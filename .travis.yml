@@ -8,7 +8,7 @@ addons:
 
 
 script:
-  - mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar -Dsonar.projectKey=Mixeway_MixewayBackend
-  - mvn package
+  - mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar -Dsonar.projectKey=Mixeway_MixewayBackendgit push
+  - mvn package -Dmaven.test.skip=true
   - docker build --build-arg JAR_FILE=target/mixeway-0.9.jar -t mixeway/backend:0.9 .
   - docker push mixeway/backend:0.9
