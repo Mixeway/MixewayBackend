@@ -1,0 +1,35 @@
+/target/
+!.mvn/wrapper/maven-wrapper.jar
+/src/main/resources/application.properties
+src/main/resources/application.properties
+/src/main/resources/bootstrap.yml
+src/main/resources/bootstrap.yml
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+*.properties
+*.yml
+*.class
+application.properties
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+*.patch
+application.properties
+bootstrap.yml
+
+### NetBeans ###
+/nbproject/private/
+/build/
+/nbbuild/
+/dist/
+/nbdist/
+/bin/
+/.nb-gradle/

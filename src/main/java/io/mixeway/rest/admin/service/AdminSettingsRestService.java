@@ -1,0 +1,166 @@
+package io.mixeway.rest.admin.service;
+
+import io.mixeway.rest.admin.model.SmtpSettingsModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.vault.core.VaultOperations;
+import io.mixeway.db.entity.Proxies;
+import io.mixeway.db.entity.RoutingDomain;
+import io.mixeway.db.entity.Settings;
+import io.mixeway.db.repository.ProxiesRepository;
+import io.mixeway.db.repository.RoutingDomainRepository;
+import io.mixeway.db.repository.SettingsRepository;
+import io.mixeway.pojo.Status;
+import io.mixeway.rest.admin.model.AuthSettingsModel;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
+@Service
+public class AdminSettingsRestService {
+    private final SettingsRepository settingsRepository;
+    private final VaultOperations operations;
+    private final RoutingDomainRepository routingDomainRepository;
+    private final ProxiesRepository proxiesRepository;
+    private static final Logger log = LoggerFactory.getLogger(AdminSettingsRestService.class);
+
+    @Autowired
+    public AdminSettingsRestService(SettingsRepository settingsRepository, VaultOperations operations,
+                                    RoutingDomainRepository routingDomainRepository, ProxiesRepository proxiesRepository){
+        this.settingsRepository = settingsRepository;
+        this.operations = operations;
+        this.proxiesRepository = proxiesRepository;
+        this.routingDomainRepository = routingDomainRepository;
+    }
+
+    public ResponseEntity<Settings> getSettings() {
+        Optional<Settings> settings = settingsRepository.findAll().stream().findFirst();
+        return settings.map(value -> new ResponseEntity<>(value, HttpStatus.OK)).orElseGet(() -> new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED));
+    }
+
+    public ResponseEntity<Status> updateSmtpSettings(SmtpSettingsModel smtpSettingsModel, String name) {
+        Optional<Settings> settings = settingsRepository.findAll().stream().findFirst();
+        if (settings.isPresent()){
+            Settings settingsToUpdate = settings.get();
+            if (smtpSettingsModel.getSmtpAuth() && smtpSettingsModel.getSmtpPassword()!=null && smtpSettingsModel.getSmtpUsername()!=null){
+                settingsToUpdate.setSmtpAuth(smtpSettingsModel.getSmtpAuth());
+                settingsToUpdate.setSmtpUsername(smtpSettingsModel.getSmtpUsername());
+                settingsToUpdate.setSmtpPassword(UUID.randomUUID().toString());
+                Map<String, String> upassMap = new HashMap<>();
+                upassMap.put("password", smtpSettingsModel.getSmtpPassword());
+                operations.write("secret/"+settingsToUpdate.getSmtpPassword(), upassMap);
+            } else if (smtpSettingsModel.getSmtpAuth() && (smtpSettingsModel.getSmtpPassword()!=null || smtpSettingsModel.getSmtpUsername()!=null) ){
+                return new ResponseEntity<>( HttpStatus.EXPECTATION_FAILED);
+            }
+            settingsToUpdate.setSmtpHost(smtpSettingsModel.getSmtpHost());
+            settingsToUpdate.setSmtpPort(smtpSettingsModel.getSmtpPort());
+            settingsToUpdate.setSmtpTls(smtpSettingsModel.getSmtpTls());
+            settingsRepository.save(settingsToUpdate);
+            log.info("{} - Updated SMTP settings", name);
+            return new ResponseEntity<>( HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>( HttpStatus.EXPECTATION_FAILED);
+        }
+    }
+
+    public ResponseEntity<Status> updateAuthSettings(AuthSettingsModel authSettingsModel, String name) {
+        Optional<Settings> settings = settingsRepository.findAll().stream().findFirst();
+        if (settings.isPresent() && (authSettingsModel.getCertificateAuth() || authSettingsModel.getPasswordAuth())){
+            Settings settingsToUpdate = settings.get();
+            settingsToUpdate.setPasswordAuth(authSettingsModel.getPasswordAuth());
+            settingsToUpdate.setCertificateAuth(authSettingsModel.getCertificateAuth());
+            settingsRepository.save(settingsToUpdate);
+            log.info("{} - Updated auth settings}", name);
+            return new ResponseEntity<>(HttpStatus.OK);
+
+        } else {
+            return new ResponseEntity<>( HttpStatus.EXPECTATION_FAILED);
+        }
+    }
+
+    public ResponseEntity<Status> createRoutingDomain(RoutingDomain routingDomain, String name) {
+        Optional<Settings> settings = settingsRepository.findAll().stream().findFirst();
+        if (settings.isPresent() && routingDomain.getName()!=null){
+            routingDomainRepository.save(routingDomain);
+            log.info("{} - Created new routing domain {}", name, routingDomain.getName());
+            return new ResponseEntity<>(HttpStatus.CREATED);
+
+        } else {
+            return new ResponseEntity<>( HttpStatus.EXPECTATION_FAILED);
+        }
+    }
+
+    public ResponseEntity<Status> deleteRoutingDomain(Long routingDomainId, String name) {
+        Optional<RoutingDomain> routingDomain = routingDomainRepository.findById(routingDomainId);
+        if (routingDomain.isPresent()){
+            try {
+                routingDomainRepository.delete(routingDomain.get());
+                log.info("{} - Deleted routing domian {}", name, routingDomain.get().getName());
+                return new ResponseEntity<>(HttpStatus.OK);
+            } catch (Exception ex){
+                return new ResponseEntity<>(HttpStatus.PRECONDITION_FAILED);
+            }
+        } else {
+            return new ResponseEntity<>( HttpStatus.NOT_FOUND);
+        }
+    }
+
+    public ResponseEntity<Status> createProxy(Proxies proxies, String name) {
+        Optional<Settings> settings = settingsRepository.findAll().stream().findFirst();
+        if (settings.isPresent() && proxies.getIp()!=null && proxies.getPort() !=null && proxies.getDescription()!=null){
+            proxiesRepository.save(proxies);
+            log.info("{} - Created new proxy {} ", name, proxies.getId()+":"+proxies.getPort());
+            return new ResponseEntity<>(HttpStatus.CREATED);
+        } else {
+            return new ResponseEntity<>( HttpStatus.EXPECTATION_FAILED);
+        }
+    }
+
+    public ResponseEntity<Status> deleteProxy(Long proxyId, String name) {
+        Optional<Proxies> proxies = proxiesRepository.findById(proxyId);
+        if (proxies.isPresent()){
+            try {
+                proxiesRepository.delete(proxies.get());
+                log.info("{} - Deleted proxy {}", name, proxies.get().getIp());
+                return new ResponseEntity<>(HttpStatus.OK);
+            } catch (Exception e){
+                return new ResponseEntity<>(HttpStatus.PRECONDITION_FAILED);
+            }
+        } else {
+            return new ResponseEntity<>( HttpStatus.NOT_FOUND);
+        }
+    }
+
+    public ResponseEntity<Status> generateApiKey(String name) {
+        Optional<Settings> settings = settingsRepository.findAll().stream().findFirst();
+        if (settings.isPresent()){
+            settings.get().setMasterApiKey(UUID.randomUUID().toString());
+            settingsRepository.save(settings.get());
+            log.info("{} - Generated new Master API Key", name);
+            return new ResponseEntity<>(HttpStatus.CREATED);
+
+        } else {
+            return new ResponseEntity<>( HttpStatus.EXPECTATION_FAILED);
+        }
+    }
+
+    public ResponseEntity<Status> deleteApiKey(String name) {
+        Optional<Settings> settings = settingsRepository.findAll().stream().findFirst();
+        if (settings.isPresent()){
+            settings.get().setMasterApiKey(null);
+            settingsRepository.save(settings.get());
+            log.info("{} - Deleted Master API Key", name);
+            return new ResponseEntity<>(HttpStatus.OK);
+
+        } else {
+            return new ResponseEntity<>( HttpStatus.EXPECTATION_FAILED);
+        }
+    }
+
+}
