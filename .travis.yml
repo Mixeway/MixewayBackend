@@ -1,5 +1,14 @@
 language: java
+services: docker
+addons:
+  sonarcloud:
+    organization: "mixeway" # the key of the org you chose at step #3
+    token:
+      secure: "f56be3b6c51f174e8ca110f8f406f9a8aefda1bf"
+
+
 script:
+  - mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar -Dsonar.projectKey=Mixeway_MixewayBackend
   - mvn package
   - docker build --build-arg JAR_FILE=target/mixeway-0.9.jar -t mixeway/backend:0.9 .
   - docker push mixeway/backend:0.9
