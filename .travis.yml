@@ -8,7 +8,7 @@ addons:
 
 
 script:
-  - mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar -Dsonar.projectKey=Mixeway_MixewayBackend
+  - mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar -Dmaven.test.skip=true -Dsonar.projectKey=Mixeway_MixewayBackend
   - mvn package -Dmaven.test.skip=true
   - docker build --build-arg JAR_FILE=target/mixeway-0.9.jar -t mixeway/backend:0.9 .
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
