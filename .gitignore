@@ -13,7 +13,6 @@ src/main/resources/bootstrap.yml
 .springBeans
 .sts4-cache
 *.properties
-*.yml
 *.class
 application.properties
 ### IntelliJ IDEA ###
