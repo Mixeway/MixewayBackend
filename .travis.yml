@@ -11,5 +11,5 @@ script:
   - mvn cleangit p org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar -Dmaven.test.skip=true -Dsonar.projectKey=Mixeway_MixewayBackendgit push
   - mvn package -Dmaven.test.skip=true
   - docker build --build-arg JAR_FILE=target/mixeway-0.9.jar -t mixeway/backend:0.9 .
-  - docker login docker.io
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
   - docker push mixeway/backend:0.9
