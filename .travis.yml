@@ -1,1 +1,5 @@
 language: java
+script:
+  - mvn package
+  - docker build --build-arg JAR_FILE=target/mixeway-0.9.jar -t mixeway/backend:0.9 .
+  - docker push mixeway/backend:0.9
