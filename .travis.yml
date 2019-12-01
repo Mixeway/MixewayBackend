@@ -4,7 +4,7 @@ addons:
   sonarcloud:
     organization: "mixeway" # the key of the org you chose at step #3
     token:
-      secure: "f56be3b6c51f174e8ca110f8f406f9a8aefda1bf"
+      secure: $SONAR_TOKEN
 
 
 script:
