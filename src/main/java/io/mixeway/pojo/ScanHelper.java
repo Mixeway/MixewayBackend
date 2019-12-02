@@ -8,6 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import io.mixeway.config.Constants;
 import io.mixeway.rest.project.model.RunScanForAssets;
@@ -27,6 +28,7 @@ public class ScanHelper {
     private NessusScanRepository nessusScanRepository;
     private List<NetworkScanClient> networkScanClients;
 
+    @Lazy
     @Autowired
     ScanHelper(AssetRepository assetRepository, InterfaceRepository interfaceRepository, ScannerTypeRepository scannerTypeRepository,
                ScannerRepository scannerRepository, NessusScanTemplateRepository nessusScanTemplateRepository,
