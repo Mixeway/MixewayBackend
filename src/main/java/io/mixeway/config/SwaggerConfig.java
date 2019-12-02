@@ -32,7 +32,7 @@ import java.util.List;
 public class SwaggerConfig implements WebMvcConfigurer {
     Contact contact = new Contact(
             "Info at",
-            "https://github.com/siewer/ScanMixerHub",
+            "https://github.com/Mixeway/MixeWayBackend",
             "gsiewruk@gmail.com"
     );
 
@@ -41,7 +41,7 @@ public class SwaggerConfig implements WebMvcConfigurer {
 
     List<VendorExtension> vendorExtensions = new ArrayList<>();
     ApiInfo apiInfo = new ApiInfo(
-            "Security Mixer REST API",
+            "Mixeway REST API",
             "Prefix prefix /api/ is deprecated please migrate to /v2/", "1.0",
             "#", contact,
             "Apache 2.0", "http://www.apache.org/licenses/LICENSE-2.0",vendorExtensions);
