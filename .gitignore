@@ -1,9 +1,5 @@
 /target/
 !.mvn/wrapper/maven-wrapper.jar
-/src/main/resources/application.properties
-src/main/resources/application.properties
-/src/main/resources/bootstrap.yml
-src/main/resources/bootstrap.yml
 ### STS ###
 .apt_generated
 .classpath
@@ -12,17 +8,13 @@ src/main/resources/bootstrap.yml
 .settings
 .springBeans
 .sts4-cache
-*.properties
 *.class
-application.properties
 ### IntelliJ IDEA ###
 .idea
 *.iws
 *.iml
 *.ipr
 *.patch
-application.properties
-bootstrap.yml
 
 ### NetBeans ###
 /nbproject/private/
