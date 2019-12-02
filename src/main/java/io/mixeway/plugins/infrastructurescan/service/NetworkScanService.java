@@ -120,8 +120,9 @@ public class NetworkScanService {
                 }
             }
         }
+        ns = nessusScanRepository.findById(ns.getId()).get();
         if (running) {
-            return new ResponseEntity<>(new Status("ok"), HttpStatus.CREATED);
+            return new ResponseEntity<>(new Status("ok",ns.getRequestId() ), HttpStatus.CREATED);
         } else {
             return new ResponseEntity<>(new Status("Problem with running scan..."), HttpStatus.PRECONDITION_FAILED);
         }
