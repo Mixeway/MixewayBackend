@@ -111,17 +111,22 @@ public class NetworkScanService {
             return new ResponseEntity<>(new Status("One or more hosts does not have Routing domain or no scanner avaliable in given Routing Domain. Omitting.."),
                     HttpStatus.EXPECTATION_FAILED);
         }
+        boolean running = false;
         //RUN MANUAL SCAN
         if (!ns.getRunning()) {
             for (NetworkScanClient networkScanClient :networkScanClients){
                 if (networkScanClient.canProcessRequest(ns)){
-                    networkScanClient.runScan(ns);
+                    running = networkScanClient.runScan(ns);
                 }
             }
         }
-        return new ResponseEntity<>(new Status("ok"), HttpStatus.CREATED);
+        if (running) {
+            return new ResponseEntity<>(new Status("ok"), HttpStatus.CREATED);
+        } else {
+            return new ResponseEntity<>(new Status("Problem with running scan..."), HttpStatus.PRECONDITION_FAILED);
+        }
     }
-    private NessusScan configureKoordynatorScan(Project project, List<Interface> intfs) throws JSONException, KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, CertificateException, FileNotFoundException, IOException, JAXBException {
+    private NessusScan configureKoordynatorScan(Project project, List<Interface> intfs) throws JSONException, KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, CertificateException, IOException, JAXBException {
 
         io.mixeway.db.entity.Scanner nessus = findNessusForInterfaces(new HashSet<>(intfs));
         NessusScan scan = new NessusScan();
@@ -222,7 +227,7 @@ public class NetworkScanService {
     public void configureAutomaticScanForProject(Project project) {
         //Pobranie asetow i wybranie roznych domen routingowych
         List<Asset> uniqueRoutingDomainsForProject = project.getAssets().stream()
-                .filter(distinctByKey(a -> a.getRoutingDomain()))
+                .filter(distinctByKey(Asset::getRoutingDomain))
                 .collect(Collectors.toList());
 
         //Dla kazdej unikalnej domeny zdefiniuj skan automatyczny
