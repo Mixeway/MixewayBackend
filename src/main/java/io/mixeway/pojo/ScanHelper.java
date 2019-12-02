@@ -3,17 +3,13 @@ package io.mixeway.pojo;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.*;
+import io.mixeway.plugins.infrastructurescan.service.NetworkScanClient;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import io.mixeway.config.Constants;
-import io.mixeway.plugins.infrastructurescan.nessus.apiclient.NessusApiClient;
-import io.mixeway.plugins.infrastructurescan.nexpose.apiclient.NexposeApiClient;
-import io.mixeway.plugins.infrastructurescan.openvas.apiclient.OpenVasSocketClient;
-import io.mixeway.plugins.infrastructurescan.openvas.apiclient.OpenVasApiClient;
 import io.mixeway.rest.project.model.RunScanForAssets;
 
 import java.util.*;
@@ -21,41 +17,40 @@ import java.util.stream.Collectors;
 
 @Component
 public class ScanHelper {
-    public static final String NESSUS_TEMPLATE = "Basic Network Scan";
-    public static final int EXECUTE_ONCE = 1;
-    @Autowired
-    AssetRepository assetRepository;
-    @Autowired
-    InterfaceRepository interfaceRepository;
-    @Autowired
-    ScannerTypeRepository scannerTypeRepository;
-    @Autowired
-    ScannerRepository nessusRepository;
-    @Autowired
-    NessusScanTemplateRepository nessusTemplateRepository;
-    @Autowired
-    OpenVasApiClient openVasApiClient;
-    @Autowired
-    NessusApiClient nessusApiClient;
-    @Autowired @Lazy
-    NexposeApiClient nexposeApiClient;
-    @Autowired
-    NessusScanRepository nessusScanRepository;
-    @Autowired
-    OpenVasSocketClient openVasSocketService;
+    private static final String NESSUS_TEMPLATE = "Basic Network Scan";
+    private static final int EXECUTE_ONCE = 1;
+    private AssetRepository assetRepository;
+    private InterfaceRepository interfaceRepository;
+    private ScannerTypeRepository scannerTypeRepository;
+    private ScannerRepository scannerRepository;
+    private NessusScanTemplateRepository nessusTemplateRepository;
+    private NessusScanRepository nessusScanRepository;
+    private List<NetworkScanClient> networkScanClients;
 
-    final static Logger log = LoggerFactory.getLogger(ScanHelper.class);
+    @Autowired
+    ScanHelper(AssetRepository assetRepository, InterfaceRepository interfaceRepository, ScannerTypeRepository scannerTypeRepository,
+               ScannerRepository scannerRepository, NessusScanTemplateRepository nessusScanTemplateRepository,
+               List<NetworkScanClient> networkScanClients, NessusScanRepository nessusScanRepository){
+        this.assetRepository = assetRepository;
+        this.interfaceRepository = interfaceRepository;
+        this.scannerTypeRepository = scannerTypeRepository;
+        this.nessusScanRepository = nessusScanRepository;
+        this.scannerRepository = scannerRepository;
+        this.nessusTemplateRepository = nessusScanTemplateRepository;
+        this.networkScanClients = networkScanClients;
+    }
+
+    private final static Logger log = LoggerFactory.getLogger(ScanHelper.class);
 
 
     public List<String> prepareTargetsForScan(NessusScan nessusScan, boolean logInfo) {
-        List<String> interfacesToScan = null;
-        List<Interface> tmpList = new ArrayList<>();
+        List<String> interfacesToScan;
         if (nessusScan.getIsAutomatic()) {
             List<Asset> assets = assetRepository.findByProjectAndActive(nessusScan.getProject(), true);
             if (nessusScan.getNessus().getUsePublic()) {
                 List<Interface> intfs = interfaceRepository.findByAssetInAndFloatingipNotNull(assets);
                 interfacesToScan = intfs.stream()
-                        .filter(n -> n.getFloatingip() != null && !n.getAutoCreated() && n.getAsset().getActive() == true)
+                        .filter(n -> n.getFloatingip() != null && !n.getAutoCreated() && n.getAsset().getActive())
                         .map(Interface::getFloatingip)
                         .collect(Collectors.toList());
                 interfacesToScan.addAll(intfs.stream().filter(n -> n.getPool() != null && !n.getAutoCreated()).map(Interface::getPool).collect(Collectors.toList()));
@@ -73,11 +68,11 @@ public class ScanHelper {
         } else {
             if (nessusScan.getNessus().getUsePublic()) {
                 interfacesToScan = nessusScan.getInterfaces().stream()
-                        .filter(n -> n.getFloatingip() != null && !n.getAutoCreated()  && n.getAsset().getActive() == true)
+                        .filter(n -> n.getFloatingip() != null && !n.getAutoCreated()  && n.getAsset().getActive())
                         .map(Interface::getFloatingip)
                         .collect(Collectors.toList());
                 interfacesToScan.addAll(nessusScan.getInterfaces().stream()
-                        .filter(n -> n.getPool() != null && !n.getAutoCreated()  && n.getAsset().getActive() == true )
+                        .filter(n -> n.getPool() != null && !n.getAutoCreated()  && n.getAsset().getActive())
                         .map(Interface::getPool)
                         .collect(Collectors.toList()));
             } else {
@@ -122,7 +117,7 @@ public class ScanHelper {
         return interfaces;
     }
     //Założenie, że jest tylko jedna domena routingowa w jednym projekcie
-    public Scanner findNessusForInterfaces(Set<Interface> intfs) {
+    private Scanner findNessusForInterfaces(Set<Interface> intfs) {
         List<Scanner> nessuses = new ArrayList<>();
         List<ScannerType> types = new ArrayList<>();
         types.add(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_NESSUS));
@@ -131,20 +126,16 @@ public class ScanHelper {
         types.add(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_OPENVAS_SOCKET));
         List<RoutingDomain> uniqueDomainInProjectAssets = intfs.stream().map(Interface::getRoutingDomain).distinct().collect(Collectors.toList());
         for (RoutingDomain rd : uniqueDomainInProjectAssets) {
-            nessuses.addAll(nessusRepository.findByRoutingDomainAndScannerTypeIn(rd, types));
+            nessuses.addAll(scannerRepository.findByRoutingDomainAndScannerTypeIn(rd, types));
         }
-        Scanner scanner = nessuses.stream()
+        return nessuses.stream()
                 .filter(s -> s.getScannerType() == scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_NESSUS))
-                .findFirst().orElse(null);
+                .findFirst().orElseGet(() -> nessuses.get(0));
 
-        if (scanner != null)
-            return scanner;
-        else
-            return nessuses.get(0);
     }
     public boolean runInfraScanForScope(Project project, Set<Interface> intfs)  {
         try {
-            NessusScan scan = null;
+            NessusScan scan;
             Scanner nessus = this.findNessusForInterfaces(intfs);
             if (nessus == null)
                 throw new Exception("No suitable network scanner for project");
@@ -159,17 +150,11 @@ public class ScanHelper {
             scan.setScanFrequency(EXECUTE_ONCE);
             scan.setScheduled(false);
             nessusScanRepository.save(scan);
-            if (scan.getNessus().getScannerType().equals(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_NESSUS))) {
-                nessusApiClient.runScanManual(scan);
+            for (NetworkScanClient networkScanClient : networkScanClients){
+                if (networkScanClient.canProcessRequest(scan)){
+                    networkScanClient.runScanManual(scan);
+                }
             }
-            else if (scan.getNessus().getScannerType().equals(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_OPENVAS))) {
-                openVasApiClient.runScanManual(scan);
-            }
-            else if (scan.getNessus().getScannerType().equals(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_OPENVAS_SOCKET))) {
-                openVasSocketService.runScanManual(scan);
-            }
-            else
-                nexposeApiClient.runScanManual(scan);
             return true;
         } catch (Exception e){
             e.printStackTrace();
