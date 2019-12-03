@@ -190,10 +190,10 @@ public class Constants {
 	public static final String STATUS_EXISTING = "EXISTING" ;
 
 	//FRONTEND
-	public static final String INFRA_VULN_TREND_LABEL = "Infrastruktura";
-	public static final String WEBAPP_VULN_TREND_LABEL = "Web Aplikacje";
-	public static final String CODE_VULN_TREND_LABEL = "Kod źródłowy";
-	public static final String AUDIT_VULN_TREND_LABEL = "Audyt CIS";
+	public static final String INFRA_VULN_TREND_LABEL = "Infrastructure";
+	public static final String WEBAPP_VULN_TREND_LABEL = "WebApps";
+	public static final String CODE_VULN_TREND_LABEL = "Source Code";
+	public static final String AUDIT_VULN_TREND_LABEL = "CIS Benchmark";
 	public static final String SOFT_VULN_TREND_LABEL = "OpenSource";
 	public static final String LOG_SEVERITY = "Log";
 	public static final String INFO_SEVERITY = "Info";
