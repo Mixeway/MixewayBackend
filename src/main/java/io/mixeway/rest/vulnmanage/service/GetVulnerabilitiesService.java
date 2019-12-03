@@ -128,7 +128,8 @@ public class GetVulnerabilitiesService {
                 if (a.getProject().getCiid() != null && !a.getProject().getCiid().isEmpty())
                 	v.setCiid(a.getProject().getCiid());
                 v.setDateCreated(spv.getInserted());
-                v.setIpAddress(a.getInterfaces().stream().findFirst().orElse(null).getPrivateip());
+                Optional<Interface> interfaceToAdd = a.getInterfaces().stream().findFirst();
+                interfaceToAdd.ifPresent(anInterface -> v.setIpAddress(anInterface.getPrivateip()));
                 v.setPacketName(spv.getSoftwarepacket().getName());
                 tmpVulns.add(v);
             }
@@ -466,6 +467,7 @@ public class GetVulnerabilitiesService {
 
             ScannedAddress scannedAddress = new ScannedAddress();
             scannedAddress.setOs(asset.getOs());
+            assert intf != null;
             scannedAddress.setIp(intf.getPrivateip());
             for (io.mixeway.db.entity.Service service: serviceRepository.findByAnInterface(intf)){
                 NetworkService networkService = new NetworkService();
@@ -482,13 +484,13 @@ public class GetVulnerabilitiesService {
         }
         InfraScanMetadata infraScanMetadata = new InfraScanMetadata();
         infraScanMetadata.setScannedAddresses(scannedAddresses);
-        return new ResponseEntity<InfraScanMetadata>(infraScanMetadata,HttpStatus.OK);
+        return new ResponseEntity<>(infraScanMetadata,HttpStatus.OK);
     }
 
 
     public ResponseEntity<Vulnerabilities> getNetworkVulnerabilitiesByRequestId(String requestId) {
         try {
-            return new ResponseEntity<Vulnerabilities>(this.setInfrastructureVulnsForRequestId(new Vulnerabilities(), requestId), HttpStatus.OK);
+            return new ResponseEntity<>(this.setInfrastructureVulnsForRequestId(new Vulnerabilities(), requestId), HttpStatus.OK);
         } catch (NullPointerException ex){
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }

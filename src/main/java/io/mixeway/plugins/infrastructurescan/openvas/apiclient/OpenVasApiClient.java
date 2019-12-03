@@ -105,6 +105,7 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 
 	@Override
 	public void runScanManual(NessusScan nessusScan) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, IOException {
+		NessusScan base = nessusScan;
 		try {
 			RestRequestBody rrb = bodyPrepare(nessusScan);
 			rrb.setParams(prepareCreateTarget(nessusScan));
@@ -114,7 +115,7 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 			nessusScanRepository.save(nessusScan);
 			runScan(nessusScan);
 		} catch (NullPointerException npe){
-			log.debug("Nullpointer thrown during runScanManual for {}", nessusScan.getProject().getName());
+			log.debug("Nullpointer thrown during runScanManual for {}", base.getProject().getName());
 		}
 	}
 
