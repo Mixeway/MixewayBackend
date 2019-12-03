@@ -207,11 +207,4 @@ public class WebApp {
 	public void setLastscan(String lastscan) {
 		this.lastscan = lastscan;
 	}
-
-	@PreRemove
-	private void removeSecurityGroupRelationship() {
-		this.vulns.remove(this);
-		this.headers.remove(this);
-		this.webAppCookies.remove(this);
-	}
 }

@@ -34,33 +34,33 @@ public class OpenStackApiScheduler {
 	private static final String FE_NETWORK_TAG = "fe";
 	private static final String ANY ="Any";
     private static final Logger log = LoggerFactory.getLogger(OpenStackApiScheduler.class);
-    @Autowired
-    IaasApiRepository iaasApiRepository;
-    @Autowired
-    AssetRepository assetRepository;
-    @Autowired
-    InterfaceRepository interfaceRepository;
-  
-    @Autowired
-    OpenStackApiClient apiClient;
-    
-    @Autowired
-    SecurityGroupRepository securityGroupRepository;
-    @Autowired
-    SecurityGroupRuleRepository securityGroupRuleRepository;
-    
-    @Autowired
-    VaultOperations operations;
-    @Autowired
-    ActivityRepository activityRepository;
-    @Autowired
-	RoutingDomainRepository routingDomainRepository;
+    private IaasApiRepository iaasApiRepository;
+    private AssetRepository assetRepository;
+    private InterfaceRepository interfaceRepository;
+    private OpenStackApiClient apiClient;
+    private SecurityGroupRepository securityGroupRepository;
+    private SecurityGroupRuleRepository securityGroupRuleRepository;
+    private ActivityRepository activityRepository;
+	private RoutingDomainRepository routingDomainRepository;
+	@Autowired
+	OpenStackApiScheduler(IaasApiRepository iaasApiRepository, AssetRepository assetRepository, InterfaceRepository interfaceRepository,
+						  OpenStackApiClient apiClient, SecurityGroupRepository securityGroupRepository,
+						  SecurityGroupRuleRepository securityGroupRuleRepository, ActivityRepository activityRepository, RoutingDomainRepository routingDomainRepository){
+		this.iaasApiRepository = iaasApiRepository;
+		this.assetRepository = assetRepository;
+		this.interfaceRepository = interfaceRepository;
+		this.apiClient = apiClient;
+		this.securityGroupRepository = securityGroupRepository;
+		this.activityRepository = activityRepository;
+		this.routingDomainRepository = routingDomainRepository;
+		this.securityGroupRuleRepository = securityGroupRuleRepository;
+	}
     
     
     //Every 5min
 	@Transactional
     @Scheduled(fixedDelay = 300000)
-    public void reportCurrentTime() throws JSONException, ParseException, UnknownHostException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
+    public void reportCurrentTime() throws JSONException, ParseException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
     	List<IaasApi> apis = iaasApiRepository.findAll();
     	for (IaasApi api : apis) {
     		if(api.getEnabled()) {
@@ -211,7 +211,7 @@ public class OpenStackApiScheduler {
 		
 	}
 
-	public void deactivateAssets(IaasApi api) {
+	private void deactivateAssets(IaasApi api) {
 		
     	List<Asset> assets = assetRepository.findByProjectId(api.getProject().getId());
     	for (Asset asset : assets) {
@@ -219,7 +219,7 @@ public class OpenStackApiScheduler {
     		assetRepository.save(asset);
     	}
     }
-	public void deactivateInterfaces(IaasApi api) {
+	private void deactivateInterfaces(IaasApi api) {
     	List<Interface> intfs= interfaceRepository.findByAssetIn(new ArrayList<>(api.getProject().getAssets()));
     	for (Interface intf : intfs) {
     		intf.setActive(false);
@@ -229,14 +229,13 @@ public class OpenStackApiScheduler {
     public void loadInterfaces(IaasApi api, Asset asset, JSONArray floatingIps) throws JSONException, ParseException, UnknownHostException {
 		try{
 			JSONArray interfaces = apiClient.getInterfaces(api, asset);
-			int newInterfaces = 0;
 			for (int i = 0; i < interfaces.length(); i++) {
 				String state = interfaces.getJSONObject(i).getString("port_state");
 				String macAddr = interfaces.getJSONObject(i).getString("mac_addr");
 				Interface intf = interfaceRepository.findByMacaddr(macAddr);
 				if (intf == null)
 					intf = new Interface();
-				intf.setActive(state.equals("ACTIVE") ? true : false);
+				intf.setActive(state.equals("ACTIVE"));
 				intf.setAutoCreated(false);
 				intf.setAsset(asset);
 				intf.setRoutingDomain(asset.getRoutingDomain());
@@ -246,13 +245,12 @@ public class OpenStackApiScheduler {
 				intf.setFloatingip(findFloatingIp(floatingIps, intf.getPrivateip()));
 				intf.setNetworkTag(FE_NETWORK_TAG);
 				interfaceRepository.save(intf);
-				newInterfaces++;
 			}
 		} catch (NullPointerException npe){
 			log.warn("OpenStack LoadInterfaces NullPointerException occured...");
 		}
     }
-    public String findFloatingIp(JSONArray flatingIps, String fixedIp) throws JSONException {
+    private String findFloatingIp(JSONArray flatingIps, String fixedIp) throws JSONException {
     	for (int i = 0; i < flatingIps.length(); i++) {
     		String fip = flatingIps.getJSONObject(i).getString("fixed_ip");
     		if (fip != null)

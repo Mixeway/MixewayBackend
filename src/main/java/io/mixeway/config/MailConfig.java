@@ -10,6 +10,7 @@ import io.mixeway.db.entity.Settings;
 import io.mixeway.db.repository.SettingsRepository;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 
 @Configuration
@@ -24,14 +25,16 @@ public class MailConfig {
     }
     @Bean
     public JavaMailSenderImpl emailService() {
-        Settings settings = settingsRepository.findAll().stream().findFirst().get();
+        Settings settings = settingsRepository.findAll().stream().findFirst().orElse(null);
+        assert settings != null;
         VaultResponseSupport<Map<String,Object>> password = operations.read("secret/"+settings.getSmtpPassword());
         Properties mailProperties = new Properties();
         if (settings.getSmtpHost() != null) {
             mailProperties.put("spring.mail.host", settings.getSmtpHost());
             mailProperties.put("spring.mail.port", settings.getSmtpPort());
             mailProperties.put("spring.mail.username", settings.getSmtpUsername());
-            mailProperties.put("spring.mail.password", password.getData().get("password").toString());
+            assert password != null;
+            mailProperties.put("spring.mail.password", Objects.requireNonNull(password.getData()).get("password").toString());
             mailProperties.put("spring.mail.properties.mail.smtp.auth", settings.getSmtpAuth());
             mailProperties.put("spring.mail.properties.mail.smtp.starttls.enable", settings.getSmtpTls());
             mailProperties.put("mail.smtp.starttls.enable", settings.getSmtpTls());

@@ -16,10 +16,14 @@ import java.io.IOException;
 @Controller
 public class CisBenchmarkApiController
 {
+    private final CisK8sBenchmarkService cisK8sBenchmarkService;
+    private final CisDockerBenchmarkService cisDockerBenchmarkService;
+
     @Autowired
-    CisK8sBenchmarkService cisK8sBenchmarkService;
-    @Autowired
-    CisDockerBenchmarkService cisDockerBenchmarkService;
+    CisBenchmarkApiController(CisK8sBenchmarkService cisK8sBenchmarkService, CisDockerBenchmarkService cisDockerBenchmarkService){
+        this.cisK8sBenchmarkService = cisK8sBenchmarkService;
+        this.cisDockerBenchmarkService = cisDockerBenchmarkService;
+    }
 
     //@PreAuthorize("hasAuthority('ROLE_API')")
     @PostMapping(value = "/api/cis-k8s/{projectId}")

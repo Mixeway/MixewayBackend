@@ -14,6 +14,7 @@ import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.util.Date;
 import java.util.Map;
+import java.util.Objects;
 
 import io.mixeway.db.entity.Asset;
 import io.mixeway.db.entity.IaasApi;
@@ -38,19 +39,24 @@ import org.springframework.web.client.RestTemplate;
 @Component
 public class OpenStackApiClient {
 
-    final static Logger log = LoggerFactory.getLogger(OpenStackApiClient.class);
-	SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private final static Logger log = LoggerFactory.getLogger(OpenStackApiClient.class);
+	private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private IaasApiRepository iaasApiRepository;
+	private VaultOperations operations;
+	private SecureRestTemplate secureRestTemplate;
+
 	@Autowired
-    IaasApiRepository iaasApiRepository;
-	@Autowired
-	VaultOperations operations;
-	@Autowired
-    SecureRestTemplate secureRestTemplate;
+	OpenStackApiClient(IaasApiRepository iaasApiRepository, VaultOperations operations, SecureRestTemplate secureRestTemplate){
+		this.operations = operations;
+		this.secureRestTemplate = secureRestTemplate;
+		this.iaasApiRepository = iaasApiRepository;
+	}
 	
-	public String buildJsonPostAuth(IaasApi api) throws JSONException {
+	private String buildJsonPostAuth(IaasApi api) throws JSONException {
 		VaultResponseSupport<Map<String,Object>> response = operations.read("secret/"+api.getPassword());
 		JSONArray ar = new JSONArray();
 		ar.put("password");
+		assert response != null;
 		String jsonString = new JSONObject()
                 .put("auth", new JSONObject()
                      .put("identity", new JSONObject()
@@ -58,7 +64,7 @@ public class OpenStackApiClient {
                     		 .put("password", new JSONObject().
                     				 put("user", new JSONObject().
                     						 put("name", api.getUsername()).
-                    						 put("password", response.getData().get("password")).
+                    						 put("password", Objects.requireNonNull(response.getData()).get("password")).
                     						 put("domain", new JSONObject().
                     								 put("name", api.getDomain()))))).
                      put("scope",new JSONObject().put("project", new JSONObject().put("id",api.getTenantId())))).toString();
@@ -68,22 +74,22 @@ public class OpenStackApiClient {
 	
 	public String sendAuthRequest(IaasApi api) throws JSONException, ParseException, IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
 		Date datenow = sdf.parse(sdf.format(new Date()));
-		Boolean newTokenNeed;
+		boolean newTokenNeed;
 		if(api.getTokenExpires() == null)
 			newTokenNeed = true;
 		else 
-			newTokenNeed = sdf.parse(api.getTokenExpires()).after(datenow) ? false : true;
+			newTokenNeed = !sdf.parse(api.getTokenExpires()).after(datenow);
 
 		if (newTokenNeed) {
 			RestTemplate restTemplate = secureRestTemplate.restTemplateForIaasApi(api);
 			HttpHeaders headers = new HttpHeaders();
 			headers.set("User-Agent", "");
 			headers.set("Content-Type", "application/json");
-			HttpEntity<String> entity = new HttpEntity<String>(buildJsonPostAuth(api).trim().replaceAll("\\s+","").trim(),headers);
+			HttpEntity<String> entity = new HttpEntity<>(buildJsonPostAuth(api).trim().replaceAll("\\s+","").trim(),headers);
 			HttpEntity<String> response = restTemplate.exchange(api.getIamUrl() + "/v3/auth/tokens", HttpMethod.POST, entity, String.class);
 			HttpHeaders headersResponse = response.getHeaders();
 			
-			String token = headersResponse.get("X-Subject-Token").toString();
+			String token = Objects.requireNonNull(headersResponse.get("X-Subject-Token")).toString();
 			api.setToken(token.substring(1, token.length() - 1));
 			api.setTokenExpires(datenow.toInstant().plus(Duration.ofHours(9)).toString().replace("T", " ").replaceAll("Z", ""));
 			api.setStatus(true);
@@ -97,7 +103,7 @@ public class OpenStackApiClient {
 		}
 	}
 	
-	public JSONArray getServerInfo(IaasApi api) throws JSONException, ParseException, UnknownHostException {
+	public JSONArray getServerInfo(IaasApi api) throws JSONException, ParseException {
 		try {
 			RestTemplate restTemplate;
 			if (api.getExternal()) {
@@ -112,8 +118,7 @@ public class OpenStackApiClient {
 					HttpMethod.GET, prepareHeadersForOpenStackRequests(api), String.class);
 			String result = response.getBody();
 			JSONObject responseJson = new JSONObject(result);
-			JSONArray serversArray = responseJson.getJSONArray("servers");
-			return serversArray;
+			return responseJson.getJSONArray("servers");
 		}catch (ResourceAccessException | CertificateException | NoSuchAlgorithmException | KeyStoreException | KeyManagementException | IOException rae){
 			log.error("OpenStack synchro - get server info error occured: {}", rae.getLocalizedMessage());
 		}
@@ -125,8 +130,7 @@ public class OpenStackApiClient {
 				HttpMethod.GET, prepareHeadersForOpenStackRequests(api), String.class);
 		String result= response.getBody();
 		JSONObject responseJson = new JSONObject(result);
-		JSONObject serversArray = responseJson.getJSONObject("server");
-		return serversArray;
+		return responseJson.getJSONObject("server");
 	}
 	public JSONArray getFloatingIps (IaasApi api) throws JSONException, ParseException, IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
 		RestTemplate restTemplate = secureRestTemplate.restTemplateForIaasApi(api);
@@ -135,37 +139,27 @@ public class OpenStackApiClient {
 					HttpMethod.GET, prepareHeadersForOpenStackRequests(api), String.class);
 			String result= response.getBody();
 			JSONObject responseJson = new JSONObject(result);
-			JSONArray serversArray = responseJson.getJSONArray("floating_ips");
-			return serversArray;
+			return responseJson.getJSONArray("floating_ips");
 		} catch (ResourceAccessException rac) {
 			return new JSONArray();
 		}
 	}
-	public JSONArray getInterfaces(IaasApi api, Asset asset) throws JSONException, ParseException, UnknownHostException {
+	public JSONArray getInterfaces(IaasApi api, Asset asset) throws JSONException, ParseException {
 		try {
 			RestTemplate restTemplate = secureRestTemplate.restTemplateForIaasApi(api);
 			HttpEntity<String> response = restTemplate.exchange(api.getServiceUrl() + "/v2/" + api.getTenantId() + "/servers/" + asset.getAssetId() + "/os-interface",
 					HttpMethod.GET, prepareHeadersForOpenStackRequests(api), String.class);
 			String result = response.getBody();
 			JSONObject responseJson = new JSONObject(result);
-			JSONArray serversArray = responseJson.getJSONArray("interfaceAttachments");
-			return serversArray;
+			return responseJson.getJSONArray("interfaceAttachments");
 		} catch (ResourceAccessException rae){
 			log.error("ResourceAccessException during getInterface for {}",asset.getProject().getName());
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (CertificateException e) {
-			e.printStackTrace();
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-		} catch (KeyStoreException e) {
-			e.printStackTrace();
-		} catch (KeyManagementException e) {
+		} catch (IOException | NoSuchAlgorithmException | KeyStoreException | CertificateException | KeyManagementException e) {
 			e.printStackTrace();
 		}
 		return null;
 	}
-	public JSONArray getSecurityGroups(IaasApi api, Asset asset) throws JSONException, ParseException, UnknownHostException {
+	public JSONArray getSecurityGroups(IaasApi api, Asset asset) {
 		try {
 			RestTemplate restTemplate = secureRestTemplate.restTemplateForIaasApi(api);
 
@@ -173,21 +167,19 @@ public class OpenStackApiClient {
 					HttpMethod.GET, prepareHeadersForOpenStackRequests(api), String.class);
 			String result = response.getBody();
 			JSONObject responseJson = new JSONObject(result);
-			JSONArray serversArray = responseJson.getJSONArray("security_groups");
-			return serversArray;
+			return responseJson.getJSONArray("security_groups");
 		} catch (Exception rae){
 			log.error("ResourceAccessException during getInterface for {}",asset.getProject().getName());
 		}
 		return null;
 	}
 
-	HttpEntity<String> prepareHeadersForOpenStackRequests(IaasApi api) throws JSONException, ParseException, UnknownHostException,
+	private HttpEntity<String> prepareHeadersForOpenStackRequests(IaasApi api) throws JSONException, ParseException, UnknownHostException,
 			CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException{
 		HttpHeaders headers = new HttpHeaders();
 		headers.set("User-Agent", "");
 		headers.set("X-Auth-Token", sendAuthRequest(api));
-		HttpEntity<String> entity = new HttpEntity<String>(headers);
-		return entity;
+		return new HttpEntity<>(headers);
 	}
 
 }

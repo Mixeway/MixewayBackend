@@ -19,7 +19,7 @@ public class CodeAccessVerifier {
     private final ProjectRepository projectRepository;
     private final CodeProjectRepository codeProjectRepository;
     private final CodeGroupRepository codeGroupRepository;
-    final static Logger log = LoggerFactory.getLogger(CodeAccessVerifier.class);
+    private final static Logger log = LoggerFactory.getLogger(CodeAccessVerifier.class);
     @Autowired
     CodeAccessVerifier(ProjectRepository projectRepository, CodeProjectRepository codeProjectRepository, CodeGroupRepository codeGroupRepository){
         this.projectRepository = projectRepository;
@@ -27,8 +27,6 @@ public class CodeAccessVerifier {
         this.codeGroupRepository = codeGroupRepository;
     }
     public SASTRequestVerify verifyPermissions(long projectId, String groupName, String projectName){
-        CodeProject codeProjectToCheck = null;
-        CodeGroup codeGroupToCheck = null;
         SASTRequestVerify sastRequestVerify= new SASTRequestVerify();
         Optional<Project> project = projectRepository.findById(projectId);
         if (project.isPresent()){

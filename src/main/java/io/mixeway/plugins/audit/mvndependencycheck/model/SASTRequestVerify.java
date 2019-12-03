@@ -4,9 +4,9 @@ import io.mixeway.db.entity.CodeGroup;
 import io.mixeway.db.entity.CodeProject;
 
 public class SASTRequestVerify {
-    Boolean valid;
-    CodeGroup cg;
-    CodeProject cp;
+    private Boolean valid;
+    private CodeGroup cg;
+    private CodeProject cp;
 
     public Boolean getValid() {
         return valid;

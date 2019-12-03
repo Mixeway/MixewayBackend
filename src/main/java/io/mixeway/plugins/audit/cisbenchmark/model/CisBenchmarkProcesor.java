@@ -12,11 +12,11 @@ import java.util.regex.Pattern;
 
 public class CisBenchmarkProcesor {
     public HashMap<String, Pattern> patterns = new HashMap<>();
-    public static final Pattern PATTERN_FIRST_LEVEL = Pattern.compile(".*\\[(\\D+)\\].*\\s(\\d+)\\s+-\\s(.*)");
-    public static final Pattern PATTERN_FIRST_LEVEL_AQUA = Pattern.compile("\\[(.*)\\] (\\d) (.*)");
-    public static final Pattern PATTERN_SECOND_LEVEL = Pattern.compile(".*\\[(\\D+)\\].*\\s(\\d+.\\d+)\\s+-\\s(.*)");
-    public static final Pattern PATTER_DOCKER = Pattern.compile(".*\\[(\\S+)\\].*(\\d+.\\d+). - (.*)");
-    public static final Pattern PATTERN_AQUASCRIPT = Pattern.compile("\\[(.*)\\] (\\d+.\\d+.\\d+) (.*) \\(.*\\)");
+    public static final Pattern PATTERN_FIRST_LEVEL = Pattern.compile(".*\\[(\\D+)].*\\s(\\d+)\\s+-\\s(.*)");
+    private static final Pattern PATTERN_FIRST_LEVEL_AQUA = Pattern.compile("\\[(.*)] (\\d) (.*)");
+    private static final Pattern PATTERN_SECOND_LEVEL = Pattern.compile(".*\\[(\\D+)].*\\s(\\d+.\\d+)\\s+-\\s(.*)");
+    private static final Pattern PATTER_DOCKER = Pattern.compile(".*\\[(\\S+)].*(\\d+.\\d+). - (.*)");
+    private static final Pattern PATTERN_AQUASCRIPT = Pattern.compile("\\[(.*)] (\\d+.\\d+.\\d+) (.*) \\(.*\\)");
     public static final String NODETYPE="nodetype";
     public static final String CATEGORY="category";
     public static final String REQUIREMENT="requirement";
@@ -73,11 +73,11 @@ public class CisBenchmarkProcesor {
             NodeAudit nodeAudit = nodeAuditRepository.findByRequirementAndNodeAndType(requirement, node,apiType);
             if (nodeAudit == null) {
                 nodeAudit = this.createNodeAudit(node,apiType,requirement, matcher.group(1),
-                        dateNow.format(dateFormatter).toString());
+                        dateNow.format(dateFormatter));
                 nodeAuditRepository.save(nodeAudit);
             } else {
                 nodeAudit = this.updateNodeAudit(nodeAudit,matcher.group(1),
-                        dateNow.format(dateFormatter).toString());
+                        dateNow.format(dateFormatter));
                 nodeAuditRepository.save(nodeAudit);
             }
         }

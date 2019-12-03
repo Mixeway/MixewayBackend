@@ -13,7 +13,6 @@ import javax.xml.bind.JAXBException;
 
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.NessusScan;
-import io.mixeway.db.repository.InterfaceRepository;
 import io.mixeway.db.repository.NessusScanRepository;
 import io.mixeway.db.repository.ScannerTypeRepository;
 import io.mixeway.plugins.infrastructurescan.service.NetworkScanClient;
@@ -34,16 +33,14 @@ import io.mixeway.plugins.infrastructurescan.service.NetworkScanService;
 public class NetworkScanScheduler {
 	private NessusScanRepository nessusScanRepository;
 	private ScannerTypeRepository scannerTypeRepository;
-	private InterfaceRepository interfaceRepository;
 	private WebAppHelper webAppHelper;
 	private final List<NetworkScanClient> networkScanClients;
 	private final NetworkScanService networkScanService;
 	@Autowired
 	NetworkScanScheduler(NessusScanRepository nessusScanRepository, NetworkScanService networkScanService,
-						 ScannerTypeRepository scannerTypeRepository, InterfaceRepository interfaceRepository,
+						 ScannerTypeRepository scannerTypeRepository,
 						 WebAppHelper webAppHelper, List<NetworkScanClient> networkScanClients){
 		this.scannerTypeRepository = scannerTypeRepository;
-		this.interfaceRepository = interfaceRepository;
 		this.nessusScanRepository = nessusScanRepository;
 		this.webAppHelper = webAppHelper;
 		this.networkScanClients = networkScanClients;
@@ -54,7 +51,7 @@ public class NetworkScanScheduler {
 
 	//Every 5min
 	@Scheduled(initialDelay=0,fixedDelay = 3000)
-	public void checkScanStatus() throws JSONException, KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, CertificateException, IOException, JAXBException {
+	public void checkScanStatus(){
 		List<NessusScan> nsl = nessusScanRepository.findByRunning(true);
 		try {
 			for (NessusScan ns : nsl) {

@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 import io.mixeway.plugins.infrastructurescan.service.NetworkScanService;
 
 import javax.xml.bind.JAXBException;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
@@ -22,11 +21,15 @@ import java.security.cert.CertificateException;
 @Controller
 public class NetworkScanApiController {
 
+    private final NetworkScanService networkScanService;
     @Autowired
-    NetworkScanService networkScanService;
+    NetworkScanApiController(NetworkScanService networkScanService){
+        this.networkScanService = networkScanService;
+    }
+
     @PreAuthorize("hasAuthority('ROLE_API')")
     @RequestMapping(value = "/api/koordynator/network",method = RequestMethod.POST)
-    public ResponseEntity<Status> createAndRunNetworkscan(@RequestBody NetworkScanRequestModel req) throws KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, CertificateException, FileNotFoundException, JSONException, IOException, JAXBException {
+    public ResponseEntity<Status> createAndRunNetworkscan(@RequestBody NetworkScanRequestModel req) throws KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, CertificateException, JSONException, IOException, JAXBException {
         return networkScanService.createAndRunNetworkScan(req);
     }
     @PreAuthorize("hasAuthority('ROLE_API')")

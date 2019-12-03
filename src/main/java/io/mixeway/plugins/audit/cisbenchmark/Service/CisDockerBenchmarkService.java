@@ -4,6 +4,7 @@ import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
 import io.mixeway.pojo.Status;
+import org.checkerframework.checker.units.qual.A;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,25 +26,32 @@ import java.util.regex.Pattern;
 
 @Service
 public class CisDockerBenchmarkService {
-    @Autowired
-    ApiTypeRepository apiTypeRepository;
-    @Autowired
-    ProjectRepository projectRepository;
-    @Autowired
-    ApiPermisionRepository apiPermisionRepository;
-    @Autowired
-    ActivityRepository activityRepository;
-    @Autowired
-    NodeAuditRepository nodeAuditRepository;
-    @Autowired
-    RequirementRepository requirementRepository;
-    @Autowired
-    NodeRepository nodeRepository;
-    DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    LocalDateTime dateNow = LocalDateTime.now();
+    private final ApiTypeRepository apiTypeRepository;
+    private final ProjectRepository projectRepository;
+    private final ApiPermisionRepository apiPermisionRepository;
+    private final ActivityRepository activityRepository;
+    private final NodeAuditRepository nodeAuditRepository;
+    private final RequirementRepository requirementRepository;
+    private final NodeRepository nodeRepository;
+    private DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private LocalDateTime dateNow = LocalDateTime.now();
 
     private static final Logger log = LoggerFactory.getLogger(CisDockerBenchmarkService.class);
-    CisBenchmarkProcesor procesor = new CisBenchmarkProcesor();
+    private CisBenchmarkProcesor procesor = new CisBenchmarkProcesor();
+
+    @Autowired
+    CisDockerBenchmarkService(ApiTypeRepository apiTypeRepository, ProjectRepository projectRepository, ApiPermisionRepository apiPermisionRepository,
+                              ActivityRepository activityRepository, NodeAuditRepository nodeAuditRepository, RequirementRepository requirementRepository,
+                              NodeRepository nodeRepository){
+        this.apiPermisionRepository = apiPermisionRepository;
+        this.projectRepository = projectRepository;
+        this.apiTypeRepository =apiTypeRepository ;
+        this.nodeAuditRepository = nodeAuditRepository;
+        this.nodeRepository = nodeRepository;
+        this.activityRepository = activityRepository;
+        this.requirementRepository = requirementRepository;
+    }
+
 
 
     public ResponseEntity<Status> getCisDocker(MultipartFile file, Long id) {
@@ -59,66 +67,68 @@ public class CisDockerBenchmarkService {
         act.setInserted(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         act.setName("New audit results of: "+Constants.CIS_DOCKER_NAME+" for project: "+project.getName());
         activityRepository.save(act);
-        return new ResponseEntity<Status>(new Status("OK"), HttpStatus.OK);
+        return new ResponseEntity<>(new Status("OK"), HttpStatus.OK);
     }
     private void processReportDocker(ApiType apiType, Project project, MultipartFile file) {
         log.info("Putting CIS docker benchmark for project {} node {}",project.getName(), file.getOriginalFilename());
         BufferedReader br;
-        List<String> result = new ArrayList<>();
-        String nodeName = file.getOriginalFilename().substring(0,  file.getOriginalFilename().length()-4);
-        String categoryname ="";
-        Boolean process = false;
+        String nodeName = Objects.requireNonNull(file.getOriginalFilename()).substring(0,  file.getOriginalFilename().length()-4);
+        boolean process = false;
         Node node = null;
         try {
             String line;
             InputStream is = file.getInputStream();
             br = new BufferedReader(new InputStreamReader(is));
-            int i=0;
             while ((line = br.readLine()) != null) {
                 if ( checkIntegrityDocker(line)) {
                     process = true;
                 }
                 if(process) {
-                    for (Map.Entry<String,Pattern> pattern : procesor.patterns.entrySet()) {
+                    label:
+                    for (Map.Entry<String, Pattern> pattern : procesor.patterns.entrySet()) {
                         Matcher matcher = pattern.getValue().matcher(line);
                         if (matcher.matches()) {
-                            if (pattern.getKey().equals(procesor.NODETYPE)) {
-                                node = nodeRepository.findByProjectAndNameAndType(project,nodeName, "Docker");
-                                if (node == null) {
-                                    node = procesor.createNode(nodeName,Constants.CIS_DOCKER_NODE_NAME, project);
-                                    nodeRepository.save(node);
-                                }
-                            } else if (pattern.getKey().equals(procesor.CATEGORY)) {
-                                categoryname = matcher.group(3);
-                            } else if (pattern.getKey().equals(procesor.REQUIREMENT)) {
-                                if(!matcher.group(1).equals("INFO")) {
-                                    Requirement requirement = requirementRepository.findByCode(matcher.group(2));
-                                    if (requirement == null) {
-                                        requirement = procesor.createRequirement(matcher.group(2),matcher.group(3));
-                                        requirementRepository.save(requirement);
+                            switch (pattern.getKey()) {
+                                case CisBenchmarkProcesor.NODETYPE:
+                                    node = nodeRepository.findByProjectAndNameAndType(project, nodeName, "Docker");
+                                    if (node == null) {
+                                        node = procesor.createNode(nodeName, Constants.CIS_DOCKER_NODE_NAME, project);
+                                        nodeRepository.save(node);
                                     }
-                                    NodeAudit nodeAudit = nodeAuditRepository.findByRequirementAndNodeAndType(requirement, node,apiType);
-                                    if (nodeAudit == null) {
-                                        try {
-                                            nodeAudit = procesor.createNodeAudit(node,apiType,requirement,
-                                                    matcher.group(1),dateNow.format(dateFormatter).toString());
-                                        } catch (Exception e) {
-                                            log.error("Error during processing K8S CIS benchmark - {}, filename {}",e.getLocalizedMessage(),file.getOriginalFilename());
+                                    break;
+                                case CisBenchmarkProcesor.CATEGORY:
+                                    break;
+                                case CisBenchmarkProcesor.REQUIREMENT:
+                                    if (!matcher.group(1).equals("INFO")) {
+                                        Requirement requirement = requirementRepository.findByCode(matcher.group(2));
+                                        if (requirement == null) {
+                                            requirement = procesor.createRequirement(matcher.group(2), matcher.group(3));
+                                            requirementRepository.save(requirement);
                                         }
-                                        nodeAuditRepository.save(nodeAudit);
-                                    } else {
-                                        nodeAudit = procesor.updateNodeAudit(nodeAudit, matcher.group(1),
-                                                dateNow.format(dateFormatter).toString());
-                                        nodeAuditRepository.save(nodeAudit);
+                                        NodeAudit nodeAudit = nodeAuditRepository.findByRequirementAndNodeAndType(requirement, node, apiType);
+                                        if (nodeAudit == null) {
+                                            try {
+                                                nodeAudit = procesor.createNodeAudit(node, apiType, requirement,
+                                                        matcher.group(1), dateNow.format(dateFormatter));
+                                            } catch (Exception e) {
+                                                log.error("Error during processing K8S CIS benchmark - {}, filename {}", e.getLocalizedMessage(), file.getOriginalFilename());
+                                            }
+                                            assert nodeAudit != null;
+                                            nodeAuditRepository.save(nodeAudit);
+                                        } else {
+                                            nodeAudit = procesor.updateNodeAudit(nodeAudit, matcher.group(1),
+                                                    dateNow.format(dateFormatter));
+                                            nodeAuditRepository.save(nodeAudit);
+                                        }
                                     }
-                                }
 
-                            } else
-                                break;
+                                    break;
+                                default:
+                                    break label;
+                            }
                         }
                     }
                 }
-                i++;
             }
             if (!process)
                 log.error("No proper file detected, ignoring..");
@@ -130,9 +140,6 @@ public class CisDockerBenchmarkService {
     }
 
     private boolean checkIntegrityDocker(String line) {
-        if (line.contains("Initializing"))
-            return true;
-        else
-            return false;
+        return line.contains("Initializing");
     }
 }

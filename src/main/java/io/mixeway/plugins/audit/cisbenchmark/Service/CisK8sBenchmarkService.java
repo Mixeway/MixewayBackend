@@ -25,20 +25,26 @@ import java.util.regex.Pattern;
 
 @Service
 public class CisK8sBenchmarkService {
+    private final ApiTypeRepository apiTypeRepository;
+    private final ProjectRepository projectRepository;
+    private final ApiPermisionRepository apiPermisionRepository;
+    private final ActivityRepository activityRepository;
+    private final NodeAuditRepository nodeAuditRepository;
+    private final RequirementRepository requirementRepository;
+    private final NodeRepository nodeRepository;
+
     @Autowired
-    ApiTypeRepository apiTypeRepository;
-    @Autowired
-    ProjectRepository projectRepository;
-    @Autowired
-    ApiPermisionRepository apiPermisionRepository;
-    @Autowired
-    ActivityRepository activityRepository;
-    @Autowired
-    NodeAuditRepository nodeAuditRepository;
-    @Autowired
-    RequirementRepository requirementRepository;
-    @Autowired
-    NodeRepository nodeRepository;
+    CisK8sBenchmarkService(ApiTypeRepository apiTypeRepository, ProjectRepository projectRepository, ApiPermisionRepository apiPermisionRepository,
+    ActivityRepository activityRepository, NodeAuditRepository nodeAuditRepository, RequirementRepository requirementRepository,
+    NodeRepository nodeRepository){
+        this.apiPermisionRepository = apiPermisionRepository;
+        this.projectRepository = projectRepository;
+        this.apiTypeRepository =apiTypeRepository ;
+        this.nodeAuditRepository = nodeAuditRepository;
+        this.nodeRepository = nodeRepository;
+        this.activityRepository = activityRepository;
+        this.requirementRepository = requirementRepository;
+    }
     private DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private LocalDateTime dateNow = LocalDateTime.now();
     private CisBenchmarkProcesor procesor = new CisBenchmarkProcesor();
@@ -61,10 +67,9 @@ public class CisK8sBenchmarkService {
     }
     private void processReportK8s(ApiType apiType, Project project, MultipartFile file) throws IOException{
         BufferedReader br;
-        List<String> result = new ArrayList<>();
-        String filename="";
+        String filename;
         try {
-            String nodeName = file.getOriginalFilename().split("-")[0];
+            String nodeName = Objects.requireNonNull(file.getOriginalFilename()).split("-")[0];
             filename = file.getOriginalFilename().replace(nodeName + "-", "");
             filename = filename.substring(0, filename.length() - 4);
         } catch (NullPointerException ex){
@@ -73,7 +78,7 @@ public class CisK8sBenchmarkService {
         }
         log.info("Putting K8S docker benchmark for project {} node {}",project.getName(), file.getOriginalFilename());
         String categoryname ="";
-        Boolean process = false;
+        boolean process = false;
         Node node = null;
         boolean aqua = checkIntegrityForAquaScript(file);
         try {
@@ -100,15 +105,15 @@ public class CisK8sBenchmarkService {
         for (Map.Entry<String,Pattern> pattern : procesor.patterns.entrySet()) {
             Matcher matcher = pattern.getValue().matcher(line);
             if (matcher.matches()) {
-                if (pattern.getKey().equals(procesor.NODETYPE) || pattern.getKey().equals(procesor.NODETYPEAQUA)) {
+                if (pattern.getKey().equals(CisBenchmarkProcesor.NODETYPE) || pattern.getKey().equals(CisBenchmarkProcesor.NODETYPEAQUA)) {
                     node = nodeRepository.findByProjectAndNameAndType(project,filename, matcher.group(3));
                     if (node == null) {
                         node = procesor.createNode(filename,matcher.group(3),project);
                         nodeRepository.save(node);
                     }
-                } else if (pattern.getKey().equals(procesor.CATEGORY)) {
+                } else if (pattern.getKey().equals(CisBenchmarkProcesor.CATEGORY)) {
                     categoryname = matcher.group(3);
-                } else if (pattern.getKey().equals(procesor.REQUIREMENT) || pattern.getKey().equals(procesor.AQUA)) {
+                } else if (pattern.getKey().equals(CisBenchmarkProcesor.REQUIREMENT) || pattern.getKey().equals(CisBenchmarkProcesor.AQUA)) {
 
                     try {
                         procesor.createRequirements(matcher, requirementRepository,
@@ -132,13 +137,10 @@ public class CisK8sBenchmarkService {
         while ((line = br.readLine()) != null) {
             lastline = line;
         }
-        if (lastline.contains("checks INFO"))
-            return true;
-        else
-            return false;
+        return lastline.contains("checks INFO");
     }
 
     private boolean checkIntegrity(String line) {
-        return procesor.PATTERN_FIRST_LEVEL.matcher(line).matches();
+        return CisBenchmarkProcesor.PATTERN_FIRST_LEVEL.matcher(line).matches();
     }
 }

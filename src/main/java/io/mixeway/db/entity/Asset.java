@@ -172,10 +172,4 @@ public class Asset {
 	public void setFix(String fix) {
 		this.fix = fix;
 	}
-	@PreRemove
-	private void removeSecurityGroupRelationship() {
-
-		this.securitygroup.remove(this);
-		this.interfaces.remove(this);
-	}
 }

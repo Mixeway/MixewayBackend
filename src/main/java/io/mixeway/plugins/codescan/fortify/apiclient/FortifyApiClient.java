@@ -228,7 +228,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 					.append(codeVuln.getSeverity());
 			issueDetails.append("\n");
 			issueDetails.append("\n");
-			issueDetails.append("Full details: " + "https://fortifyssc.corpnet.pl/ssc/html/ssc/version/"+versionid+"/fix/"+id+"/?engineType=SCA&issue="+instanceId+"&filterSet=a243b195-0a59-3f8b-1403-d55b7a7d78e6");
+			issueDetails.append("Full details: " + "https://fortifyssc.corpnet.pl/ssc/html/ssc/version/" + versionid + "/fix/" + id + "/?engineType=SCA&issue=" + instanceId + "&filterSet=a243b195-0a59-3f8b-1403-d55b7a7d78e6");
 			issueDetails.append("\n");
 			issueDetails.append("Full filename: ")
 					.append(Objects.requireNonNull(response.getBody()).getIssueDetailModel().getFullFileName())

@@ -59,7 +59,7 @@ public class CodeScheduler {
 	@Transactional
 	@Scheduled(cron="0 0 23 * * *" )
 	//@Scheduled(fixedDelay = 30000)
-	public void getReportForAllGroups() throws KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, CertificateException, FileNotFoundException, IOException, JSONException, ParseException {
+	public void getReportForAllGroups() throws JSONException, ParseException {
 		List<CodeGroup> groups = codeGroupRepository.findAll();
 		Optional<Scanner> fortify = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_FORTIFY)).stream().findFirst();
 		if (fortify.isPresent() && fortify.get().getStatus()) {
@@ -80,15 +80,15 @@ public class CodeScheduler {
 	//Uruchomienie skanow dla grup
 	@Transactional
 	@Scheduled(cron="0 40 23 * * *" )
-	public void runScheduledScans() throws KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, CertificateException, FileNotFoundException, IOException, JSONException, ParseException {
+	public void runScheduledScans() throws KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, CertificateException, IOException {
 		log.info("Starting Fortify Scheduled Scans");
-		List<CodeGroup> groups = codeGroupRepository.findByAuto(true);
+		//List<CodeGroup> groups = codeGroupRepository.findByAuto(true);
 		List<Project> projects = projectRepository.findByAutoCodeScan(true);
 		List<Scanner> fortify = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_FORTIFY));
 		if ( fortify.size() > 0 &&  fortify.get(0).getStatus()) {
 			for (Project p : projects){
 				for (CodeGroup cg : p.getCodes()){
-					if (cg.getRepoPassword() != "" && cg.getRepoPassword() != null){
+					if (!cg.getRepoPassword().equals("") && cg.getRepoPassword() != null){
 						for(CodeScanClient codeScanClient : codeScanClients){
 							if (codeScanClient.canProcessRequest(cg)){
 								codeScanClient.runScan(cg,null);
@@ -139,9 +139,12 @@ public class CodeScheduler {
 
 	@Transactional
 	@Scheduled(fixedDelay = 120000)
-	public void checkAndRunFromQueue() throws CertificateException, IOException, ParseException, NoSuchAlgorithmException, KeyManagementException, UnrecoverableKeyException, KeyStoreException, JSONException {
+	public void checkAndRunFromQueue() throws CertificateException, IOException, NoSuchAlgorithmException, KeyManagementException, UnrecoverableKeyException, KeyStoreException {
 		try {
-			Scanner fortify = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_FORTIFY)).get(0);
+			Scanner fortify = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_FORTIFY))
+					.stream()
+					.findFirst()
+					.orElse(null);
 			for (CodeGroup cg : codeGroupRepository.findByInQueue(true)) {
 				if (codeGroupRepository.countByRunning(true) == 0) {
 					for(CodeScanClient codeScanClient : codeScanClients){
@@ -176,15 +179,12 @@ public class CodeScheduler {
 
 	private List<CodeVuln> deleteOldVulns(CodeGroup group) {
 		List<CodeVuln> tmpVulns = new ArrayList<>();
-		Long deleted = (long) 0;
 		if (group.getHasProjects()) {
 			for (CodeProject cp : group.getProjects()) {
-				deleted += cp.getVulns().size();
 				tmpVulns.addAll(codeVulnRepository.findByCodeProject(cp));
 				codeVulnRepository.deleteVulnsForCodeProject(cp);
 			}
 		} else{
-			deleted += group.getVulns().size();
 			tmpVulns.addAll(codeVulnRepository.findByCodeGroup(group));
 			codeVulnRepository.deleteVulnsForCodeGroup(group);
 		}

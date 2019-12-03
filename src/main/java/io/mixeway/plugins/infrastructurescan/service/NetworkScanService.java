@@ -18,7 +18,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.security.KeyManagementException;
@@ -120,8 +119,9 @@ public class NetworkScanService {
                 }
             }
         }
-        ns = nessusScanRepository.findById(ns.getId()).get();
+        ns = nessusScanRepository.findById(ns.getId()).orElse(null);
         if (running) {
+            assert ns != null;
             return new ResponseEntity<>(new Status("ok",ns.getRequestId() ), HttpStatus.CREATED);
         } else {
             return new ResponseEntity<>(new Status("Problem with running scan..."), HttpStatus.PRECONDITION_FAILED);

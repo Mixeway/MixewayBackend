@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit;
 public class WebAppHandlerInterceptor extends HandlerInterceptorAdapter {
     private final Semaphore semaphore;
     private final long waitTime;
-    public WebAppHandlerInterceptor() {
+    WebAppHandlerInterceptor() {
         // Hardcode this values or inject through spring as preferred.
         semaphore = new Semaphore(1);
         waitTime = 2;

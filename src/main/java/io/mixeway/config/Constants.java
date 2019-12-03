@@ -5,13 +5,10 @@ public class Constants {
 	public static final String TARGET_NAME = "name";
 	public static final String TARGET_ID = "target_id";
 	public static final String CONFIG_ID = "config_id";
-	public static final String CONFIG_NAME = "Full and fast";
 	public static final String SCANNER_ID = "scanner_id";
-	public static final String SCANNER_NAME = "OpenVAS Default";
 	public static final String TASK_ID = "task_id";
 	public static final String REPORT_ID = "report_id";
 	public static final String STATUS = "status";
-	public static final String STATUS_OK = "ok";
 	public static final String STATUS_DONE = "Done";
 	public static final String STATUS_RUNNING = "Running";
 	public static final String STATUS_REQUESTED = "Requested";
@@ -26,8 +23,6 @@ public class Constants {
 	public static final String IF_VULN_THREAT_HIGH = "High";
 	public static final String IF_VULN_THREAT_MEDIUM = "Medium";
 	public static final String SOFTWARE_LOOKUP_UPDATE= "Detection";
-	public static final String FORTIFY_API = "FORTIFY_API";
-	public static final String GROUP_NAME = "groupName";
 	public static final String HEADER_CONTENT_TYPE = "Content-Type";
 	public static final String HEADER_CONTENT_TYPE_JSON = "application/json";
 	public static final String HEADER_AUTHORIZATION = "Authorization";
@@ -40,12 +35,10 @@ public class Constants {
 	public static final String VULN_PATH = "fullFileName";
 	public static final String VULN_CRITICALITY = "friority";
 	public static final String VULN_ANALYSIS = "primaryTag";
-	public static final String VULN_ANALYSIS_EXPLOITABLE = "Exploitable";
 	public static final String VULN_NAME = "issueName";
 	public static final String VULN_CRITICALITY_CRITICAL = "Critical";
 	public static final String VULN_CRITICALITY_HIGH = "High";
 	public static final String FORTIFY_TOKEN = "FortifyToken";
-	public static final String FORTIFY_ISSUE_LINK = "_href";
 	public static final String VULN_ISSUE_ID = "id";
 	public static final String VULN_ISSUE_INSTANCE_ID="issueInstanceId";
 	public static final String FORTIFY_LINKS = "links";
@@ -56,30 +49,8 @@ public class Constants {
 	public static final String FORTIFY_LINE_NUMVER = "lineNumber";
 
 	//VULN HISTORY
-	public static final String VULN_HISTORY_FORTIFY = "fortify";
-	public static final String VULN_HISTORY_OPENVAS = "openvas";
-	public static final String VULN_HISTORY_ACUNETIX = "acunetix";
-	public static final String VULN_HISTORY_NESSUS = "nessus";
-	public static final String VULN_HISTORY_INFRASTRUCTURE = "infrastructure";
-	public static final String VULN_HISTORY_AUDIT = "audit";
 	public static final String VULN_HISTORY_ALL = "complete";
-	
-	//show project template
-	public static final String SHOW_PROJECT_ASSET = "Zasoby";
-	public static final String SHOW_PROJECT_INFRAVULN = "Podatności OpenVAS";
-	public static final String SHOW_PROJECT_CODEVULN = "Podatności Fortify";
-	public static final String SHOW_PROJECT_WEBAPPVULN = "Podatności WebApp";
-	public static final String SHOW_PROJECT_SOFTWARE = "Typy oprogramwoania";
-	public static final String SHOW_PROJECT_SECGROUP = "Security Group";
-	public static final String SHOW_PROJECT_ASSET_ICON = "cloud";
-	public static final String SHOW_PROJECT_INFRAVULN_ICON = "bug";
-	public static final String SHOW_PROJECT_CODEVULN_ICON = "code";
-	public static final String SHOW_PROJECT_WEBAPPVULN_ICON = "tab";
-	public static final String SHOW_PROJECT_SOFTWARE_ICON = "collection-bookmark";
-	public static final String SHOW_PROJECT_SECGROUP_ICON = "book";
-	
-	public static final String SEC_GROUP_DIRECTION_IN = "Inbound";
-	
+
 	//SCANER TYPES
 	public static final String SCANNER_TYPE_OPENVAS = "OpenVAS";
 	public static final String SCANNER_TYPE_OPENVAS_SOCKET = "OpenVAS Socket";
@@ -100,17 +71,10 @@ public class Constants {
 	public static final String ACUNETIX_PROXYPROTOCOL = "protocol";
 	public static final String ACUNETIX_PROXY_PORT = "port";
 	public static final String ACUNETIX_PROXY_ADDRESS = "address";
-	public static final String ACUNETIX_RUN_SCHEDULE = "schedule";
-	public static final String ACUNETIX_RUN_SCHEDULE_DISABLE = "disable";
-	public static final String ACUNETIX_RUN_SCHEDULE_START_DATE = "start_date";
-	public static final String ACUNETIX_RUN_SCHEDULE_TIME_SENSITIVE = "time_sensitive";
-	public static final String ACUNETIX_RUN_TARGET_ID = "target_id";
-	public static final String ACUNETIX_RUN_PROFILE_ID = "profile_id";
 	public static final String ACUNETIX_TARGET_SCAN_ID = "last_scan_id";
 	public static final String ACUNETIX_TARGET_SCAN_STATUS = "last_scan_session_status";
 	public static final String ACUNETIX_TARGET_SCAN_STATUS_COMPLETED = "completed";
 	public static final String ACUNETIX_TARGET_SCAN_STATUS_FAILED = "failed";
-	public static final String ACUNETIX_TARGET_SCAN_DATE = "last_scan_date";
 	public static final String ACUNETIX_VULN = "vulnerabilities";
 	public static final String ACUNETIX_VULN_NAME = "vt_name";
 	public static final String ACUNETIX_VULN_LOCATION = "affects_url";
@@ -126,7 +90,6 @@ public class Constants {
 	
 	// API TYPES
 	public static final String API_TYPE_CIS_K8S = "cis-k8s";
-	public static final String API_TYPE_WEBAPP_DISCOVERY = "webapp";
 	public static final String API_SCANNER_OPENVAS = "networkScanner";
 	public static final String API_SCANNER_WEBAPP = "webApplicationScanner";
 	public static final String API_SCANNER_CODE = "codeScanner";
@@ -160,7 +123,6 @@ public class Constants {
 	public static final String NESSUS_SEVERITY = "severity";
 	public static final String NESSUS_PORTS = "ports";
 	public static final String NESSUS_OUTPUTS = "outputs";
-	public static final String NESSUS_INFO = "info";
 	public static final String NESSUS_PLUGINDESCRIPTION = "plugindescription";
 	public static final String NESSUS_PLUGINATTRIBUTES = "pluginattributes";
 	public static final String NESSUS_VULN_DESCRIPTION = "description";
@@ -169,12 +131,10 @@ public class Constants {
 
 
 	//CIS
-	public static final String CIS_K8S_NAME = "cis-k8s";
 	public static final String CIS_DOCKER_NAME = "cis-docker";
 	public static final String CIS_DOCKER_NODE_NAME = "Docker";
 	
 	//ENUMS
-	public static final String ASSET_IP_POOL_ = "POOL";
 	public static final String ASSET_IP_SINGLE = "SINGLE";
 
 	//NEXPOSE
@@ -185,7 +145,6 @@ public class Constants {
 	public static final String NEXPOSE_SEVERITY_SEVERE="Severe";
 	public static final String NEXPOSE_SEVERITY_MODERATE = "Moderate";
 	public static final String NEXPOSE_STATUS_END = "finished";
-	public static final String Nexpose_SEVERITY_CRITICAL = "Critical";
 	public static final String STATUS_NEW = "NEW" ;
 	public static final String STATUS_EXISTING = "EXISTING" ;
 
@@ -215,12 +174,10 @@ public class Constants {
     public static final String FORTIFY_ISSUE_STATE_UPDATED = "UPDATED";
     public static final String VULN_CRITICALITY_MEDIUM = "Medium";
 	public static final String VULN_CRITICALITY_LOW = "Low";
-	public static final String VULN_JIRA_STRATEGY_MANUAL = "Manual";
 	public static final String VULN_JIRA_INFRASTRUCTURE = "infra";
 	public static final String VULN_JIRA_WEBAPP = "webapp";
 	public static final String VULN_JIRA_CODE = "code";
 	public static final String VULN_JIRA_OPENSOURCE = "opensource";
-	public static final String JIRA_AUTOCREATOR_LOG = "Issue ticket master";
 	public static final String OPENVAS_DEFAULT_CONFIG = "Full and fast";
 	public static final String OPENVAS_DEFAULT_SCANNER = "OpenVAS Default";
 

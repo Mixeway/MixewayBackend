@@ -14,11 +14,6 @@ public class TrustStoreConfig {
 
     @PostConstruct
     private void configureSSL() {
-        //set to TLSv1.1 or TLSv1.2
-        //System.setProperty("https.protocols", "TLSv1.1");
-
-        //load the 'javax.net.ssl.trustStore' and
-        //'javax.net.ssl.trustStorePassword' from application-default.properties
         System.setProperty("javax.net.ssl.trustStore", trustStorePath);
         System.setProperty("javax.net.ssl.trustStorePassword",trustStorePassword);
         System.out.println("Properly set truststore for Project");

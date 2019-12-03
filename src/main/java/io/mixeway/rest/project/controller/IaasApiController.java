@@ -27,7 +27,7 @@ public class IaasApiController {
 
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping(value = "/{id}/iaasapi")
-    public ResponseEntity<IaasModel> showIaasApi(@PathVariable("id")Long id, Principal principal) {
+    public ResponseEntity<IaasModel> showIaasApi(@PathVariable("id")Long id) {
         return iaasApiService.showIaasApi(id);
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
@@ -37,7 +37,7 @@ public class IaasApiController {
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @GetMapping(value = "/{id}/iaasapi/test")
-    public ResponseEntity<Status> testIaasApi(@PathVariable("id")Long id, Principal principal) throws JSONException, ParseException {
+    public ResponseEntity<Status> testIaasApi(@PathVariable("id")Long id) {
         return iaasApiService.testIaasApi(id);
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")

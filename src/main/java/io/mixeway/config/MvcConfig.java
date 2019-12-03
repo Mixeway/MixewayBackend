@@ -12,8 +12,7 @@ public class MvcConfig implements WebMvcConfigurer  {
 
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
-        BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
-        return bCryptPasswordEncoder;
+        return new BCryptPasswordEncoder();
     }
     @Override
     public void addInterceptors(InterceptorRegistry registry) {

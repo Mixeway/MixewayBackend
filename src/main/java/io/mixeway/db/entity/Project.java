@@ -238,11 +238,4 @@ public class Project implements Serializable{
 		this.vulnHistories = vulnHistories;
 	}
 
-	@PreRemove
-	private void removeSecurityGroupRelationship() {
-		this.vulnHistories.remove(this);
-		this.scans.remove(this);
-	}
-	
-
 }
