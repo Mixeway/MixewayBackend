@@ -110,28 +110,4 @@ public class VulnHistory {
 		this.project = project;
 	}
 
-	public Long findMaxVulns(){
-		List<Long> values = new ArrayList<Long>(){{
-			add(getWebAppVulnHistory());
-			add(getAuditVulnHistory());
-			add(getInfrastructureVulnHistory());
-			add(getCodeVulnHistory());
-		}};
-
-		return Collections.max(values);
-	}
-
-	public Long findMinVulns(){
-		List<Long> values = new ArrayList<Long>(){{
-			add(getWebAppVulnHistory());
-			add(getAuditVulnHistory());
-			add(getInfrastructureVulnHistory());
-			add(getCodeVulnHistory());
-		}};
-
-		return Collections.min(values);
-	}
-	
-	
-
 }

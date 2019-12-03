@@ -7,6 +7,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.Optional;
 
 import io.mixeway.db.entity.Asset;
 import io.mixeway.db.entity.SoftwarePacket;
@@ -43,7 +44,7 @@ public class VulnersApiClient {
     SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository;
 
 
-	DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+	private DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	final static Logger log = LoggerFactory.getLogger(VulnersApiClient.class);
 	public void handleVulnerRequest(VulnersRequest vulnReq, Asset asset) throws JSONException {
 		RestTemplate restTemplate;
@@ -57,13 +58,13 @@ public class VulnersApiClient {
 		Iterator<String> packageNames = packages.keys();
 		while (packageNames.hasNext()) {
 			String name = packageNames.next();
-			if (packages.getJSONObject(name) instanceof JSONObject) {
+			if (packages.getJSONObject(name) != null) {
 				Iterator<String> vulns = packages.getJSONObject(name).keys();
 				String vulnCode;
 				Double cvss =null;
 				String fix = null;
-				SoftwarePacket softPack = softwarePacketRepository.findByName(name).get();
-				deleteOldVulns(softPack);
+				Optional<SoftwarePacket> softPack = softwarePacketRepository.findByName(name);
+				softPack.ifPresent(this::deleteOldVulns);
 				while (vulns.hasNext()) {
 					vulnCode = vulns.next();
 					JSONArray vulnArray = packages.getJSONObject(name).getJSONArray(vulnCode);
@@ -72,7 +73,7 @@ public class VulnersApiClient {
 						fix = vulnArray.getJSONObject(0).getString("fix"); 
 						
 					}
-					createVulnerability(softPack, vulnCode, cvss,fix,asset);
+					createVulnerability(softPack.get(), vulnCode, cvss,fix,asset);
 				}
 			}
 		}
@@ -91,7 +92,7 @@ public class VulnersApiClient {
 		
 	}
 	@Transactional(propagation = Propagation.REQUIRED, readOnly = false)
-	void deleteOldVulns(SoftwarePacket softPack) {
+	public void deleteOldVulns(SoftwarePacket softPack) {
 		//for(SoftwarePacketVulnerability spv : softPack.getVulns()) {
 		//	softwarePacketVulnerabilityRepository.delete(spv);
 		//}

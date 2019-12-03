@@ -53,7 +53,7 @@ public class VulnersScheduler {
     	}
     }
 	@Transactional(propagation = Propagation.REQUIRED, readOnly = false)
-	void deactivateSoftwarePackets() {
+	public void deactivateSoftwarePackets() {
 		for (SoftwarePacket sp :softwarePacketRepository.findAll()) {
 			sp.setUptated(false);
 			softwarePacketRepository.save(sp);

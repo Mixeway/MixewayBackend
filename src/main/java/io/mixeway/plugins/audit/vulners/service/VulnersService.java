@@ -92,7 +92,8 @@ public class VulnersService {
             softPacket.setName(packet);
             if(softPacket.getAssets() == null) {
                 Set<Asset> assetSet = new HashSet<Asset>() {{
-                    add(assetRepository.findById(asset.getId()).get());
+                    Optional<Asset> assetToSoft = assetRepository.findById(asset.getId());
+                    assetToSoft.ifPresent(this::add);
                 }};
                 softPacket.setAssets(assetSet);
             }
