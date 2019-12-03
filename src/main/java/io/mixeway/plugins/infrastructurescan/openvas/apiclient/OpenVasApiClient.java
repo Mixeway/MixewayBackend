@@ -105,13 +105,17 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 
 	@Override
 	public void runScanManual(NessusScan nessusScan) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, IOException {
-		RestRequestBody rrb = bodyPrepare(nessusScan);
-		rrb.setParams(prepareCreateTarget(nessusScan));
+		try {
+			RestRequestBody rrb = bodyPrepare(nessusScan);
+			rrb.setParams(prepareCreateTarget(nessusScan));
 
-		nessusScan = createNewTarget(nessusScan,rrb);
-		nessusScan = createNewTask(nessusScan,rrb);
-		nessusScanRepository.save(nessusScan);
-		runScan(nessusScan);
+			nessusScan = createNewTarget(nessusScan, rrb);
+			nessusScan = createNewTask(nessusScan, rrb);
+			nessusScanRepository.save(nessusScan);
+			runScan(nessusScan);
+		} catch (NullPointerException npe){
+			log.debug("Nullpointer thrown during runScanManual for {}", nessusScan.getProject().getName());
+		}
 	}
 
 	@Override
@@ -229,7 +233,6 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 	private void setVulnerabilities(NessusScan ns, String body) throws JSONException  {
 		List<InfrastructureVuln> oldVulns = oldVulnDelete(ns);
 		List<Asset> assetsActive = assetRepository.findByProject(ns.getProject());
-		ns = nessusScanRepository.findById(ns.getId()).get();
 		JSONObject vuln = new JSONObject(body);
 		JSONArray vulns = vuln.getJSONArray(Constants.IF_VULNS);
 		JSONObject v;
@@ -344,9 +347,9 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 				ns = createNewTarget(ns,rrb);
 				log.debug("Creating task configuration for automatic scan");
 				ns = createNewTask(ns,rrb);
-			} catch (HttpServerErrorException ex) {
+			} catch (HttpServerErrorException  | NullPointerException ex) {
 				assert ns != null;
-				log.error("RunAutomaticScan server HTTP exception {} for {}", ex.getRawStatusCode(), ns.getProject().getName());
+				log.error("RunAutomaticScan server HTTP exception {} for {}", ex.getLocalizedMessage(), ns.getProject().getName());
 			}
 			nessusScanRepository.save(ns);
 			log.debug("Starting running task");

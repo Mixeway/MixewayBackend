@@ -35,7 +35,7 @@ public class Status {
 		JSONObject o = new JSONObject();
 		try {
 			o.append("status", this.getStatus());
-			if (this.getRequestId()!=null && this.getRequestId()!="")
+			if (this.getRequestId()!=null && !this.getRequestId().equals(""))
 				o.append("requestId", this.getRequestId());
 		} catch (JSONException e) {
 			e.printStackTrace();

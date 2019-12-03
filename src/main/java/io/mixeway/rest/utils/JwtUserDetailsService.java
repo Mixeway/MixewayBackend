@@ -58,7 +58,8 @@ public class JwtUserDetailsService implements UserDetailsService {
     UserDetails loadUserByApiKeyAndRequestUri(String username, String requestURI) {
         try {
             String[] locations = requestURI.split("/");
-            Settings settings = settingsRepository.findAll().stream().findFirst().get();
+            Settings settings = settingsRepository.findAll().stream().findFirst().orElse(null);
+            assert settings != null;
             if ( settings.getMasterApiKey() != null && username.equals(settings.getMasterApiKey()))
                 return new User(username, "", AuthorityUtils.commaSeparatedStringToAuthorityList("ROLE_API"));
             if (locations.length > 0 && locations[1].equals(Constants.API_URL)) {

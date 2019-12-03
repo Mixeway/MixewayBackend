@@ -133,7 +133,6 @@ public class OpenVasSocketClient implements NetworkScanClient, SecurityScanner {
     private void getVulns(NessusScan nessusScan, ComandResponseGetReport reportResponse) {
         List<InfrastructureVuln> oldVulns = oldVulnDelete(nessusScan);
         List<Asset> assetsActive = assetRepository.findByProject(nessusScan.getProject());
-        nessusScan = nessusScanRepository.findById(nessusScan.getId()).get();
         Interface intfActive;
         for (Result result : reportResponse.getGetReportResponse().getReportFirstLvl().getReportSecondLvl().getResults().getResults()) {
            intfActive = loadInterface(nessusScan,assetsActive,reportResponse.getGetReportResponse().getReportFirstLvl().getReportSecondLvl().getHost().getIp() );
@@ -318,20 +317,22 @@ public class OpenVasSocketClient implements NetworkScanClient, SecurityScanner {
         ComandResponseGetScanners scannerResponse = (ComandResponseGetScanners) jaxbUnmarshallerScanners.unmarshal(new StringReader(Objects.requireNonNull(OpenVasSocketHelper.processRequest(getScanners, scanner))));
         if (configResponse.getStatus().equals("200") && scannerResponse.getStatus().equals("200")){
             scanner.setStatus(true);
-            scanner.setScannerid(scannerResponse.getGetScannersResponse().getScanner()
+            Optional<io.mixeway.plugins.infrastructurescan.openvas.model.Scanner> scannerId = scannerResponse.getGetScannersResponse().getScanner()
                     .stream()
                     .filter(s -> s.getName().equals(Constants.OPENVAS_DEFAULT_SCANNER))
-                    .findFirst()
-                    .get()
-                    .getId());
-            scanner.setConfigId(configResponse.getGetConfigResponse().getConfig()
+                    .findFirst();
+            Optional<Config> configId = configResponse.getGetConfigResponse().getConfig()
                     .stream()
                     .filter(s -> s.getName().equals(Constants.OPENVAS_DEFAULT_CONFIG))
-                    .findFirst()
-                    .get()
-                    .getId());
-            scannerRepository.save(scanner);
-            return true;
+                    .findFirst();
+            if (scannerId.isPresent() && configId.isPresent()){
+                scanner.setScannerid(scannerId.get().getId());
+                scanner.setConfigId(configId.get().getId());
+                scannerRepository.save(scanner);
+                return true;
+            } else {
+                return false;
+            }
         } else {
             log.error("Error during OpenVAS Socket initialization");
             return false;

@@ -47,12 +47,14 @@ public class IaasApiService {
         if ( project.isPresent() && project.get().getIaasApis().size() == 1){
             Optional<IaasApi> iaasApi = project.get().getIaasApis().stream().findFirst();
             IaasModel iaasModel = new IaasModel();
-            iaasModel.setAuto(iaasApi.get().getEnabled());
-            iaasModel.setEnabled(iaasApi.get().getStatus());
-            iaasModel.setIam(iaasApi.get().getIamUrl());
-            iaasModel.setService(iaasApi.get().getServiceUrl());
-            iaasModel.setNetwork(iaasApi.get().getNetworkUrl());
-            iaasModel.setProject(iaasApi.get().getTenantId());
+            if (iaasApi.isPresent()) {
+                iaasModel.setAuto(iaasApi.get().getEnabled());
+                iaasModel.setEnabled(iaasApi.get().getStatus());
+                iaasModel.setIam(iaasApi.get().getIamUrl());
+                iaasModel.setService(iaasApi.get().getServiceUrl());
+                iaasModel.setNetwork(iaasApi.get().getNetworkUrl());
+                iaasModel.setProject(iaasApi.get().getTenantId());
+            }
             return new ResponseEntity<>(iaasModel, HttpStatus.OK);
 
         } else if (project.isPresent()) {

@@ -128,7 +128,7 @@ public class WebAppScheduler {
 
 	}
 	@Transactional(propagation=Propagation.REQUIRES_NEW,isolation = Isolation.REPEATABLE_READ, noRollbackFor = Exception.class)
-	boolean removedDuplicates(List<WebApp> webApps, WebApp processingWebApp) {
+	public boolean removedDuplicates(List<WebApp> webApps, WebApp processingWebApp) {
 			if (webApps.size() > 1) {
 				if (webApps.stream().filter(webApp -> webApp.getRunning() || webApp.getLastExecuted() != null).count() == 1) {
 					webApps.remove(webApps.stream().filter(WebApp::getRunning).findFirst().orElse(null));

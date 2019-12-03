@@ -391,8 +391,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 			} else {
 				List<FortifySingleApp> apps = fortifySingleAppRepository.findByFinishedAndDownloaded(true,false);
 				for (FortifySingleApp app : apps){
-					boolean tets = verifyCloudScanJob(app.getCodeGroup(), app);
-					return tets;
+					return verifyCloudScanJob(app.getCodeGroup(), app);
 				}
 			}
 		} else {
@@ -464,20 +463,22 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 				log.warn("Fortify Scan error on {} with scope of {}", cg.getName(), cg.getScope());
 			} else if (response.getBody().getScanId() != null && !response.getBody().getScanId().equals("")) {
 				if (response.getBody().getProjectName() != null && !response.getBody().getProjectName().equals("")) {
-					CodeProject cp = codeProjectRepository.findByCodeGroupAndName(cg, response.getBody().getProjectName()).get();
-					cp.setCommitid(response.getBody().getCommitid());
-					codeProjectRepository.save(cp);
-					FortifySingleApp fortifySingleApp = new FortifySingleApp();
-					fortifySingleApp.setCodeGroup(cg);
-					fortifySingleApp.setCodeProject(cp);
-					fortifySingleApp.setRequestId(response.getBody().getRequestId());
-					fortifySingleApp.setJobToken(response.getBody().getScanId());
-					fortifySingleApp.setFinished(false);
-					fortifySingleApp.setDownloaded(false);
-					fortifySingleAppRepository.save(fortifySingleApp);
-					cp.setRunning(false);
-					codeProjectRepository.save(cp);
-					codeGroupRepository.save(cg);
+					Optional<CodeProject> cp = codeProjectRepository.findByCodeGroupAndName(cg, response.getBody().getProjectName());
+					if (cp.isPresent()) {
+						cp.get().setCommitid(response.getBody().getCommitid());
+						codeProjectRepository.save(cp.get());
+						FortifySingleApp fortifySingleApp = new FortifySingleApp();
+						fortifySingleApp.setCodeGroup(cg);
+						fortifySingleApp.setCodeProject(cp.get());
+						fortifySingleApp.setRequestId(response.getBody().getRequestId());
+						fortifySingleApp.setJobToken(response.getBody().getScanId());
+						fortifySingleApp.setFinished(false);
+						fortifySingleApp.setDownloaded(false);
+						fortifySingleAppRepository.save(fortifySingleApp);
+						cp.get().setRunning(false);
+						codeProjectRepository.save(cp.get());
+						codeGroupRepository.save(cg);
+					}
 					//verifycloudscan for single
 				} else {
 					cg.setScanid(response.getBody().getScanId());

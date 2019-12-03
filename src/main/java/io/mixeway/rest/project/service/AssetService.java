@@ -128,7 +128,7 @@ public class AssetService {
                     }
                 }
             }
-            asset = assetRepository.findById(asset.getId()).get();
+            //asset = assetRepository.findById(asset.getId()).get();
             log.info("{} - Created new asset [{}]{} ", username, project.get().getName(), asset.getName());
             return new ResponseEntity<>(new Status("created"), HttpStatus.CREATED);
         } else {

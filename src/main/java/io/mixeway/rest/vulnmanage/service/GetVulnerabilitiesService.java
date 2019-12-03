@@ -100,7 +100,7 @@ public class GetVulnerabilitiesService {
 
     public ResponseEntity<Vulnerabilities> getAllVulnerabilities() throws UnknownHostException {
         Vulnerabilities vulns = new Vulnerabilities();
-        log.info("Vulnerabilities access granted: {}");
+        log.debug("Vulnerabilities access granted: ");
         List<Vuln> vulnList = new ArrayList<>();
         vulns.setVulnerabilities(vulnList);
         vulns = setInfrastructureVulns(vulns,null);
@@ -128,7 +128,7 @@ public class GetVulnerabilitiesService {
                 if (a.getProject().getCiid() != null && !a.getProject().getCiid().isEmpty())
                 	v.setCiid(a.getProject().getCiid());
                 v.setDateCreated(spv.getInserted());
-                v.setIpAddress(a.getInterfaces().stream().findFirst().get().getPrivateip());
+                v.setIpAddress(a.getInterfaces().stream().findFirst().orElse(null).getPrivateip());
                 v.setPacketName(spv.getSoftwarepacket().getName());
                 tmpVulns.add(v);
             }
@@ -444,7 +444,6 @@ public class GetVulnerabilitiesService {
 
     public ResponseEntity<Vulnerabilities> getVulnerabilitiesByProject(Long id) throws UnknownHostException {
         Vulnerabilities vulns = new Vulnerabilities();
-        log.info("Vulnerabilities access granted for projectID: {}");
         Project project = projectRepository.getOne(id);
 
         List<Vuln> vulnList = new ArrayList<>();
@@ -463,7 +462,7 @@ public class GetVulnerabilitiesService {
         for (Asset asset : assetRepository.findByRequestId(requestId)){
 
             //TODO verify
-            Interface intf = asset.getInterfaces().stream().findFirst().get();
+            Interface intf = asset.getInterfaces().stream().findFirst().orElse(null);
 
             ScannedAddress scannedAddress = new ScannedAddress();
             scannedAddress.setOs(asset.getOs());

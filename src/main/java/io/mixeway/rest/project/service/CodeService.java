@@ -178,7 +178,7 @@ public class CodeService {
                     }
                 }
             }
-            log.info("{} - Run SAST scan for {} - scope single", username, codeProject.get().getCodeGroup().getProject().getName());
+            log.info("{} - Run SAST scan for {} - scope single", username, codeProject.orElse(null).getCodeGroup().getProject().getName());
             return new ResponseEntity<>(null, HttpStatus.OK);
         } catch (IndexOutOfBoundsException e) {
             return new ResponseEntity<>(null, HttpStatus.EXPECTATION_FAILED);

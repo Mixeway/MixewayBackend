@@ -87,17 +87,25 @@ public class ScanManagerService {
 
     private ResponseEntity<Status> processWebAppScanRequest(WebAppScanRequestModel webAppScanRequest) {
         try {
-            Optional<List<Project>> projectFromReq = projectRepository.findByCiid(webAppScanRequest.getCiid().get());
-            Project project;
-            if (projectFromReq.isPresent()) {
-                project = projectFromReq.get().get(0);
+            if (webAppScanRequest.getCiid().isPresent()) {
+                Optional<List<Project>> projectFromReq = projectRepository.findByCiid(webAppScanRequest.getCiid().get());
+                Project project;
+                if (projectFromReq.isPresent()) {
+                    project = projectFromReq.get().get(0);
+                } else {
+                    project = new Project();
+                    if (webAppScanRequest.getProjectName().isPresent()){
+                        project.setName(webAppScanRequest.getProjectName().get());
+                    } else {
+                        project.setName("Autogen name for ciid: "+webAppScanRequest.getCiid().get());
+                    }
+                    project.setCiid(webAppScanRequest.getCiid().get());
+                    project = projectRepository.save(project);
+                }
+                return acunetixService.processScanWebAppRequest(project.getId(), webAppScanRequest.getWebApp());
             } else {
-                project = new Project();
-                project.setName(webAppScanRequest.getProjectName().get());
-                project.setCiid(webAppScanRequest.getCiid().get());
-                project = projectRepository.save(project);
+                return new ResponseEntity<>(new Status("Request contains no information about project. projectName and ciid are required."), HttpStatus.BAD_REQUEST);
             }
-            return acunetixService.processScanWebAppRequest(project.getId(), webAppScanRequest.getWebApp());
         } catch (Exception ex){
             return new ResponseEntity<>(new Status("Request contains no information about project. projectName and ciid are required."), HttpStatus.BAD_REQUEST);
         }

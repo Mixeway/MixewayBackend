@@ -46,7 +46,7 @@ public class WebAppHelper {
 
     }
     @Transactional(rollbackFor = Exception.class)
-    void createOrVerifyWebApps(Project project, List<InfrastructureVuln> vulns){
+    public void createOrVerifyWebApps(Project project, List<InfrastructureVuln> vulns){
         for (InfrastructureVuln iv : vulns){
             String port = iv.getPort().split("/")[0].trim();
             String proto ="http://";

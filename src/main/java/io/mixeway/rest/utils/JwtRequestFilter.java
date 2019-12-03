@@ -50,9 +50,9 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             } catch (ExpiredJwtException e) {
                 log.error("JWT Token has expired");
             }
-        }  else if (s_dn != null && s_dn != ""){
+        }  else if (s_dn != null && !s_dn.equals("")){
             username = s_dn.replaceFirst(".*CN=(.*?),.*", "$1");
-        }else if (apiKey != null && apiKey != ""){
+        }else if (apiKey != null && !apiKey.equals("")){
             username = apiKey.replaceFirst(".*CN=(.*?),.*", "$1");
         } else {
             logger.debug("JWT Token does not look like token "+ request.getRequestURI());

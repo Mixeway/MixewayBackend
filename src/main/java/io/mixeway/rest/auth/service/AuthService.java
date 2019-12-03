@@ -56,25 +56,25 @@ public class AuthService {
         final UserDetails userDetails = userDetailsService
                 .loadUserByUsername(commonName);
         final String token = jwtUtils.generateToken(userDetails);
-        Cookie role = new Cookie("role", userRepository.findByCommonName(commonName).get().getPermisions());
-        role.setPath("/");
-        role.setMaxAge(3600);
-        Cookie jwt = new Cookie("token",token);
-        jwt.setPath("/");
-        jwt.setMaxAge(3600);
-        jwt.setSecure(true);
-        jwt.setHttpOnly(true);
-        log.info("User is successfuly logged {}",commonName);
         Optional<User> user = userRepository.findByCommonName(commonName);
-        if (user.isPresent()){
-            user.get().setLogins(user.get().getLogins()+1);
+        if (user.isPresent()) {
+            Cookie role = new Cookie("role", user.get().getPermisions());
+            role.setPath("/");
+            role.setMaxAge(3600);
+            Cookie jwt = new Cookie("token", token);
+            jwt.setPath("/");
+            jwt.setMaxAge(3600);
+            jwt.setSecure(true);
+            jwt.setHttpOnly(true);
+            log.info("User is successfuly logged {}", commonName);
+            user.get().setLogins(user.get().getLogins() + 1);
             userRepository.save(user.get());
+            httpServletResponse.addCookie(jwt);
+            httpServletResponse.addCookie(role);
+            httpServletResponse.setHeader("Location", "/pages/dashboard");
+            httpServletResponse.setStatus(302);
+            httpServletResponse.flushBuffer();
         }
-        httpServletResponse.addCookie(jwt);
-        httpServletResponse.addCookie(role);
-        httpServletResponse.setHeader("Location", "/pages/dashboard");
-        httpServletResponse.setStatus(302);
-        httpServletResponse.flushBuffer();
     }
 
 
@@ -145,7 +145,8 @@ public class AuthService {
     }
 
     public ResponseEntity<StatusEntity> getStatus() {
-        Settings settings = settingsRepository.findAll().stream().findFirst().get();
+        Settings settings = settingsRepository.findAll().stream().findFirst().orElse(null);
+        assert settings != null;
         return new ResponseEntity<>(new StatusEntity(settings.getInitialized(), settings.getCertificateAuth(),settings.getPasswordAuth()), HttpStatus.OK);
 
     }

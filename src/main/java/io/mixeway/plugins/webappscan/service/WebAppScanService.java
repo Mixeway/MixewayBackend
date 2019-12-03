@@ -129,7 +129,7 @@ public class WebAppScanService {
         }
         if (cookies != null) {
             removeCookiesForWebApp(webApp);
-            webApp = waRepository.findById(webApp.getId()).get();
+            webApp = waRepository.findById(webApp.getId()).orElse(null);
             for (CustomCookie customCookie : cookies) {
                 createCookiesForWebApp(customCookie, webApp);
             }

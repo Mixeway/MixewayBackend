@@ -73,7 +73,9 @@ public class VulnersApiClient {
 						fix = vulnArray.getJSONObject(0).getString("fix"); 
 						
 					}
-					createVulnerability(softPack.get(), vulnCode, cvss,fix,asset);
+					if (softPack.isPresent()) {
+						createVulnerability(softPack.get(), vulnCode, cvss, fix, asset);
+					}
 				}
 			}
 		}

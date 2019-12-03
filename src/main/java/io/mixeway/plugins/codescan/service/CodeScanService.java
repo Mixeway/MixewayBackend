@@ -56,10 +56,10 @@ public class CodeScanService {
     //PREPARE SCAN
 
     public ResponseEntity<List<CodeVuln>> getResultsForProject(long projectId, String groupName, String projectName){
-
-        if (codeAccessVerifier.verifyPermissions(projectId,groupName,projectName).getValid()){
+        Optional<Project> project = projectRepository.findById(projectId);
+        if (codeAccessVerifier.verifyPermissions(projectId,groupName,projectName).getValid() && project.isPresent()){
             CodeProject cp = codeProjectRepository.findByCodeGroupAndName(codeGroupRepository
-                    .findByProjectAndName(projectRepository.findById(projectId).get(),groupName).get(),projectName).get();
+                    .findByProjectAndName(project.get(),groupName).orElse(null),projectName).orElse(null);
             List<CodeVuln> codeVulns = codeVulnRepository.findByCodeProjectAndAnalysisNot(cp,"Not an Issue");
             new ResponseEntity<>(codeVulns, HttpStatus.OK);
 
@@ -73,7 +73,7 @@ public class CodeScanService {
 
         if (codeAccessVerifier.verifyPermissions(projectId,groupName,null).getValid()){
             CodeGroup cg = codeGroupRepository
-                    .findByProjectAndName(projectRepository.findById(projectId).get(),groupName).get();
+                    .findByProjectAndName(projectRepository.findById(projectId).orElse(null),groupName).orElse(null);
             List<CodeVuln> codeVulns = codeVulnRepository.findByCodeGroupAndAnalysisNot(cg,"Not an Issue");
             new ResponseEntity<>(codeVulns, HttpStatus.OK);
 
@@ -89,7 +89,7 @@ public class CodeScanService {
             Optional<List<Project>> projects = projectRepository.findByCiid(codeScanRequest.getCiid());
             Project project;
             if (projects.isPresent()){
-                project = projects.get().stream().findFirst().get();
+                project = projects.get().stream().findFirst().orElse(null);
             } else {
                 project = new Project();
                 project.setName(codeScanRequest.getProjectName());
@@ -118,7 +118,7 @@ public class CodeScanService {
                         codeScanClient.runScan(updatedCodeGroup,updatedCodeProject);
                     }
                 }
-                requestId = codeProjectRepository.findById(updatedCodeProject.getId()).get().getRequestId();
+                requestId = Objects.requireNonNull(codeProjectRepository.findById(updatedCodeProject.getId()).orElse(null)).getRequestId();
             } else {
                 CodeGroup updatedCodeGroup = updateCodeGroup(codeScanRequest,codeGroup.get());
                 CodeProject newCodeProject = createNewCodeProject(codeScanRequest,project,updatedCodeGroup);
@@ -127,7 +127,7 @@ public class CodeScanService {
                         codeScanClient.runScan(updatedCodeGroup,newCodeProject);
                     }
                 }
-                requestId = codeProjectRepository.findById(newCodeProject.getId()).get().getRequestId();
+                requestId = Objects.requireNonNull(codeProjectRepository.findById(newCodeProject.getId()).orElse(null)).getRequestId();
             }
         } else {
             CodeGroup newCodeGroup = createNewCodeGroup(codeScanRequest,project);
@@ -137,7 +137,7 @@ public class CodeScanService {
                     codeScanClient.runScan(newCodeGroup,newCodeProject);
                 }
             }
-            requestId = codeProjectRepository.findById(newCodeProject.getId()).get().getRequestId();
+            requestId = Objects.requireNonNull(codeProjectRepository.findById(newCodeProject.getId()).orElse(null)).getRequestId();
         }
         return requestId;
     }

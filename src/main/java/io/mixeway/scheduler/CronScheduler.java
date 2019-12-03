@@ -81,7 +81,7 @@ public class CronScheduler {
     GetVulnerabilitiesService getVulnerabilitiesService;
 
 
-    DateFormat format = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss");
+    private DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private static final Logger log = LoggerFactory.getLogger(CronScheduler.class);
 
     // Every 12h

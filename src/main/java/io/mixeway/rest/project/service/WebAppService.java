@@ -56,7 +56,7 @@ public class WebAppService {
         try {
             Optional<Scanner> scanner = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_ACUNETIX)).stream().findFirst();
             Optional<WebApp> webApp = webAppRepository.findById(webAppId);
-            if (webApp.isPresent() ) {
+            if (webApp.isPresent() && scanner.isPresent() ) {
                 for (WebAppScanClient webAppScanClient : webAppScanClients){
                     if (webAppScanClient.canProcessRequest(scanner.get())){
                         webAppScanClient.runScan(webApp.get(),scanner.get());
@@ -81,8 +81,8 @@ public class WebAppService {
     }
     public ResponseEntity<Status> runAllScanForWebApp(Long id, String username) {
         Optional<Project> project = projectRepository.findById(id);
-        if (project.isPresent()){
-            Optional<Scanner> scanner = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_ACUNETIX)).stream().findFirst();
+        Optional<Scanner> scanner = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_ACUNETIX)).stream().findFirst();
+        if (project.isPresent() && scanner.isPresent()){
             //AddTarget
             try {
                 for (WebApp webApp : project.get().getWebapps()) {
@@ -104,8 +104,9 @@ public class WebAppService {
 
     public ResponseEntity<Status> runSelectedWebApps(Long id, List<RunScanForWebApps> runScanForWebApps, String username) {
         Optional<Project> project = projectRepository.findById(id);
-        if (project.isPresent()){
-            Optional<Scanner> scanner = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_ACUNETIX)).stream().findFirst();
+        Optional<Scanner> scanner = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_ACUNETIX)).stream().findFirst();
+
+        if (project.isPresent() && scanner.isPresent()){
 
             for (RunScanForWebApps selectedApp : runScanForWebApps){
                 try{
