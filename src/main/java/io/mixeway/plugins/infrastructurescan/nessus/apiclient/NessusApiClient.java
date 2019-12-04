@@ -249,8 +249,8 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 
 		ResponseEntity<String> response = restTemplate.exchange(nessusScan.getNessus().getApiUrl() + "/scans/"+nessusScan.getScanId()+"/launch", HttpMethod.POST, entity, String.class);
 		if (response.getStatusCode() == HttpStatus.OK) {
-			log.info("scan launched for {} and {} - {}",nessusScan.getNessus().getApiUrl(),nessusScan.getProject().getName(),response.getStatusCode().toString());
-
+			nessusScan.setRunning(true);
+			nessusScanRepository.save(nessusScan);
 			return true;
 		}
 		else {
