@@ -226,7 +226,7 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 			ResponseEntity<String> response = restTemplate.exchange(nessusScan.getNessus().getApiUrl() + "/scans/" + nessusScan.getScanId(), HttpMethod.PUT,
 					prepareEntityForCreateUpdate(nessusScan), String.class);
 			if (response.getStatusCode() == HttpStatus.OK) {
-				log.debug("Nessus Scan for {} is updated", nessusScan.getProject().getName());
+				log.info("Nessus Scan for {} is updated", nessusScan.getProject().getName());
 				return true;
 			} else {
 				log.error("Error during Scan update for {} and {} - {}", nessusScan.getNessus().getApiUrl(), nessusScan.getProject().getName(), response.getStatusCode().toString());
@@ -249,6 +249,8 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 
 		ResponseEntity<String> response = restTemplate.exchange(nessusScan.getNessus().getApiUrl() + "/scans/"+nessusScan.getScanId()+"/launch", HttpMethod.POST, entity, String.class);
 		if (response.getStatusCode() == HttpStatus.OK) {
+			log.info("scan launched for {} and {} - {}",nessusScan.getNessus().getApiUrl(),nessusScan.getProject().getName(),response.getStatusCode().toString());
+
 			return true;
 		}
 		else {
