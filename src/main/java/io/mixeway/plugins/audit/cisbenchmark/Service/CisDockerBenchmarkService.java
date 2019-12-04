@@ -3,6 +3,7 @@ package io.mixeway.plugins.audit.cisbenchmark.Service;
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
+import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.Status;
 import org.checkerframework.checker.units.qual.A;
 import org.slf4j.Logger;
@@ -70,7 +71,7 @@ public class CisDockerBenchmarkService {
         return new ResponseEntity<>(new Status("OK"), HttpStatus.OK);
     }
     private void processReportDocker(ApiType apiType, Project project, MultipartFile file) {
-        log.info("Putting CIS docker benchmark for project {} node {}",project.getName(), file.getOriginalFilename());
+        log.info("Putting CIS docker benchmark for project {} node {}",project.getName(), LogUtil.prepare(file.getOriginalFilename()));
         BufferedReader br;
         String nodeName = Objects.requireNonNull(file.getOriginalFilename()).substring(0,  file.getOriginalFilename().length()-4);
         boolean process = false;
@@ -85,7 +86,7 @@ public class CisDockerBenchmarkService {
                 }
                 if(process) {
                     label:
-                    for (Map.Entry<String, Pattern> pattern : procesor.patterns.entrySet()) {
+                    for (Map.Entry<String, Pattern> pattern : procesor.getPatterns().entrySet()) {
                         Matcher matcher = pattern.getValue().matcher(line);
                         if (matcher.matches()) {
                             switch (pattern.getKey()) {

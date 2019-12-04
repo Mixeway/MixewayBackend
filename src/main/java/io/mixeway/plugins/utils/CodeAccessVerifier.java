@@ -5,6 +5,7 @@ import io.mixeway.db.entity.Project;
 import io.mixeway.db.repository.CodeGroupRepository;
 import io.mixeway.db.repository.CodeProjectRepository;
 import io.mixeway.db.repository.ProjectRepository;
+import io.mixeway.pojo.LogUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,7 +59,7 @@ public class CodeAccessVerifier {
                     return sastRequestVerify;
                 }
                 else{
-                    log.info("Has no group {} and no projec {}", groupName,projectName);
+                    log.info("Has no group {} and no projec {}", LogUtil.prepare(groupName),LogUtil.prepare(projectName));
                     sastRequestVerify.setValid(false);
                     return sastRequestVerify;
                 }

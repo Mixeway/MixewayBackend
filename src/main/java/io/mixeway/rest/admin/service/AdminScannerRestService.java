@@ -5,6 +5,7 @@ import io.mixeway.db.repository.RoutingDomainRepository;
 import io.mixeway.db.repository.ScannerRepository;
 import io.mixeway.db.repository.ScannerTypeRepository;
 import io.mixeway.plugins.remotefirewall.apiclient.RfwApiClient;
+import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.SecurityScanner;
 import io.mixeway.rest.model.RfwModel;
 import io.mixeway.rest.model.ScannerModel;
@@ -67,10 +68,10 @@ public class AdminScannerRestService {
                     securityScanner.saveScanner(scannerModel);
                 }
             }
-           log.info("{} - Created new scanner of {} with apiurl {}", name, scannerModel.getScannerType(), scannerModel.getApiUrl());
+           log.info("{} - Created new scanner of {} with apiurl {}", name, LogUtil.prepare(scannerModel.getScannerType()), LogUtil.prepare(scannerModel.getApiUrl()));
             return new ResponseEntity<>(new Status("not ok"), HttpStatus.CREATED);
         } catch(Exception e){
-            e.printStackTrace();
+            log.error("Cannot add scanner {}",LogUtil.prepare(scannerModel.getApiUrl()));
             return new ResponseEntity<>(new Status("not ok"), HttpStatus.PRECONDITION_FAILED);
         }
     }
@@ -100,7 +101,7 @@ public class AdminScannerRestService {
                 return new ResponseEntity<>(new Status("not ok"), HttpStatus.PRECONDITION_FAILED);
             }
         } catch (Exception e){
-            e.printStackTrace();
+            log.error("Error during scanner testing");
             return new ResponseEntity<>(new Status(e.getLocalizedMessage()), HttpStatus.PRECONDITION_FAILED);
         }
     }

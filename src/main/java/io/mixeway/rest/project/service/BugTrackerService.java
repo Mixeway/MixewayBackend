@@ -2,6 +2,7 @@ package io.mixeway.rest.project.service;
 
 import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
+import io.mixeway.pojo.LogUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,7 +65,7 @@ public class BugTrackerService {
             bugTracker.setProject(project.get());
             bugTracker.setPassword(uuidPass);
             bugTrackerRepository.save(bugTracker);
-            log.info("{} - Created new BugTracker for {} vulns {}", name, bugTracker.getProject().getName(), bugTracker.getVulns());
+            log.info("{} - Created new BugTracker for {} vulns {}", name, LogUtil.prepare(bugTracker.getProject().getName()), LogUtil.prepare(bugTracker.getVulns()));
             return new ResponseEntity<>(new Status("OK"), HttpStatus.CREATED);
         } else
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);

@@ -8,8 +8,10 @@ import io.mixeway.db.repository.*;
 import io.mixeway.plugins.infrastructurescan.model.NetworkScanRequestModel;
 import io.mixeway.plugins.remotefirewall.apiclient.RfwApiClient;
 import io.mixeway.pojo.AssetToCreate;
+import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.ScanHelper;
 import io.mixeway.pojo.Status;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,7 +81,7 @@ public class NetworkScanService {
                     return new ResponseEntity<>(new Status("At least one scan for "+p.getName()+" is running."), HttpStatus.LOCKED);
                 }
             }
-            return new ResponseEntity<>(new Status("Can't find running network scan for ciid "+ciid), HttpStatus.OK);
+            return new ResponseEntity<>(new Status("Can't find running network scan for ciid "+ StringEscapeUtils.escapeHtml(ciid)), HttpStatus.OK);
         } else {
             return new ResponseEntity<>(new Status("Project not found"), HttpStatus.NOT_FOUND);
         }

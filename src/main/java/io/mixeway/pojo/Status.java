@@ -2,9 +2,11 @@ package io.mixeway.pojo;
 
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Status {
-	
+	private final static Logger log = LoggerFactory.getLogger(Status.class);
 	private String status;
 	private String requestId;
 
@@ -38,7 +40,7 @@ public class Status {
 			if (this.getRequestId()!=null && !this.getRequestId().equals(""))
 				o.append("requestId", this.getRequestId());
 		} catch (JSONException e) {
-			e.printStackTrace();
+			log.debug("Error during string mapping");
 		}
 	    return o.toString();
 	} 

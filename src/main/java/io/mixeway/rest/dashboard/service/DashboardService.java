@@ -4,6 +4,7 @@ import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
 import io.mixeway.domain.service.project.CreateProjectService;
 import io.mixeway.domain.service.project.FindProjectService;
+import io.mixeway.pojo.LogUtil;
 import io.mixeway.rest.dashboard.model.SearchRequest;
 import io.mixeway.rest.model.OverAllVulnTrendChartData;
 import io.mixeway.rest.model.Projects;
@@ -88,7 +89,7 @@ public class DashboardService {
 
     public ResponseEntity putProject(String projectName, String projectDescription, String ciid, String user) {
         if (!projectRepository.findByName(projectName).isPresent() && createProjectService.putProject(projectName,projectDescription,ciid)){
-            log.info("{} - Created new project {}", user, projectName);
+            log.info("{} - Created new project {}", user, LogUtil.prepare(projectName));
             return new ResponseEntity(HttpStatus.CREATED);
         } else {
             return new ResponseEntity(HttpStatus.EXPECTATION_FAILED);

@@ -3,6 +3,7 @@ package io.mixeway.plugins.audit.cisbenchmark.Service;
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
+import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,7 +77,7 @@ public class CisK8sBenchmarkService {
             log.error("Nullpointer during cis k8s split for filename {}", file.getOriginalFilename());
             filename = file.getOriginalFilename();
         }
-        log.info("Putting K8S docker benchmark for project {} node {}",project.getName(), file.getOriginalFilename());
+        log.info("Putting K8S docker benchmark for project {} node {}",project.getName(), LogUtil.prepare(file.getOriginalFilename()));
         String categoryname ="";
         boolean process = false;
         Node node = null;
@@ -102,7 +103,7 @@ public class CisK8sBenchmarkService {
 
     }
     private Node processDevOpsScriptFile(Project project, String filename, Node node, String categoryname, ApiType apiType,String line){
-        for (Map.Entry<String,Pattern> pattern : procesor.patterns.entrySet()) {
+        for (Map.Entry<String,Pattern> pattern : procesor.getPatterns().entrySet()) {
             Matcher matcher = pattern.getValue().matcher(line);
             if (matcher.matches()) {
                 if (pattern.getKey().equals(CisBenchmarkProcesor.NODETYPE) || pattern.getKey().equals(CisBenchmarkProcesor.NODETYPEAQUA)) {

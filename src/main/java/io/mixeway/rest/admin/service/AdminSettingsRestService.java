@@ -1,5 +1,6 @@
 package io.mixeway.rest.admin.service;
 
+import io.mixeway.pojo.LogUtil;
 import io.mixeway.rest.admin.model.SmtpSettingsModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +17,7 @@ import io.mixeway.db.repository.RoutingDomainRepository;
 import io.mixeway.db.repository.SettingsRepository;
 import io.mixeway.pojo.Status;
 import io.mixeway.rest.admin.model.AuthSettingsModel;
+import sun.rmi.runtime.Log;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -88,7 +90,7 @@ public class AdminSettingsRestService {
         Optional<Settings> settings = settingsRepository.findAll().stream().findFirst();
         if (settings.isPresent() && routingDomain.getName()!=null){
             routingDomainRepository.save(routingDomain);
-            log.info("{} - Created new routing domain {}", name, routingDomain.getName());
+            log.info("{} - Created new routing domain {}", name, LogUtil.prepare(routingDomain.getName()));
             return new ResponseEntity<>(HttpStatus.CREATED);
 
         } else {
@@ -115,7 +117,7 @@ public class AdminSettingsRestService {
         Optional<Settings> settings = settingsRepository.findAll().stream().findFirst();
         if (settings.isPresent() && proxies.getIp()!=null && proxies.getPort() !=null && proxies.getDescription()!=null){
             proxiesRepository.save(proxies);
-            log.info("{} - Created new proxy {} ", name, proxies.getId()+":"+proxies.getPort());
+            log.info("{} - Created new proxy {} ", name, LogUtil.prepare(proxies.getIp())+":"+ LogUtil.prepare(proxies.getPort()));
             return new ResponseEntity<>(HttpStatus.CREATED);
         } else {
             return new ResponseEntity<>( HttpStatus.EXPECTATION_FAILED);

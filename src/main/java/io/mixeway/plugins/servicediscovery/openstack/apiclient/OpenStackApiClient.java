@@ -155,7 +155,7 @@ public class OpenStackApiClient {
 		} catch (ResourceAccessException rae){
 			log.error("ResourceAccessException during getInterface for {}",asset.getProject().getName());
 		} catch (IOException | NoSuchAlgorithmException | KeyStoreException | CertificateException | KeyManagementException e) {
-			e.printStackTrace();
+			log.warn("Exception {} came up durring getting interfaces for {}", e.getLocalizedMessage(),asset.getName());
 		}
 		return null;
 	}

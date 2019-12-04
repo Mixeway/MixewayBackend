@@ -97,14 +97,8 @@ public class NetworkScanScheduler {
 						}
 					}
 				}
-			} catch (ResourceAccessException rae) {
-				log.error("Scanner not avaliable - {}",rae.getLocalizedMessage());
-			} catch (NullPointerException ex){
-				log.error("Something wrong came up with scan for {}", ns.getProject().getName());
-			} catch (HttpServerErrorException ex){
-				log.error("HTTP Error during scan creation for {}", ns.getProject().getName());
-			} catch (JAXBException e) {
-				e.printStackTrace();
+			} catch (ResourceAccessException | NullPointerException | HttpServerErrorException | JAXBException e) {
+				log.error("Exception - {} came up during scan for {}",e.getLocalizedMessage(), ns.getProject().getName());
 			}
 		}
 

@@ -1,5 +1,6 @@
 package io.mixeway.rest.admin.service;
 import io.mixeway.db.repository.UserRepository;
+import io.mixeway.pojo.LogUtil;
 import io.mixeway.rest.model.NewPasswordModel;
 import io.mixeway.rest.model.UserModel;
 import org.slf4j.Logger;
@@ -48,7 +49,7 @@ public class AdminUserRestService {
             if ( userModel.getPasswordAuth())
                 userToCreate.setPassword(bCryptPasswordEncoder.encode(userModel.getUserPassword()));
             userRepository.save(userToCreate);
-            log.info("{} - Created new user {} with role {}", name, userToCreate.getCommonName(), userToCreate.getPermisions());
+            log.info("{} - Created new user {} with role {}", name, LogUtil.prepare(userToCreate.getCommonName()), LogUtil.prepare(userToCreate.getPermisions()));
             return new ResponseEntity<>(new Status("ok"), HttpStatus.CREATED);
         }
     }

@@ -6,6 +6,7 @@ import io.mixeway.db.entity.CodeProject;
 import io.mixeway.db.entity.SoftwarePacket;
 import io.mixeway.db.entity.SoftwarePacketVulnerability;
 import io.mixeway.db.repository.*;
+import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.Status;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -18,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import sun.rmi.runtime.Log;
 
 import java.io.File;
 import java.io.IOException;
@@ -61,7 +63,7 @@ public class MvnDependencyCheckUploadService {
                 codeProject1.setName(codeProject);
                 codeProject1.setSkipAllScan(true);
                 codeProjectRepository.save(codeProject1);
-                log.info("Created new CodeProject {} for group {} of {}", codeProject,codeGroup,cg.get().getProject().getName());
+                log.info("Created new CodeProject {} for group {} of {}", LogUtil.prepare(codeProject),LogUtil.prepare(codeGroup),cg.get().getProject().getName());
                 loadSoftwarePackets(codeProject1,file);
             }
         }
@@ -113,7 +115,8 @@ public class MvnDependencyCheckUploadService {
         spv.setDescription(description);
         softwarePacketVulnerabilityRepository.save(spv);
 
-        log.info("Saved new vulnerability {} with score {} for CodeProject {} of {}", spv.getName(), spv.getScore(),codeProject.getName(),codeProject.getCodeGroup().getProject().getName());
+        log.info("Saved new vulnerability {} with score {} for CodeProject {} of {}", LogUtil.prepare(spv.getName()),
+                spv.getScore(),LogUtil.prepare(codeProject.getName()),LogUtil.prepare(codeProject.getCodeGroup().getProject().getName()));
 
     }
     private  static File multipartToFile(MultipartFile multipart) throws IllegalStateException, IOException {

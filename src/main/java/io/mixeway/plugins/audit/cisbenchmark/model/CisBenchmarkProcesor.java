@@ -7,11 +7,12 @@ import io.mixeway.db.repository.RequirementRepository;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class CisBenchmarkProcesor {
-    public HashMap<String, Pattern> patterns = new HashMap<>();
+    private HashMap<String, Pattern> patterns = new HashMap<>();
     public static final Pattern PATTERN_FIRST_LEVEL = Pattern.compile(".*\\[(\\D+)].*\\s(\\d+)\\s+-\\s(.*)");
     private static final Pattern PATTERN_FIRST_LEVEL_AQUA = Pattern.compile("\\[(.*)] (\\d) (.*)");
     private static final Pattern PATTERN_SECOND_LEVEL = Pattern.compile(".*\\[(\\D+)].*\\s(\\d+.\\d+)\\s+-\\s(.*)");
@@ -29,6 +30,9 @@ public class CisBenchmarkProcesor {
         patterns.put(REQUIREMENT, PATTER_DOCKER);
         patterns.put(AQUA, PATTERN_AQUASCRIPT);
         patterns.put(NODETYPEAQUA, PATTERN_FIRST_LEVEL_AQUA);
+    }
+    public HashMap<String, Pattern> getPatterns(){
+        return this.patterns;
     }
 
     public NodeAudit createNodeAudit(Node node, ApiType apiType, Requirement requirement, String score, String date) throws Exception {
