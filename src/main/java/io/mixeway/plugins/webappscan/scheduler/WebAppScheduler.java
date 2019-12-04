@@ -89,7 +89,6 @@ public class WebAppScheduler {
 	}
 	//Every 5 min
 	@Scheduled(fixedDelay = 300000)
-	@Transactional
 	public void runScanFromQueue() {
 		Long count = webAppRepository.getCountOfRunningScans(true);
 		Optional<Scanner> scanner = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_ACUNETIX)).stream().findFirst();
