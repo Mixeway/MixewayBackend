@@ -181,5 +181,5 @@ public class Constants {
 	public static final String OPENVAS_DEFAULT_CONFIG = "Full and fast";
 	public static final String OPENVAS_DEFAULT_SCANNER = "OpenVAS Default";
 
-    public static final String JIRA = "Jira";
+    public static final String JIRA = "JIRA";
 }

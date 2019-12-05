@@ -11,7 +11,6 @@ import io.mixeway.pojo.AssetToCreate;
 import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.ScanHelper;
 import io.mixeway.pojo.Status;
-import org.apache.commons.lang.StringEscapeUtils;
 import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +18,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.util.HtmlUtils;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -81,7 +81,7 @@ public class NetworkScanService {
                     return new ResponseEntity<>(new Status("At least one scan for "+p.getName()+" is running."), HttpStatus.LOCKED);
                 }
             }
-            return new ResponseEntity<>(new Status("Can't find running network scan for ciid "+ StringEscapeUtils.escapeHtml(ciid)), HttpStatus.OK);
+            return new ResponseEntity<>(new Status("Can't find running network scan for ciid "+ HtmlUtils.htmlEscape(ciid)), HttpStatus.OK);
         } else {
             return new ResponseEntity<>(new Status("Project not found"), HttpStatus.NOT_FOUND);
         }
