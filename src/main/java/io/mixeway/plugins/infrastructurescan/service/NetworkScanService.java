@@ -122,7 +122,7 @@ public class NetworkScanService {
             }
         }
         ns = nessusScanRepository.findById(ns.getId()).orElse(null);
-        if (running) {
+        if (ns.getRunning()) {
             assert ns != null;
             return new ResponseEntity<>(new Status("ok",ns.getRequestId() ), HttpStatus.CREATED);
         } else {
