@@ -136,11 +136,10 @@ public class CronScheduler {
         try {
             message.setSubject("DOP Security test trend update");
             MimeMessageHelper helper = new MimeMessageHelper(message, true);
-            helper.setFrom("zz_sourceanalyzer@orange.com");
-            helper.setTo(InternetAddress.parse("grzegorz.siewruk@orange.com,przemyslaw.deba@orange.com"));
+            //TODO settings helper create
             helper.setCc(InternetAddress.parse(tools.getContactList()));
             helper.setText(body, true);
-            sender.send(message);
+            //sender.send(message);
         } catch (MessagingException ex){
             log.warn("MessagingException {}", ex.getLocalizedMessage());
         }
@@ -156,11 +155,11 @@ public class CronScheduler {
         try {
             message.setSubject("Online Security test trend update");
             MimeMessageHelper helper = new MimeMessageHelper(message, true);
-            helper.setFrom("zz_sourceanalyzer@orange.com");
-            helper.setTo(InternetAddress.parse("grzegorz.siewruk@orange.com"));
+
+            //TODO template create email
             helper.setCc(InternetAddress.parse(prod.getContactList()));
             helper.setText(body, true);
-            sender.send(message);
+            //sender.send(message);
         } catch (MessagingException ex){
             log.warn("MessagingException {}", ex.getLocalizedMessage());
         }
