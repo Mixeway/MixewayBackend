@@ -295,7 +295,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 					.getRestTemplate()
 					.exchange(scanner.getApiUrl() + API_JOB_STATE + "/" + (fortifySingleApp == null ? cg.getScanid() : fortifySingleApp.getJobToken()), HttpMethod.GET, sscRequestHelper.getHttpEntity(), CloudJobState.class);
 			if (response.getStatusCode() == HttpStatus.OK) {
-				if (Objects.requireNonNull(response.getBody()).getData().getJobState().equals("UPLOAD_COMPLETED")) {
+				if (Objects.requireNonNull(response.getBody()).getData().getJobState().equals(Constants.FORTIFY_UPLOAD_COMPLETED)) {
 					codeGroupRepository.save(cg);
 					if (fortifySingleApp != null) {
 						fortifySingleApp.setFinished(true);
@@ -303,6 +303,19 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 					}
 					log.info("CloudScan ended for {}", cg.getName());
 					return true;
+				} else if (Objects.requireNonNull(response.getBody()).getData().getJobState().equals(Constants.FORTIFY_SCAN_FOULTED)) {
+					cg.setRunning(false);
+					cg.setRequestid(null);
+					cg.setScanid(null);
+					cg.setScope(null);
+					codeGroupRepository.save(cg);
+					if (fortifySingleApp != null) {
+						fortifySingleApp.setFinished(true);
+						fortifySingleApp.setDownloaded(true);
+						fortifySingleAppRepository.save(fortifySingleApp);
+					}
+					log.info("CloudScan ended with FAULTED state for {}", cg.getName());
+					return false;
 				}
 			}
 			return false;

@@ -8,7 +8,6 @@ import io.mixeway.db.repository.*;
 import io.mixeway.plugins.infrastructurescan.model.NetworkScanRequestModel;
 import io.mixeway.plugins.remotefirewall.apiclient.RfwApiClient;
 import io.mixeway.pojo.AssetToCreate;
-import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.ScanHelper;
 import io.mixeway.pojo.Status;
 import org.codehaus.jettison.json.JSONException;
@@ -112,18 +111,16 @@ public class NetworkScanService {
             return new ResponseEntity<>(new Status("One or more hosts does not have Routing domain or no scanner avaliable in given Routing Domain. Omitting.."),
                     HttpStatus.EXPECTATION_FAILED);
         }
-        boolean running = false;
         //RUN MANUAL SCAN
         if (!ns.getRunning()) {
             for (NetworkScanClient networkScanClient :networkScanClients){
                 if (networkScanClient.canProcessRequest(ns)){
-                    running = networkScanClient.runScan(ns);
+                    networkScanClient.runScan(ns);
                 }
             }
         }
         ns = nessusScanRepository.findById(ns.getId()).orElse(null);
-        if (ns.getRunning()) {
-            assert ns != null;
+        if (ns!=null && ns.getRunning()) {
             return new ResponseEntity<>(new Status("ok",ns.getRequestId() ), HttpStatus.CREATED);
         } else {
             return new ResponseEntity<>(new Status("Problem with running scan..."), HttpStatus.PRECONDITION_FAILED);
