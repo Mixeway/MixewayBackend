@@ -184,4 +184,6 @@ public class Constants {
     public static final String JIRA = "JIRA";
     public static final String FORTIFY_UPLOAD_COMPLETED = "UPLOAD_COMPLETED";
     public static final String FORTIFY_SCAN_FOULTED = "SCAN_FAULTED";
+	public static final String FORTIFY_SCAN_CANCELED = "SCAN_CANCELED";
+	public static final String FORTIFY_UPLOAD_FAILED = "UPLOAD_FAILED";
 }
