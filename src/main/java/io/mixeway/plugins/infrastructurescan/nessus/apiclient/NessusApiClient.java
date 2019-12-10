@@ -240,23 +240,27 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 	//TODO: String to objectModel maping
 	private boolean launchScan(NessusScan nessusScan) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException,
 			KeyManagementException, KeyStoreException, IOException {
-		RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(nessusScan.getNessus());
-		HttpEntity<String> entity = new HttpEntity<>(prepareAuthHeaderForNessus(nessusScan.getNessus()));
-		if (nessusScan.getNessus().getRfwUrl() != null){
-			this.putRulesOnRfw(nessusScan);
-			log.info("RFW for scan {} is configured - accept traffic", nessusScan.getProject().getName());
-		}
+		try {
+			RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(nessusScan.getNessus());
+			HttpEntity<String> entity = new HttpEntity<>(prepareAuthHeaderForNessus(nessusScan.getNessus()));
+			if (nessusScan.getNessus().getRfwUrl() != null) {
+				this.putRulesOnRfw(nessusScan);
+				log.info("RFW for scan {} is configured - accept traffic", nessusScan.getProject().getName());
+			}
 
-		ResponseEntity<String> response = restTemplate.exchange(nessusScan.getNessus().getApiUrl() + "/scans/"+nessusScan.getScanId()+"/launch", HttpMethod.POST, entity, String.class);
-		if (response.getStatusCode() == HttpStatus.OK) {
-			nessusScan.setRunning(true);
-			nessusScanRepository.save(nessusScan);
-			return true;
-		}
-		else {
-			log.error("Error during Scan Launching for {} and {} - {}",nessusScan.getNessus().getApiUrl(),nessusScan.getProject().getName(),response.getStatusCode().toString());
+			ResponseEntity<String> response = restTemplate.exchange(nessusScan.getNessus().getApiUrl() + "/scans/" + nessusScan.getScanId() + "/launch", HttpMethod.POST, entity, String.class);
+			if (response.getStatusCode() == HttpStatus.OK) {
+				nessusScan.setRunning(true);
+				nessusScanRepository.save(nessusScan);
+				return true;
+			} else {
+				log.error("Error during Scan Launching for {} and {} - {}", nessusScan.getNessus().getApiUrl(), nessusScan.getProject().getName(), response.getStatusCode().toString());
+				return false;
+			}
+		} catch (HttpClientErrorException e){
+			log.error("Error during Scan Launching for {} and {}", nessusScan.getNessus().getApiUrl(), nessusScan.getProject().getName());
 			return false;
-		}		
+		}
 	}
 	private void putRulesOnRfw(NessusScan nessusScan)throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
 		for (String ipAddress : scanHelper.prepareTargetsForScan(nessusScan,false)){
