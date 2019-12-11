@@ -15,4 +15,5 @@ public interface ProjectRepository extends JpaRepository<Project, Long>{
 	Optional<Project> findByIdAndApiKey(Long id, String apiKey);
 	List<Project> findByAutoWebAppScan(boolean autoWebScan);
 	List<Project> findByAutoCodeScan(boolean autoWebScan);
+	List<Project> findByAutoInfraScan(boolean autoInfraScan);
 }
