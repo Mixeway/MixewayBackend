@@ -66,6 +66,10 @@ public class NetworkScanScheduler {
 							ns.setRunning(false);
 							nessusScanRepository.save(ns);
 							log.info("Loaded result for {} scan of {}",ns.getNessus().getScannerType().getName(), ns.getProject().getName());
+							if (ns.getNessus().getRfwUrl() != null) {
+								networkScanService.deleteRulsFromRfw(ns);
+								log.info("RFW for scan {} is cleared - dropped traffic", ns.getProject().getName());
+							}
 						}
 					}
 					//For nessus create webapp linking
@@ -73,10 +77,7 @@ public class NetworkScanScheduler {
 						if (ns.getProject().getWebAppAutoDiscover() != null && ns.getProject().getWebAppAutoDiscover())
 							webAppHelper.discoverWebAppFromInfrastructureVulns(ns.getProject());
 					}
-					if (ns.getNessus().getRfwUrl() != null) {
-						networkScanService.deleteRulsFromRfw(ns);
-						log.info("RFW for scan {} is cleared - dropped traffic", ns.getProject().getName());
-					}
+
 				}
 			}
 		} catch (Exception ce){
