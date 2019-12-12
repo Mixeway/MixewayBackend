@@ -91,7 +91,7 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 				return true;
 			}
 		} catch (HttpClientErrorException ex){
-			log.error("Error occured during nessus initialize");
+			log.error("Error occured during nessus initialize - {} - {} {}", scanner.getApiUrl(), ex.getStatusCode(), ex.getLocalizedMessage() );
 		}
 		return false;
 	}
@@ -529,7 +529,6 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 		
 	}
 	private void createServicesForInterface(Interface i){
-		infrastructureVulnRepository.findByIntf(i).size();
 		serviceRepository.updateServiceSetStatusNullForInterface(i.getId());
 		List<Service> services = serviceRepository.findByAnInterface(i);
 		for (String port : infrastructureVulnRepository.getPortsFromInfraVulnForInterface(i.getId())){
