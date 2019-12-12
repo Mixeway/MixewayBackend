@@ -168,13 +168,21 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 		HttpHeaders headers = prepareAuthHeaderForNessus(scanner);
 		headers.set(Constants.HEADER_CONTENT_TYPE, Constants.HEADER_CONTENT_TYPE_JSON);
 		HttpEntity<String> entity = new HttpEntity<>(new Gson().toJson(new CreateFolderRequest()),headers);
-		ResponseEntity<String> response = restTemplate.exchange(scanner.getApiUrl() + "/folders", HttpMethod.POST, entity, String.class);
-		if (response.getStatusCode() == HttpStatus.OK) {
-			setFolderForNessus(scanner, response.getBody());
-			return true;
-		}
-		else {
-			return false;
+		try {
+			ResponseEntity<String> response = restTemplate.exchange(scanner.getApiUrl() + "/folders", HttpMethod.POST, entity, String.class);
+			if (response.getStatusCode() == HttpStatus.OK) {
+				setFolderForNessus(scanner, response.getBody());
+				return true;
+			} else {
+				return false;
+			}
+		} catch (HttpClientErrorException e){
+			if (e.getStatusCode().equals(HttpStatus.CONFLICT)){
+				log.warn("Nessus {} responded with CONFLICT state during folder creation, returning true, hopeing that there is already folderID created", scanner.getApiUrl());
+				return true;
+			} else {
+				return false;
+			}
 		}
 	}
 
