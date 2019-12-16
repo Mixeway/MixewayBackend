@@ -18,6 +18,7 @@ import io.mixeway.db.repository.NessusScanRepository;
 import io.mixeway.db.repository.ProjectRepository;
 import io.mixeway.db.repository.ScannerTypeRepository;
 import io.mixeway.plugins.infrastructurescan.service.NetworkScanClient;
+import io.mixeway.pojo.ScanHelper;
 import io.mixeway.pojo.WebAppHelper;
 import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
@@ -39,12 +40,14 @@ public class NetworkScanScheduler {
 	private final List<NetworkScanClient> networkScanClients;
 	private final NetworkScanService networkScanService;
 	private final ProjectRepository projectRepository;
+	private final ScanHelper scanHelper;
 	@Autowired
 	NetworkScanScheduler(NessusScanRepository nessusScanRepository, NetworkScanService networkScanService,
 						 ScannerTypeRepository scannerTypeRepository, ProjectRepository projectRepository,
-						 WebAppHelper webAppHelper, List<NetworkScanClient> networkScanClients){
+						 WebAppHelper webAppHelper, List<NetworkScanClient> networkScanClients, ScanHelper scanHelper){
 		this.scannerTypeRepository = scannerTypeRepository;
 		this.nessusScanRepository = nessusScanRepository;
+		this.scanHelper = scanHelper;
 		this.webAppHelper = webAppHelper;
 		this.projectRepository = projectRepository;
 		this.networkScanClients = networkScanClients;
@@ -65,6 +68,7 @@ public class NetworkScanScheduler {
 							networkScanClient.loadVulnerabilities(ns);
 							ns.setRunning(false);
 							nessusScanRepository.save(ns);
+							scanHelper.updateInterfaceState(ns,false);
 							log.info("Loaded result for {} scan of {}",ns.getNessus().getScannerType().getName(), ns.getProject().getName());
 							if (ns.getNessus().getRfwUrl() != null) {
 								networkScanService.deleteRulsFromRfw(ns);
