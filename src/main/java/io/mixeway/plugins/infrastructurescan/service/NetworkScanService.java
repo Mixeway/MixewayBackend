@@ -120,10 +120,21 @@ public class NetworkScanService {
             }
         }
         ns = nessusScanRepository.findById(ns.getId()).orElse(null);
-        if (ns!=null && ns.getRunning()) {
+        //MAKE SURE ASSET REQUESTID IS SET PROPERLY
+        assert ns != null;
+        saveRequestIdForAsset(intfs, ns.getRequestId());
+        if (ns.getRunning()) {
             return new ResponseEntity<>(new Status("ok",ns.getRequestId() ), HttpStatus.CREATED);
         } else {
             return new ResponseEntity<>(new Status("Problem with running scan..."), HttpStatus.PRECONDITION_FAILED);
+        }
+    }
+    private void saveRequestIdForAsset(List<Interface> interfaces, String requestId){
+        Set<Asset> assets = new HashSet<>();
+        interfaces.stream().filter(i -> assets.add(i.getAsset())).collect(Collectors.toList());
+        for (Asset asset : assets){
+            asset.setRequestId(requestId);
+            assetRepository.save(asset);
         }
     }
     private NessusScan configureKoordynatorScan(Project project, List<Interface> intfs) throws JSONException, KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, CertificateException, IOException, JAXBException {
@@ -138,6 +149,7 @@ public class NetworkScanService {
         scan.setScheduled(false);
         for (Interface i: intfs){
             i.getAsset().setRequestId(scan.getRequestId());
+
             assetRepository.save(i.getAsset());
         }
         nessusScanRepository.save(scan);
@@ -176,9 +188,7 @@ public class NetworkScanService {
     private List<Interface> updateAssetsAndPrepareInterfacesForScan(NetworkScanRequestModel req, Project project) {
         List<Interface> listtoScan = new ArrayList<>();
         for (AssetToCreate atc : req.getIpAddresses()){
-
             Optional<Asset> asset = assetRepository.findByNameAndProject(atc.getHostname(), project);
-
             if (asset.isPresent() ) {
                 Optional<Interface> intf = interfaceRepository.findByAssetAndPrivateip(asset.get(), atc.getIp());
                 if (intf.isPresent()) {

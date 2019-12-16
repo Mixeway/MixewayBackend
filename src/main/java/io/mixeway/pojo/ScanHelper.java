@@ -97,6 +97,7 @@ public class ScanHelper {
     }
 
     public void updateInterfaceState(NessusScan nessusScan, boolean state){
+        // SETTING INTERFACE.SCANRUNNING
         for (String ip : prepareTargetsForScan(nessusScan,false)){
             Optional<Interface> inter = interfaceRepository.findByAssetInAndPrivateipAndActive(nessusScan.getProject().getAssets(), ip, true);
             if (inter.isPresent()){
@@ -113,9 +114,10 @@ public class ScanHelper {
                 Optional<Interface> inter = interfaceRepository.findByAssetInAndPrivateipAndActive(nessusScan.getProject().getAssets(), ip, true);
                 if (inter.isPresent()) {
                     inter.get().setScanRunning(true);
-                    inter.get().getAsset().setRequestId(requestId);
+                    Asset asset = inter.get().getAsset();
+                    asset.setRequestId(requestId);
                     interfaceRepository.save(inter.get());
-                    assetRepository.save(inter.get().getAsset());
+                    assetRepository.save(asset);
                 }
             }
             nessusScan.setRequestId(requestId);

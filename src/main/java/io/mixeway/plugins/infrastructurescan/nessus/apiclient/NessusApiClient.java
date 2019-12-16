@@ -316,7 +316,7 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 	public boolean runScan(NessusScan nessusScan) throws JSONException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
 		if (!nessusScan.getRunning()) {
 			runScanManual(nessusScan);
-			this.launchScan(nessusScan);
+			//this.launchScan(nessusScan);
 			nessusScan.setRunning(true);
 			nessusScanRepository.save(nessusScan);
 			return true;
