@@ -12,6 +12,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import io.mixeway.config.Constants;
 import io.mixeway.rest.project.model.RunScanForAssets;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -95,7 +97,7 @@ public class ScanHelper {
         updateInterfaceState(nessusScan,interfacesToScan);
         return interfacesToScan;
     }
-
+    @Transactional(propagation= Propagation.REQUIRES_NEW)
     public void updateInterfaceState(NessusScan nessusScan, boolean state){
         // SETTING INTERFACE.SCANRUNNING
         for (String ip : prepareTargetsForScan(nessusScan,false)){
