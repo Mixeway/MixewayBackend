@@ -101,9 +101,10 @@ public class ScanHelper {
         for (String ip : prepareTargetsForScan(nessusScan,false)){
             Optional<Interface> inter = interfaceRepository.findByAssetInAndPrivateipAndActive(nessusScan.getProject().getAssets(), ip, true);
             if (inter.isPresent()){
-                inter.get().setScanRunning(state);
-                interfaceRepository.save(inter.get());
-                log.info("Update inerface state for {} to {}", inter.get().getPrivateip(),state);
+                Interface i = inter.get();
+                i.setScanRunning(state);
+                interfaceRepository.save(i);
+                log.info("Update inerface state for {} to scan running {}", i.getPrivateip(),state);
             }
         }
     }
