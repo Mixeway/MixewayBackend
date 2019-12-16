@@ -122,15 +122,19 @@ public class NetworkScanService {
         ns = nessusScanRepository.findById(ns.getId()).orElse(null);
         //MAKE SURE ASSET REQUESTID IS SET PROPERLY
         assert ns != null;
-        saveRequestIdForAsset(intfs, ns.getRequestId());
+        updateIntfsStateAndAssetRequestId(intfs, ns.getRequestId());
         if (ns.getRunning()) {
             return new ResponseEntity<>(new Status("ok",ns.getRequestId() ), HttpStatus.CREATED);
         } else {
             return new ResponseEntity<>(new Status("Problem with running scan..."), HttpStatus.PRECONDITION_FAILED);
         }
     }
-    private void saveRequestIdForAsset(List<Interface> interfaces, String requestId){
+    private void updateIntfsStateAndAssetRequestId(List<Interface> interfaces, String requestId){
         Set<Asset> assets = new HashSet<>();
+        for (Interface i : interfaces){
+            i.setScanRunning(true);
+            interfaceRepository.save(i);
+        }
         interfaces.stream().filter(i -> assets.add(i.getAsset())).collect(Collectors.toList());
         for (Asset asset : assets){
             asset.setRequestId(requestId);
