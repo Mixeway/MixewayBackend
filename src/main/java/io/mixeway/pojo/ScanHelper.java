@@ -96,6 +96,16 @@ public class ScanHelper {
         return interfacesToScan;
     }
 
+    public void updateInterfaceState(NessusScan nessusScan, boolean state){
+        for (String ip : prepareTargetsForScan(nessusScan,false)){
+            Optional<Interface> inter = interfaceRepository.findByAssetInAndPrivateipAndActive(nessusScan.getProject().getAssets(), ip, true);
+            if (inter.isPresent()){
+                inter.get().setScanRunning(state);
+                interfaceRepository.save(inter.get());
+            }
+        }
+    }
+
     private void updateInterfaceState(NessusScan nessusScan, List<String> interfacesToScan) {
         try {
             String requestId = UUID.randomUUID().toString();

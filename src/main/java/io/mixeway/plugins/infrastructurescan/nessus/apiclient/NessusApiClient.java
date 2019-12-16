@@ -120,7 +120,7 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 		io.mixeway.db.entity.Scanner nessus = new io.mixeway.db.entity.Scanner();
 		nessus.setAccessKey(UUID.randomUUID().toString());
 		nessus.setSecretKey(UUID.randomUUID().toString());
-		nessus = nessusOperations(scannerModel.getRoutingDomain(),nessus,proxy,scannerModel.getApiUrl(),scannerType);
+		nessusOperations(scannerModel.getRoutingDomain(),nessus,proxy,scannerModel.getApiUrl(),scannerType);
 		// Secret key put to vault
 		Map<String, String> secretKeyMap = new HashMap<>();
 		secretKeyMap.put("password", scannerModel.getSecretkey());
@@ -431,6 +431,7 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 			i.setScanRunning(false);
 			interfaceRepository.save(i);
 		}
+		scanHelper.updateInterfaceState(ns,false);
 		ns.setRunning(false);
 		nessusScanRepository.save(ns);
 		log.debug("Nessus - successfully loaded vulnerabilities for {}",ns.getProject().getName());
