@@ -27,7 +27,7 @@ public class CodeAccessVerifier {
         this.codeProjectRepository = codeProjectRepository;
         this.codeGroupRepository = codeGroupRepository;
     }
-    public SASTRequestVerify verifyPermissions(long projectId, String groupName, String projectName){
+    public SASTRequestVerify verifyPermissions(long projectId, String groupName, String projectName, boolean depCheck){
         SASTRequestVerify sastRequestVerify= new SASTRequestVerify();
         Optional<Project> project = projectRepository.findById(projectId);
         if (project.isPresent()){
@@ -35,7 +35,7 @@ public class CodeAccessVerifier {
                 Optional<CodeGroup> cg = codeGroupRepository.findByProjectAndName(project.get(),groupName);
                 if (cg.isPresent()){
                     Optional<CodeProject> cp = codeProjectRepository.findByCodeGroupAndName(cg.get(),projectName);
-                    if (cp.isPresent() && cp.get().getCodeGroup().getVersionIdsingle() > 0){
+                    if (cp.isPresent() && (cp.get().getCodeGroup().getVersionIdsingle() > 0 || depCheck)){
                         sastRequestVerify.setValid(true);
                         sastRequestVerify.setCg(cg.get());
                         sastRequestVerify.setCp(cp.get());

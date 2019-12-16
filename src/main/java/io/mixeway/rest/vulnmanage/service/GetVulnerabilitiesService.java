@@ -424,6 +424,8 @@ public class GetVulnerabilitiesService {
                 .filter (cv -> cv.getSeverity().equals(Constants.API_SEVERITY_CRITICAL))
                 .filter (cv -> cv.getAnalysis().equals(Constants.FORTIFY_ANALYSIS_EXPLOITABLE))
                 .collect(Collectors.toList());
+        List<SoftwarePacketVulnerability> softVulnForCP = softwarePacketVulnerabilityReposutitory.getSoftwareVulnsForCodeProject(cp.getId())
+                .stream().filter(v -> v.getScore() > 7).collect(Collectors.toList());
         // petla po webappvuln
         for (WebAppVuln wav : vulnsForCP){
             VulnManageResponse vmr = new VulnManageResponse();
@@ -438,6 +440,14 @@ public class GetVulnerabilitiesService {
             vmr.setVulnerabilityName(cv.getName());
             vmr.setSeverity(cv.getSeverity());
             vmr.setDateDiscovered(cv.getInserted());
+            vulnManageResponses.add(vmr);
+        }
+        //pentla po softvu
+        for (SoftwarePacketVulnerability spv : softVulnForCP){
+            VulnManageResponse vmr = new VulnManageResponse();
+            vmr.setVulnerabilityName(spv.getName());
+            vmr.setSeverity(spv.getSeverity());
+            vmr.setDateDiscovered(spv.getInserted());
             vulnManageResponses.add(vmr);
         }
         return vulnManageResponses;

@@ -93,7 +93,11 @@ public class MvnDependencyCheckUploadService {
                 }
                 Element vulnDescription = vulns.nextElementSibling().select("pre").first();
                 Element cvsScore = vulns.nextElementSibling().select("ul>li:contains(Base Score)").get(1);
-                this.saveVuln(vulnCVE.text(),cvsScore.text(),vulnDescription.text(),softwarePacket,codeProject);
+                try {
+                    this.saveVuln(vulnCVE.text(), cvsScore.text(), vulnDescription.text(), softwarePacket, codeProject);
+                } catch (NullPointerException npp){
+                    log.warn("nullpointer");
+                }
             }
         }
     }

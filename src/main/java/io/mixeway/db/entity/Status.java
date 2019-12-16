@@ -1,5 +1,6 @@
 package io.mixeway.db.entity;
 
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -9,6 +10,7 @@ import javax.persistence.*;
 @EntityScan
 @Table(name = "status")
 @EntityListeners(AuditingEntityListener.class)
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Status {
     private Long id;
     private String name;

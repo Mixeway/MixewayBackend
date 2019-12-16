@@ -57,7 +57,7 @@ public class CodeScanService {
 
     public ResponseEntity<List<CodeVuln>> getResultsForProject(long projectId, String groupName, String projectName){
         Optional<Project> project = projectRepository.findById(projectId);
-        if (codeAccessVerifier.verifyPermissions(projectId,groupName,projectName).getValid() && project.isPresent()){
+        if (codeAccessVerifier.verifyPermissions(projectId,groupName,projectName,false).getValid() && project.isPresent()){
             CodeProject cp = codeProjectRepository.findByCodeGroupAndName(codeGroupRepository
                     .findByProjectAndName(project.get(),groupName).orElse(null),projectName).orElse(null);
             List<CodeVuln> codeVulns = codeVulnRepository.findByCodeProjectAndAnalysisNot(cp,"Not an Issue");
@@ -71,7 +71,7 @@ public class CodeScanService {
     }
     public ResponseEntity<List<CodeVuln>> getResultsForGroup(long projectId, String groupName){
 
-        if (codeAccessVerifier.verifyPermissions(projectId,groupName,null).getValid()){
+        if (codeAccessVerifier.verifyPermissions(projectId,groupName,null, false).getValid()){
             CodeGroup cg = codeGroupRepository
                     .findByProjectAndName(projectRepository.findById(projectId).orElse(null),groupName).orElse(null);
             List<CodeVuln> codeVulns = codeVulnRepository.findByCodeGroupAndAnalysisNot(cg,"Not an Issue");

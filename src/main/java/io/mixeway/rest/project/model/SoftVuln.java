@@ -3,7 +3,9 @@ package io.mixeway.rest.project.model;
 import io.mixeway.db.entity.CodeProject;
 import io.mixeway.db.entity.SoftwarePacketVulnerability;
 
-public class SoftVuln {
+import java.io.Serializable;
+
+public class SoftVuln implements Serializable {
     CodeProject codeProject;
     SoftwarePacketVulnerability softwarePacketVulnerability;
 

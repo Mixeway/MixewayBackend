@@ -33,7 +33,7 @@ public class OpenVasSocketHelper {
     public OpenVasSocketHelper(URI url) {
         mUrl = url;
 
-        String protocol = mUrl.getScheme();
+        //String protocol = mUrl.getScheme();
     }
 
     /**
@@ -47,9 +47,6 @@ public class OpenVasSocketHelper {
      * Establishes the connection.
      */
     public void connect() throws java.io.IOException {
-        String host = mUrl.getHost();
-        String path = mUrl.getPath();
-
         mSocket = createSocket();
         if (mSocket != null) {
 
@@ -66,7 +63,7 @@ public class OpenVasSocketHelper {
     private Socket createSocket() {
         SocketFactory factory = SSLSocketFactory.getDefault();
         try {
-            return factory.createSocket(mUrl.toString().split(":")[0], Integer.parseInt(mUrl.toString().split(":")[1]));
+            return factory.createSocket(mUrl.getHost(), mUrl.getPort());
         } catch (IOException ce){
             return null;
         }
@@ -121,7 +118,7 @@ public class OpenVasSocketHelper {
 
     public static String processRequest(String request, Scanner scanner) {
         try {
-            OpenVasSocketHelper ws = new OpenVasSocketHelper(new URI(scanner.getApiUrl()));
+            OpenVasSocketHelper ws = new OpenVasSocketHelper(new URI(scanner.getApiUrl().trim()));
             ws.connect();
             ws.send(request);
             String res = ws.recv();

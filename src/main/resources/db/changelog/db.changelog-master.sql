@@ -800,3 +800,6 @@ alter table bugtracker add column proxies_id int references proxies(id);
 
 --changeset siewer:154
 insert into scannertype (name) values ('OpenVAS Socket');
+
+--changeset siewer:155
+alter table bugtracker drop constraint bugtracker_project_id_fkey, add constraint bugtracker_project_id_fkey foreign key ("project_id") references project(id) on delete cascade;

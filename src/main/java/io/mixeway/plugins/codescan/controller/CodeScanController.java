@@ -40,7 +40,7 @@ public class CodeScanController {
     public ResponseEntity<Status> createScanForProject(@PathVariable(value = "projectId") Long id,
                                                        @PathVariable(value="groupName") String groupName,
                                                        @PathVariable(value="projectName") String projectName) throws IOException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException {
-        SASTRequestVerify sastRequestVerify = codeAccessVerifier.verifyPermissions(id,groupName,projectName);
+        SASTRequestVerify sastRequestVerify = codeAccessVerifier.verifyPermissions(id,groupName,projectName,false);
         if (sastRequestVerify.getValid()){
             for(CodeScanClient codeScanClient : codeScanClients){
                 if (codeScanClient.canProcessRequest(sastRequestVerify.getCg())){

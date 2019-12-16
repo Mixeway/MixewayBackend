@@ -34,7 +34,7 @@ public class MvnDependencyCheckUploadController {
                                                      @PathVariable(value = "codeProject") String codeProject,
                                                      @PathVariable(value = "projectId") Long id,
                                                      @RequestParam("file") MultipartFile file) throws IOException {
-        SASTRequestVerify sastRequestVerify = codeAccessVerifier.verifyPermissions(id,codeGroup,codeProject);
+        SASTRequestVerify sastRequestVerify = codeAccessVerifier.verifyPermissions(id,codeGroup,codeProject,true);
         if (sastRequestVerify.getValid()) {
             return mvnDependencyCheckUploadService.mvnDependencyCheck(codeGroup, codeProject, id, file);
         } else {
