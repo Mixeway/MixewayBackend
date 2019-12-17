@@ -355,6 +355,7 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 					nessusScanRepository.save(ns);
 					log.warn("Nessus scan completed for {} but no hosts found", ns.getProject().getName());
 				}
+				log.info("Scan for {} is done",ns.getProject().getName());
 				return true;
 			}
 			else return false;
@@ -436,7 +437,7 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 		}
 		ns.setRunning(false);
 		nessusScanRepository.save(ns);
-		log.debug("Nessus - successfully loaded vulnerabilities for {}",ns.getProject().getName());
+		log.info("Nessus - successfully loaded vulnerabilities for {}",ns.getProject().getName());
 	}
 
 
