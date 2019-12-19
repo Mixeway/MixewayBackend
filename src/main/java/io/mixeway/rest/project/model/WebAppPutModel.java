@@ -3,14 +3,14 @@ package io.mixeway.rest.project.model;
 public class WebAppPutModel {
     private String webAppUrl;
     private String webAppHeaders;
-    private boolean isPublic;
+    private boolean scanPublic;
 
-    public boolean isPublic() {
-        return isPublic;
+    public boolean isScanPublic() {
+        return scanPublic;
     }
 
-    public void setPublic(boolean aPublic) {
-        isPublic = aPublic;
+    public void setScanPublic(boolean scanPublic) {
+        this.scanPublic = scanPublic;
     }
 
     public String getWebAppUrl() {

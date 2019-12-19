@@ -134,7 +134,7 @@ public class WebAppService {
             WebApp webApp = new WebApp();
             webApp.setUrl(webAppPutMode.getWebAppUrl());
             webApp.setRunning(false);
-            webApp.setPublicscan(webAppPutMode.isPublic());
+            webApp.setPublicscan(webAppPutMode.isScanPublic());
             webApp.setProject(projectRepository.getOne(id));
             webAppRepository.save(webApp);
             for (String header : webAppPutMode.getWebAppHeaders().split(",")) {
