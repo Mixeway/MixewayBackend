@@ -85,7 +85,7 @@ public class NetworkScanScheduler {
 		}
 	}
 	//Every 12h
-	@Scheduled(cron="0 0 10,21 * * *" )
+	@Scheduled(cron="#{@getNetworkCronExpresion}" )
 	public void runScheduledTest() throws JSONException, KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, CertificateException, IOException {
 		log.info("Starting Scheduled task for automatic test");
 		List<Project> autoInfraProjectList = projectRepository.findByAutoInfraScan(true);

@@ -146,7 +146,7 @@ public class WebAppScheduler {
 
 	}
 
-	@Scheduled(cron="0 55 1 * * FRI" )
+	@Scheduled(cron="#{@getWebAppCronExpresion}" )
 	public void startAutomaticWebAppScans(){
 		//List<WebApp> webApps = webAppRepository.findByAutoStart(true);
 		List<Project> projects = projectRepository.findByAutoWebAppScan(true);

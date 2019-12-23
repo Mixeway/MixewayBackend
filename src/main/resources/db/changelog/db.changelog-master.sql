@@ -803,3 +803,13 @@ insert into scannertype (name) values ('OpenVAS Socket');
 
 --changeset siewer:155
 alter table bugtracker drop constraint bugtracker_project_id_fkey, add constraint bugtracker_project_id_fkey foreign key ("project_id") references project(id) on delete cascade;
+
+--changeset siewer:156
+alter table settings add column infraautocron text;
+alter table settings add column webappautocron text;
+alter table settings add column codeautocron text;
+
+--changeset siewer:157
+update settings set infraautocron='0 0 10,21 * * *';
+update settings set webappautocron='0 55 1 * * FRI';
+update settings set codeautocron='0 40 23 * * *';

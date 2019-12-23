@@ -1,5 +1,6 @@
 package io.mixeway.rest.admin.controller;
 
+import io.mixeway.rest.admin.model.CronSettings;
 import io.mixeway.rest.admin.model.SmtpSettingsModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -71,4 +72,20 @@ public class AdminSettingsRestController {
     public ResponseEntity<Status> deleteApiKey( Principal principal)  {
         return adminSettingsRestService.deleteApiKey(principal.getName());
     }
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PatchMapping(value = "/settings/infracron")
+    public ResponseEntity<Status> changeInfraCron( Principal principal, CronSettings cronSettings)  {
+        return adminSettingsRestService.changeInfraCron(principal.getName(), cronSettings);
+    }
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PatchMapping(value = "/settings/webappcron")
+    public ResponseEntity<Status> changeWebAppCron( Principal principal, CronSettings cronSettings)  {
+        return adminSettingsRestService.changeWebAppCron(principal.getName(), cronSettings);
+    }
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PatchMapping(value = "/settings/codecron")
+    public ResponseEntity<Status> changeCodeCron( Principal principal, CronSettings cronSettings)  {
+        return adminSettingsRestService.changeCodeCron(principal.getName(), cronSettings);
+    }
+
 }
