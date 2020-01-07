@@ -68,7 +68,7 @@ public class NetworkScanScheduler {
 							networkScanClient.loadVulnerabilities(ns);
 							ns.setRunning(false);
 							nessusScanRepository.save(ns);
-							scanHelper.updateInterfaceState(ns,false);
+							//scanHelper.updateInterfaceState(ns,false);
 							log.info("Loaded result for {} scan of {}",ns.getNessus().getScannerType().getName(), ns.getProject().getName());
 							if (ns.getNessus().getRfwUrl() != null) {
 								networkScanService.deleteRulsFromRfw(ns);

@@ -447,6 +447,7 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 			i.getVulns().clear();
 			List<InfrastructureVuln> tmpOldVulns = infrastructureVulnRepository.findByIntf(i);
 			infrastructureVulnRepository.deleteByIntf(i);
+			i.setScanRunning(false);
 			interfaceRepository.save(i);
 			RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(ns.getNessus());
 			HttpEntity<String> entity = new HttpEntity<>(prepareAuthHeaderForNessus(ns.getNessus()));
@@ -458,6 +459,7 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 					JSONObject vuln = vulnArray.getJSONObject(k);
 					createVulnerability(vuln, ns, i, tmpOldVulns);
 				}
+				log.info("Get {} vulns for {}", vulnArray.length(),ns.getProject().getName());
 				createServicesForInterface(i);
 			} else {
 				log.error("Getting vulns {} failed return code is: {}", ns.getNessus().getApiUrl(), response.getStatusCode().toString());
