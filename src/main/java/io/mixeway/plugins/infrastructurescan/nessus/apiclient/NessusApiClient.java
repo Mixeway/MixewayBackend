@@ -487,8 +487,8 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 		
 	}
 
-
-	private void createVuln(JSONObject vuln, Interface i, String body,String pluginName,List<InfrastructureVuln> oldVulns) throws JSONException {
+	@Transactional(propagation = Propagation.REQUIRES_NEW)
+	void createVuln(JSONObject vuln, Interface i, String body, String pluginName, List<InfrastructureVuln> oldVulns) throws JSONException {
 		JSONObject bodyJ = new JSONObject(body);
 		try {
 			JSONArray outputs = bodyJ.getJSONArray(Constants.NESSUS_OUTPUTS);
@@ -541,9 +541,8 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 		} catch (JSONException ex) {
 			log.error("Exception for {} {} {}",i.getPrivateip(),i.getHostid(),ex.getLocalizedMessage());
 		}
-		
+		log.info("Vuln created for {}", i.getPrivateip());
 	}
-	@Transactional(propagation = Propagation.REQUIRES_NEW)
 	void createServicesForInterface(Interface i){
 		serviceRepository.updateServiceSetStatusNullForInterface(i.getId());
 		List<Service> services = serviceRepository.findByAnInterface(i);
