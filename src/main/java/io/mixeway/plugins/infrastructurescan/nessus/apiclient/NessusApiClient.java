@@ -33,8 +33,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.vault.core.VaultOperations;
 import org.springframework.vault.support.VaultResponseSupport;
 import org.springframework.web.client.HttpClientErrorException;
@@ -211,16 +209,14 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 	}
 
 	//TODO: String to objectModel maping
-	private boolean createScan(NessusScan nessusScan) throws JSONException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+	private void createScan(NessusScan nessusScan) throws JSONException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
 		RestTemplate restTemplate =secureRestTemplate.prepareClientWithCertificate(nessusScan.getNessus());
 		ResponseEntity<String> response = restTemplate.exchange(nessusScan.getNessus().getApiUrl() + "/scans", HttpMethod.POST, prepareEntityForCreateUpdate(nessusScan), String.class);
 		if (response.getStatusCode() == HttpStatus.OK) {
 			handleCreateScanResponse(nessusScan, response.getBody());
-			return true;
 		}
 		else {
 			log.error("Error during Scan creation for {} and {} - {}",nessusScan.getNessus().getApiUrl(),nessusScan.getProject().getName(),response.getStatusCode().toString());
-			return false;
 		}
 	}
 	//TODO: String to objectModel maping
@@ -230,25 +226,22 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 		return new HttpEntity<>(new Gson().toJson(prepareCreateScanRequest(nessusScan)), headers);
 	}
 	//TODO: String to objectModel maping
-	private boolean updateScan(NessusScan nessusScan) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+	private void updateScan(NessusScan nessusScan) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
 		try {
 			RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(nessusScan.getNessus());
 			ResponseEntity<String> response = restTemplate.exchange(nessusScan.getNessus().getApiUrl() + "/scans/" + nessusScan.getScanId(), HttpMethod.PUT,
 					prepareEntityForCreateUpdate(nessusScan), String.class);
 			if (response.getStatusCode() == HttpStatus.OK) {
 				log.info("Nessus Scan for {} is updated", nessusScan.getProject().getName());
-				return true;
 			} else {
 				log.error("Error during Scan update for {} and {} - {}", nessusScan.getNessus().getApiUrl(), nessusScan.getProject().getName(), response.getStatusCode().toString());
-				return false;
 			}
 		} catch (HttpClientErrorException hcee){
 			log.warn("Error during scan update for {} code {} msg {}", nessusScan.getProject().getName(),hcee.getStatusCode(),hcee.getResponseBodyAsString());
-			return false;
 		}
 	}
 	//TODO: String to objectModel maping
-	private boolean launchScan(NessusScan nessusScan) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException,
+	private void launchScan(NessusScan nessusScan) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException,
 			KeyManagementException, KeyStoreException, IOException {
 		try {
 			RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(nessusScan.getNessus());
@@ -262,14 +255,11 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 			if (response.getStatusCode() == HttpStatus.OK) {
 				nessusScan.setRunning(true);
 				nessusScanRepository.save(nessusScan);
-				return true;
 			} else {
 				log.error("Error during Scan Launching for {} and {} - {}", nessusScan.getNessus().getApiUrl(), nessusScan.getProject().getName(), response.getStatusCode().toString());
-				return false;
 			}
 		} catch (HttpClientErrorException e){
 			log.error("Error during Scan Launching for {} and {}", nessusScan.getNessus().getApiUrl(), nessusScan.getProject().getName());
-			return false;
 		}
 	}
 	private void putRulesOnRfw(NessusScan nessusScan)throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
@@ -456,10 +446,8 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 				JSONArray vulnArray = new JSONObject(Objects.requireNonNull(response.getBody())).getJSONArray(Constants.NESSUS_VULNERABILITIES);
 				for (int k = 0; k < vulnArray.length(); k++) {
 					JSONObject vuln = vulnArray.getJSONObject(k);
-					log.info("Starting to get vulns for  {}", i.getPrivateip());
 					createVulnerability(vuln, ns, i, tmpOldVulns);
 				}
-				log.info("Get {} vulns for {}", vulnArray.length(),ns.getProject().getName());
 				infrastructureVulnRepository.flush();
 				interfaceRepository.flush();
 				assetRepository.flush();
@@ -490,7 +478,7 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 		
 	}
 
-	void createVuln(JSONObject vuln, Interface i, String body, String pluginName, List<InfrastructureVuln> oldVulns) throws JSONException {
+	private void createVuln(JSONObject vuln, Interface i, String body, String pluginName, List<InfrastructureVuln> oldVulns) throws JSONException {
 		JSONObject bodyJ = new JSONObject(body);
 		try {
 			JSONArray outputs = bodyJ.getJSONArray(Constants.NESSUS_OUTPUTS);
@@ -545,19 +533,11 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 		}
 		log.info("Vuln created for {}", i.getPrivateip());
 	}
-	void createServicesForInterface(Interface i){
+	private void createServicesForInterface(Interface i){
 
-		//serviceRepository.updateServiceSetStatusNullForInterface(i.getId());
+		serviceRepository.updateServiceSetStatusNullForInterface(i.getId());
 		List<Service> services = serviceRepository.findByAnInterface(i);
-		log.info("Starting createServicesForInterface for {}",i.getPrivateip());
-		for (Service s : services){
-			s.setStatus(null);
-			serviceRepository.save(s);
-		}
-		List<String> portsFromExistingVulns = infrastructureVulnRepository.getPortsFromInfraVulnForInterface(i.getId());
-		log.info("Starting again.. createServicesForInterface for {}",i.getPrivateip());
-		for (String port : portsFromExistingVulns){
-			log.info("going through port {}",port);
+		for (String port : infrastructureVulnRepository.getPortsFromInfraVulnForInterface(i.getId())){
 			String[] splitedPort = port.split("/");
 			Optional<Service> optionalService = services.stream().filter(s -> s.getAppProto().equals(splitedPort[2].trim()) && s.getNetProto().equals(splitedPort[1].trim()) &&
 					s.getPort()==Integer.parseInt(splitedPort[0].trim())).findFirst();
@@ -572,10 +552,8 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 				newService.setNetProto(splitedPort[1].trim());
 				newService.setAppProto(splitedPort[2].trim());
 				serviceRepository.save(newService);
-				log.info("saved new service");
 			}
 		}
-		log.info("Done createServicesForInterface for {}",i.getPrivateip());
 		serviceRepository.removeOldServices(i.getId());
 	}
 	
