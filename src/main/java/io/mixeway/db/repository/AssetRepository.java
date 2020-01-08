@@ -42,5 +42,7 @@ public interface AssetRepository extends JpaRepository<Asset,Long> {
 	@Query(value="update asset set active = false where routingdomain_id =?1", nativeQuery =true )
 	void disactivateAssetByRoutingDomain(Long routingdomain_id);
 	List<Asset> findByRequestId(String requestId);
+	@Query(value="select * from asset where project_id=?1",nativeQuery=true)
+	List<Asset> getAssetForProjectByNativeQuery(Long project_id);
 
 }

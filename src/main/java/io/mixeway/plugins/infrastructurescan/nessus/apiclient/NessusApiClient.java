@@ -373,7 +373,7 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 		JSONArray hosts = response.getJSONArray(Constants.NESSUS_HOSTS);
 		for (int i = 0; i < hosts.length(); i++) {
 			JSONObject host = hosts.getJSONObject(i);
-			List<Asset> assets = assetRepository.findByProject(ns.getProject());
+			List<Asset> assets = assetRepository.getAssetForProjectByNativeQuery(ns.getProject().getId());
 			Interface intf = findInterfaceForIp(host.getString(Constants.NESSUS_HOSTNAME),assets);
 			if (intf == null){
 				intf = createAssetAndIntf(ns, host.getString(Constants.NESSUS_HOSTNAME));
