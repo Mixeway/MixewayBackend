@@ -553,8 +553,9 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 			s.setStatus(null);
 			serviceRepository.save(s);
 		}
+		List<String> portsFromExistingVulns = infrastructureVulnRepository.getPortsFromInfraVulnForInterface(i.getId());
 		log.info("Starting again.. createServicesForInterface for {}",i.getPrivateip());
-		for (String port : infrastructureVulnRepository.getPortsFromInfraVulnForInterface(i.getId())){
+		for (String port : portsFromExistingVulns){
 			log.info("going through port {}",port);
 			String[] splitedPort = port.split("/");
 			Optional<Service> optionalService = services.stream().filter(s -> s.getAppProto().equals(splitedPort[2].trim()) && s.getNetProto().equals(splitedPort[1].trim()) &&
