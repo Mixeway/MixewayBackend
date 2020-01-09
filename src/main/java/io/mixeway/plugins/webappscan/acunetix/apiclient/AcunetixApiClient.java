@@ -32,6 +32,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.vault.core.VaultOperations;
 import org.springframework.vault.support.VaultResponseSupport;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -285,49 +286,54 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 	@Override
 	public Boolean loadVulnerabilities(io.mixeway.db.entity.Scanner scanner, WebApp webApp, String paginator, List<WebAppVuln> oldVulns) throws Exception {
 		if (scanner.getStatus()) {
-			RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(null);
-			HttpHeaders headers = prepareAuthHeader(scanner);
-			HttpEntity<String> entity = new HttpEntity<>(headers);
-			String coursor = "";
-			if (paginator != null)
-				coursor = "&c="+paginator;
-			ResponseEntity<String> response = restTemplate.exchange(scanner.getApiUrl() + "/api/v1/vulnerabilities?q=target_id:"+webApp.getTargetId()+coursor, HttpMethod.GET, entity, String.class);
-			if (response.getStatusCode() == HttpStatus.OK) {
-				JSONObject responseJson = new JSONObject(Objects.requireNonNull(response.getBody()));
-				JSONArray vulnArray = responseJson.getJSONArray(Constants.ACUNETIX_VULN);
-				for (int i = 0; i < vulnArray.length(); i++) {
-					JSONObject vulnObj = vulnArray.getJSONObject(i);
-					WebAppVuln vuln = new WebAppVuln();
-					if ( webApp.getCodeGroup() !=null && webApp.getCodeProject() !=null){
-						vuln.setCodeProject(webApp.getCodeProject());
+			try {
+				RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(null);
+				HttpHeaders headers = prepareAuthHeader(scanner);
+				HttpEntity<String> entity = new HttpEntity<>(headers);
+				String coursor = "";
+				if (paginator != null)
+					coursor = "&c=" + paginator;
+				ResponseEntity<String> response = restTemplate.exchange(scanner.getApiUrl() + "/api/v1/vulnerabilities?q=target_id:" + webApp.getTargetId() + coursor, HttpMethod.GET, entity, String.class);
+				if (response.getStatusCode() == HttpStatus.OK) {
+					JSONObject responseJson = new JSONObject(Objects.requireNonNull(response.getBody()));
+					JSONArray vulnArray = responseJson.getJSONArray(Constants.ACUNETIX_VULN);
+					for (int i = 0; i < vulnArray.length(); i++) {
+						JSONObject vulnObj = vulnArray.getJSONObject(i);
+						WebAppVuln vuln = new WebAppVuln();
+						if (webApp.getCodeGroup() != null && webApp.getCodeProject() != null) {
+							vuln.setCodeProject(webApp.getCodeProject());
+						}
+						vuln.setName(vulnObj.getString(Constants.ACUNETIX_VULN_NAME));
+						vuln.setLocation(vulnObj.getString(Constants.ACUNETIX_VULN_LOCATION));
+						vuln.setSeverity(AcunetixSeverity.resolveSeverity(vulnObj.getInt(Constants.ACUNETIX_SEVERITY)));
+						vuln.setWebApp(webApp);
+						webAppVulnRepository.save(vuln);
+						vuln = loadVulnDetails(vuln, scanner, vulnObj.getString(Constants.ACUNETIX_VULN_ID));
+						WebAppVuln finalVuln = vuln;
+						Optional<WebAppVuln> oldVulnExist = oldVulns.stream().filter(v -> v.getName().equals(finalVuln.getName()) && v.getSeverity().equals(finalVuln.getSeverity()) &&
+								v.getLocation().equals(finalVuln.getLocation()) && v.getDescription().equals(finalVuln.getDescription())).findFirst();
+						if (oldVulnExist.isPresent()) {
+							vuln.setStatus(statusRepository.findByName(Constants.STATUS_EXISTING));
+							vuln.setTicketId(oldVulnExist.get().getTicketId());
+						} else {
+							vuln.setStatus(statusRepository.findByName(Constants.STATUS_NEW));
+							//TODO JIRA CREATION
+							//jiraService.processRequest(webAppVulnRepository, Optional.of(vuln),webApp.getProject(),Constants.VULN_JIRA_WEBAPP,Constants.JIRA_AUTOCREATOR_LOG,false);
+						}
+
 					}
-					vuln.setName(vulnObj.getString(Constants.ACUNETIX_VULN_NAME));
-					vuln.setLocation(vulnObj.getString(Constants.ACUNETIX_VULN_LOCATION));
-					vuln.setSeverity(AcunetixSeverity.resolveSeverity(vulnObj.getInt(Constants.ACUNETIX_SEVERITY)));
-					vuln.setWebApp(webApp);
-	    			webAppVulnRepository.save(vuln);
-	    			vuln = loadVulnDetails(vuln, scanner, vulnObj.getString(Constants.ACUNETIX_VULN_ID));
-					WebAppVuln finalVuln = vuln;
-					Optional<WebAppVuln> oldVulnExist = oldVulns.stream().filter(v -> v.getName().equals(finalVuln.getName()) && v.getSeverity().equals(finalVuln.getSeverity()) &&
-							v.getLocation().equals(finalVuln.getLocation()) && v.getDescription().equals(finalVuln.getDescription())).findFirst();
-					if (oldVulnExist.isPresent()){
-						vuln.setStatus(statusRepository.findByName(Constants.STATUS_EXISTING));
-						vuln.setTicketId(oldVulnExist.get().getTicketId());
-					} else {
-						vuln.setStatus(statusRepository.findByName(Constants.STATUS_NEW));
-						//TODO JIRA CREATION
-						//jiraService.processRequest(webAppVulnRepository, Optional.of(vuln),webApp.getProject(),Constants.VULN_JIRA_WEBAPP,Constants.JIRA_AUTOCREATOR_LOG,false);
+					if (responseJson.getJSONObject(Constants.ACUNETIX_PAGINATION).getString(Constants.ACUNETIX_NETX_CURSOR) != null) {
+						loadVulnerabilities(scanner, webApp, responseJson.getJSONObject(Constants.ACUNETIX_PAGINATION).getString(Constants.ACUNETIX_NETX_CURSOR), oldVulns);
 					}
-	    			
+					log.info("WebApp Scan - Successfully loaded vulns for project {} - target {} ", webApp.getProject().getName(), webApp.getUrl());
+					this.deleteTarget(scanner, webApp);
+					return true;
+				} else {
+					log.error("Unable to load vulns info for {}", webApp.getUrl());
+					return false;
 				}
-				if (responseJson.getJSONObject(Constants.ACUNETIX_PAGINATION).getString(Constants.ACUNETIX_NETX_CURSOR) != null) {
-    				loadVulnerabilities(scanner, webApp, responseJson.getJSONObject(Constants.ACUNETIX_PAGINATION).getString(Constants.ACUNETIX_NETX_CURSOR),oldVulns );
-    			}
-				log.info("WebApp Scan - Successfully loaded vulns for project {} - target {} ",webApp.getProject().getName(),webApp.getUrl());
-				this.deleteTarget(scanner,webApp);
-				return true;
-			} else {
-				log.error("Unable to load vulns info for {}",webApp.getUrl());
+			} catch (HttpServerErrorException e) {
+				log.error("Error trying to load vulnerabilities using url {} with msg {}","/api/v1/vulnerabilities?q=target_id:" + webApp.getTargetId(), e.getResponseBodyAsString());
 				return false;
 			}
 		} else
