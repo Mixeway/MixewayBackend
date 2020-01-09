@@ -229,6 +229,13 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 	@Transactional
 	public void runScan(WebApp webApp, io.mixeway.db.entity.Scanner scanner) throws Exception {
 		try {
+			createTarget(scanner,webApp);
+			if (webApp.getHeaders().size() > 0){
+				createHeadersForTarget(scanner, webApp);
+			}
+			if (webApp.getWebAppCookies().size() > 0){
+				createCookiesorTarget(scanner,webApp);
+			}
 			if (scanner.getStatus()) {
 				RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(null);
 				HttpHeaders headers = prepareAuthHeader(scanner);
