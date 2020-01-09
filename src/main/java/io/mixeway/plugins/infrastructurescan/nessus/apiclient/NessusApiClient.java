@@ -531,7 +531,6 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 		} catch (JSONException ex) {
 			log.error("Exception for {} {} {}",i.getPrivateip(),i.getHostid(),ex.getLocalizedMessage());
 		}
-		log.info("Vuln created for {}", i.getPrivateip());
 	}
 	private void createServicesForInterface(Interface i){
 
