@@ -146,10 +146,11 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 	public void createTarget(io.mixeway.db.entity.Scanner scanner, WebApp webApp) {
 		try {
 			if (scanner.getStatus()) {
+				String createTargetBody = new Gson().toJson(new CreateTarget(webApp));
 				RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(null);
 				HttpHeaders headers = prepareAuthHeader(scanner);
 				headers.set("Content-Type", "application/json");
-				HttpEntity<String> entity = new HttpEntity<>(new Gson().toJson(new CreateTarget(webApp)),headers);
+				HttpEntity<String> entity = new HttpEntity<>(createTargetBody,headers);
 				ResponseEntity<String> response = restTemplate.exchange(scanner.getApiUrl() + "/api/v1/targets", HttpMethod.POST, entity, String.class);
 				if (response.getStatusCode() == HttpStatus.CREATED) {
 					JSONObject responseObject = new JSONObject(Objects.requireNonNull(response.getBody()));
@@ -157,7 +158,7 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 					webAppRepository.save(webApp);
 				}
 				else
-					log.error("Failed target creation for {}",webApp.getUrl());
+					log.error("Failed target creation for {} with body of {}",webApp.getUrl(),createTargetBody);
 			} else
 				throw new Exception("Scanner Not initialized");
 		} catch (HttpClientErrorException ex) {
