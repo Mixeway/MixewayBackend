@@ -244,7 +244,7 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 			} else
 				throw new Exception("Scanner Not initialized");
 		} catch (HttpClientErrorException ex){
-			log.error("Response from acunetix /api/v1/scans {} for url {}", ex.getStatusCode(),webApp.getUrl());
+			log.error("Response from acunetix /api/v1/scans {} for url {} is {}", ex.getStatusCode(),webApp.getUrl(), ex.getResponseBodyAsString());
 		} catch (DataIntegrityViolationException dve){
 			log.error("EXception occured during runScan");
 
