@@ -138,6 +138,8 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 			headers.set("Content-Type", "application/json");
 			HttpEntity<String> entity = new HttpEntity<>(headers);
 			ResponseEntity<String> response = restTemplate.exchange(scanner.getApiUrl() + "/api/v1/targets", HttpMethod.GET, entity, String.class);
+			scanner.setStatus(true);
+			scannerRepository.save(scanner);
 			return response.getStatusCode() == HttpStatus.OK;
 		} else
 			throw new Exception("Scanner already initialized ");
@@ -167,6 +169,7 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 		} catch (PSQLException ex){
 			log.error("PSQL Exception for webapp {}",webApp.getUrl());
 		} catch (Exception dve){
+			dve.printStackTrace();
 			log.error("EXception occured during webapp update");
 
 		}
@@ -293,22 +296,19 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 				String coursor = "";
 				if (paginator != null)
 					coursor = "&c=" + paginator;
-				ResponseEntity<String> response = restTemplate.exchange(scanner.getApiUrl() + "/api/v1/vulnerabilities?q=target_id:" + webApp.getTargetId() + coursor, HttpMethod.GET, entity, String.class);
+				ResponseEntity<LoadVlnerabilitiesModel> response = restTemplate.exchange(scanner.getApiUrl() + "/api/v1/vulnerabilities?q=target_id:" + webApp.getTargetId() + coursor, HttpMethod.GET, entity, LoadVlnerabilitiesModel.class);
 				if (response.getStatusCode() == HttpStatus.OK) {
-					JSONObject responseJson = new JSONObject(Objects.requireNonNull(response.getBody()));
-					JSONArray vulnArray = responseJson.getJSONArray(Constants.ACUNETIX_VULN);
-					for (int i = 0; i < vulnArray.length(); i++) {
-						JSONObject vulnObj = vulnArray.getJSONObject(i);
+					for (VulnerabilityModel vulnFromAcu : response.getBody().getVulnerabilities()){
 						WebAppVuln vuln = new WebAppVuln();
 						if (webApp.getCodeGroup() != null && webApp.getCodeProject() != null) {
 							vuln.setCodeProject(webApp.getCodeProject());
 						}
-						vuln.setName(vulnObj.getString(Constants.ACUNETIX_VULN_NAME));
-						vuln.setLocation(vulnObj.getString(Constants.ACUNETIX_VULN_LOCATION));
-						vuln.setSeverity(AcunetixSeverity.resolveSeverity(vulnObj.getInt(Constants.ACUNETIX_SEVERITY)));
+						vuln.setName(vulnFromAcu.getVt_name());
+						vuln.setLocation(vulnFromAcu.getAffects_url());
+						vuln.setSeverity(AcunetixSeverity.resolveSeverity(vulnFromAcu.getSeverity()));
 						vuln.setWebApp(webApp);
 						webAppVulnRepository.save(vuln);
-						vuln = loadVulnDetails(vuln, scanner, vulnObj.getString(Constants.ACUNETIX_VULN_ID));
+						vuln = loadVulnDetails(vuln, scanner, vulnFromAcu.getVt_id());
 						WebAppVuln finalVuln = vuln;
 						Optional<WebAppVuln> oldVulnExist = oldVulns.stream().filter(v -> v.getName().equals(finalVuln.getName()) && v.getSeverity().equals(finalVuln.getSeverity()) &&
 								v.getLocation().equals(finalVuln.getLocation()) && v.getDescription().equals(finalVuln.getDescription())).findFirst();
@@ -322,11 +322,11 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 						}
 
 					}
-					if (responseJson.getJSONObject(Constants.ACUNETIX_PAGINATION).getString(Constants.ACUNETIX_NETX_CURSOR) != null) {
-						loadVulnerabilities(scanner, webApp, responseJson.getJSONObject(Constants.ACUNETIX_PAGINATION).getString(Constants.ACUNETIX_NETX_CURSOR), oldVulns);
+					if (response.getBody().getPagination().getNext_cursor() != null) {
+						loadVulnerabilities(scanner, webApp,response.getBody().getPagination().getNext_cursor(), oldVulns);
 					}
 					log.info("WebApp Scan - Successfully loaded vulns for project {} - target {} ", webApp.getProject().getName(), webApp.getUrl());
-					this.deleteTarget(scanner, webApp);
+					//this.deleteTarget(scanner, webApp);
 					return true;
 				} else {
 					log.error("Unable to load vulns info for {}", webApp.getUrl());
@@ -335,9 +335,12 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 			} catch (HttpServerErrorException e) {
 				log.error("Error trying to load vulnerabilities using url {} with msg {}","/api/v1/vulnerabilities?q=target_id:" + webApp.getTargetId(), e.getResponseBodyAsString());
 				return false;
+			} catch (Exception e){
+				e.printStackTrace();
 			}
 		} else
 			throw new Exception("Scanner Not initialized");
+		return false;
 	}
 
 	@Override
