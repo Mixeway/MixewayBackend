@@ -239,6 +239,10 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 			if (webApp.getWebAppCookies().size() > 0){
 				createCookiesorTarget(scanner,webApp);
 			}
+			//TODO to routingDomian instead of PublicScan
+			if (webApp.getPublicscan()){
+				createProxyForWebApp(scanner,webApp);
+			}
 			if (scanner.getStatus()) {
 				RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(null);
 				HttpHeaders headers = prepareAuthHeader(scanner);
