@@ -307,7 +307,7 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 						vuln.setSeverity(AcunetixSeverity.resolveSeverity(vulnFromAcu.getSeverity()));
 						vuln.setWebApp(webApp);
 						webAppVulnRepository.save(vuln);
-						vuln = loadVulnDetails(vuln, scanner, vulnFromAcu.getVt_id());
+						vuln = loadVulnDetails(vuln, scanner, vulnFromAcu.getVuln_id());
 						WebAppVuln finalVuln = vuln;
 						Optional<WebAppVuln> oldVulnExist = oldVulns.stream().filter(v -> v.getName().equals(finalVuln.getName()) && v.getSeverity().equals(finalVuln.getSeverity()) &&
 								v.getLocation().equals(finalVuln.getLocation()) && v.getDescription().equals(finalVuln.getDescription())).findFirst();
@@ -326,6 +326,8 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 					}
 					log.info("WebApp Scan - Successfully loaded vulns for project {} - target {} ", webApp.getProject().getName(), webApp.getUrl());
 					this.deleteTarget(scanner, webApp);
+					webApp.setLastExecuted(sdf.format(new Date()));
+					webAppRepository.save(webApp);
 					return true;
 				} else {
 					log.error("Unable to load vulns info for {}", webApp.getUrl());
