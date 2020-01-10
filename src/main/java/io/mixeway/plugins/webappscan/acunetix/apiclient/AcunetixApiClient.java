@@ -169,8 +169,7 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 		} catch (PSQLException ex){
 			log.error("PSQL Exception for webapp {}",webApp.getUrl());
 		} catch (Exception dve){
-			dve.printStackTrace();
-			log.error("EXception occured during webapp update");
+			log.error("Exception occured during webapp update");
 
 		}
 	}
@@ -255,7 +254,7 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 			} else
 				throw new Exception("Scanner Not initialized");
 		} catch (HttpClientErrorException ex){
-			log.error("Response from acunetix /api/v1/scans {} for url {} is {}", ex.getStatusCode(),webApp.getUrl(), ex.getResponseBodyAsString());
+			log.error("Response from acunetix /api/v1/scans {} for url {}", ex.getStatusCode(),webApp.getUrl());
 		} catch (DataIntegrityViolationException dve){
 			log.error("EXception occured during runScan");
 
@@ -326,7 +325,7 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 						loadVulnerabilities(scanner, webApp,response.getBody().getPagination().getNext_cursor(), oldVulns);
 					}
 					log.info("WebApp Scan - Successfully loaded vulns for project {} - target {} ", webApp.getProject().getName(), webApp.getUrl());
-					//this.deleteTarget(scanner, webApp);
+					this.deleteTarget(scanner, webApp);
 					return true;
 				} else {
 					log.error("Unable to load vulns info for {}", webApp.getUrl());
@@ -335,12 +334,9 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 			} catch (HttpServerErrorException e) {
 				log.error("Error trying to load vulnerabilities using url {} with msg {}","/api/v1/vulnerabilities?q=target_id:" + webApp.getTargetId(), e.getResponseBodyAsString());
 				return false;
-			} catch (Exception e){
-				e.printStackTrace();
 			}
 		} else
 			throw new Exception("Scanner Not initialized");
-		return false;
 	}
 
 	@Override
