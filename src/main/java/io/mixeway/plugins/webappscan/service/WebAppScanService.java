@@ -16,9 +16,10 @@ import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.NonUniqueResultException;
-import javax.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -59,7 +60,7 @@ public class WebAppScanService {
             return urlToSend;
 
     }
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public ResponseEntity<Status> processScanWebAppRequest(Long id, List<WebAppScanModel> webAppScanModelList){
         synchronized (this) {
             String requestId = null;
@@ -81,9 +82,11 @@ public class WebAppScanService {
                             }
                         }
                     } catch (NonUniqueResultException | IncorrectResultSizeDataAccessException ex){
+                        waRepository.flush();
                         return new ResponseEntity<>(HttpStatus.PRECONDITION_FAILED);
                     }
                 }
+                waRepository.flush();
                 return new ResponseEntity<>(new Status("Scan is requested", requestId), HttpStatus.CREATED);
             } else {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -106,6 +109,7 @@ public class WebAppScanService {
         waRepository.flush();
         this.createHeaderAndCookies(webAppScanModel.getHeaders(),webAppScanModel.getCookies(), webApp);
         log.info("Created WebApp '{}'", webApp.getUrl());
+        waRepository.flush();
         return webApp.getRequestId();
     }
 
