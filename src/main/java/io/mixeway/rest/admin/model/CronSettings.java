@@ -1,13 +1,13 @@
 package io.mixeway.rest.admin.model;
 
 public class CronSettings {
-    private String expresion;
+    private String expression;
 
-    public String getExpresion() {
-        return expresion;
+    public String getExpression() {
+        return expression;
     }
 
-    public void setExpresion(String expresion) {
-        this.expresion = expresion;
+    public void setExpression(String expression) {
+        this.expression = expression;
     }
 }

@@ -74,17 +74,17 @@ public class AdminSettingsRestController {
     }
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PatchMapping(value = "/settings/infracron")
-    public ResponseEntity<Status> changeInfraCron( Principal principal, CronSettings cronSettings)  {
+    public ResponseEntity<Status> changeInfraCron( Principal principal, @RequestBody CronSettings cronSettings)  {
         return adminSettingsRestService.changeInfraCron(principal.getName(), cronSettings);
     }
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PatchMapping(value = "/settings/webappcron")
-    public ResponseEntity<Status> changeWebAppCron( Principal principal, CronSettings cronSettings)  {
+    public ResponseEntity<Status> changeWebAppCron( Principal principal,@RequestBody CronSettings cronSettings)  {
         return adminSettingsRestService.changeWebAppCron(principal.getName(), cronSettings);
     }
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PatchMapping(value = "/settings/codecron")
-    public ResponseEntity<Status> changeCodeCron( Principal principal, CronSettings cronSettings)  {
+    public ResponseEntity<Status> changeCodeCron( Principal principal,@RequestBody CronSettings cronSettings)  {
         return adminSettingsRestService.changeCodeCron(principal.getName(), cronSettings);
     }
 
