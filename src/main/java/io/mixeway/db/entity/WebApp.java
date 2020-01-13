@@ -49,7 +49,7 @@ public class WebApp {
 		this.requestId = requestId;
 	}
 
-	@OneToMany(mappedBy = "webApp", cascade = CascadeType.ALL, fetch=FetchType.LAZY)
+	@OneToMany(mappedBy = "webApp", cascade = CascadeType.ALL, fetch=FetchType.EAGER)
 	public Set<WebAppCookies> getWebAppCookies() {
 		return webAppCookies;
 	}
@@ -171,7 +171,7 @@ public class WebApp {
 	public void setScanId(String scanId) {
 		this.scanId = scanId;
 	}
-	@OneToMany(mappedBy = "webApp", cascade = CascadeType.ALL, fetch=FetchType.LAZY)
+	@OneToMany(mappedBy = "webApp", cascade = CascadeType.ALL, fetch=FetchType.EAGER)
 	public Set<WebAppHeader> getHeaders() {
 		return headers;
 	}

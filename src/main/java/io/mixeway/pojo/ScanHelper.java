@@ -12,6 +12,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import io.mixeway.config.Constants;
 import io.mixeway.rest.project.model.RunScanForAssets;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -90,25 +92,35 @@ public class ScanHelper {
 
             }
         }
-        if (logInfo)
-            log.info("Scope of scan is [{} - {}]: {}",nessusScan.getProject().getName(),nessusScan.getNessus().getRoutingDomain().getName(), StringUtils.join(interfacesToScan, ','));
-        updateInterfaceState(nessusScan,interfacesToScan);
+        if (logInfo) {
+            log.info("Scope of scan is [{} - {}]: {}", nessusScan.getProject().getName(), nessusScan.getNessus().getRoutingDomain().getName(), StringUtils.join(interfacesToScan, ','));
+            updateInterfaceState(nessusScan, interfacesToScan);
+        }
         return interfacesToScan;
+    }
+    @Transactional(propagation= Propagation.REQUIRES_NEW)
+    public void updateInterfaceState(NessusScan nessusScan, boolean state){
+        // SETTING INTERFACE.SCANRUNNING
+        for (String ip : prepareTargetsForScan(nessusScan,false)){
+            Optional<Interface> inter = interfaceRepository.findByAssetInAndPrivateipAndActive(nessusScan.getProject().getAssets(), ip, true);
+            if (inter.isPresent()){
+                Interface i = inter.get();
+                i.setScanRunning(state);
+                interfaceRepository.save(i);
+                log.info("Update inerface state for {} to scan running {}", i.getPrivateip(),state);
+            }
+        }
     }
 
     private void updateInterfaceState(NessusScan nessusScan, List<String> interfacesToScan) {
         try {
-            String requestId = UUID.randomUUID().toString();
             for (String ip : interfacesToScan) {
                 Optional<Interface> inter = interfaceRepository.findByAssetInAndPrivateipAndActive(nessusScan.getProject().getAssets(), ip, true);
                 if (inter.isPresent()) {
                     inter.get().setScanRunning(true);
-                    inter.get().getAsset().setRequestId(requestId);
                     interfaceRepository.save(inter.get());
-                    assetRepository.save(inter.get().getAsset());
                 }
             }
-            nessusScan.setRequestId(requestId);
             nessusScanRepository.save(nessusScan);
         } catch (Exception ex) {
             log.error("IllegalArgumentException during updating interface for {}", nessusScan.getProject().getName());

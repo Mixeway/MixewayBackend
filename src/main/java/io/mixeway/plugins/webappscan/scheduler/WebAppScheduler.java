@@ -60,7 +60,7 @@ public class WebAppScheduler {
 			for (WebApp app : apps) {
 				try {
 					for (WebAppScanClient webAppScanClient : webAppScanClients){
-						if (webAppScanClient.canProcessRequest(scanner.get()) || webAppScanClient.isScanDone(scanner.get(), app)){
+						if (webAppScanClient.canProcessRequest(scanner.get()) && webAppScanClient.isScanDone(scanner.get(), app)){
 							List<WebAppVuln> tmpVulns =  new ArrayList<>();
 							if (app.getVulns().size() > 0) {
 								tmpVulns =  vulnRepository.findByWebApp(app);
@@ -88,7 +88,7 @@ public class WebAppScheduler {
 
 	}
 	//Every 5 min
-	@Scheduled(fixedDelay = 300000)
+	@Scheduled(fixedDelay = 30000)
 	public void runScanFromQueue() {
 		Long count = webAppRepository.getCountOfRunningScans(true);
 		Optional<Scanner> scanner = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_ACUNETIX)).stream().findFirst();

@@ -4,19 +4,23 @@ import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
 import io.mixeway.plugins.webappscan.WebAppScanClient;
+import io.mixeway.pojo.LogUtil;
 import io.mixeway.rest.project.model.RunScanForWebApps;
 import io.mixeway.rest.project.model.WebAppCard;
 import io.mixeway.rest.project.model.WebAppModel;
 import io.mixeway.rest.project.model.WebAppPutModel;
 import io.mixeway.rest.utils.ProjectRiskAnalyzer;
+import org.postgresql.util.PSQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import io.mixeway.pojo.Status;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -130,25 +134,30 @@ public class WebAppService {
     }
     public ResponseEntity<Status> saveWebApp(Long id, WebAppPutModel webAppPutMode, String usernamel) {
         Optional<Project> project = projectRepository.findById(id);
-        if (project.isPresent()){
-            WebApp webApp = new WebApp();
-            webApp.setUrl(webAppPutMode.getWebAppUrl());
-            webApp.setRunning(false);
-            webApp.setPublicscan(webAppPutMode.isPublic());
-            webApp.setProject(projectRepository.getOne(id));
-            webAppRepository.save(webApp);
-            for (String header : webAppPutMode.getWebAppHeaders().split(",")) {
-                String[] headerValues = header.split(":");
-                if (headerValues.length == 2) {
-                    WebAppHeader waHeader = new WebAppHeader();
-                    waHeader.setHeaderName(headerValues[0]);
-                    waHeader.setHeaderValue(headerValues[1]);
-                    waHeader.setWebApp(webApp);
-                    webAppHeaderRepository.save(waHeader);
+        if (project.isPresent()) {
+            try {
+                WebApp webApp = new WebApp();
+                webApp.setUrl(webAppPutMode.getWebAppUrl());
+                webApp.setRunning(false);
+                webApp.setPublicscan(webAppPutMode.isScanPublic());
+                webApp.setProject(projectRepository.getOne(id));
+                webAppRepository.save(webApp);
+                for (String header : webAppPutMode.getWebAppHeaders().split(",")) {
+                    String[] headerValues = header.split(":");
+                    if (headerValues.length == 2) {
+                        WebAppHeader waHeader = new WebAppHeader();
+                        waHeader.setHeaderName(headerValues[0]);
+                        waHeader.setHeaderValue(headerValues[1]);
+                        waHeader.setWebApp(webApp);
+                        webAppHeaderRepository.save(waHeader);
+                    }
                 }
+                log.info("{} - Added webapp [{}] {} and set {} headers", usernamel, project.get().getName(), webApp.getUrl(), webApp.getHeaders() != null ? webApp.getHeaders().size() : 0);
+                return new ResponseEntity<>(null, HttpStatus.CREATED);
+            } catch (DataIntegrityViolationException ex) {
+                log.info("{} - is trying to add duplicate URL [{}] for project {} ", usernamel, LogUtil.prepare(webAppPutMode.getWebAppUrl()), project.get().getName());
+                return new ResponseEntity<>(null, HttpStatus.CONFLICT);
             }
-            log.info("{} - Added webapp [{}] {} and set {} headers", usernamel, project.get().getName(), webApp.getUrl(), webApp.getHeaders()!=null?webApp.getHeaders().size():0);
-            return new ResponseEntity<>(null,HttpStatus.CREATED);
         } else {
             return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
         }

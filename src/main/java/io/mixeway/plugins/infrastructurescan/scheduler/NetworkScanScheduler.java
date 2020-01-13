@@ -98,8 +98,6 @@ public class NetworkScanScheduler {
 						for (NetworkScanClient networkScanClient :networkScanClients) {
 							if (networkScanClient.canProcessRequest(ns) ) {
 								networkScanClient.runScan(ns);
-								ns.setRunning(false);
-								nessusScanRepository.save(ns);
 								log.info("{} Starting automatic scan for {}",ns.getNessus().getScannerType().getName(), ns.getProject().getName());
 							}
 						}

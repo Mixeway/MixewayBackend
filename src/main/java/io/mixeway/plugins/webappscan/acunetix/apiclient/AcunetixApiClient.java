@@ -32,6 +32,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.vault.core.VaultOperations;
 import org.springframework.vault.support.VaultResponseSupport;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -137,6 +138,8 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 			headers.set("Content-Type", "application/json");
 			HttpEntity<String> entity = new HttpEntity<>(headers);
 			ResponseEntity<String> response = restTemplate.exchange(scanner.getApiUrl() + "/api/v1/targets", HttpMethod.GET, entity, String.class);
+			scanner.setStatus(true);
+			scannerRepository.save(scanner);
 			return response.getStatusCode() == HttpStatus.OK;
 		} else
 			throw new Exception("Scanner already initialized ");
@@ -146,10 +149,11 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 	public void createTarget(io.mixeway.db.entity.Scanner scanner, WebApp webApp) {
 		try {
 			if (scanner.getStatus()) {
+				String createTargetBody = new Gson().toJson(new CreateTarget(webApp));
 				RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(null);
 				HttpHeaders headers = prepareAuthHeader(scanner);
 				headers.set("Content-Type", "application/json");
-				HttpEntity<String> entity = new HttpEntity<>(new Gson().toJson(new CreateTarget(webApp)),headers);
+				HttpEntity<String> entity = new HttpEntity<>(createTargetBody,headers);
 				ResponseEntity<String> response = restTemplate.exchange(scanner.getApiUrl() + "/api/v1/targets", HttpMethod.POST, entity, String.class);
 				if (response.getStatusCode() == HttpStatus.CREATED) {
 					JSONObject responseObject = new JSONObject(Objects.requireNonNull(response.getBody()));
@@ -157,7 +161,7 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 					webAppRepository.save(webApp);
 				}
 				else
-					log.error("Failed target creation for {}",webApp.getUrl());
+					log.error("Failed target creation for {} with body of {}",webApp.getUrl(),createTargetBody);
 			} else
 				throw new Exception("Scanner Not initialized");
 		} catch (HttpClientErrorException ex) {
@@ -165,7 +169,7 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 		} catch (PSQLException ex){
 			log.error("PSQL Exception for webapp {}",webApp.getUrl());
 		} catch (Exception dve){
-			log.error("EXception occured during webapp update");
+			log.error("Exception occured during webapp update");
 
 		}
 	}
@@ -228,6 +232,17 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 	@Transactional
 	public void runScan(WebApp webApp, io.mixeway.db.entity.Scanner scanner) throws Exception {
 		try {
+			createTarget(scanner,webApp);
+			if (webApp.getHeaders().size() > 0){
+				createHeadersForTarget(scanner, webApp);
+			}
+			if (webApp.getWebAppCookies().size() > 0){
+				createCookiesorTarget(scanner,webApp);
+			}
+			//TODO to routingDomian instead of PublicScan
+			if (webApp.getPublicscan()){
+				createProxyForWebApp(scanner,webApp);
+			}
 			if (scanner.getStatus()) {
 				RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(null);
 				HttpHeaders headers = prepareAuthHeader(scanner);
@@ -277,49 +292,53 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 	@Override
 	public Boolean loadVulnerabilities(io.mixeway.db.entity.Scanner scanner, WebApp webApp, String paginator, List<WebAppVuln> oldVulns) throws Exception {
 		if (scanner.getStatus()) {
-			RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(null);
-			HttpHeaders headers = prepareAuthHeader(scanner);
-			HttpEntity<String> entity = new HttpEntity<>(headers);
-			String coursor = "";
-			if (paginator != null)
-				coursor = "&c="+paginator;
-			ResponseEntity<String> response = restTemplate.exchange(scanner.getApiUrl() + "/api/v1/vulnerabilities?q=target_id:"+webApp.getTargetId()+coursor, HttpMethod.GET, entity, String.class);
-			if (response.getStatusCode() == HttpStatus.OK) {
-				JSONObject responseJson = new JSONObject(Objects.requireNonNull(response.getBody()));
-				JSONArray vulnArray = responseJson.getJSONArray(Constants.ACUNETIX_VULN);
-				for (int i = 0; i < vulnArray.length(); i++) {
-					JSONObject vulnObj = vulnArray.getJSONObject(i);
-					WebAppVuln vuln = new WebAppVuln();
-					if ( webApp.getCodeGroup() !=null && webApp.getCodeProject() !=null){
-						vuln.setCodeProject(webApp.getCodeProject());
+			try {
+				RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(null);
+				HttpHeaders headers = prepareAuthHeader(scanner);
+				HttpEntity<String> entity = new HttpEntity<>(headers);
+				String coursor = "";
+				if (paginator != null)
+					coursor = "&c=" + paginator;
+				ResponseEntity<LoadVlnerabilitiesModel> response = restTemplate.exchange(scanner.getApiUrl() + "/api/v1/vulnerabilities?q=target_id:" + webApp.getTargetId() + coursor, HttpMethod.GET, entity, LoadVlnerabilitiesModel.class);
+				if (response.getStatusCode() == HttpStatus.OK) {
+					for (VulnerabilityModel vulnFromAcu : response.getBody().getVulnerabilities()){
+						WebAppVuln vuln = new WebAppVuln();
+						if (webApp.getCodeGroup() != null && webApp.getCodeProject() != null) {
+							vuln.setCodeProject(webApp.getCodeProject());
+						}
+						vuln.setName(vulnFromAcu.getVt_name());
+						vuln.setLocation(vulnFromAcu.getAffects_url());
+						vuln.setSeverity(AcunetixSeverity.resolveSeverity(vulnFromAcu.getSeverity()));
+						vuln.setWebApp(webApp);
+						webAppVulnRepository.save(vuln);
+						vuln = loadVulnDetails(vuln, scanner, vulnFromAcu.getVuln_id());
+						WebAppVuln finalVuln = vuln;
+						Optional<WebAppVuln> oldVulnExist = oldVulns.stream().filter(v -> v.getName().equals(finalVuln.getName()) && v.getSeverity().equals(finalVuln.getSeverity()) &&
+								v.getLocation().equals(finalVuln.getLocation()) && v.getDescription().equals(finalVuln.getDescription())).findFirst();
+						if (oldVulnExist.isPresent()) {
+							vuln.setStatus(statusRepository.findByName(Constants.STATUS_EXISTING));
+							vuln.setTicketId(oldVulnExist.get().getTicketId());
+						} else {
+							vuln.setStatus(statusRepository.findByName(Constants.STATUS_NEW));
+							//TODO JIRA CREATION
+							//jiraService.processRequest(webAppVulnRepository, Optional.of(vuln),webApp.getProject(),Constants.VULN_JIRA_WEBAPP,Constants.JIRA_AUTOCREATOR_LOG,false);
+						}
+
 					}
-					vuln.setName(vulnObj.getString(Constants.ACUNETIX_VULN_NAME));
-					vuln.setLocation(vulnObj.getString(Constants.ACUNETIX_VULN_LOCATION));
-					vuln.setSeverity(AcunetixSeverity.resolveSeverity(vulnObj.getInt(Constants.ACUNETIX_SEVERITY)));
-					vuln.setWebApp(webApp);
-	    			webAppVulnRepository.save(vuln);
-	    			vuln = loadVulnDetails(vuln, scanner, vulnObj.getString(Constants.ACUNETIX_VULN_ID));
-					WebAppVuln finalVuln = vuln;
-					Optional<WebAppVuln> oldVulnExist = oldVulns.stream().filter(v -> v.getName().equals(finalVuln.getName()) && v.getSeverity().equals(finalVuln.getSeverity()) &&
-							v.getLocation().equals(finalVuln.getLocation()) && v.getDescription().equals(finalVuln.getDescription())).findFirst();
-					if (oldVulnExist.isPresent()){
-						vuln.setStatus(statusRepository.findByName(Constants.STATUS_EXISTING));
-						vuln.setTicketId(oldVulnExist.get().getTicketId());
-					} else {
-						vuln.setStatus(statusRepository.findByName(Constants.STATUS_NEW));
-						//TODO JIRA CREATION
-						//jiraService.processRequest(webAppVulnRepository, Optional.of(vuln),webApp.getProject(),Constants.VULN_JIRA_WEBAPP,Constants.JIRA_AUTOCREATOR_LOG,false);
+					if (response.getBody().getPagination().getNext_cursor() != null) {
+						loadVulnerabilities(scanner, webApp,response.getBody().getPagination().getNext_cursor(), oldVulns);
 					}
-	    			
+					log.info("WebApp Scan - Successfully loaded vulns for project {} - target {} ", webApp.getProject().getName(), webApp.getUrl());
+					this.deleteTarget(scanner, webApp);
+					webApp.setLastExecuted(sdf.format(new Date()));
+					webAppRepository.save(webApp);
+					return true;
+				} else {
+					log.error("Unable to load vulns info for {}", webApp.getUrl());
+					return false;
 				}
-				if (responseJson.getJSONObject(Constants.ACUNETIX_PAGINATION).getString(Constants.ACUNETIX_NETX_CURSOR) != null) {
-    				loadVulnerabilities(scanner, webApp, responseJson.getJSONObject(Constants.ACUNETIX_PAGINATION).getString(Constants.ACUNETIX_NETX_CURSOR),oldVulns );
-    			}
-				log.info("WebApp Scan - Successfully loaded vulns for project {} - target {} ",webApp.getProject().getName(),webApp.getUrl());
-				this.deleteTarget(scanner,webApp);
-				return true;
-			} else {
-				log.error("Unable to load vulns info for {}",webApp.getUrl());
+			} catch (HttpServerErrorException e) {
+				log.error("Error trying to load vulnerabilities using url {} with msg {}","/api/v1/vulnerabilities?q=target_id:" + webApp.getTargetId(), e.getResponseBodyAsString());
 				return false;
 			}
 		} else
