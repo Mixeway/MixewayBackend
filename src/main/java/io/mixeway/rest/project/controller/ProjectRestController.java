@@ -2,6 +2,8 @@ package io.mixeway.rest.project.controller;
 
 import io.mixeway.db.entity.Proxies;
 import io.mixeway.db.entity.RoutingDomain;
+import io.mixeway.db.entity.Status;
+import io.mixeway.rest.project.model.ContactList;
 import io.mixeway.rest.project.model.ProjectVulnTrendChart;
 import io.mixeway.rest.project.model.RiskCards;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,6 +50,11 @@ public class ProjectRestController {
     @GetMapping(value = "/{id}/vulns/severitychart")
     public ResponseEntity<HashMap<String,Long>> showSeverityChart(@PathVariable("id")Long id) {
         return projectService.showSeverityChart(id);
+    }
+    @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
+    @PatchMapping(value = "/{id}/contactlist")
+    public ResponseEntity<Status> updateContactList(@PathVariable("id")Long id, @RequestBody ContactList contactList) {
+        return projectService.updateContactList(id,contactList);
     }
 
     //endregion

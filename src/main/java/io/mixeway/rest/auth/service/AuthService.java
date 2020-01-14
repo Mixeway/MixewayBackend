@@ -127,7 +127,15 @@ public class AuthService {
         List<Settings> settings = settingsRepository.findAll();
         if (user.isPresent() && settings.get(0).getInitialized()){
             return new ResponseEntity(HttpStatus.EXPECTATION_FAILED);
-        } else {
+        } else if ( user.isPresent()){
+           User admin = user.get();
+            admin.setPassword(bCryptPasswordEncoder.encode(password.getPassword()));
+            userRepository.save(admin);
+            Settings s = settings.get(0);
+            s.setInitialized(true);
+            settingsRepository.save(s);
+            return new ResponseEntity(HttpStatus.OK);
+        } else{
             User admin = new User();
             admin.setUsername("admin");
             admin.setCommonName("admin");

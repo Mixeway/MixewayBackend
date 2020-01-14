@@ -1,6 +1,9 @@
 package io.mixeway.pojo;
 
+import io.mixeway.db.entity.Project;
+
 public class EmailVulnHelper {
+    private Project project;
     private int number;
     private String result;
     private String source;
@@ -33,7 +36,16 @@ public class EmailVulnHelper {
         this.to = to;
     }
 
-    public EmailVulnHelper(int number, String result, String source, String color,String from, String to,int overall){
+    public Project getProject() {
+        return project;
+    }
+
+    public void setProject(Project project) {
+        this.project = project;
+    }
+
+    public EmailVulnHelper(Project project, int number, String result, String source, String color, String from, String to, int overall){
+        this.project = project;
         this.number=number;
         this.result=result;
         this.source=source;

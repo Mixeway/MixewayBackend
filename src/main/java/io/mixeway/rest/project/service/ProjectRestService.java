@@ -1,11 +1,9 @@
 package io.mixeway.rest.project.service;
 
 import io.mixeway.config.Constants;
-import io.mixeway.db.entity.Project;
-import io.mixeway.db.entity.Proxies;
-import io.mixeway.db.entity.RoutingDomain;
-import io.mixeway.db.entity.VulnHistory;
+import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
+import io.mixeway.rest.project.model.ContactList;
 import io.mixeway.rest.project.model.ProjectVulnTrendChart;
 import io.mixeway.rest.project.model.ProjectVulnTrendChartSerie;
 import io.mixeway.rest.project.model.RiskCards;
@@ -16,7 +14,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import springfox.documentation.service.Contact;
 
+import javax.mail.internet.AddressException;
+import javax.mail.internet.InternetAddress;
 import java.util.*;
 
 @Service
@@ -179,5 +180,29 @@ public class ProjectRestService {
         } else {
             return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
         }
+    }
+
+    public ResponseEntity<Status> updateContactList(Long id, ContactList contactList) {
+        Optional<Project> project = projectRepository.findById(id);
+        if (project.isPresent() && verifyContactList(contactList) ){
+            project.get().setContactList(contactList.getContactList());
+            projectRepository.save(project.get());
+            return new ResponseEntity<>(HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+        }
+    }
+
+    private boolean verifyContactList(ContactList contactList) {
+        boolean result = true;
+        try {
+            for (String email : contactList.getContactList().split(",")) {
+                InternetAddress emailAddr = new InternetAddress(email);
+                emailAddr.validate();
+            }
+        } catch (AddressException ex) {
+            result = false;
+        }
+        return result;
     }
 }
