@@ -11,17 +11,46 @@ import javax.persistence.*;
 @Table(name = "settings")
 @EntityListeners(AuditingEntityListener.class)
 public class Settings {
-    Long id;
-    Boolean initialized;
-    Boolean smtpAuth;
-    Boolean smtpTls;
-    String smtpHost;
-    int smtpPort;
-    String smtpUsername;
-    @JsonIgnore String smtpPassword;
-    Boolean passwordAuth;
-    Boolean certificateAuth;
-    String masterApiKey;
+    private Long id;
+    private Boolean initialized;
+    private Boolean smtpAuth;
+    private Boolean smtpTls;
+    private String smtpHost;
+    private int smtpPort;
+    private String smtpUsername;
+    @JsonIgnore
+    private String smtpPassword;
+    private Boolean passwordAuth;
+    private Boolean certificateAuth;
+    private String masterApiKey;
+    private String infraAutoCron;
+    private String webAppAutoCron;
+    private String codeAutoCron;
+
+    @Column(name = "infraautocron")
+    public String getInfraAutoCron() {
+        return infraAutoCron;
+    }
+
+    public void setInfraAutoCron(String infraAutoron) {
+        this.infraAutoCron = infraAutoron;
+    }
+    @Column(name = "webappautocron")
+    public String getWebAppAutoCron() {
+        return webAppAutoCron;
+    }
+
+    public void setWebAppAutoCron(String webAppAutoCron) {
+        this.webAppAutoCron = webAppAutoCron;
+    }
+    @Column(name="codeautocron")
+    public String getCodeAutoCron() {
+        return codeAutoCron;
+    }
+
+    public void setCodeAutoCron(String codeAutoCron) {
+        this.codeAutoCron = codeAutoCron;
+    }
 
     @Column(name="masterapikey")
     public String getMasterApiKey() {
