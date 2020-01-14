@@ -153,7 +153,8 @@ public class WebAppScheduler {
 		List<Project> projects = projectRepository.findByAutoWebAppScan(true);
 		for (Project p : projects){
 			for (WebApp webApp : p.getWebapps()){
-				webAppService.processScanWebAppRequest(webApp.getProject().getId(), createServiceDiscoveryFromWebApp(webApp));
+				webApp.setInQueue(true);
+				webAppRepository.save(webApp);
 			}
 		}
 	}
