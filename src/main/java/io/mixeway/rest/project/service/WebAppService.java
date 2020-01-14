@@ -90,11 +90,8 @@ public class WebAppService {
             //AddTarget
             try {
                 for (WebApp webApp : project.get().getWebapps()) {
-                    for (WebAppScanClient webAppScanClient : webAppScanClients){
-                        if (webAppScanClient.canProcessRequest(scanner.get())){
-                            webAppScanClient.runScan(webApp,scanner.get());
-                        }
-                    }
+                    webApp.setInQueue(true);
+                    webAppRepository.save(webApp);
                 }
             } catch (Exception e) {
                 return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);

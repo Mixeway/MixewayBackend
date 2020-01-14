@@ -51,7 +51,7 @@ public class WebAppScheduler {
 	private static final Logger log = LoggerFactory.getLogger(WebAppScheduler.class);
 
 
-	@Scheduled(fixedDelay = 300000)
+	@Scheduled(fixedDelay = 3000)
 	public void checkAndDownload() throws Exception {
 		List<WebApp> apps = waRepository.findByRunning(true);
 		ScannerType scannerType = scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_ACUNETIX);
