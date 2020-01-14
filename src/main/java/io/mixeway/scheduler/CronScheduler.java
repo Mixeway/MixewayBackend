@@ -145,7 +145,7 @@ public class CronScheduler {
         }
 
     }
-    @Scheduled(fixedDelay = 3000)
+    @Scheduled(cron = "0 0 14 * * FRI")
     public void sendTrendEmails(){
         List<Project> projects = projectRepository.findByContactListNotNull();
         for(Project project : projects){
