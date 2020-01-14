@@ -79,7 +79,7 @@ public class CodeScheduler {
 	}
 	//Uruchomienie skanow dla grup
 	@Transactional
-	@Scheduled(cron="0 40 23 * * *" )
+	@Scheduled(cron="#{@getCodeCronExpression}" )
 	public void runScheduledScans() throws KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, CertificateException, IOException {
 		log.info("Starting Fortify Scheduled Scans");
 		//List<CodeGroup> groups = codeGroupRepository.findByAuto(true);

@@ -1,7 +1,9 @@
 package io.mixeway.rest.admin.service;
 
 import io.mixeway.pojo.LogUtil;
+import io.mixeway.rest.admin.model.CronSettings;
 import io.mixeway.rest.admin.model.SmtpSettingsModel;
+import org.quartz.CronExpression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +21,7 @@ import io.mixeway.pojo.Status;
 import io.mixeway.rest.admin.model.AuthSettingsModel;
 import sun.rmi.runtime.Log;
 
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -165,4 +168,53 @@ public class AdminSettingsRestService {
         }
     }
 
+    public ResponseEntity<Status> changeInfraCron(String name, CronSettings cronSettings) {
+        try {
+
+
+            CronExpression cron = new CronExpression(cronSettings.getExpression());
+            Optional<Settings> settings = settingsRepository.findAll().stream().findFirst();
+            if (settings.isPresent()){
+                settings.get().setInfraAutoCron(cronSettings.getExpression());
+                settingsRepository.save(settings.get());
+                log.info("{} - Changed Cron auto scan start for network to {}", name, cronSettings.getExpression());
+                return new ResponseEntity<>( HttpStatus.OK);
+            }
+        } catch (ParseException e) {
+            return new ResponseEntity<>(new Status(e.getLocalizedMessage()), HttpStatus.EXPECTATION_FAILED);
+        }
+        return new ResponseEntity<>( HttpStatus.EXPECTATION_FAILED);
+    }
+
+    public ResponseEntity<Status> changeWebAppCron(String name, CronSettings cronSettings) {
+        try {
+            CronExpression cron = new CronExpression(cronSettings.getExpression());
+            Optional<Settings> settings = settingsRepository.findAll().stream().findFirst();
+            if (settings.isPresent()){
+                settings.get().setWebAppAutoCron(cronSettings.getExpression());
+                settingsRepository.save(settings.get());
+                log.info("{} - Changed Cron auto scan start for WebApp to {}", name, cronSettings.getExpression());
+                return new ResponseEntity<>( HttpStatus.OK);
+            }
+        } catch (ParseException e) {
+            return new ResponseEntity<>(new Status(e.getLocalizedMessage()), HttpStatus.EXPECTATION_FAILED);
+        }
+        return new ResponseEntity<>( HttpStatus.EXPECTATION_FAILED);
+    }
+
+    public ResponseEntity<Status> changeCodeCron(String name, CronSettings cronSettings) {
+        try {
+            CronExpression cron = new CronExpression(cronSettings.getExpression());
+            Optional<Settings> settings = settingsRepository.findAll().stream().findFirst();
+            if (settings.isPresent()){
+                settings.get().setCodeAutoCron(cronSettings.getExpression());
+                settingsRepository.save(settings.get());
+                log.info("{} - Changed Cron auto scan start for code to {}", name, cronSettings.getExpression());
+                return new ResponseEntity<>( HttpStatus.OK);
+            }
+        } catch (ParseException e) {
+            return new ResponseEntity<>(new Status(e.getLocalizedMessage()), HttpStatus.EXPECTATION_FAILED);
+        }
+        return new ResponseEntity<>( HttpStatus.EXPECTATION_FAILED);
+    }
 }
