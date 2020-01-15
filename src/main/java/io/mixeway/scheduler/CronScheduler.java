@@ -2,10 +2,10 @@ package io.mixeway.scheduler;
 
 import io.mixeway.db.entity.NessusScan;
 import io.mixeway.db.entity.Project;
+import io.mixeway.db.entity.Settings;
 import io.mixeway.db.entity.VulnHistory;
 import io.mixeway.db.repository.*;
 import io.mixeway.plugins.remotefirewall.apiclient.RfwApiClient;
-import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,16 +15,12 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import io.mixeway.config.Constants;
 import io.mixeway.plugins.remotefirewall.model.Rule;
-import io.mixeway.rest.vulnmanage.service.GetVulnerabilitiesService;
 import io.mixeway.pojo.DOPMailTemplateBuilder;
 import io.mixeway.pojo.EmailVulnHelper;
 import io.mixeway.pojo.ScanHelper;
 
-import javax.mail.MessagingException;
-import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import javax.transaction.Transactional;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
@@ -40,28 +36,40 @@ import java.util.stream.Collectors;
 @Component
 @Transactional
 public class CronScheduler {
+    private final SettingsRepository settingsRepository;
+    private final VulnHistoryRepository vulnHistoryRepository;
+    private final ProjectRepository projectRepository;
+    private final WebAppVulnRepository webAppVulnRepository;
+    private final CodeVulnRepository codeVulnRepository;
+    private final NodeAuditRepository nodeAuditRepository;
+    private final InfrastructureVulnRepository infrastructureVulnRepository;
+    private final InterfaceRepository interfaceRepository;
+    private final NessusScanRepository nessusScanRepository;
+    private final JavaMailSender sender;
+    private final SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository;
+    private final RfwApiClient rfwApiClient;
+    private final ScanHelper scanHelper;
     @Autowired
-    SettingsRepository settingsRepository;
-    @Autowired
-    VulnHistoryRepository vulnHistoryRepository;
-    @Autowired
-    ProjectRepository projectRepository;
-    @Autowired
-    WebAppVulnRepository webAppVulnRepository;
-    @Autowired
-    CodeVulnRepository codeVulnRepository;
-    @Autowired
-    NodeAuditRepository nodeAuditRepository;
-    @Autowired
-    InfrastructureVulnRepository infrastructureVulnRepository;
-    @Autowired
-    InterfaceRepository interfaceRepository;
-    @Autowired
-    NessusScanRepository nessusScanRepository;
-    @Autowired
-    JavaMailSender sender;
-    @Autowired
-    SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository;
+    public CronScheduler(SettingsRepository settingsRepository, VulnHistoryRepository vulnHistoryRepository,
+            ProjectRepository projectRepository, WebAppVulnRepository webAppVulnRepository,
+            CodeVulnRepository codeVulnRepository,  NodeAuditRepository nodeAuditRepository, InfrastructureVulnRepository infrastructureVulnRepository,
+            InterfaceRepository interfaceRepository, NessusScanRepository nessusScanRepository, JavaMailSender sender,
+            SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository,RfwApiClient rfwApiClient,
+            ScanHelper scanHelper) {
+        this.settingsRepository = settingsRepository;
+        this.projectRepository = projectRepository;
+        this.vulnHistoryRepository = vulnHistoryRepository;
+        this.webAppVulnRepository = webAppVulnRepository;
+        this.codeVulnRepository = codeVulnRepository;
+        this.nodeAuditRepository = nodeAuditRepository;
+        this.infrastructureVulnRepository = infrastructureVulnRepository;
+        this.nessusScanRepository = nessusScanRepository;
+        this.interfaceRepository = interfaceRepository;
+        this.softwarePacketVulnerabilityRepository = softwarePacketVulnerabilityRepository;
+        this.rfwApiClient =rfwApiClient;
+        this.sender = sender;
+        this.scanHelper = scanHelper;
+    }
 
     private DOPMailTemplateBuilder templateBuilder = new DOPMailTemplateBuilder();
     private List<String> severities = new ArrayList<String>(){{
@@ -73,14 +81,6 @@ public class CronScheduler {
         add("WARN" );
         add("FAIL");
     }};
-    @Autowired
-    RfwApiClient rfwApiClient;
-    @Autowired
-    ScannerRepository scannerRepository;
-    @Autowired
-    ScanHelper scanHelper;
-    @Autowired
-    GetVulnerabilitiesService getVulnerabilitiesService;
 
 
     private DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -88,7 +88,7 @@ public class CronScheduler {
 
     // Every 12h
     @Scheduled(cron="0 0 12 * * *" )
-    public void createHistoryForVulns() throws JSONException, KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, CertificateException, FileNotFoundException, IOException {
+    public void createHistoryForVulns() {
         for(Project project : projectRepository.findAll()){
             VulnHistory vulnHistory = new VulnHistory();
             vulnHistory.setName(Constants.VULN_HISTORY_ALL);
@@ -112,7 +112,7 @@ public class CronScheduler {
 
     //every 3 minutes
     @Scheduled(initialDelay=0,fixedDelay = 150000)
-    public void verifyRFWRules() throws JSONException, KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, CertificateException, FileNotFoundException, IOException {
+    public void verifyRFWRules() throws  KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, CertificateException, IOException {
         try {
             for (NessusScan ns : nessusScanRepository.getRunningScansWithRfwConfigured()) {
                 List<Rule> rules = rfwApiClient.getListOfRules(ns.getNessus()).stream().filter(r -> r.getChain().equals("OUTPUT")).collect(Collectors.toList());
@@ -125,45 +125,25 @@ public class CronScheduler {
         } catch (NullPointerException ignored) {}
 
     }
-    //@Scheduled(cron = "0 0 14 * * FRI")
-    public void sendEmailToDOP() throws Exception {
-        Project tools= projectRepository.getOne((long)1);
-        Project nonprod= projectRepository.getOne((long)4);
-        Project prod= projectRepository.getOne((long)6);
-        String body = templateBuilder.createTemplate(getTrend(tools,"OpenStack"),
-                getTrend(nonprod,"OpenStack"), getTrend(prod,"OpenStack"),
-                getTrend(tools,"scanners"));
-        MimeMessage message = sender.createMimeMessage();
-        try {
-            message.setSubject("DOP Security test trend update");
-            MimeMessageHelper helper = new MimeMessageHelper(message, true);
-            //TODO settings helper create
-            helper.setCc(InternetAddress.parse(tools.getContactList()));
-            helper.setText(body, true);
-            //sender.send(message);
-        } catch (MessagingException ex){
-            log.warn("MessagingException {}", ex.getLocalizedMessage());
-        }
 
-    }
-    @Scheduled(fixedRate = 300000 )
+    @Scheduled(cron = "0 0 14 * * FRI")
     public void sendTrendEmails(){
         List<Project> projects = projectRepository.findByContactListNotNull();
         for(Project project : projects){
-            String body = null;
+            String body;
             try {
-                body = templateBuilder.createTemplateEmail(getTrend(project,null));
-                MimeMessage message = sender.createMimeMessage();
-                try {
-                    message.setSubject("Mixeway Security test trend update for "+project.getName());
-                    MimeMessageHelper helper = new MimeMessageHelper(message, true);
-                    helper.setFrom(settingsRepository.findAll().stream().findFirst().get().getSmtpUsername()+"@orange.com");
-                    helper.setCc("grzegorz.siewruk@orange.com");
-                    helper.setText(body, true);
-                    sender.send(message);
-                } catch (MessagingException ex){
-                    log.warn("MessagingException {}", ex.getLocalizedMessage());
+                Optional<Settings> settings = settingsRepository.findAll().stream().findFirst();
+                if (!settings.isPresent()){
+                    throw new Exception("Settings error during sending email trend");
                 }
+                body = templateBuilder.createTemplateEmail(getTrend(project));
+                MimeMessage message = sender.createMimeMessage();
+                message.setSubject("Mixeway Security test trend update for "+project.getName());
+                MimeMessageHelper helper = new MimeMessageHelper(message, true);
+                helper.setFrom(settings.get().getSmtpUsername()+"@"+settings.get().getDomain());
+                helper.setCc("grzegorz.siewruk@orange.com");
+                helper.setText(body, true);
+                sender.send(message);
             } catch (Exception e) {
                 log.warn(e.getLocalizedMessage());
             }
@@ -188,13 +168,13 @@ public class CronScheduler {
     }
 
     private long getInfraVulnsForProject(Project project){
-        long vulns = 0;
-        vulns = (long)infrastructureVulnRepository.findByIntfInAndSeverityIn(
+        long vulns;
+        vulns = infrastructureVulnRepository.findByIntfInAndSeverityIn(
                 interfaceRepository.findByAssetIn(new ArrayList<>(project.getAssets())), severities).size();
         return vulns;
     }
 
-   List<EmailVulnHelper> getTrend(Project project, String source) throws Exception {
+   List<EmailVulnHelper> getTrend(Project project) throws Exception {
         List<EmailVulnHelper> vulns = new ArrayList<>();
        List<VulnHistory> vulnsForProject = vulnHistoryRepository.getLastTwoVulnForProject(project.getId());
        vulnsForProject.sort(Comparator.comparing(VulnHistory::getInserted));

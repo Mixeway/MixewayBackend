@@ -9,6 +9,15 @@ public class SmtpSettingsModel {
     int smtpPort;
     String smtpUsername;
     String smtpPassword;
+    String domain;
+
+    public String getDomain() {
+        return domain;
+    }
+
+    public void setDomain(String domain) {
+        this.domain = domain;
+    }
 
     public Boolean getSmtpAuth() {
         return smtpAuth;

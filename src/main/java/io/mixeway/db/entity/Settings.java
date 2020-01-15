@@ -26,6 +26,15 @@ public class Settings {
     private String infraAutoCron;
     private String webAppAutoCron;
     private String codeAutoCron;
+    private String domain;
+
+    public String getDomain() {
+        return domain;
+    }
+
+    public void setDomain(String domain) {
+        this.domain = domain;
+    }
 
     @Column(name = "infraautocron")
     public String getInfraAutoCron() {

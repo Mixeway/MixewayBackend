@@ -813,3 +813,6 @@ alter table settings add column codeautocron text;
 update settings set infraautocron='0 0 10,21 * * *';
 update settings set webappautocron='0 55 1 * * FRI';
 update settings set codeautocron='0 40 23 * * *';
+
+--changeset siewer:158
+alter table settings add column domain text;

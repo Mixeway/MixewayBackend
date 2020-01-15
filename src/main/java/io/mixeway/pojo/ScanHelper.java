@@ -176,7 +176,6 @@ public class ScanHelper {
             }
             return true;
         } catch (Exception e){
-            e.printStackTrace();
             log.error("Got error during running scan for scope - {} ",e.getLocalizedMessage());
             return false;
         }

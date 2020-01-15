@@ -9,6 +9,7 @@ import com.atlassian.jira.rest.client.api.domain.input.*;
 import com.atlassian.jira.rest.client.internal.async.AsynchronousJiraRestClientFactory;
 import io.atlassian.util.concurrent.Promise;
 import io.mixeway.db.entity.*;
+import io.mixeway.pojo.LogUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,7 @@ import io.mixeway.pojo.Vulnerability;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 
@@ -77,7 +79,7 @@ public class JiraService implements BugTracking {
         if (entity.isPresent()  && entity.get().getTicketId()==null && canIssueTicket(manual,entity.get(),bugTracker.getAutoStrategy())){
             entity.get().setTicketId(this.createIssue(entity.get().getName(),entity.get().getDescription(),bugTracker));
             o.save(entity.get());
-            log.info("{} - Issued ticket for {} for {} vulns {}", principal, project.getName(), bugTracker.getVulns(), entity.get().getName());
+            log.info("{} - Issued ticket for {} for {} vulns {}", LogUtil.prepare(principal), LogUtil.prepare(project.getName()), LogUtil.prepare(bugTracker.getVulns()), LogUtil.prepare(entity.get().getName()));
             return new ResponseEntity<>(HttpStatus.CREATED);
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -93,7 +95,7 @@ public class JiraService implements BugTracking {
     @Override
     public void closeIssue(String ticketId, BugTracker bugTracker) throws URISyntaxException {
         JiraRestClientFactory factory = new AsynchronousJiraRestClientFactory();
-        String password = operations.read("secret/"+bugTracker.getPassword()).getData().get("password").toString();
+        String password = Objects.requireNonNull(Objects.requireNonNull(operations.read("secret/" + bugTracker.getPassword())).getData()).get("password").toString();
         URI uri = new URI(bugTracker.getUrl());
         JiraRestClient client = factory.createWithBasicHttpAuthentication(uri, bugTracker.getUsername(), password);
         Promise promise = client.getIssueClient().getIssue("ticketId");

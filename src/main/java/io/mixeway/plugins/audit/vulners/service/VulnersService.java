@@ -7,6 +7,7 @@ import io.mixeway.db.repository.AssetRepository;
 import io.mixeway.db.repository.InterfaceRepository;
 import io.mixeway.db.repository.SoftwarePacketRepository;
 import io.mixeway.plugins.audit.vulners.model.Packets;
+import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,16 +20,19 @@ import java.util.*;
 
 @Service
 public class VulnersService {
+    private final AssetRepository assetRepository;
+    private final SoftwarePacketRepository softwarePacketRepository;
+    private final InterfaceRepository interfaceRepository;
     @Autowired
-    AssetRepository assetRepository;
-    @Autowired
-    SoftwarePacketRepository softwarePacketRepository;
-    @Autowired
-    InterfaceRepository interfaceRepository;
+    public VulnersService(AssetRepository assetRepository, SoftwarePacketRepository softwarePacketRepository, InterfaceRepository interfaceRepository){
+        this.interfaceRepository = interfaceRepository;
+        this.assetRepository = assetRepository;
+        this.softwarePacketRepository = softwarePacketRepository;
+    }
     private static final Logger log = LoggerFactory.getLogger(VulnersService.class);
 
     public ResponseEntity<Status> savePacketDiscovery(Packets packets){
-        log.info("Packet discovery for: {}, {} packets found", packets.getHostname(), packets.getPackets().size());
+        log.info("Packet discovery for: {}, {} packets found", LogUtil.prepare(packets.getHostname()), packets.getPackets().size());
 
         Optional<Asset> asset = assetRepository.findByName(packets.getHostname());
         if(asset.isPresent()) {
@@ -44,7 +48,7 @@ public class VulnersService {
         } else
             createAssetFromPacket(packets);
 
-        return new ResponseEntity<Status>(new Status("Ok"), HttpStatus.OK);
+        return new ResponseEntity<>(new Status("Ok"), HttpStatus.OK);
     }
 
     private void loadPackets(Asset asset, List<String> packets) {
@@ -79,7 +83,6 @@ public class VulnersService {
         asset.setOs(packets.getOs());
         asset.setOsversion(packets.getVersion());
         assetRepository.save(asset);
-        Set<Asset> emptySet =  Collections.emptySet();
         for (String ip : packets.getIps()) {
             Interface intf = new Interface();
             intf.setPrivateip(ip);

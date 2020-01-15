@@ -8,6 +8,7 @@ import io.mixeway.db.repository.*;
 import io.mixeway.plugins.infrastructurescan.model.NetworkScanRequestModel;
 import io.mixeway.plugins.remotefirewall.apiclient.RfwApiClient;
 import io.mixeway.pojo.AssetToCreate;
+import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.ScanHelper;
 import io.mixeway.pojo.Status;
 import org.codehaus.jettison.json.JSONException;
@@ -87,7 +88,7 @@ public class NetworkScanService {
     }
     public ResponseEntity<Status> createAndRunNetworkScan(NetworkScanRequestModel req) throws JSONException, KeyManagementException,
             UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, CertificateException, IOException, JAXBException {
-        log.info("Got request for scan from koordynator - system {}, asset no: {}",req.getProjectName(),req.getIpAddresses().size());
+        log.info("Got request for scan from koordynator - system {}, asset no: {}", LogUtil.prepare(req.getProjectName()),req.getIpAddresses().size());
         Optional<List<Project>> projectFromReq = projectRepository.findByCiid(req.getCiid());
         Project project;
         if (projectFromReq.isPresent()) {
@@ -222,7 +223,6 @@ public class NetworkScanService {
                 interf.setAutoCreated(false);
                 interf.setRoutingDomain(a.getRoutingDomain());
                 interfaceRepository.save(interf);
-                log.info("adding {} to scope", interf.getPrivateip());
                 listtoScan.add(interf);
             }
         }
