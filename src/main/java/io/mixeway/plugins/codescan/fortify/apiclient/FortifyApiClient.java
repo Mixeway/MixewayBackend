@@ -261,11 +261,13 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 	}
 
 	private void processIssueTracking(CodeVuln codeVuln) throws URISyntaxException {
-		Optional<BugTracker> bugTracker = bugTrackerRepository.findByProjectAndVulns(codeVuln.getCodeGroup().getProject(),Constants.VULN_JIRA_CODE);
-		if (bugTracker.isPresent() && codeVuln.getTicketId()==null) {
-			for (BugTracking bugTracking : bugTrackings) {
-				if (bugTracking.canProcessRequest(bugTracker.get())) {
-					bugTracking.processRequest(codeVulnRepository, Optional.of(codeVuln), bugTracker.get(), codeVuln.getCodeGroup().getProject(), Constants.VULN_JIRA_CODE, Constants.SCAN_MODE_AUTO, false);
+		if (codeVuln.getCodeGroup()!=null) {
+			Optional<BugTracker> bugTracker = bugTrackerRepository.findByProjectAndVulns(codeVuln.getCodeGroup().getProject(), Constants.VULN_JIRA_CODE);
+			if (bugTracker.isPresent() && codeVuln.getTicketId() == null) {
+				for (BugTracking bugTracking : bugTrackings) {
+					if (bugTracking.canProcessRequest(bugTracker.get())) {
+						bugTracking.processRequest(codeVulnRepository, Optional.of(codeVuln), bugTracker.get(), codeVuln.getCodeGroup().getProject(), Constants.VULN_JIRA_CODE, Constants.SCAN_MODE_AUTO, false);
+					}
 				}
 			}
 		}
