@@ -41,6 +41,8 @@ import java.util.stream.Collectors;
 @Transactional
 public class CronScheduler {
     @Autowired
+    SettingsRepository settingsRepository;
+    @Autowired
     VulnHistoryRepository vulnHistoryRepository;
     @Autowired
     ProjectRepository projectRepository;
@@ -155,7 +157,7 @@ public class CronScheduler {
                 try {
                     message.setSubject("Mixeway Security test trend update for "+project.getName());
                     MimeMessageHelper helper = new MimeMessageHelper(message, true);
-                    helper.setFrom("Mixeway Vulnerability Trend update");
+                    helper.setFrom(settingsRepository.findAll().stream().findFirst().get().getSmtpUsername());
                     helper.setCc("grzegorz.siewruk@orange.com");
                     helper.setText(body, true);
                     sender.send(message);
