@@ -141,7 +141,7 @@ public class CronScheduler {
                 message.setSubject("Mixeway Security test trend update for "+project.getName());
                 MimeMessageHelper helper = new MimeMessageHelper(message, true);
                 helper.setFrom(settings.get().getSmtpUsername()+"@"+settings.get().getDomain());
-                helper.setCc("grzegorz.siewruk@orange.com");
+                helper.setBcc(project.getContactList());
                 helper.setText(body, true);
                 sender.send(message);
             } catch (Exception e) {
