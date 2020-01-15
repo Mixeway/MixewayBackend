@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.vault.core.VaultOperations;
 import io.mixeway.plugins.bugtracker.BugTracking;
 import io.mixeway.pojo.Status;
@@ -83,6 +85,7 @@ public class BugTrackerService {
         }
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public ResponseEntity<Status> issueTicket(Long id, String vulnType, Long vulnId, String name) throws URISyntaxException {
         Optional<Project> project = projectRepository.findById(id);
         if (project.isPresent()) {
@@ -102,7 +105,7 @@ public class BugTrackerService {
                     }
                 }
             } else if (bugTracker.isPresent() &&vulnType.equals("code")) {
-                Optional<CodeVuln> codeVuln = codeVulnRepository.findById(vulnId);
+                Optional<CodeVuln> codeVuln = codeVulnRepository.getVulnsById(vulnId);
                 for (BugTracking bugTracking : bugTrackings){
                     if (bugTracking.canProcessRequest(bugTracker.get())){
                         return bugTracking.processRequest(codeVulnRepository, codeVuln,bugTracker.get(), project.get(), vulnType, name, true);

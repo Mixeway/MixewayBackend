@@ -1,6 +1,7 @@
 package io.mixeway.db.repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import io.mixeway.pojo.BarChartProjection;
@@ -15,12 +16,15 @@ import io.mixeway.db.entity.CodeProject;
 import io.mixeway.db.entity.CodeVuln;
 
 public interface CodeVulnRepository extends JpaRepository<CodeVuln, Long>{
+	Optional<CodeVuln> findById(Long id);
 	public Long deleteByCodeGroup(CodeGroup codeGroup);
 	public Long deleteByCodeProject(CodeProject codeProject);
 	public List<CodeVuln> findByCodeProjectAndSeverityAndAnalysis(CodeProject codeProject, String severity, String analysis);
 	public List<CodeVuln> findByCodeProjectInAndSeverityContainingIgnoreCaseAndAnalysis(List<CodeProject> list, String severity, String analysis);
 	@Query("SELECT distinct c.name from CodeVuln c where severity != 'Log'")
 	public List<String> findDistinctName();
+	@Query(value = "SELECT * from codevuln where id=?1", nativeQuery = true)
+	public Optional<CodeVuln> getVulnsById(@Param("id") Long id);
 	@Query("SELECT distinct c.name from CodeVuln c where analysis != 'Not an Issue' and analysis!='Reliability Issue'")
 	public List<String> findDistinctNameNotNotAnIssue();
 	@Modifying
