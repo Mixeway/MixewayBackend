@@ -52,7 +52,7 @@ public class JiraService implements BugTracking {
             proxyProp.setProperty("http.proxyHost", bugTracker.getProxies().getIp());
             proxyProp.setProperty("http.proxyPort", bugTracker.getProxies().getPort());
         }
-
+        origProp.setProperty("jsse.enableSNIExtension","false");
         JiraRestClientFactory factory = new AsynchronousJiraRestClientFactory();
         String password = operations.read("secret/"+bugTracker.getPassword()).getData().get("password").toString();
         URI uri = new URI(bugTracker.getUrl());
@@ -70,9 +70,10 @@ public class JiraService implements BugTracking {
                     .setDescription(description)
                     .build();
         }
-        String ticketId = issueClient.createIssue(newIssue) .claim().getKey();
+        //TODO uncomment it
+        //String ticketId = issueClient.createIssue(newIssue) .claim().getKey();
         System.setProperties(origProp);
-        return ticketId;
+        return null;
     }
     @Override
     public <T extends JpaRepository, V extends Vulnerability> ResponseEntity<Status> processRequest(T o, Optional<V> entity, BugTracker bugTracker, Project project, String vulnType, String principal, Boolean manual) throws URISyntaxException {

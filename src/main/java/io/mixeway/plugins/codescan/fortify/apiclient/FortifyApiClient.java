@@ -5,12 +5,14 @@ import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.*;
+import io.mixeway.plugins.bugtracker.BugTracking;
 import io.mixeway.plugins.codescan.fortify.model.FileContentDataModel;
 import io.mixeway.plugins.codescan.fortify.model.IssueDetailDataModel;
 import io.mixeway.plugins.codescan.model.SSCRequestHelper;
 import io.mixeway.plugins.codescan.service.CodeScanClient;
 import io.mixeway.pojo.*;
 import io.mixeway.rest.model.ScannerModel;
+import io.mixeway.rest.project.service.BugTrackerService;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -54,17 +56,21 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 	private StatusRepository statusRepository;
 	private SecureRestTemplate secureRestTemplate;
 	private ScannerTypeRepository scannerTypeRepository;
+	private BugTrackerRepository bugTrackerRepository;
+	private List<BugTracking> bugTrackings ;
 	private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 	private SimpleDateFormat sdfForFortify = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
 	@Autowired
-	FortifyApiClient(VaultOperations operations, ScannerRepository scannerRepository, CodeVulnRepository codeVulnRepository,
+	FortifyApiClient(VaultOperations operations, ScannerRepository scannerRepository, CodeVulnRepository codeVulnRepository, List<BugTracking> bugTrackings,
 					 CodeProjectRepository codeProjectRepository, CodeGroupRepository codeGroupRepository, FortifySingleAppRepository fortifySingleAppRepository,
-					 StatusRepository statusRepository, SecureRestTemplate secureRestTemplate, ScannerTypeRepository scannerTypeRepository){
+					 StatusRepository statusRepository, SecureRestTemplate secureRestTemplate, ScannerTypeRepository scannerTypeRepository, BugTrackerRepository bugTrackerRepository){
 		this.operations = operations;
+		this.bugTrackerRepository = bugTrackerRepository;
 		this.scannerRepository = scannerRepository;
 		this.codeVulnRepository = codeVulnRepository;
 		this.codeProjectRepository = codeProjectRepository;
+		this.bugTrackings = bugTrackings;
 		this.codeGroupRepository = codeGroupRepository;
 		this.fortifySingleAppRepository = fortifySingleAppRepository;
 		this.statusRepository = statusRepository;
@@ -246,11 +252,23 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 				codeVuln.setStatus(statusRepository.findByName(Constants.STATUS_EXISTING));
 			} else {
 				codeVuln.setStatus(statusRepository.findByName(Constants.STATUS_NEW));
+				processIssueTracking(codeVuln);
 				//TODO Auto jira generation
 			}
 		}
 
 		return codeVuln;
+	}
+
+	private void processIssueTracking(CodeVuln codeVuln) throws URISyntaxException {
+		Optional<BugTracker> bugTracker = bugTrackerRepository.findByProjectAndVulns(codeVuln.getCodeGroup().getProject(),Constants.VULN_JIRA_CODE);
+		if (bugTracker.isPresent() && codeVuln.getTicketId()==null) {
+			for (BugTracking bugTracking : bugTrackings) {
+				if (bugTracking.canProcessRequest(bugTracker.get())) {
+					bugTracking.processRequest(codeVulnRepository, Optional.of(codeVuln), bugTracker.get(), codeVuln.getCodeGroup().getProject(), Constants.VULN_JIRA_CODE, Constants.SCAN_MODE_AUTO, false);
+				}
+			}
+		}
 	}
 
 	private String getCodeSnippet(io.mixeway.db.entity.Scanner scanner, int versionid, String fullFileName, int lineNumber) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, JSONException, ParseException {
