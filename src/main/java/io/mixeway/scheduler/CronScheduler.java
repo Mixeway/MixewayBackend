@@ -151,12 +151,11 @@ public class CronScheduler {
             String body = null;
             try {
                 body = templateBuilder.createTemplateEmail(getTrend(project,null));
-                log.info(body);
                 MimeMessage message = sender.createMimeMessage();
                 try {
                     message.setSubject("Mixeway Security test trend update for "+project.getName());
                     MimeMessageHelper helper = new MimeMessageHelper(message, true);
-                    //TODO settings helper create
+                    helper.setFrom("Mixeway Vulnerability Trend update");
                     helper.setCc("grzegorz.siewruk@orange.com");
                     helper.setText(body, true);
                     sender.send(message);
@@ -251,7 +250,7 @@ public class CronScheduler {
                        "Not changed  (", "Dynamic Web Application Scanner", "blue", vulnsForProject.get(6).getInserted(),
                        vulnsForProject.get(0).getInserted(), vulnsForProject.get(6).getWebAppVulnHistory().intValue()));
        } catch (IndexOutOfBoundsException e){
-           throw new Exception("Cannot create Trend Email not enouvh data");
+           throw new Exception("Cannot create Trend Email not enough data");
        }
        return vulns;
     }
