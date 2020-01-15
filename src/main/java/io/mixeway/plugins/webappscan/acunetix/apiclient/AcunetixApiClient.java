@@ -335,10 +335,12 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 					return true;
 				} else {
 					log.error("Unable to load vulns info for {}", webApp.getUrl());
+					this.deleteTarget(scanner, webApp);
 					return false;
 				}
 			} catch (HttpServerErrorException e) {
 				log.error("Error trying to load vulnerabilities using url {} with msg {}","/api/v1/vulnerabilities?q=target_id:" + webApp.getTargetId(), e.getResponseBodyAsString());
+				this.deleteTarget(scanner, webApp);
 				return false;
 			}
 		} else
