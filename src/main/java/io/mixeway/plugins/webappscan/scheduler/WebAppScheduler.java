@@ -51,7 +51,7 @@ public class WebAppScheduler {
 	private static final Logger log = LoggerFactory.getLogger(WebAppScheduler.class);
 
 
-	@Scheduled(fixedDelay = 3000)
+	@Scheduled(fixedRate = 3000)
 	public void checkAndDownload() throws Exception {
 		List<WebApp> apps = waRepository.findByRunning(true);
 		ScannerType scannerType = scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_ACUNETIX);
@@ -88,7 +88,7 @@ public class WebAppScheduler {
 
 	}
 	//Every 5 min
-	@Scheduled(fixedDelay = 30000)
+	@Scheduled(fixedRate = 30000)
 	public void runScanFromQueue() {
 		Long count = webAppRepository.getCountOfRunningScans(true);
 		Optional<Scanner> scanner = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_ACUNETIX)).stream().findFirst();

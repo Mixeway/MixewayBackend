@@ -61,13 +61,13 @@ public class CronScheduler {
     @Autowired
     SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository;
 
-    DOPMailTemplateBuilder templateBuilder = new DOPMailTemplateBuilder();
-    List<String> severities = new ArrayList<String>(){{
+    private DOPMailTemplateBuilder templateBuilder = new DOPMailTemplateBuilder();
+    private List<String> severities = new ArrayList<String>(){{
         add("Medium" );
         add("High");
         add("Critical");
     }};
-    List<String> scores = new ArrayList<String>(){{
+    private List<String> scores = new ArrayList<String>(){{
         add("WARN" );
         add("FAIL");
     }};
@@ -104,9 +104,8 @@ public class CronScheduler {
     }
 
     private Long createSoftwarePacketHistory(Project project) {
-        Long vulnNumbers = (long)softwarePacketVulnerabilityRepository.getSoftwareVulnsForCodeProject(project.getId()).size();
 
-        return vulnNumbers;
+        return (Long) (long)softwarePacketVulnerabilityRepository.getSoftwareVulnsForCodeProject(project.getId()).size();
     }
 
     //every 3 minutes
@@ -121,7 +120,7 @@ public class CronScheduler {
                         log.error("Security Violation! RFW Contains rule which is not valid in scope of running tests !! - {}", r.getDestination());
                 }
             }
-        } catch (NullPointerException ex) {}
+        } catch (NullPointerException ignored) {}
 
     }
     //@Scheduled(cron = "0 0 14 * * FRI")
@@ -145,7 +144,7 @@ public class CronScheduler {
         }
 
     }
-    @Scheduled(cron = "0 0 14 * * FRI")
+    @Scheduled(fixedRate = 300000 )
     public void sendTrendEmails(){
         List<Project> projects = projectRepository.findByContactListNotNull();
         for(Project project : projects){
@@ -153,6 +152,17 @@ public class CronScheduler {
             try {
                 body = templateBuilder.createTemplateEmail(getTrend(project,null));
                 log.info(body);
+                MimeMessage message = sender.createMimeMessage();
+                try {
+                    message.setSubject("Mixeway Security test trend update for "+project.getName());
+                    MimeMessageHelper helper = new MimeMessageHelper(message, true);
+                    //TODO settings helper create
+                    helper.setCc("grzegorz.siewruk@orange.com");
+                    helper.setText(body, true);
+                    sender.send(message);
+                } catch (MessagingException ex){
+                    log.warn("MessagingException {}", ex.getLocalizedMessage());
+                }
             } catch (Exception e) {
                 log.warn(e.getLocalizedMessage());
             }
