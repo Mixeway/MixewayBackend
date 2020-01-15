@@ -57,7 +57,7 @@ public class CodeScheduler {
 	
 	//Pobranie wyników z SSC
 	@Transactional
-	@Scheduled(cron="0 0 23 * * *" )
+	@Scheduled(fixedRate = 3000000)
 	//@Scheduled(fixedDelay = 30000)
 	public void getReportForAllGroups() throws JSONException, ParseException {
 		List<CodeGroup> groups = codeGroupRepository.findAll();
