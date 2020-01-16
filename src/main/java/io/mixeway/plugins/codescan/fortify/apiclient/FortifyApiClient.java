@@ -205,9 +205,6 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 			vuln.setSeverity(vulnJson.getString(Constants.VULN_CRITICALITY));
 			vuln.setName(vulnJson.getString(Constants.VULN_NAME));
 			vuln.setInserted(sdf.format(new Date()));
-			vuln.setFilePath(vulnJson.getString(Constants.VULN_PATH)+":"+vulnJson.getString(Constants.FORTIFY_LINE_NUMVER));
-			vuln = createDescriptionAndState(vulnJson.getString(Constants.VULN_ISSUE_INSTANCE_ID),vulnJson.getLong(Constants.VULN_ISSUE_ID),
-					codeGroup.getVersionIdAll(), scanner, vuln);
 			if(codeGroup.getHasProjects() && cp == null && codeGroup.getProjects().size()>1) {
 				CodeProject codeProject = getProjectFromPath(codeGroup,vulnJson.getString(Constants.VULN_PATH));
 				vuln.setCodeProject(codeProject);
@@ -217,6 +214,9 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 				vuln.setCodeGroup(codeGroup);
 			}else
 				vuln.setCodeGroup(codeGroup);
+			vuln.setFilePath(vulnJson.getString(Constants.VULN_PATH)+":"+vulnJson.getString(Constants.FORTIFY_LINE_NUMVER));
+			vuln = createDescriptionAndState(vulnJson.getString(Constants.VULN_ISSUE_INSTANCE_ID),vulnJson.getLong(Constants.VULN_ISSUE_ID),
+					codeGroup.getVersionIdAll(), scanner, vuln);
 			codeVulnRepository.save(vuln);
 		}
 
