@@ -89,7 +89,7 @@ public class WebAppScheduler {
 	}
 	//Every 5 min
 	@Scheduled(fixedRate = 30000)
-	public void runScanFromQueue() {
+	public void runScanFromQueue() throws Exception {
 		Long count = webAppRepository.getCountOfRunningScans(true);
 		Optional<Scanner> scanner = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_ACUNETIX)).stream().findFirst();
 		int limit;
@@ -100,50 +100,16 @@ public class WebAppScheduler {
 				appsToScan = webAppRepository.getXInQueue(true, limit);
 			}
 			for (WebApp webApp : appsToScan) {
-				String urlToLookFor = WebAppScanHelper.normalizeUrl(webApp.getUrl());
-				List<WebApp> webApps = webAppRepository.getWebAppByRegexForDelation(urlToLookFor, webApp.getProject().getId());
-				try {
-					if (removedDuplicates(webApps, webApp)) {//if (webApps.size() == 1){
-						webApp.setInQueue(false);
-						webAppRepository.save(webApp);
-						for (WebAppScanClient webAppScanClient : webAppScanClients){
-							if (webAppScanClient.canProcessRequest(scanner.get())){
-								webAppScanClient.runScan(webApp,scanner.get());
-							}
-						}
-						log.debug("Starget scan for {} taken from queue", webApp.getUrl());
+				webApp.setInQueue(false);
+				webAppRepository.save(webApp);
+				for (WebAppScanClient webAppScanClient : webAppScanClients){
+					if (webAppScanClient.canProcessRequest(scanner.get())){
+						webAppScanClient.runScan(webApp,scanner.get());
 					}
-					else {
-						break;
-					}
-				} catch (Exception ex){
-					log.debug("Exception occured in shceduler - {} for {} size of array is {} and webapp contains webapp - {}",
-							ex.getLocalizedMessage(), webApp.getUrl(), webApps.size(), webApps.contains(webApp) );
-					webApp.setInQueue(false);
-					webAppRepository.save(webApp);
 				}
+				log.debug("Starget scan for {} taken from queue", webApp.getUrl());
 			}
 		}
-
-	}
-
-	public boolean removedDuplicates(List<WebApp> webApps, WebApp processingWebApp) {
-			if (webApps.size() > 1) {
-				if (webApps.stream().filter(webApp -> webApp.getRunning() || webApp.getLastExecuted() != null).count() == 1) {
-					webApps.remove(webApps.stream().filter(WebApp::getRunning).findFirst().orElse(null));
-					webApps.remove(webApps.stream().filter(webApp -> webApp.getLastExecuted() != null).findFirst().orElse(null));
-					webAppRepository.deleteAll(webApps);
-					webAppRepository.flush();
-					return false;
-				} else {
-					webApps.remove(processingWebApp);
-					webAppRepository.deleteAll(webApps);
-					webAppRepository.flush();
-					return false;
-				}
-			} else {
-				return true;
-			}
 
 	}
 

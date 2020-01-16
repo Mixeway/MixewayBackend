@@ -74,9 +74,9 @@ public class WebAppScanService {
                         if (webAppOptional.isPresent()) {
                             requestId = updateAndPutWebAppToQueue(webAppOptional.get(), webAppScanModel);
                         } else {
-                            webAppOptional = checkRegexes(urlToLookFor, project.get().getId());
-                            if (webAppOptional.isPresent()) {
-                                requestId = updateAndPutWebAppToQueue(webAppOptional.get(), webAppScanModel);
+                            List<WebApp> webAppsByRegex = checkRegexes(urlToLookFor, project.get().getId());
+                            if (webAppsByRegex.size() > 0) {
+                                requestId = updateAndPutWebAppToQueue(getProperWebAppForUpdate(webAppsByRegex), webAppScanModel);
                             } else {
                                 requestId = createAndPutWebAppToQueue(webAppScanModel, project.get());
                             }
@@ -91,6 +91,20 @@ public class WebAppScanService {
             } else {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
+        }
+    }
+
+    private WebApp getProperWebAppForUpdate(List<WebApp> webAppsByRegex) {
+        if (webAppsByRegex.size() > 1) {
+            WebApp webApp = webAppsByRegex.get(0);
+            webAppsByRegex.remove(webApp);
+            for (WebApp wa : webAppsByRegex){
+                waRepository.delete(wa);
+            }
+            waRepository.flush();
+            return webApp;
+        } else {
+            return webAppsByRegex.get(0);
         }
     }
 
@@ -154,8 +168,8 @@ public class WebAppScanService {
         }
     }
 
-    private Optional<WebApp> checkRegexes(String url, Long id) {
-        return waRepository.getWebAppByRegex(url+"$",id);
+    private List<WebApp> checkRegexes(String url, Long id) {
+        return waRepository.getWebAppByRegexAsList(url+"$",id);
     }
 
     private void removeCookiesForWebApp(WebApp webApp){

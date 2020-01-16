@@ -31,7 +31,7 @@ public interface WebAppRepository extends JpaRepository<WebApp, Long> {
 	@Query(value="select * from webapp wa where wa.url ~ :url and project_id=:id", nativeQuery = true)
 	Optional<WebApp> getWebAppByRegex(@Param("url") String url, @Param("id") Long project_id);
 	@Query(value="select * from webapp wa where wa.url ~ :url and project_id=:id", nativeQuery = true)
-	List<WebApp> getWebAppByRegexForDelation(@Param("url") String url, @Param("id") Long project_id);
+	List<WebApp> getWebAppByRegexAsList(@Param("url") String url, @Param("id") Long project_id);
 	@Query(value = "select * from webapp where url ilike %?1% limit 100", nativeQuery = true)
 	List<WebApp> searchForUrl(@Param("url") String url);
 	List<WebApp> findByRequestId(String requestId);
