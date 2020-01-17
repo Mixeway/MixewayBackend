@@ -338,8 +338,8 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 					this.deleteTarget(scanner, webApp);
 					return false;
 				}
-			} catch (HttpServerErrorException e) {
-				log.error("Error trying to load vulnerabilities using url {} with msg {}","/api/v1/vulnerabilities?q=target_id:" + webApp.getTargetId(), e.getResponseBodyAsString());
+			} catch (HttpServerErrorException | NullPointerException e) {
+				log.error("Error trying to load vulnerabilities using url {} with msg {}","/api/v1/vulnerabilities?q=target_id:" + webApp.getTargetId(), e.getLocalizedMessage());
 				this.deleteTarget(scanner, webApp);
 				return false;
 			}
