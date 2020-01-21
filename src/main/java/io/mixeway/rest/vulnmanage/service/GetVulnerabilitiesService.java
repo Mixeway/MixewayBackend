@@ -281,7 +281,7 @@ public class GetVulnerabilitiesService {
         List<InfrastructureVuln> infraVulns = null;
         if (project != null) {
             infraVulns = infrastractureVulnRepository
-                    .findByIntfInAndSeverityNot(interfaceRepository.findByAssetIn(project.getAssets().stream().collect(Collectors.toList())),"Log");
+                    .findByIntfInAndSeverityNot(interfaceRepository.findByAssetIn(new ArrayList<>(project.getAssets())),"Log");
         } else
             infraVulns = infrastractureVulnRepository.findBySeverityNot("Log");
         for (InfrastructureVuln iv : infraVulns) {

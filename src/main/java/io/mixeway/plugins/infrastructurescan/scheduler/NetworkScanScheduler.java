@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 
@@ -102,7 +103,7 @@ public class NetworkScanScheduler {
 							}
 						}
 					}
-				} catch (ResourceAccessException | NullPointerException | HttpServerErrorException | JAXBException e) {
+				} catch (ResourceAccessException | NullPointerException | HttpServerErrorException | JAXBException | HttpClientErrorException e) {
 					log.error("Exception - {} came up during scan for {}",e.getLocalizedMessage(), ns.getProject().getName());
 				}
 			}
