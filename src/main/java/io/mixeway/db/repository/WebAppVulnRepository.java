@@ -42,6 +42,12 @@ WebAppVulnRepository extends JpaRepository<WebAppVuln, Long>{
 	@Query(value = "select * from webappvuln where name ilike %?1%", nativeQuery = true)
 	List<WebAppVuln> searchForName(@Param("name") String name);
 	List<WebAppVuln> findByWebApp(WebApp webApp);
+	@Query(value = "select ((count(*) filter (where severity='Critical') * :critWage) + (count(*) filter (where severity='High') * :highWage) + (count(*) filter (where severity='Medium') * :mediumWage)) from " +
+			"webappvuln where webapp_id in (select id from webapp where project_id=:project_id);", nativeQuery = true)
+	int countRiskForProject(@Param("project_id")Long project_id,@Param("critWage") int critWage, @Param("highWage") int highWage,@Param("mediumWage") int mediumWage);
+	@Query(value = "select ((count(*) filter (where severity='Critical') * :critWage) + (count(*) filter (where severity='High') * :highWage) + (count(*) filter (where severity='Medium') * :mediumWage)) from " +
+			"webappvuln where webapp_id =:webapp_id", nativeQuery = true)
+	int countRiskForWebApp(@Param("webapp_id")Long webapp_id,@Param("critWage") int critWage, @Param("highWage") int highWage,@Param("mediumWage") int mediumWage);
 
 
 }

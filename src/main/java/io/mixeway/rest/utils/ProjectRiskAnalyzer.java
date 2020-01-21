@@ -40,55 +40,28 @@ public class ProjectRiskAnalyzer {
     }
 
     public int getProjectCodeRisk(Project project) {
-        int result = 0;
-        if (project.getCodes() != null){
-            try {
-                result += codeVulnRepository.getCountByProjectIdSeverityAndAnalysis(project.getId(),Constants.VULN_CRITICALITY_CRITICAL, Constants.FORTIFY_ANALYSIS_EXPLOITABLE) * CODE_CRITIC_WAGE;
-                result += codeVulnRepository.getCountByProjectIdSeverityAndAnalysis(project.getId(),Constants.VULN_CRITICALITY_HIGH, Constants.FORTIFY_ANALYSIS_EXPLOITABLE) * CODE_HIGH_WAGE;
-            } catch (NullPointerException ex){
-                log.warn("Something wrong with code for data: {}",project.getName());
-            }
-        }
-        return result;
+        return codeVulnRepository.countRiskForProject(project.getId(),CODE_CRITIC_WAGE, CODE_HIGH_WAGE,Constants.FORTIFY_ANALYSIS_EXPLOITABLE);
     }
     public int getProjectInfraRisk(Project project){
-        int result = 0;
-        if (project.getAssets() != null) {
-            result+=infrastructureVulnRepository.getCountByProjectIdAndThreat(project.getId(),Constants.VULN_CRITICALITY_CRITICAL) * INFRA_HIGH_WAGE;
-            result+=infrastructureVulnRepository.getCountByProjectIdAndThreat(project.getId(),Constants.VULN_CRITICALITY_HIGH) * INFRA_HIGH_WAGE;
-            result+=infrastructureVulnRepository.getCountByProjectIdAndThreat(project.getId(),Constants.IF_VULN_THREAT_MEDIUM) * INFRA_MEDIUM_WAGE;
-        }
-        return result;
+        return infrastructureVulnRepository.countRiskForProject(project.getId(),INFRA_HIGH_WAGE,INFRA_HIGH_WAGE,INFRA_MEDIUM_WAGE);
     }
     public int getProjectWebAppRisk(Project project){
-        int result = 0;
-        if (project.getWebapps() != null) {
-            result += webAppVulnRepository.getCountByProjectIdAndSeverity(project.getId(), Constants.VULN_CRITICALITY_HIGH) * WEBAPP_HIGH_WAGE;
-            result += webAppVulnRepository.getCountByProjectIdAndSeverity(project.getId(), Constants.IF_VULN_THREAT_MEDIUM) * WEBAPP_MEDIUM_WAGE;
-        }
-        return result;
+        return webAppVulnRepository.countRiskForProject(project.getId(),WEBAPP_HIGH_WAGE,WEBAPP_HIGH_WAGE,WEBAPP_MEDIUM_WAGE);
     }
     public int getProjectAuditRisk(Project project){
         return 0;
     }
 
     public int getInterfaceRisk(Interface i) {
-        int result = 0;
-        result+=infrastructureVulnRepository.getCountByInterfaceIdAndThreat(i.getId(),Constants.VULN_CRITICALITY_CRITICAL) * INFRA_HIGH_WAGE;
-        result+=infrastructureVulnRepository.getCountByInterfaceIdAndThreat(i.getId(),Constants.VULN_CRITICALITY_HIGH) * INFRA_HIGH_WAGE;
-        result+=infrastructureVulnRepository.getCountByInterfaceIdAndThreat(i.getId(),Constants.IF_VULN_THREAT_MEDIUM) * INFRA_MEDIUM_WAGE;
-        return result;
+        return infrastructureVulnRepository.countRiskForInterface(i.getId(),INFRA_HIGH_WAGE,INFRA_HIGH_WAGE, INFRA_MEDIUM_WAGE);
     }
     public int getWebAppRisk(WebApp webApp){
-        int result = 0;
-        result += webAppVulnRepository.getCountByWebAppIdAndSeverity(webApp.getId(), Constants.VULN_CRITICALITY_HIGH) * WEBAPP_HIGH_WAGE;
-        result += webAppVulnRepository.getCountByWebAppIdAndSeverity(webApp.getId(), Constants.IF_VULN_THREAT_MEDIUM) * WEBAPP_MEDIUM_WAGE;
-        return result;
+        return webAppVulnRepository.countRiskForWebApp(webApp.getId(),WEBAPP_HIGH_WAGE,WEBAPP_HIGH_WAGE,WEBAPP_MEDIUM_WAGE);
     }
     public int getCodeProjectRisk(CodeProject cp){
         int result = 0;
         result += codeVulnRepository.getCountByCodeProjectIdSeverityAndAnalysis(cp.getId(),Constants.VULN_CRITICALITY_CRITICAL, Constants.FORTIFY_ANALYSIS_EXPLOITABLE) * CODE_CRITIC_WAGE;
         result += codeVulnRepository.getCountByCodeProjectIdSeverityAndAnalysis(cp.getId(),Constants.VULN_CRITICALITY_HIGH, Constants.FORTIFY_ANALYSIS_EXPLOITABLE) * CODE_HIGH_WAGE;
-        return result;
+        return codeVulnRepository.countRiskForCodeProject(cp.getId(),CODE_CRITIC_WAGE,CODE_HIGH_WAGE,Constants.FORTIFY_ANALYSIS_EXPLOITABLE);
     }
 }

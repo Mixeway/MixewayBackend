@@ -63,5 +63,11 @@ public interface InfrastructureVulnRepository extends JpaRepository<Infrastructu
 	Long getCountByInterfaceIdAndThreat(@Param("id")Long id, @Param("threat")String threat);
 	@Query(value = "select * from infrastructurevuln where name ilike %?1%", nativeQuery = true)
 	List<InfrastructureVuln> searchForName(@Param("name") String name);
+	@Query(value = "select ((count(*) filter (where threat='Critical') * :critWage) + (count(*) filter (where threat='High') * :highWage) + (count(*) filter (where threat='Medium') * :mediumWage)) from " +
+			"infrastructurevuln where interface_id in (select id from interface where asset_id in (select id from asset where project_id =:project_id));", nativeQuery = true)
+	int countRiskForProject(@Param("project_id")Long project_id,@Param("critWage") int critWage, @Param("highWage") int highWage,@Param("mediumWage") int mediumWage);
+	@Query(value = "select ((count(*) filter (where threat='Critical') * :critWage) + (count(*) filter (where threat='High') * :highWage) + (count(*) filter (where threat='Medium') * :mediumWage)) from " +
+			"infrastructurevuln where interface_id =:interface_id;", nativeQuery = true)
+	int countRiskForInterface(@Param("interface_id")Long interface_id,@Param("critWage") int critWage, @Param("highWage") int highWage,@Param("mediumWage") int mediumWage);
 
 }

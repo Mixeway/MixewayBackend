@@ -65,5 +65,13 @@ public interface CodeVulnRepository extends JpaRepository<CodeVuln, Long>{
 	@Query(value = "select * from codevuln where name ilike %?1%", nativeQuery = true)
 	List<CodeVuln> searchForName(@Param("name") String name);
 	List<CodeVuln> findByCodeGroup(CodeGroup codeGroup);
+	@Query(value = "select ((count(*) filter (where severity='Critical') * :critWage) + (count(*) filter (where severity='High') * :highWage)) from " +
+			"codevuln where codegroup_id in (select id from codegroup where project_id=:project_id) and analysis =:analysis", nativeQuery = true)
+	int countRiskForProject(@Param("project_id")Long project_id,@Param("critWage") int critWage, @Param("highWage") int highWage,
+							@Param("analysis") String analysis);
+	@Query(value = "select ((count(*) filter (where severity='Critical') * :critWage) + (count(*) filter (where severity='High') * :highWage)) from " +
+			"codevuln where codeproject_id =:codeProject_id and analysis =:analysis", nativeQuery = true)
+	int countRiskForCodeProject(@Param("codeProject_id")Long codeProject_id,@Param("critWage") int critWage, @Param("highWage") int highWage,
+							@Param("analysis") String analysis);
 
 }
