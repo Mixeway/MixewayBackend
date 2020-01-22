@@ -5,6 +5,15 @@ public class CodeModel {
     String codeGroup;
     String codeProject;
     Boolean running;
+    String dTrackUuid;
+
+    public String getdTrackUuid() {
+        return dTrackUuid;
+    }
+
+    public void setdTrackUuid(String dTrackUuid) {
+        this.dTrackUuid = dTrackUuid;
+    }
 
     public Boolean getRunning() {
         return running;

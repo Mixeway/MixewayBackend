@@ -19,6 +19,7 @@ public class CodeProject {
 	private Long id;
 	private CodeGroup codeGroup;
 	private String name;
+	private String dTrackUuid;
 	@JsonIgnore private Set<CodeVuln> vulns;
 	@JsonIgnore private Set<WebAppVuln> webAppVulns;
 	@JsonIgnore private String commitid;
@@ -32,6 +33,15 @@ public class CodeProject {
 	@JsonIgnore private Set<SoftwarePacket> softwarePackets;
 	@JsonIgnore private String branch;
 	@JsonIgnore private String requestId;
+
+	@Column(name="dtrackuuid")
+	public String getdTrackUuid() {
+		return dTrackUuid;
+	}
+
+	public void setdTrackUuid(String dTrackUuid) {
+		this.dTrackUuid = dTrackUuid;
+	}
 
 	@Column(name="requestid")
 	public String getRequestId() {

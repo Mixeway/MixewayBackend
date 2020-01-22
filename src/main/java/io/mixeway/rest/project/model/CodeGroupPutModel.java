@@ -10,6 +10,15 @@ public class CodeGroupPutModel {
     private String tech;
     private boolean autoScan;
     private boolean childs;
+    private String dTrackUuid;
+
+    public String getdTrackUuid() {
+        return dTrackUuid;
+    }
+
+    public void setdTrackUuid(String dTrackUuid) {
+        this.dTrackUuid = dTrackUuid;
+    }
 
     public String getCodeGroupName() {
         return codeGroupName;
