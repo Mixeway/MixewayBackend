@@ -171,7 +171,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 				log.debug("Contains old vulns, reimporting");
 				reimportAnalysisFromScans(codeProject,codeGroup, codeVulns);
 			}
-			if (codeProject.getdTrackUuid()!=null){
+			if (codeProject!=null && codeProject.getdTrackUuid()!=null){
 				dependencyTrackApiClient.loadVulnerabilities(codeProject);
 			}
 		} catch (HttpClientErrorException | CertificateException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyManagementException | KeyStoreException | IOException | URISyntaxException | HttpServerErrorException hcee){
