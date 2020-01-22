@@ -11,6 +11,15 @@ public class CreateFortifyScanRequest {
     private String password;
     private int versionId;
     private Boolean single;
+    private String dTrackUuid;
+
+    public String getdTrackUuid() {
+        return dTrackUuid;
+    }
+
+    public void setdTrackUuid(String dTrackUuid) {
+        this.dTrackUuid = dTrackUuid;
+    }
 
     public Boolean getSingle() {
         return single;

@@ -393,6 +393,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 			if (!cp.getSkipAllScan()) {
 				ProjectCode pc = new ProjectCode();
 				pc.setProjectName(cp.getName());
+				pc.setdTrackUuid(cp.getdTrackUuid());
 				pc.setBranch(cp.getBranch()!=null && !cp.getBranch().equals("") ? cp.getBranch() : Constants.CODE_DEFAULT_BRANCH);
 				pc.setProjectRepoUrl(cp.getRepoUrl());
 				pc.setTechnique(cp.getTechnique());
@@ -411,6 +412,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 			fortifyScanRequest.setCloudCtrlToken(Objects.requireNonNull(token.getData()).get("password").toString());
 			fortifyScanRequest.setGroupName(cp.getCodeGroup().getName());
 			fortifyScanRequest.setSingle(true);
+			fortifyScanRequest.setdTrackUuid(cp.getdTrackUuid());
 			fortifyScanRequest.setUsername(cp.getCodeGroup().getRepoUsername());
 			VaultResponseSupport<Map<String, Object>> password = operations.read("secret/" + cp.getCodeGroup().getRepoPassword());
 			assert password != null;

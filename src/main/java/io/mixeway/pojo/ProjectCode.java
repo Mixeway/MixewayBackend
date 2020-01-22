@@ -7,6 +7,15 @@ public class ProjectCode {
     private String params;
     private String technique;
     private String branch;
+    private String dTrackUuid;
+
+    public String getdTrackUuid() {
+        return dTrackUuid;
+    }
+
+    public void setdTrackUuid(String dTrackUuid) {
+        this.dTrackUuid = dTrackUuid;
+    }
 
     public String getBranch() {
         return branch;
