@@ -1,10 +1,8 @@
 package io.mixeway.scheduler;
 
-import io.mixeway.db.entity.NessusScan;
-import io.mixeway.db.entity.Project;
-import io.mixeway.db.entity.Settings;
-import io.mixeway.db.entity.VulnHistory;
+import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
+import io.mixeway.plugins.audit.dependencytrack.apiclient.DependencyTrackApiClient;
 import io.mixeway.plugins.remotefirewall.apiclient.RfwApiClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,21 +44,25 @@ public class CronScheduler {
     private final InterfaceRepository interfaceRepository;
     private final NessusScanRepository nessusScanRepository;
     private final JavaMailSender sender;
+    private final CodeProjectRepository codeProjectRepository;
     private final SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository;
     private final RfwApiClient rfwApiClient;
     private final ScanHelper scanHelper;
+    private final DependencyTrackApiClient dependencyTrackApiClient;
     @Autowired
     public CronScheduler(SettingsRepository settingsRepository, VulnHistoryRepository vulnHistoryRepository,
-            ProjectRepository projectRepository, WebAppVulnRepository webAppVulnRepository,
+            ProjectRepository projectRepository, WebAppVulnRepository webAppVulnRepository, DependencyTrackApiClient dependencyTrackApiClient,
             CodeVulnRepository codeVulnRepository,  NodeAuditRepository nodeAuditRepository, InfrastructureVulnRepository infrastructureVulnRepository,
             InterfaceRepository interfaceRepository, NessusScanRepository nessusScanRepository, JavaMailSender sender,
             SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository,RfwApiClient rfwApiClient,
-            ScanHelper scanHelper) {
+            ScanHelper scanHelper, CodeProjectRepository codeProjectRepository) {
         this.settingsRepository = settingsRepository;
+        this.codeProjectRepository = codeProjectRepository;
         this.projectRepository = projectRepository;
         this.vulnHistoryRepository = vulnHistoryRepository;
         this.webAppVulnRepository = webAppVulnRepository;
         this.codeVulnRepository = codeVulnRepository;
+        this.dependencyTrackApiClient = dependencyTrackApiClient;
         this.nodeAuditRepository = nodeAuditRepository;
         this.infrastructureVulnRepository = infrastructureVulnRepository;
         this.nessusScanRepository = nessusScanRepository;
@@ -108,6 +110,17 @@ public class CronScheduler {
     private Long createSoftwarePacketHistory(Project project) {
 
         return (Long) (long)softwarePacketVulnerabilityRepository.getSoftwareVulnsForCodeProject(project.getId()).size();
+    }
+    @Scheduled(initialDelay=0,fixedDelay = 150000)
+    public void getDepTrackVulns() throws  KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, CertificateException, IOException {
+        try {
+            for (CodeProject cp : codeProjectRepository.findBydTrackUuidNotNull()){
+                dependencyTrackApiClient.loadVulnerabilities(cp);
+            }
+        } catch (Exception ignored) {
+            ignored.printStackTrace();
+        }
+
     }
 
     //every 3 minutes

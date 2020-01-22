@@ -816,3 +816,20 @@ update settings set codeautocron='0 40 23 * * *';
 
 --changeset siewer:158
 alter table settings add column domain text;
+
+--changeset siewer:159
+alter table scannertype add column authapikey boolean;
+alter table scannertype add column authsecrettoken boolean;
+alter table scannertype add column authaccesstoken boolean;
+alter table scannertype add column authusername boolean;
+alter table scannertype add column authpassword boolean;
+alter table scannertype add column authcloudctrltoken boolean;
+update scannertype set authapikey=false,authsecrettoken=false,authaccesstoken=false,authusername=true,authpassword=true,authcloudctrltoken=false where name='OpenVas Socket';
+update scannertype set authapikey=false,authsecrettoken=false,authaccesstoken=false,authusername=true,authpassword=true,authcloudctrltoken=false where name='OpenVas';
+update scannertype set authapikey=false,authsecrettoken=false,authaccesstoken=false,authusername=true,authpassword=true,authcloudctrltoken=false where name='Nexpose';
+update scannertype set authapikey=false,authsecrettoken=false,authaccesstoken=false,authusername=true,authpassword=true,authcloudctrltoken=false where name='Fortify SSC';
+update scannertype set authapikey=false,authsecrettoken=false,authaccesstoken=false,authusername=false,authpassword=false,authcloudctrltoken=true where name='Fortify SCA Rest API';
+update scannertype set authapikey=true,authsecrettoken=false,authaccesstoken=false,authusername=false,authpassword=false,authcloudctrltoken=false where name='Acunetix';
+update scannertype set authapikey=false,authsecrettoken=true,authaccesstoken=true,authusername=false,authpassword=false,authcloudctrltoken=false where name='Nessus';
+insert into scannertype (name, authaccesstoken,authapikey,authcloudctrltoken,authpassword,authusername,authsecrettoken) values ('OWASP Dependency Track',false,true,false,false,false,false);
+alter table codeproject add column dtrackuuid text;
