@@ -90,7 +90,7 @@ public class DependencyTrackApiClient implements SecurityScanner {
     public boolean createProject(CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         List<Scanner> dTrack = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_DEPENDENCYTRACK));
         //Multiple dTrack instances not yet supported
-        if (dTrack.size() == 1 && codeProject.getdTrackUuid() != null){
+        if (dTrack.size() == 1 && (codeProject.getdTrackUuid() == null || codeProject.getdTrackUuid().isEmpty())){
             RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(dTrack.get(0));
             HttpHeaders headers = prepareAuthHeader(dTrack.get(0));
             HttpEntity<DTrackCreateProject> entity = new HttpEntity<>(new DTrackCreateProject(codeProject.getName()),headers);
