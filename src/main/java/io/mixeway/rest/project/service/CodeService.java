@@ -3,6 +3,8 @@ package io.mixeway.rest.project.service;
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.Project;
 import io.mixeway.db.repository.CodeProjectRepository;
+import io.mixeway.plugins.audit.dependencytrack.apiclient.DependencyTrackApiClient;
+import io.mixeway.plugins.audit.dependencytrack.model.Projects;
 import io.mixeway.plugins.codescan.service.CodeScanClient;
 import io.mixeway.rest.project.model.*;
 import io.mixeway.rest.utils.ProjectRiskAnalyzer;
@@ -37,14 +39,16 @@ public class CodeService {
     private final VaultOperations operations;
     private final List<CodeScanClient> codeScanClients;
     private final CodeVulnRepository codeVulnRepository;
+    private final DependencyTrackApiClient dependencyTrackApiClient;
 
     @Autowired
     CodeService(ProjectRepository projectRepository, CodeProjectRepository codeProjectRepository,
                 ProjectRiskAnalyzer projectRiskAnalyzer, CodeGroupRepository codeGroupRepository,
                 VaultOperations operations, List<CodeScanClient> codeScanClients,
-                CodeVulnRepository codeVulnRepository) {
+                CodeVulnRepository codeVulnRepository, DependencyTrackApiClient dependencyTrackApiClient) {
         this.projectRepository = projectRepository;
         this.codeProjectRepository = codeProjectRepository;
+        this.dependencyTrackApiClient = dependencyTrackApiClient;
         this.projectRiskAnalyzer = projectRiskAnalyzer;
         this.operations = operations;
         this.codeGroupRepository = codeGroupRepository;
@@ -252,5 +256,24 @@ public class CodeService {
             log.warn("{} failed to edit codeProject {} due to wrong UUID format", name, id);
         }
         return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    }
+
+    public ResponseEntity<Status> createDTrackProject(Long id, String name) {
+        Optional<CodeProject> codeProject = codeProjectRepository.findById(id);
+        try{
+            if (codeProject.isPresent() && dependencyTrackApiClient.createProject(codeProject.get()) ) {
+
+                log.info("{} Successfully Created dTrack Project {}", name, codeProject.get().getName());
+                return new ResponseEntity<>(HttpStatus.OK);
+
+            }
+        } catch (IllegalArgumentException |IOException | CertificateException | NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException | KeyManagementException exception){
+            log.warn("{} failed to create dTrackProject {} due to wrong UUID format", name, id);
+        }
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    }
+
+    public ResponseEntity<List<Projects>> getdTracksProjects() throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+        return new ResponseEntity<>(dependencyTrackApiClient.getProjects(), HttpStatus.OK);
     }
 }

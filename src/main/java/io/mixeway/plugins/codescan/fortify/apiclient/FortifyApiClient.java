@@ -5,6 +5,7 @@ import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.*;
+import io.mixeway.plugins.audit.dependencytrack.apiclient.DependencyTrackApiClient;
 import io.mixeway.plugins.bugtracker.BugTracking;
 import io.mixeway.plugins.codescan.fortify.model.FileContentDataModel;
 import io.mixeway.plugins.codescan.fortify.model.IssueDetailDataModel;
@@ -24,6 +25,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.vault.core.VaultOperations;
 import org.springframework.vault.support.VaultResponseSupport;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.BufferedReader;
@@ -56,19 +58,21 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 	private StatusRepository statusRepository;
 	private SecureRestTemplate secureRestTemplate;
 	private ScannerTypeRepository scannerTypeRepository;
+	private DependencyTrackApiClient dependencyTrackApiClient;
 	private BugTrackerRepository bugTrackerRepository;
 	private List<BugTracking> bugTrackings ;
 	private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 	private SimpleDateFormat sdfForFortify = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
 	@Autowired
-	FortifyApiClient(VaultOperations operations, ScannerRepository scannerRepository, CodeVulnRepository codeVulnRepository, List<BugTracking> bugTrackings,
+	FortifyApiClient(VaultOperations operations, ScannerRepository scannerRepository, CodeVulnRepository codeVulnRepository, List<BugTracking> bugTrackings, DependencyTrackApiClient dependencyTrackApiClient,
 					 CodeProjectRepository codeProjectRepository, CodeGroupRepository codeGroupRepository, FortifySingleAppRepository fortifySingleAppRepository,
 					 StatusRepository statusRepository, SecureRestTemplate secureRestTemplate, ScannerTypeRepository scannerTypeRepository, BugTrackerRepository bugTrackerRepository){
 		this.operations = operations;
 		this.bugTrackerRepository = bugTrackerRepository;
 		this.scannerRepository = scannerRepository;
 		this.codeVulnRepository = codeVulnRepository;
+		this.dependencyTrackApiClient = dependencyTrackApiClient;
 		this.codeProjectRepository = codeProjectRepository;
 		this.bugTrackings = bugTrackings;
 		this.codeGroupRepository = codeGroupRepository;
@@ -167,7 +171,10 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 				log.debug("Contains old vulns, reimporting");
 				reimportAnalysisFromScans(codeProject,codeGroup, codeVulns);
 			}
-		} catch (HttpClientErrorException | CertificateException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyManagementException | KeyStoreException | IOException | URISyntaxException hcee){
+			if (codeProject.getdTrackUuid()!=null){
+				dependencyTrackApiClient.loadVulnerabilities(codeProject);
+			}
+		} catch (HttpClientErrorException | CertificateException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyManagementException | KeyStoreException | IOException | URISyntaxException | HttpServerErrorException hcee){
 			log.error("FortifySSC HttpClientErrorExceptio was unsuccessfull with code of: {} {} ",hcee.getLocalizedMessage(),hcee.getMessage());
 		}
 	}

@@ -19,6 +19,7 @@ import org.springframework.vault.core.VaultOperations;
 import org.springframework.vault.support.VaultResponseSupport;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 import javax.xml.bind.JAXBException;
@@ -76,12 +77,12 @@ public class DependencyTrackApiClient implements SecurityScanner {
                         "/api/v1/vulnerability/project/" + codeProject.getdTrackUuid(), HttpMethod.GET, entity, new ParameterizedTypeReference<List<DTrackVuln>>() {
                 });
                 if (response.getStatusCode() == HttpStatus.OK) {
-                    createVulns(codeProject, response.getBody());
+                    createVulns(codeProject, Objects.requireNonNull(response.getBody()));
                 } else {
                     log.error("Unable to get Findings from Dependency Track for project {}", codeProject.getdTrackUuid());
                 }
-            } catch (HttpClientErrorException e){
-                log.error("Error during OpenSource loading vulnerabilities for {} with code {}", codeProject.getName(), e.getStatusCode());
+            } catch (HttpClientErrorException | HttpServerErrorException | ResourceAccessException e){
+                log.error("Error during OpenSource loading vulnerabilities for {} with code {}", codeProject.getName(), e.getLocalizedMessage());
             }
         }
 
@@ -97,10 +98,11 @@ public class DependencyTrackApiClient implements SecurityScanner {
             try {
                 ResponseEntity<DTrackCreateProjectResponse> response = restTemplate.exchange(dTrack.get(0).getApiUrl() +
                         "/api/v1/project", HttpMethod.PUT, entity, DTrackCreateProjectResponse.class);
-                if (response.getStatusCode() == HttpStatus.OK) {
-                   codeProject.setdTrackUuid(response.getBody().getUuid());
+                if (response.getStatusCode() == HttpStatus.CREATED) {
+                   codeProject.setdTrackUuid(Objects.requireNonNull(response.getBody()).getUuid());
                    codeProjectRepository.save(codeProject);
                    log.info("Successfully created Dependency Track project for {} with UUID {}", codeProject.getName(),codeProject.getdTrackUuid());
+                   return true;
                 } else {
                     log.error("Unable to to create project Dependency Track for project {}", codeProject.getdTrackUuid());
                 }
@@ -110,6 +112,29 @@ public class DependencyTrackApiClient implements SecurityScanner {
         }
 
         return false;
+    }
+    public List<Projects> getProjects() throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+        List<Scanner> dTrack = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_DEPENDENCYTRACK));
+        //Multiple dTrack instances not yet supported
+        if (dTrack.size() == 1 ){
+            RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(dTrack.get(0));
+            HttpHeaders headers = prepareAuthHeader(dTrack.get(0));
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+
+            try {
+                ResponseEntity<List<Projects>> response = restTemplate.exchange(dTrack.get(0).getApiUrl() +
+                        "/api/v1/project", HttpMethod.GET, entity, new ParameterizedTypeReference<List<Projects>>() {});
+                if (response.getStatusCode() == HttpStatus.OK) {
+                    return response.getBody();
+                } else {
+                    log.error("Unable to load Dependency Track projects");
+                }
+            } catch (HttpClientErrorException | HttpServerErrorException | ResourceAccessException e){
+                log.error("Error during getting Dependency Track project list {}", e.getLocalizedMessage());
+            }
+        }
+
+        return null;
     }
 
     private void createVulns(CodeProject codeProject, List<DTrackVuln> body) {

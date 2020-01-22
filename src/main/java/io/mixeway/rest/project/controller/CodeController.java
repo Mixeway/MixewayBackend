@@ -1,5 +1,6 @@
 package io.mixeway.rest.project.controller;
 
+import io.mixeway.plugins.audit.dependencytrack.model.Projects;
 import io.mixeway.rest.project.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -81,5 +82,15 @@ public class CodeController {
     @PatchMapping(value = "/codeproject/{id}")
     public ResponseEntity<Status> editCodeProject(@PathVariable("id")Long id, @RequestBody EditCodeProjectModel editCodeProjectModel, Principal principal) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         return codeService.editCodeProject(id, editCodeProjectModel, principal.getName());
+    }
+    @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
+    @GetMapping(value = "/codeproject/{id}/createdtrack")
+    public ResponseEntity<Status> createDTrackProject(@PathVariable("id")Long id, Principal principal) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+        return codeService.createDTrackProject(id, principal.getName());
+    }
+    @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
+    @GetMapping(value = "/dtrackprojects")
+    public ResponseEntity<List<Projects>> getdTracksProjects() throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+        return codeService.getdTracksProjects();
     }
 }

@@ -124,7 +124,7 @@ public class CronScheduler {
     }
 
     //every 3 minutes
-    @Scheduled(initialDelay=0,fixedDelay = 150000)
+    @Scheduled(initialDelay=0,fixedDelay = 1500000)
     public void verifyRFWRules() throws  KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, CertificateException, IOException {
         try {
             for (NessusScan ns : nessusScanRepository.getRunningScansWithRfwConfigured()) {
