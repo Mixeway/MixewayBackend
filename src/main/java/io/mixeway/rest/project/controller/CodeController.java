@@ -1,9 +1,6 @@
 package io.mixeway.rest.project.controller;
 
-import io.mixeway.rest.project.model.CodeCard;
-import io.mixeway.rest.project.model.CodeGroupPutModel;
-import io.mixeway.rest.project.model.CodeProjectPutModel;
-import io.mixeway.rest.project.model.RunScanForCodeProject;
+import io.mixeway.rest.project.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -79,5 +76,10 @@ public class CodeController {
     @GetMapping(value = "/{id}/vulns/code")
     public ResponseEntity<List<CodeVuln>> showCodeVulns(@PathVariable("id")Long id) {
         return codeService.showCodeVulns(id);
+    }
+    @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
+    @PatchMapping(value = "/codeproject/{id}")
+    public ResponseEntity<Status> editCodeProject(@PathVariable("id")Long id, @RequestBody EditCodeProjectModel editCodeProjectModel, Principal principal) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+        return codeService.editCodeProject(id, editCodeProjectModel, principal.getName());
     }
 }

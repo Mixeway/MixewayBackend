@@ -212,8 +212,12 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 			}else if (codeGroup.getHasProjects() && cp != null){
 				vuln.setCodeProject(cp);
 				vuln.setCodeGroup(codeGroup);
-			}else
+			}else {
 				vuln.setCodeGroup(codeGroup);
+				List<CodeProject> codeProject = codeProjectRepository.findByCodeGroup(codeGroup);
+				if (codeProject.size() == 1)
+					vuln.setCodeProject(codeProject.get(0));
+			}
 			vuln.setFilePath(vulnJson.getString(Constants.VULN_PATH)+":"+vulnJson.getString(Constants.FORTIFY_LINE_NUMVER));
 			vuln = createDescriptionAndState(vulnJson.getString(Constants.VULN_ISSUE_INSTANCE_ID),vulnJson.getLong(Constants.VULN_ISSUE_ID),
 					codeGroup.getVersionIdAll(), scanner, vuln);

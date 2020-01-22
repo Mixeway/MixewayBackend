@@ -7,6 +7,15 @@ public class CodeProjectPutModel {
     private String projectTech;
     private String additionalPath;
     private String branch;
+    private String dTrackUuid;
+
+    public String getdTrackUuid() {
+        return dTrackUuid;
+    }
+
+    public void setdTrackUuid(String dTrackUuid) {
+        this.dTrackUuid = dTrackUuid;
+    }
 
     public String getBranch() {
         return branch;

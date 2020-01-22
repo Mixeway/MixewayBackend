@@ -63,6 +63,7 @@ public class CodeService {
                 codeModel.setCodeProject(cp.getName());
                 codeModel.setCodeGroup(cp.getCodeGroup().getName());
                 codeModel.setId(cp.getId());
+                codeModel.setdTrackUuid(cp.getdTrackUuid());
                 codeModel.setRunning(cp.getCodeGroup().isRunning());
                 int risk = projectRiskAnalyzer.getCodeProjectRisk(cp);
                 codeModel.setRisk(Math.min(risk, 100));
@@ -98,6 +99,8 @@ public class CodeService {
             codeGroup.setVersionIdsingle(codeGroupPutModel.getVersionIdSingle());
             codeGroup.setProject(project.get());
             codeGroupRepository.save(codeGroup);
+            if (!codeGroup.getHasProjects())
+                createProjectForCodeGroup(codeGroup,codeGroupPutModel);
             Map<String, String> mapa = new HashMap<>();
             mapa.put("password", codeGroupPutModel.getGitpassword());
             operations.write("secret/"+codeGroup.getRepoPassword(), mapa);
@@ -108,6 +111,18 @@ public class CodeService {
         }
     }
 
+    private void createProjectForCodeGroup(CodeGroup codeGroup, CodeGroupPutModel codeGroupPutModel) {
+        CodeProject cp = new CodeProject();
+        cp.setName(codeGroup.getName());
+        cp.setCodeGroup(codeGroup);
+        cp.setBranch(Constants.CODE_DEFAULT_BRANCH);
+        cp.setRepoUrl(codeGroup.getRepoUrl());
+        cp.setRepoPassword(codeGroup.getRepoPassword());
+        cp.setRepoUsername(codeGroup.getRepoUsername());
+        cp.setdTrackUuid(codeGroupPutModel.getdTrackUuid());
+        codeProjectRepository.save(cp);
+    }
+
     public ResponseEntity<Status> saveCodeProject(Long id, CodeProjectPutModel codeProjectPutModel, String username) {
         Optional<Project> project = projectRepository.findById(id);
         Optional<CodeGroup> codeGroup = codeGroupRepository.findById(codeProjectPutModel.getCodeGroup());
@@ -116,6 +131,7 @@ public class CodeService {
             codeProject.setCodeGroup(codeGroup.get());
             codeProject.setName(codeProjectPutModel.getCodeProjectName());
             codeProject.setSkipAllScan(false);
+            codeProject.setdTrackUuid(codeProjectPutModel.getdTrackUuid());
             codeProject.setBranch(codeProjectPutModel.getBranch()!=null && !codeProjectPutModel.getBranch().equals("") ? codeProjectPutModel.getBranch() : Constants.CODE_DEFAULT_BRANCH);
             codeProject.setAdditionalPath(codeProjectPutModel.getAdditionalPath());
             codeProject.setRepoUrl(codeProjectPutModel.getProjectGiturl());
@@ -219,5 +235,22 @@ public class CodeService {
         } else {
             return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
         }
+    }
+
+    public ResponseEntity<Status> editCodeProject(Long id, EditCodeProjectModel editCodeProjectModel, String name) {
+        Optional<CodeProject> codeProject = codeProjectRepository.findById(id);
+        try{
+            if (codeProject.isPresent()) {
+                UUID uuid = UUID.fromString(editCodeProjectModel.getdTrackUuid());
+                codeProject.get().setdTrackUuid(editCodeProjectModel.getdTrackUuid());
+                codeProjectRepository.save(codeProject.get());
+                log.info("{} Successfully Edited codeProject {}", name, codeProject.get().getName());
+                return new ResponseEntity<>(HttpStatus.OK);
+
+            }
+        } catch (IllegalArgumentException exception){
+            log.warn("{} failed to edit codeProject {} due to wrong UUID format", name, id);
+        }
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
 }

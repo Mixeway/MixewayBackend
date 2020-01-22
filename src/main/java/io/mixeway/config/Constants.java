@@ -186,4 +186,6 @@ public class Constants {
     public static final String FORTIFY_SCAN_FOULTED = "SCAN_FAULTED";
 	public static final String FORTIFY_SCAN_CANCELED = "SCAN_CANCELED";
 	public static final String FORTIFY_UPLOAD_FAILED = "UPLOAD_FAILED";
+    public static final String SCANNER_TYPE_DEPENDENCYTRACK = "OWASP Dependency Track";
+    public static final String DTRACK_AUTH_HEADER = "X-Api-Key";
 }
