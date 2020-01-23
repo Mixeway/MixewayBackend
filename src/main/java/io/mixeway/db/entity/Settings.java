@@ -2,6 +2,7 @@ package io.mixeway.db.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import javax.persistence.*;
@@ -26,7 +27,17 @@ public class Settings {
     private String infraAutoCron;
     private String webAppAutoCron;
     private String codeAutoCron;
+    private String trendEmailCron;
     private String domain;
+
+    @Column(name="trendemailcron")
+    public String getTrendEmailCron() {
+        return trendEmailCron;
+    }
+
+    public void setTrendEmailCron(String trendEmailCron) {
+        this.trendEmailCron = trendEmailCron;
+    }
 
     public String getDomain() {
         return domain;

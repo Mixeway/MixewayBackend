@@ -42,4 +42,13 @@ public class SchedulerConfig {
             throw new Exception("Unable to load settings");
         }
     }
+    @Bean
+    public String getTrendEmailExpression() throws Exception {
+        Optional<Settings> settings = settingsRepository.findAll().stream().findFirst();
+        if (settings.isPresent()){
+            return settings.get().getTrendEmailCron();
+        } else {
+            throw new Exception("Unable to load settings");
+        }
+    }
 }

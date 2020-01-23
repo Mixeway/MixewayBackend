@@ -833,3 +833,7 @@ update scannertype set authapikey=true,authsecrettoken=false,authaccesstoken=fal
 update scannertype set authapikey=false,authsecrettoken=true,authaccesstoken=true,authusername=false,authpassword=false,authcloudctrltoken=false where name='Nessus';
 insert into scannertype (name, authaccesstoken,authapikey,authcloudctrltoken,authpassword,authusername,authsecrettoken) values ('OWASP Dependency Track',false,true,false,false,false,false);
 alter table codeproject add column dtrackuuid text;
+
+--changeset siewer:160
+alter table settings add column trendemailcron text;
+update settings set trendemailcron='0 0 14 * * FRI';

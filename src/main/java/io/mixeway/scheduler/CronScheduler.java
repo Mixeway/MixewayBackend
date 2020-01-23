@@ -139,27 +139,31 @@ public class CronScheduler {
 
     }
 
-    @Scheduled(cron = "0 0 14 * * FRI")
+    @Scheduled(cron = "#{@getTrendEmailExpression}")
     public void sendTrendEmails(){
-        List<Project> projects = projectRepository.findByContactListNotNull();
-        for(Project project : projects){
-            String body;
-            try {
+        try {
+            List<String> emailsToSend = projectRepository.getUniqueContactListEmails();
+            for (String email : emailsToSend) {
+                List<List<EmailVulnHelper>> vulns = new ArrayList<>();
+                List<Project> projectForEmail = projectRepository.getUniqueContactListEmails(email);
+                for (Project project : projectForEmail) {
+                    vulns.add(getTrend(project));
+                }
                 Optional<Settings> settings = settingsRepository.findAll().stream().findFirst();
-                if (!settings.isPresent()){
+                if (!settings.isPresent()) {
                     throw new Exception("Settings error during sending email trend");
                 }
-                body = templateBuilder.createTemplateEmail(getTrend(project));
+                String body = templateBuilder.createTemplateEmail(vulns);
                 MimeMessage message = sender.createMimeMessage();
-                message.setSubject("Mixeway Security test trend update for "+project.getName());
+                message.setSubject("Mixeway Security aggregated vulnerability trend update");
                 MimeMessageHelper helper = new MimeMessageHelper(message, true);
-                helper.setFrom(settings.get().getSmtpUsername()+"@"+settings.get().getDomain());
-                helper.setBcc(project.getContactList());
+                helper.setFrom(settings.get().getSmtpUsername() + "@" + settings.get().getDomain());
+                helper.setBcc("grzegorz.siewruk@orange.com");
                 helper.setText(body, true);
                 sender.send(message);
-            } catch (Exception e) {
-                log.warn(e.getLocalizedMessage());
             }
+        } catch( Exception e){
+            log.warn(e.getLocalizedMessage());
         }
     }
 
@@ -189,8 +193,8 @@ public class CronScheduler {
 
    List<EmailVulnHelper> getTrend(Project project) throws Exception {
         List<EmailVulnHelper> vulns = new ArrayList<>();
-       List<VulnHistory> vulnsForProject = vulnHistoryRepository.getLastTwoVulnForProject(project.getId());
-       vulnsForProject.sort(Comparator.comparing(VulnHistory::getInserted));
+        List<VulnHistory> vulnsForProject = vulnHistoryRepository.getLastTwoVulnForProject(project.getId());
+        vulnsForProject.sort(Comparator.comparing(VulnHistory::getInserted));
        //Network scan
        try {
            if (vulnsForProject.get(6).getInfrastructureVulnHistory() > vulnsForProject.get(0).getInfrastructureVulnHistory()) {
@@ -244,6 +248,19 @@ public class CronScheduler {
                vulns.add(new EmailVulnHelper(project, 0,
                        "Not changed  (", "Dynamic Web Application Scanner", "blue", vulnsForProject.get(6).getInserted(),
                        vulnsForProject.get(0).getInserted(), vulnsForProject.get(6).getWebAppVulnHistory().intValue()));
+           //OpenSource
+           if (vulnsForProject.get(6).getSoftwarePacketVulnNumber() > vulnsForProject.get(0).getSoftwarePacketVulnNumber()) {
+               vulns.add(new EmailVulnHelper(project, (int) (vulnsForProject.get(6).getSoftwarePacketVulnNumber() - vulnsForProject.get(0).getSoftwarePacketVulnNumber()),
+                       "Increased    (+", "OpenSource Scanner", "red", vulnsForProject.get(6).getInserted(),
+                       vulnsForProject.get(0).getInserted(), vulnsForProject.get(6).getSoftwarePacketVulnNumber().intValue()));
+           } else if (vulnsForProject.get(6).getSoftwarePacketVulnNumber() < vulnsForProject.get(0).getSoftwarePacketVulnNumber()) {
+               vulns.add(new EmailVulnHelper(project, (int) (vulnsForProject.get(0).getSoftwarePacketVulnNumber() - vulnsForProject.get(6).getSoftwarePacketVulnNumber()),
+                       "Decreased    (-", "OpenSource Scanner", "green", vulnsForProject.get(6).getInserted(),
+                       vulnsForProject.get(0).getInserted(), vulnsForProject.get(6).getSoftwarePacketVulnNumber().intValue()));
+           } else
+               vulns.add(new EmailVulnHelper(project, 0,
+                       "Not changed  (", "OpenSource Scanner", "blue", vulnsForProject.get(6).getInserted(),
+                       vulnsForProject.get(0).getInserted(), vulnsForProject.get(6).getSoftwarePacketVulnNumber().intValue()));
        } catch (IndexOutOfBoundsException e){
            throw new Exception("Cannot create Trend Email not enough data");
        }

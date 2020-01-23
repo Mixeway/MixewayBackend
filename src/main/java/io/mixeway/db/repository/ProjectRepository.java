@@ -4,7 +4,10 @@ import java.util.List;
 import java.util.Optional;
 
 import io.mixeway.db.entity.Project;
+import io.mixeway.pojo.BarChartProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -17,4 +20,8 @@ public interface ProjectRepository extends JpaRepository<Project, Long>{
 	List<Project> findByAutoCodeScan(boolean autoWebScan);
 	List<Project> findByAutoInfraScan(boolean autoInfraScan);
 	List<Project> findByContactListNotNull();
+	@Query(value="SELECT distinct(regexp_split_to_table(contactlist, E',')) FROM project",nativeQuery = true)
+	List<String> getUniqueContactListEmails();
+	@Query(value="select * from project where contactlist like '%:email%';",nativeQuery = true)
+	List<Project> getUniqueContactListEmails(@Param("email") String email);
 }

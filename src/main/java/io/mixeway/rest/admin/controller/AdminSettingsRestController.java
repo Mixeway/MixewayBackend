@@ -87,5 +87,10 @@ public class AdminSettingsRestController {
     public ResponseEntity<Status> changeCodeCron( Principal principal,@RequestBody CronSettings cronSettings)  {
         return adminSettingsRestService.changeCodeCron(principal.getName(), cronSettings);
     }
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PatchMapping(value = "/settings/trendcron")
+    public ResponseEntity<Status> changeTrendCron( Principal principal,@RequestBody CronSettings cronSettings)  {
+        return adminSettingsRestService.changeTrendCron(principal.getName(), cronSettings);
+    }
 
 }

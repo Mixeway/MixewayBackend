@@ -218,4 +218,20 @@ public class AdminSettingsRestService {
         }
         return new ResponseEntity<>( HttpStatus.EXPECTATION_FAILED);
     }
+
+    public ResponseEntity<Status> changeTrendCron(String name, CronSettings cronSettings) {
+        try {
+            CronExpression cron = new CronExpression(cronSettings.getExpression());
+            Optional<Settings> settings = settingsRepository.findAll().stream().findFirst();
+            if (settings.isPresent()){
+                settings.get().setTrendEmailCron(cronSettings.getExpression());
+                settingsRepository.save(settings.get());
+                log.info("{} - Changed Cron auto scan start for code to {}", name, LogUtil.prepare(cronSettings.getExpression()));
+                return new ResponseEntity<>( HttpStatus.OK);
+            }
+        } catch (ParseException e) {
+            return new ResponseEntity<>(new Status(e.getLocalizedMessage()), HttpStatus.EXPECTATION_FAILED);
+        }
+        return new ResponseEntity<>( HttpStatus.EXPECTATION_FAILED);
+    }
 }
