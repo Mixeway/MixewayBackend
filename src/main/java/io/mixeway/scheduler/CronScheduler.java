@@ -157,10 +157,10 @@ public class CronScheduler {
                         }
                         String body = templateBuilder.createTemplateEmail(vulns);
                         MimeMessage message = sender.createMimeMessage();
-                        message.setSubject(email + " Mixeway Security aggregated vulnerability trend update");
+                        message.setSubject("Mixeway Security aggregated vulnerability trend update");
                         MimeMessageHelper helper = new MimeMessageHelper(message, true);
                         helper.setFrom(settings.get().getSmtpUsername() + "@" + settings.get().getDomain());
-                        helper.setBcc("grzegorz.siewruk@orange.com");
+                        helper.setTo(email);
                         helper.setText(body, true);
                         sender.send(message);
                     }
