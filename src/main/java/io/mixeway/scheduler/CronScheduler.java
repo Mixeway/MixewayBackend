@@ -139,7 +139,7 @@ public class CronScheduler {
 
     }
 
-    @Scheduled(cron = "#{@getTrendEmailExpression}")
+    @Scheduled(fixedDelay = 500)
     public void sendTrendEmails(){
         try {
             List<String> emailsToSend = projectRepository.getUniqueContactListEmails();
@@ -158,7 +158,7 @@ public class CronScheduler {
                 message.setSubject(email +" Mixeway Security aggregated vulnerability trend update");
                 MimeMessageHelper helper = new MimeMessageHelper(message, true);
                 helper.setFrom(settings.get().getSmtpUsername() + "@" + settings.get().getDomain());
-                helper.setBcc("grzegorz.siewruk@orange.com");
+                helper.setTo("grzegorz.siewruk@orange.com");
                 helper.setText(body, true);
                 sender.send(message);
             }
