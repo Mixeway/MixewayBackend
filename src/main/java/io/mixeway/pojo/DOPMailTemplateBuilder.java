@@ -14,6 +14,7 @@ public class DOPMailTemplateBuilder {
             for (EmailVulnHelper evh : vulnHelpers) {
                 sb.append("<li>" + evh.getSource() + " - <font color=\"" + evh.getColor() + "\"><b><u>Vulnerabilities detected: " + evh.getOverall() + "</u> [7 days trend -> " + evh.getResult() + "" + evh.getNumber() + ")]</b></font></li>");
             }
+            sb.append("</ul>");
         }
         sb.append("</br></br>\n" +
                 "* please note that this report does not contain information about newly removed vulnerabilities " +

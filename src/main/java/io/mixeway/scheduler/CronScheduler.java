@@ -141,30 +141,35 @@ public class CronScheduler {
 
     @Scheduled(cron = "#{@getTrendEmailExpression}")
     public void sendTrendEmails(){
-        try {
+
             List<String> emailsToSend = projectRepository.getUniqueContactListEmails();
             for (String email : emailsToSend) {
-                List<List<EmailVulnHelper>> vulns = new ArrayList<>();
-                List<Project> projectForEmail = projectRepository.getUniqueContactListEmails(email);
-                for (Project project : projectForEmail) {
-                    vulns.add(getTrend(project));
+                try {
+                    List<List<EmailVulnHelper>> vulns = new ArrayList<>();
+                    List<Project> projectForEmail = projectRepository.getUniqueContactListEmails(email);
+                    for (Project project : projectForEmail) {
+                        vulns.add(getTrend(project));
+                    }
+                    if (vulns.size()>0) {
+                        Optional<Settings> settings = settingsRepository.findAll().stream().findFirst();
+                        if (!settings.isPresent()) {
+                            throw new Exception("Settings error during sending email trend");
+                        }
+                        String body = templateBuilder.createTemplateEmail(vulns);
+                        MimeMessage message = sender.createMimeMessage();
+                        message.setSubject("Mixeway Security aggregated vulnerability trend update");
+                        MimeMessageHelper helper = new MimeMessageHelper(message, true);
+                        helper.setFrom(settings.get().getSmtpUsername() + "@" + settings.get().getDomain());
+                        helper.setTo(email);
+                        helper.setText(body, true);
+                        sender.send(message);
+                    }
+                } catch( Exception e){
+                    e.printStackTrace();
+                    log.warn(e.getLocalizedMessage());
                 }
-                Optional<Settings> settings = settingsRepository.findAll().stream().findFirst();
-                if (!settings.isPresent()) {
-                    throw new Exception("Settings error during sending email trend");
-                }
-                String body = templateBuilder.createTemplateEmail(vulns);
-                MimeMessage message = sender.createMimeMessage();
-                message.setSubject("Mixeway Security aggregated vulnerability trend update");
-                MimeMessageHelper helper = new MimeMessageHelper(message, true);
-                helper.setFrom(settings.get().getSmtpUsername() + "@" + settings.get().getDomain());
-                helper.setBcc("grzegorz.siewruk@orange.com");
-                helper.setText(body, true);
-                sender.send(message);
             }
-        } catch( Exception e){
-            log.warn(e.getLocalizedMessage());
-        }
+
     }
 
     private Long createWebAppVulnHistory(Project p){
