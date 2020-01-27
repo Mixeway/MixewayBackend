@@ -1,5 +1,6 @@
 package io.mixeway.db.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.OnDelete;
@@ -75,6 +76,7 @@ public class CiOperations {
     }
     @CreationTimestamp
     @Temporal(TemporalType.TIMESTAMP)
+    @JsonFormat(pattern = "yyyy-MM-dd hh:mm:ss")
     public Date getInserted() {
         return inserted;
     }
