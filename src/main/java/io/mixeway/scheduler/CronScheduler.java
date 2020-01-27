@@ -109,7 +109,7 @@ public class CronScheduler {
 
     private Long createSoftwarePacketHistory(Project project) {
 
-        return (Long) (long)softwarePacketVulnerabilityRepository.getSoftwareVulnsForCodeProject(project.getId()).size();
+        return (Long) (long)softwarePacketVulnerabilityRepository.getSoftwareVulnsForProject(project.getId()).size();
     }
     @Scheduled(initialDelay=0,fixedDelay = 1500000)
     public void getDepTrackVulns() throws  KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, CertificateException, IOException {
