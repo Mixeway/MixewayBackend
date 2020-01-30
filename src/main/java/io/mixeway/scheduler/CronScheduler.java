@@ -112,11 +112,12 @@ public class CronScheduler {
         return (Long) (long)softwarePacketVulnerabilityRepository.getSoftwareVulnsForProject(project.getId()).size();
     }
     @Scheduled(initialDelay=0,fixedDelay = 1500000)
-    public void getDepTrackVulns() throws  KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, CertificateException, IOException {
+    public void getDepTrackVulns() {
         try {
             for (CodeProject cp : codeProjectRepository.findBydTrackUuidNotNull()){
                 dependencyTrackApiClient.loadVulnerabilities(cp);
             }
+            log.info("Successfully synchronized with OpenSource scanner");
         } catch (Exception ignored) {
             ignored.printStackTrace();
         }

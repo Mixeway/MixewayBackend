@@ -171,7 +171,6 @@ public class DependencyTrackApiClient implements SecurityScanner {
             }
             codeProjectRepository.save(codeProject);
         }
-        log.info("Loaded OpenSource vulns for {}", codeProject.getName());
     }
 
     private Double createScore(String severity) {
