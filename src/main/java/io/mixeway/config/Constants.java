@@ -188,4 +188,15 @@ public class Constants {
 	public static final String FORTIFY_UPLOAD_FAILED = "UPLOAD_FAILED";
     public static final String SCANNER_TYPE_DEPENDENCYTRACK = "OWASP Dependency Track";
     public static final String DTRACK_AUTH_HEADER = "X-Api-Key";
+    public static final String SCANNER_TYPE_CHECKMARX = "Checmkarx";
+	public static final String CHECKMARX_LOGIN_FORM_USERNAME = "username";
+	public static final String CHECKMARX_LOGIN_FORM_PASSWORD = "password";
+	public static final String CHECKMARX_LOGIN_FORM_GRANT_TYPE = "grant_type";
+	public static final String CHECKMARX_LOGIN_FORM_SCOPE = "scope";
+	public static final String CHECKMARX_LOGIN_FORM_CLIENTID = "client_id";
+	public static final String CHECKMARX_LOGIN_FORM_CLIENTSECRET = "resource_owner_client";
+	public static final String CHECKMARX_LOGIN_FORM_GRANT_TYPE_VALUE = "password";
+	public static final String CHECKMARX_LOGIN_FORM_SCOPE_VALUE = "sast_rest_api";
+	public static final String CHECKMARX_LOGIN_FORM_CLIENTID_VALUE = "client_secret";
+	public static final String CHECKMARX_LOGIN_FORM_CLIENTSECRET_VALUE = "014DF517-39D1-4453-B7B3-9930C563627C";
 }
