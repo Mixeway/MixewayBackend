@@ -84,8 +84,6 @@ public class NetworkScanScheduler {
 					}
 
 				}
-				nessusScanRepository.flush();
-				interfaceRepository.flush();
 			}
 		} catch (Exception ce){
 			log.debug("Connection refused for one of scanners");

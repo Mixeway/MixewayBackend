@@ -452,9 +452,6 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 					JSONObject vuln = vulnArray.getJSONObject(k);
 					createVulnerability(vuln, ns, i, tmpOldVulns);
 				}
-				infrastructureVulnRepository.flush();
-				interfaceRepository.flush();
-				assetRepository.flush();
 				createServicesForInterface(i);
 			} else {
 				log.error("Getting vulns {} failed return code is: {}", ns.getNessus().getApiUrl(), response.getStatusCode().toString());
