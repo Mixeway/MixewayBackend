@@ -189,7 +189,7 @@ public class GetVulnerabilitiesService {
             }
         }
         else {
-            try (Stream<CodeVuln> vulnsForProject = codeVulnRepository.findAllCodeVulns()){
+            try (Stream<CodeVuln> vulnsForProject = codeVulnRepository.findAllCodeVulns("Not an Issue")){
                 codeVulns = vulnsForProject.collect(Collectors.toList());
             }
         }

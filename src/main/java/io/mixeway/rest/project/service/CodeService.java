@@ -222,7 +222,7 @@ public class CodeService {
         Optional<Project> project = projectRepository.findById(id);
         if (project.isPresent()){
             List<CodeVuln> codeVulns;
-            try(Stream<CodeVuln> vulns = codeVulnRepository.findByCodeGroupIn(project.get().getCodes())){
+            try(Stream<CodeVuln> vulns = codeVulnRepository.findByCodeGroupInAndAnalysisNot(project.get().getCodes(),"Not an Issue")){
                 codeVulns = vulns.collect(Collectors.toList());
             }
             return new ResponseEntity<>(codeVulns,HttpStatus.OK);
