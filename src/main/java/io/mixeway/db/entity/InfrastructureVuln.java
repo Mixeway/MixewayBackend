@@ -62,7 +62,7 @@ public class InfrastructureVuln implements Vulnerability {
 	public void setId(Long id) {
 		this.id = id;
 	}
-	@ManyToOne(fetch = FetchType.LAZY, optional = false)
+	@ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "interface_id", nullable = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
 	public Interface getIntf() {
