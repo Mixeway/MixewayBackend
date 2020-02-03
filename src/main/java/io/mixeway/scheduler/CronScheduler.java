@@ -129,7 +129,7 @@ public class CronScheduler {
     public void verifyRFWRules() throws  KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, CertificateException, IOException {
         try {
             for (NessusScan ns : nessusScanRepository.getRunningScansWithRfwConfigured()) {
-                List<Rule> rules = rfwApiClient.getListOfRules(ns.getNessus()).stream().filter(r -> r.getChain().equals("FORWARD")).collect(Collectors.toList());
+                List<Rule> rules = rfwApiClient.getListOfRules(ns.getNessus()).stream().filter(r -> r.getChain().equals("INPUT")).collect(Collectors.toList());
                 List<String> runningScansIps = scanHelper.prepareTargetsForScan(ns, false);
                 for (Rule r : rules) {
                     if (!runningScansIps.contains(r.getDestination()))
