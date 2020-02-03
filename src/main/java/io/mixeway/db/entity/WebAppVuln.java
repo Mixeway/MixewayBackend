@@ -71,7 +71,7 @@ public class WebAppVuln implements Vulnerability {
 	public void setWebAppScan(WebAppScan webAppScan) {
 		this.webAppScan = webAppScan;
 	}
-	@ManyToOne(fetch = FetchType.LAZY, optional = true, cascade=CascadeType.DETACH)
+	@ManyToOne(fetch = FetchType.EAGER, optional = true, cascade=CascadeType.DETACH)
     @JoinColumn(name = "webapp_id", nullable = true)
 	public WebApp getWebApp() {
 		return webApp;

@@ -146,9 +146,12 @@ public class ScanHelper {
         for (RoutingDomain rd : uniqueDomainInProjectAssets) {
             nessuses.addAll(scannerRepository.findByRoutingDomainAndScannerTypeIn(rd, types));
         }
-        return nessuses.stream()
+        if (nessuses.size() > 0)
+            return nessuses.stream()
                 .filter(s -> s.getScannerType() == scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_NESSUS))
                 .findFirst().orElseGet(() -> nessuses.get(0));
+        else
+            return null;
 
     }
     public boolean runInfraScanForScope(Project project, Set<Interface> intfs)  {
@@ -156,7 +159,7 @@ public class ScanHelper {
             NessusScan scan;
             Scanner nessus = this.findNessusForInterfaces(intfs);
             if (nessus == null)
-                throw new Exception("No suitable network scanner for project");
+                throw new Exception("No suitable network scanner for project "+project.getName()+" got "+intfs.size()+" interfaces to scan");
             scan = new NessusScan();
             scan.setIsAutomatic(false);
             scan.setNessus(nessus);
