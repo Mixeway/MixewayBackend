@@ -22,6 +22,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.vault.core.VaultOperations;
 import org.springframework.vault.support.VaultResponseSupport;
 import org.springframework.web.client.HttpClientErrorException;
@@ -430,6 +432,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 			return null;
 	}
 	@Override
+	@Transactional(propagation = Propagation.REQUIRES_NEW)
 	public boolean isScanDone(CodeGroup cg) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, ParseException, JSONException {
 		if (cg.isRunning() && cg.getRequestid()!=null && cg.getScanid()==null){
 			getScanId(cg);
@@ -497,6 +500,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 	private void getScanId(CodeGroup cg) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
 		List<io.mixeway.db.entity.Scanner> fortify = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_FORTIFY_SCA));
 		RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(null);
+		log.info("Checking SAST JOB {}", cg.getRequestid());
 		ResponseEntity<FortifyScan> response = restTemplate.exchange(fortify.get(0).getApiUrl()+"/check/"+cg.getRequestid(), HttpMethod.GET, null, FortifyScan.class);
 		if (response.getStatusCode().equals(HttpStatus.OK)) {
 			if (Objects.requireNonNull(response.getBody()).getError() != null && response.getBody().getError()) {

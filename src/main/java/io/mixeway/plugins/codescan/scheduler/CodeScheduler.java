@@ -99,7 +99,6 @@ public class CodeScheduler {
 			}
 		}
 	}
-	@Transactional
 	@Scheduled(fixedDelay = 30000)
 	public void getVulns() throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
 		Optional<Scanner> fortify = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_FORTIFY)).stream().findFirst();
