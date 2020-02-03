@@ -500,11 +500,11 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 	private void getScanId(CodeGroup cg) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
 		List<io.mixeway.db.entity.Scanner> fortify = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_FORTIFY_SCA));
 		RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(null);
-		log.info("Checking SAST JOB {}", cg.getRequestid());
 		ResponseEntity<FortifyScan> response = restTemplate.exchange(fortify.get(0).getApiUrl()+"/check/"+cg.getRequestid(), HttpMethod.GET, null, FortifyScan.class);
-		if (response.getStatusCode().equals(HttpStatus.OK)) {
-			if (Objects.requireNonNull(response.getBody()).getError() != null && response.getBody().getError()) {
 
+		if (response.getStatusCode().equals(HttpStatus.OK)) {
+			log.info("Getting check for {} with scanid {}",cg.getRequestid(),response.getBody().getScanId());
+			if (Objects.requireNonNull(response.getBody()).getError() != null && response.getBody().getError()) {
 				Optional<FortifySingleApp> fortifySingleApp = fortifySingleAppRepository.findByRequestId(response.getBody().getRequestId());
 				if (fortifySingleApp.isPresent()) {
 					fortifySingleApp.get().setFinished(true);
