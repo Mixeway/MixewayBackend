@@ -497,6 +497,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 		}
 	}
 
+	@Transactional(propagation = Propagation.REQUIRES_NEW)
 	private void getScanId(CodeGroup cg) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
 		List<io.mixeway.db.entity.Scanner> fortify = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_FORTIFY_SCA));
 		RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(null);
@@ -516,9 +517,9 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 				log.warn("Fortify Scan error on {} with scope of {}", cg.getName(), cg.getScope());
 			} else if (response.getBody().getScanId() != null) {
 				if (response.getBody().getProjectName() != null ) {
-					log.info("Getting check for {} with scanid {}",cg.getRequestid(),response.getBody().getScanId());
 					Optional<CodeProject> cp = codeProjectRepository.findByCodeGroupAndName(cg, response.getBody().getProjectName());
 					if (cp.isPresent()) {
+						log.info("Getting check for {} with scanid {}",cg.getRequestid(),response.getBody().getScanId());
 						cp.get().setCommitid(response.getBody().getCommitid());
 						codeProjectRepository.save(cp.get());
 						FortifySingleApp fortifySingleApp = new FortifySingleApp();
