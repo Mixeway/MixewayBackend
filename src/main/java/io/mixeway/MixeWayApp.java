@@ -26,7 +26,8 @@ public class MixeWayApp {
 	@Bean
 	public TaskScheduler taskScheduler() {
 		final ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
-		scheduler.setPoolSize(15);
+		scheduler.setPoolSize(20);
+		scheduler.setAwaitTerminationSeconds(120);
 		scheduler.setRemoveOnCancelPolicy(true);
 		return scheduler;
 	}
