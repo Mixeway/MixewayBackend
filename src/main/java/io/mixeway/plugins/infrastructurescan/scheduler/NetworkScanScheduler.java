@@ -68,13 +68,6 @@ public class NetworkScanScheduler {
 					for (NetworkScanClient networkScanClient :networkScanClients) {
 						if (networkScanClient.canProcessRequest(ns) && networkScanClient.isScanDone(ns)) {
 							networkScanClient.loadVulnerabilities(ns);
-							ns.setRunning(false);
-							nessusScanRepository.save(ns);
-							log.info("Loaded result for {} scan of {}",ns.getNessus().getScannerType().getName(), ns.getProject().getName());
-							if (ns.getNessus().getRfwUrl() != null) {
-								networkScanService.deleteRulsFromRfw(ns);
-								log.info("RFW for scan {} is cleared - dropped traffic", ns.getProject().getName());
-							}
 						}
 					}
 					//For nessus create webapp linking

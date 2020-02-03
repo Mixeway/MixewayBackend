@@ -16,6 +16,7 @@ import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.*;
 import io.mixeway.plugins.infrastructurescan.service.NetworkScanClient;
+import io.mixeway.plugins.infrastructurescan.service.NetworkScanService;
 import io.mixeway.plugins.remotefirewall.apiclient.RfwApiClient;
 import io.mixeway.pojo.ScanHelper;
 import io.mixeway.pojo.SecureRestTemplate;
@@ -62,10 +63,11 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 	private final ScannerTypeRepository scannerTypeRepository;
 	private final RoutingDomainRepository routingDomainRepository;
 	private final ProxiesRepository proxiesRepository;
+	private final NetworkScanService networkScanService;
 	@Autowired
 	NessusApiClient(VaultOperations operations, ScannerRepository scannerRepository, NessusScanTemplateRepository nessusScanTemplateRepository,
 					AssetRepository assetRepository, InterfaceRepository interfaceRepository, NessusScanRepository nessusScanRepository,
-					InfrastructureVulnRepository infrastructureVulnRepository, RfwApiClient rfwApiClient, ScanHelper scanHelper,
+					InfrastructureVulnRepository infrastructureVulnRepository, RfwApiClient rfwApiClient, ScanHelper scanHelper, NetworkScanService networkScanService,
 					SecureRestTemplate secureRestTemplate, ServiceRepository serviceRepository, StatusRepository statusRepository,
 					ScannerTypeRepository scannerTypeRepository, RoutingDomainRepository routingDomainRepository, ProxiesRepository proxiesRepository){
 		this.operations = operations;
@@ -75,6 +77,7 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 		this.interfaceRepository = interfaceRepository;
 		this.nessusScanTemplateRepository = nessusScanTemplateRepository;
 		this.infrastructureVulnRepository = infrastructureVulnRepository;
+		this.networkScanService = networkScanService;
 		this.rfwApiClient = rfwApiClient;
 		this.scanHelper = scanHelper;
 		this.secureRestTemplate = secureRestTemplate;
@@ -417,6 +420,7 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 
 
 	@Override
+	@Transactional(propagation = Propagation.REQUIRES_NEW)
 	public void loadVulnerabilities(NessusScan ns) throws JSONException, CertificateException, UnrecoverableKeyException,
 			NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
 		List<Interface> intfs = interfaceRepository.getInterfaceForAssetsWithHostIdSet(new ArrayList<>(ns.getProject().getAssets()));
@@ -430,10 +434,14 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 		//scanHelper.updateInterfaceState(ns,false);
 		ns.setRunning(false);
 		nessusScanRepository.save(ns);
+		log.info("Loaded result for {} scan of {}",ns.getNessus().getScannerType().getName(), ns.getProject().getName());
+		if (ns.getNessus().getRfwUrl() != null) {
+			networkScanService.deleteRulsFromRfw(ns);
+			log.info("RFW for scan {} is cleared - dropped traffic", ns.getProject().getName());
+		}
 		log.info("Nessus - successfully loaded vulnerabilities for {}",ns.getProject().getName());
 	}
 
-	@Transactional(propagation = Propagation.REQUIRES_NEW)
 	void loadVulnForInterface(NessusScan ns, Interface i) throws JSONException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
 		try {
 			i.getVulns().clear();
