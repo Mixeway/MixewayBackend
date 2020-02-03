@@ -22,6 +22,7 @@ import io.mixeway.db.entity.InfrastructureVuln;
 import io.mixeway.plugins.infrastructurescan.service.NetworkScanService;
 import io.mixeway.pojo.Status;
 
+import javax.persistence.criteria.Predicate;
 import javax.transaction.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -152,7 +153,7 @@ public class AssetService {
     public ResponseEntity<Status> runAllAssetScan(Long id, String username) {
         Optional<Project> project = projectRepository.findById(id);
         if (project.isPresent()){
-            List<Interface> intfs =  interfaceRepository.findByAssetIn(new ArrayList<>(project.get().getAssets())).stream().filter(Interface::isScanRunning).collect(Collectors.toList());
+            List<Interface> intfs =  interfaceRepository.findByAssetIn(new ArrayList<>(project.get().getAssets())).stream().filter(i -> !i.isScanRunning()).collect(Collectors.toList());
             if (scanHelper.runInfraScanForScope(project.get(),new HashSet<>(intfs))) {
                 log.info("{} - Started scan for project {} - scope full", username, project.get().getName());
                 return new ResponseEntity<>(null, HttpStatus.CREATED);

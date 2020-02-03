@@ -129,7 +129,7 @@ public class ScanHelper {
         Set<Interface> interfaces = new HashSet<>();
         for (RunScanForAssets assetToScan : runScanForAssets){
             Optional<Interface> intf = interfaceRepository.findById(assetToScan.getAssetId());
-            if (intf.isPresent() && intf.get().getAsset().getProject() == project)
+            if (intf.isPresent() && intf.get().getAsset().getProject().getId().equals(project.getId()))
                 interfaces.add(intf.get());
         }
         return interfaces;
