@@ -135,7 +135,7 @@ public class NessusScan {
 	public void setLastExecuted(String lastExecuted) {
 		this.lastExecuted = lastExecuted;
 	}
-	@ManyToMany(fetch = FetchType.LAZY,cascade = {CascadeType.PERSIST,CascadeType.MERGE,CascadeType.DETACH})
+	@ManyToMany(fetch = FetchType.LAZY,cascade = {CascadeType.MERGE,CascadeType.DETACH})
 	@JoinTable(name = "nessus_interface", joinColumns = {@JoinColumn(name="nessusscan_id", referencedColumnName="id")}, 
 				inverseJoinColumns= {@JoinColumn(name="interface_id", referencedColumnName="id")})
 	public Set<Interface> getInterfaces() {

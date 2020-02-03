@@ -164,6 +164,8 @@ public class CodeScheduler {
 							log.info("Ready to scan [scope {}}] {}, taking it from the queue",cp.getName(), cp.getCodeGroup().getName());
 							cp.setInQueue(false);
 							codeProjectRepository.save(cp);
+							cp.getCodeGroup().setRunning(true);
+							codeGroupRepository.save(cp.getCodeGroup());
 							codeScanClient.runScan(cp.getCodeGroup(), cp);
 						}
 					}
