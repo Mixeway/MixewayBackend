@@ -503,7 +503,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 		ResponseEntity<FortifyScan> response = restTemplate.exchange(fortify.get(0).getApiUrl()+"/check/"+cg.getRequestid(), HttpMethod.GET, null, FortifyScan.class);
 
 		if (response.getStatusCode().equals(HttpStatus.OK)) {
-			log.info("Getting check for {} with scanid {}",cg.getRequestid(),response.getBody().getScanId());
+			log.info("response is {}",response.getBody().toString());
 			if (Objects.requireNonNull(response.getBody()).getError() != null && response.getBody().getError()) {
 				Optional<FortifySingleApp> fortifySingleApp = fortifySingleAppRepository.findByRequestId(response.getBody().getRequestId());
 				if (fortifySingleApp.isPresent()) {
@@ -514,8 +514,9 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 				cg.setRunning(false);
 				codeGroupRepository.save(cg);
 				log.warn("Fortify Scan error on {} with scope of {}", cg.getName(), cg.getScope());
-			} else if (response.getBody().getScanId() != null && !response.getBody().getScanId().equals("")) {
-				if (response.getBody().getProjectName() != null && !response.getBody().getProjectName().equals("")) {
+			} else if (response.getBody().getScanId() != null) {
+				if (response.getBody().getProjectName() != null ) {
+					log.info("Getting check for {} with scanid {}",cg.getRequestid(),response.getBody().getScanId());
 					Optional<CodeProject> cp = codeProjectRepository.findByCodeGroupAndName(cg, response.getBody().getProjectName());
 					if (cp.isPresent()) {
 						cp.get().setCommitid(response.getBody().getCommitid());
