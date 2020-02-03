@@ -70,7 +70,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 try {
                     userDetails = this.jwtUserDetailsService.loadUserByUsername(username);
                 } catch (UsernameNotFoundException n){
-                    log.error(n.getLocalizedMessage());
+                    log.debug(n.getLocalizedMessage());
                 }
             }
             try {
@@ -88,7 +88,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
                 }
             } catch (IllegalArgumentException e){
-                log.error("Error in JWT verification");
+                log.debug("Error in JWT verification");
             }
 
         } else {
