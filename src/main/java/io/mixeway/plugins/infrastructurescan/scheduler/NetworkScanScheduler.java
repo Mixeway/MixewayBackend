@@ -12,8 +12,10 @@ import javax.transaction.Transactional;
 import javax.xml.bind.JAXBException;
 
 import io.mixeway.config.Constants;
+import io.mixeway.db.entity.Interface;
 import io.mixeway.db.entity.NessusScan;
 import io.mixeway.db.entity.Project;
+import io.mixeway.db.repository.InterfaceRepository;
 import io.mixeway.db.repository.NessusScanRepository;
 import io.mixeway.db.repository.ProjectRepository;
 import io.mixeway.db.repository.ScannerTypeRepository;
@@ -36,6 +38,7 @@ import io.mixeway.plugins.infrastructurescan.service.NetworkScanService;
 public class NetworkScanScheduler {
 	private NessusScanRepository nessusScanRepository;
 	private ScannerTypeRepository scannerTypeRepository;
+	private InterfaceRepository interfaceRepository;
 	private WebAppHelper webAppHelper;
 	private final List<NetworkScanClient> networkScanClients;
 	private final NetworkScanService networkScanService;
@@ -43,9 +46,10 @@ public class NetworkScanScheduler {
 	@Autowired
 	NetworkScanScheduler(NessusScanRepository nessusScanRepository, NetworkScanService networkScanService,
 						 ScannerTypeRepository scannerTypeRepository, ProjectRepository projectRepository,
-						 WebAppHelper webAppHelper, List<NetworkScanClient> networkScanClients){
+						 WebAppHelper webAppHelper, List<NetworkScanClient> networkScanClients, InterfaceRepository interfaceRepository){
 		this.scannerTypeRepository = scannerTypeRepository;
 		this.nessusScanRepository = nessusScanRepository;
+		this.interfaceRepository = interfaceRepository;
 		this.webAppHelper = webAppHelper;
 		this.projectRepository = projectRepository;
 		this.networkScanClients = networkScanClients;
@@ -80,6 +84,8 @@ public class NetworkScanScheduler {
 					}
 
 				}
+				nessusScanRepository.flush();
+				interfaceRepository.flush();
 			}
 		} catch (Exception ce){
 			log.debug("Connection refused for one of scanners");
