@@ -16,6 +16,8 @@ import io.mixeway.plugins.webappscan.acunetix.apiclient.AcunetixApiClient;
 import io.mixeway.plugins.infrastructurescan.nessus.apiclient.NessusApiClient;
 import io.mixeway.plugins.infrastructurescan.openvas.apiclient.OpenVasApiClient;
 import io.mixeway.rest.vulnmanage.model.Vulnerabilities;
+
+import javax.transaction.Transactional;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.DateFormat;
@@ -24,6 +26,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class GetVulnerabilitiesService {
@@ -98,6 +101,7 @@ public class GetVulnerabilitiesService {
     private final List<String> severities = Arrays.asList(Constants.API_SEVERITY_CRITICAL,Constants.API_SEVERITY_HIGH, Constants.API_SEVERITY_INFO,
             Constants.API_SEVERITY_LOW, Constants.API_SEVERITY_MEDIUM);
 
+    @Transactional
     public ResponseEntity<Vulnerabilities> getAllVulnerabilities() throws UnknownHostException {
         Vulnerabilities vulns = new Vulnerabilities();
         log.debug("Vulnerabilities access granted: ");
@@ -175,13 +179,20 @@ public class GetVulnerabilitiesService {
         vulns.setVulnerabilities(tmpVulns);
         return vulns;
     }
-    private Vulnerabilities setCodeVulns(Vulnerabilities vulns,Project project) {
+
+    Vulnerabilities setCodeVulns(Vulnerabilities vulns, Project project) {
         List<Vuln> tmpVulns = vulns.getVulnerabilities();
         List<CodeVuln> codeVulns = null;
-        if (project != null)
-            codeVulns = codeVulnRepository.findByCodeGroupInAndAnalysisNot(project.getCodes(), "Not an Issue");
-        else
-            codeVulns = codeVulnRepository.findAll();
+        if (project != null) {
+            try (Stream<CodeVuln> vulnsForProject = codeVulnRepository.findByCodeGroupInAndAnalysisNot(project.getCodes(), "Not an Issue")) {
+                codeVulns = vulnsForProject.collect(Collectors.toList());
+            }
+        }
+        else {
+            try (Stream<CodeVuln> vulnsForProject = codeVulnRepository.findAllCodeVulns()){
+                codeVulns = vulnsForProject.collect(Collectors.toList());
+            }
+        }
         for (CodeVuln cv : codeVulns) {
             Vuln v = new Vuln();
             v.setVulnerabilityName(cv.getName());
@@ -364,6 +375,7 @@ public class GetVulnerabilitiesService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Proper scanner type is: networkScanner,webApplicationScanner,codeScanner, audit,packageScan");
 
     }
+    @Transactional
     public ResponseEntity<String> getVulnerabilitiesByType(String type) throws UnknownHostException {
         if (scannerTypes.contains(type)) {
             log.info("Vulnerabilities access granted: {}",type);

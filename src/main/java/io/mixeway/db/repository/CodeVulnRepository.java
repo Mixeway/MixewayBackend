@@ -3,6 +3,7 @@ package io.mixeway.db.repository;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import io.mixeway.pojo.BarChartProjection;
 import io.mixeway.pojo.BarChartProjection2;
@@ -36,8 +37,10 @@ public interface CodeVulnRepository extends JpaRepository<CodeVuln, Long>{
 	List<CodeVuln> findByCodeProject(CodeProject codeProject);
 	 Long countByName(String name);
 	 List<CodeVuln> findByName(String name);
-	List<CodeVuln> findByCodeGroupIn(Set<CodeGroup> groups);
-	List<CodeVuln> findByCodeGroupInAndAnalysisNot(Set<CodeGroup> groups, String analysis);
+	Stream<CodeVuln> findByCodeGroupIn(Set<CodeGroup> groups);
+	@Query(value="select cv from CodeVuln cv")
+	Stream<CodeVuln> findAllCodeVulns();
+	Stream<CodeVuln> findByCodeGroupInAndAnalysisNot(Set<CodeGroup> groups, String analysis);
 	List<CodeVuln> findByCodeProjectInAndAnalysisNot(List<CodeProject> project, String analysis);
 	List<CodeVuln> findByCodeGroupInAndSeverityIn(Set<CodeGroup> groups, List<String> severities);
 	List<CodeVuln> findByCodeGroupInAndSeverityInAndAnalysis(Set<CodeGroup> groups, List<String> severities, String analysis);

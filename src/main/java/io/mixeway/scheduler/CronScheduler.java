@@ -30,6 +30,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Component
 @Transactional
@@ -178,10 +179,11 @@ public class CronScheduler {
                 severities).size();
 
     }
+    @org.springframework.transaction.annotation.Transactional
     private Long createCodeVulnHistory(Project p){
-        return (long)codeVulnRepository.findByCodeGroupInAndAnalysisNot(p.getCodes(), "Not an Issue").size();
-
-
+        try (Stream<CodeVuln> codeVulnStream = codeVulnRepository.findByCodeGroupInAndAnalysisNot(p.getCodes(), "Not an Issue")){
+            return codeVulnStream.count();
+        }
     }
     private Long createInfraVulnHistory(Project p){
         return getInfraVulnsForProject(p);

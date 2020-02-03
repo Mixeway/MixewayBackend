@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.vault.core.VaultOperations;
 import io.mixeway.db.entity.CodeGroup;
 import io.mixeway.db.entity.CodeProject;
@@ -23,11 +24,12 @@ import io.mixeway.db.repository.CodeVulnRepository;
 import io.mixeway.db.repository.ProjectRepository;
 import io.mixeway.pojo.Status;
 
-import javax.transaction.Transactional;
 import java.io.IOException;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class CodeService {
@@ -215,10 +217,14 @@ public class CodeService {
         }
         return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
     }
+    @Transactional
     public ResponseEntity<List<CodeVuln>> showCodeVulns(Long id) {
         Optional<Project> project = projectRepository.findById(id);
         if (project.isPresent()){
-            List<CodeVuln> codeVulns = codeVulnRepository.findByCodeGroupIn(project.get().getCodes());
+            List<CodeVuln> codeVulns;
+            try(Stream<CodeVuln> vulns = codeVulnRepository.findByCodeGroupIn(project.get().getCodes())){
+                codeVulns = vulns.collect(Collectors.toList());
+            }
             return new ResponseEntity<>(codeVulns,HttpStatus.OK);
         } else {
             return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
