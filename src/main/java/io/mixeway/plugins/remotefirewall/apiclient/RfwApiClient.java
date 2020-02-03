@@ -57,9 +57,9 @@ public class RfwApiClient {
             }
             return rules;
         } catch (Exception pe){
-            throw new ProtocolException();
+            log.warn("Get Exception during get list of rules from RFW {}", pe.getLocalizedMessage());
         }
-
+        return null;
     }
 
     private HttpEntity<String> prepareAuthHeader(Scanner scanner){
