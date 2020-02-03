@@ -21,6 +21,7 @@ public interface InterfaceRepository extends JpaRepository<Interface, Long>{
 	Long countByFloatingipNotNull();
 	List<Interface> findByAssetInAndFloatingipNotNull(List<Asset> assets);
 	List<Interface> findByAssetIn(List<Asset> assets);
+	List<Interface> findByAssetInAndActive(List<Asset> assets, Boolean active);
 	List<Interface> findByAssetInAndRoutingDomain(List<Asset> assets, RoutingDomain routingDomain);
 	List<Interface> findByFloatingipAndActiveAndAssetIn(String privateip, Boolean active ,List<Asset> assets);
 	List<Interface> findByPrivateipAndActiveAndAssetIn(String privateip, Boolean active ,List<Asset> assets);
