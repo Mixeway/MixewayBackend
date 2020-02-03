@@ -447,6 +447,7 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 					HttpMethod.GET, entity, String.class);
 			if (response.getStatusCode() == HttpStatus.OK) {
 				JSONArray vulnArray = new JSONObject(Objects.requireNonNull(response.getBody())).getJSONArray(Constants.NESSUS_VULNERABILITIES);
+				log.info("Get {} vulnerabilities for {}", vulnArray.length(), ns.getProject().getName());
 				for (int k = 0; k < vulnArray.length(); k++) {
 					JSONObject vuln = vulnArray.getJSONObject(k);
 					createVulnerability(vuln, ns, i, tmpOldVulns);
