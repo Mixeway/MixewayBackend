@@ -565,11 +565,11 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 						cg.setRequestid(response.getBody().getRequestId());
 						cg.setRunning(true);
 						cg.setScope(scope);
-						codeGroupRepository.save(cg);
+						codeGroupRepository.saveAndFlush(cg);
 						if (codeProject!=null){
 							codeProject.setRunning(true);
 							codeProject.setRequestId(UUID.randomUUID().toString());
-							codeProjectRepository.save(codeProject);
+							codeProjectRepository.saveAndFlush(codeProject);
 						}
 						log.info("Fortify scan starged for [scope {}] {}",scope, cg.getName());
 						return true;
