@@ -104,7 +104,7 @@ public class CodeScheduler {
 	public void getVulns() throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
 		Optional<Scanner> fortify = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_FORTIFY)).stream().findFirst();
 		if (fortify.isPresent()) {
-			for (FortifySingleApp app : fortifySingleAppRepository.findByFinishedAndDownloaded(true, false)) {
+			for (FortifySingleApp app : fortifySingleAppRepository.findByFinishedAndDownloaded(false, false)) {
 				List<CodeVuln> codeVulns = codeVulns = deleteVulnsForProject(app.getCodeProject());
 				for (CodeScanClient codeScanClient : codeScanClients) {
 					if (codeScanClient.canProcessRequest(app.getCodeGroup()) && codeScanClient.isScanDone(app.getCodeGroup())) {
