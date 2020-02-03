@@ -16,9 +16,9 @@ import io.mixeway.plugins.remotefirewall.model.Rule;
 import io.mixeway.pojo.DOPMailTemplateBuilder;
 import io.mixeway.pojo.EmailVulnHelper;
 import io.mixeway.pojo.ScanHelper;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.mail.internet.MimeMessage;
-import javax.transaction.Transactional;
 import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
@@ -126,7 +126,7 @@ public class CronScheduler {
     }
 
     //every 3 minutes
-    @Scheduled(initialDelay=0,fixedDelay = 150000)
+    //@Scheduled(initialDelay=0,fixedDelay = 150000)
     public void verifyRFWRules() throws  KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, CertificateException, IOException {
         try {
             for (NessusScan ns : nessusScanRepository.getRunningScansWithRfwConfigured()) {
@@ -179,8 +179,8 @@ public class CronScheduler {
                 severities).size();
 
     }
-    @org.springframework.transaction.annotation.Transactional
-    private Long createCodeVulnHistory(Project p){
+    @Transactional
+    Long createCodeVulnHistory(Project p){
         try (Stream<CodeVuln> codeVulnStream = codeVulnRepository.findByCodeGroupInAndAnalysisNot(p.getCodes(), "Not an Issue")){
             return codeVulnStream.count();
         }

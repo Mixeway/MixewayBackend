@@ -155,7 +155,6 @@ public class CodeScheduler {
 						}
 					}
 				}
-				break;
 			}
 			for (CodeProject cp : codeProjectRepository.findByInQueue(true)){
 				if (codeGroupRepository.countByRunning(true) == 0){
@@ -163,14 +162,13 @@ public class CodeScheduler {
 						if (codeScanClient.canProcessRequest(cp.getCodeGroup())){
 							log.info("Ready to scan [scope {}] {}, taking it from the queue",cp.getName(), cp.getCodeGroup().getName());
 							cp.setInQueue(false);
-							codeProjectRepository.save(cp);
+							codeProjectRepository.saveAndFlush(cp);
 							cp.getCodeGroup().setRunning(true);
-							codeGroupRepository.save(cp.getCodeGroup());
+							codeGroupRepository.saveAndFlush(cp.getCodeGroup());
 							codeScanClient.runScan(cp.getCodeGroup(), cp);
 						}
 					}
 				}
-				break;
 			}
 		} catch (IndexOutOfBoundsException ex){
 			log.debug("Fortify configuration missing");
