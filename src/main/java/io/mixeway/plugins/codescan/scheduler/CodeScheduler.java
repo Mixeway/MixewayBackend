@@ -138,7 +138,7 @@ public class CodeScheduler {
 	}
 
 	@Transactional
-	@Scheduled(fixedDelay = 120000)
+	@Scheduled(fixedDelay = 60000)
 	public void checkAndRunFromQueue() throws CertificateException, IOException, NoSuchAlgorithmException, KeyManagementException, UnrecoverableKeyException, KeyStoreException {
 		try {
 			Scanner fortify = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_FORTIFY))
@@ -156,6 +156,7 @@ public class CodeScheduler {
 						}
 					}
 				}
+				break;
 			}
 			for (CodeProject cp : codeProjectRepository.findByInQueue(true)){
 				if (codeGroupRepository.countByRunning(true) == 0){
@@ -170,6 +171,7 @@ public class CodeScheduler {
 						}
 					}
 				}
+				break;
 			}
 		} catch (IndexOutOfBoundsException ex){
 			log.debug("Fortify configuration missing");
