@@ -28,6 +28,7 @@ import org.codehaus.jettison.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -65,6 +66,7 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 	private final ProxiesRepository proxiesRepository;
 	private final NetworkScanService networkScanService;
 	@Autowired
+	@Lazy
 	NessusApiClient(VaultOperations operations, ScannerRepository scannerRepository, NessusScanTemplateRepository nessusScanTemplateRepository,
 					AssetRepository assetRepository, InterfaceRepository interfaceRepository, NessusScanRepository nessusScanRepository,
 					InfrastructureVulnRepository infrastructureVulnRepository, RfwApiClient rfwApiClient, ScanHelper scanHelper, NetworkScanService networkScanService,
