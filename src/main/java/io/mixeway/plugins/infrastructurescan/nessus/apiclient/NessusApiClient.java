@@ -428,10 +428,6 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 		List<Interface> intfs = interfaceRepository.getInterfaceForAssetsWithHostIdSet(new ArrayList<>(ns.getProject().getAssets()));
 		for (Interface i : intfs) {
 			this.loadVulnForInterface(ns, i);
-
-			i.setHostid(0);
-			i.setScanRunning(false);
-			interfaceRepository.saveAndFlush(i);
 			log.info("Settings interface {} to host id 0 and scan running false");
 		}
 		ns.setRunning(false);
@@ -463,6 +459,9 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 			} else {
 				log.error("Getting vulns {} failed return code is: {}", ns.getNessus().getApiUrl(), response.getStatusCode().toString());
 			}
+			i.setHostid(0);
+			i.setScanRunning(false);
+			interfaceRepository.saveAndFlush(i);
 		} catch (NullPointerException e){
 			log.warn("Nullpoitnter during loading vuln for project {} asset {}", i.getAsset().getProject().getName(),i.getAsset().getName());
 		}
