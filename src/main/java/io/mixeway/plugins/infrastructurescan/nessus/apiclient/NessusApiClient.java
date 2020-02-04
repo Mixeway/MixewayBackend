@@ -427,7 +427,6 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 		List<Interface> intfs = interfaceRepository.getInterfaceForAssetsWithHostIdSet(new ArrayList<>(ns.getProject().getAssets()));
 		for (Interface i : intfs) {
 			this.loadVulnForInterface(ns, i);
-			log.info("Settings interface {} to host id 0 and scan running false");
 		}
 		ns.setRunning(false);
 		nessusScanRepository.saveAndFlush(ns);
