@@ -426,25 +426,23 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 	public void loadVulnerabilities(NessusScan ns) throws JSONException, CertificateException, UnrecoverableKeyException,
 			NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
 		List<Interface> intfs = interfaceRepository.getInterfaceForAssetsWithHostIdSet(new ArrayList<>(ns.getProject().getAssets()));
-		log.info("Nessus - get {} itnerfaces with host set for  {}",intfs.size(), ns.getProject().getName());
 		for (Interface i : intfs) {
 			this.loadVulnForInterface(ns, i);
 			i.setHostid(0);
 			i.setScanRunning(false);
-			interfaceRepository.save(i);
+			interfaceRepository.saveAndFlush(i);
 		}
-		scanHelper.updateInterfaceState(ns,false);
 		ns.setRunning(false);
-		nessusScanRepository.save(ns);
-		log.info("Loaded result for {} scan of {}",ns.getNessus().getScannerType().getName(), ns.getProject().getName());
+		nessusScanRepository.saveAndFlush(ns);
 		if (ns.getNessus().getRfwUrl() != null) {
 			networkScanService.deleteRulsFromRfw(ns);
 			log.info("RFW for scan {} is cleared - dropped traffic", ns.getProject().getName());
 		}
 		log.info("Nessus - successfully loaded vulnerabilities for {}",ns.getProject().getName());
+		scanHelper.updateInterfaceState(ns,false);
 	}
 
-	void loadVulnForInterface(NessusScan ns, Interface i) throws JSONException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+	private void loadVulnForInterface(NessusScan ns, Interface i) throws JSONException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
 		try {
 			i.getVulns().clear();
 			List<InfrastructureVuln> tmpOldVulns = infrastructureVulnRepository.findByIntf(i);
