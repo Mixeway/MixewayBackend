@@ -433,7 +433,7 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 			i.setScanRunning(false);
 			interfaceRepository.save(i);
 		}
-		//scanHelper.updateInterfaceState(ns,false);
+		scanHelper.updateInterfaceState(ns,false);
 		ns.setRunning(false);
 		nessusScanRepository.save(ns);
 		log.info("Loaded result for {} scan of {}",ns.getNessus().getScannerType().getName(), ns.getProject().getName());

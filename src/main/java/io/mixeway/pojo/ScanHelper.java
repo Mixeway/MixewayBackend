@@ -106,7 +106,6 @@ public class ScanHelper {
                 Interface i = inter.get();
                 i.setScanRunning(state);
                 interfaceRepository.save(i);
-                log.info("Update inerface state for {} to scan running {}", i.getPrivateip(),state);
             }
         }
     }
