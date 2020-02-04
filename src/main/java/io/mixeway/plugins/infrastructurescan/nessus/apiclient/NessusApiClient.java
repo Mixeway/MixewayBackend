@@ -428,9 +428,11 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 		List<Interface> intfs = interfaceRepository.getInterfaceForAssetsWithHostIdSet(new ArrayList<>(ns.getProject().getAssets()));
 		for (Interface i : intfs) {
 			this.loadVulnForInterface(ns, i);
+
 			i.setHostid(0);
 			i.setScanRunning(false);
 			interfaceRepository.saveAndFlush(i);
+			log.info("Settings interface {} to host id 0 and scan running false");
 		}
 		ns.setRunning(false);
 		nessusScanRepository.saveAndFlush(ns);
@@ -439,7 +441,7 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 			log.info("RFW for scan {} is cleared - dropped traffic", ns.getProject().getName());
 		}
 		log.info("Nessus - successfully loaded vulnerabilities for {}",ns.getProject().getName());
-		scanHelper.updateInterfaceState(ns,false);
+		//scanHelper.updateInterfaceState(ns,false);
 	}
 
 	private void loadVulnForInterface(NessusScan ns, Interface i) throws JSONException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
@@ -447,8 +449,6 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 			i.getVulns().clear();
 			List<InfrastructureVuln> tmpOldVulns = infrastructureVulnRepository.findByIntf(i);
 			infrastructureVulnRepository.deleteByIntf(i);
-			i.setScanRunning(false);
-			interfaceRepository.save(i);
 			RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(ns.getNessus());
 			HttpEntity<String> entity = new HttpEntity<>(prepareAuthHeaderForNessus(ns.getNessus()));
 			ResponseEntity<String> response = restTemplate.exchange(ns.getNessus().getApiUrl() + "/scans/" + ns.getScanId() + "/hosts/" + i.getHostid(),

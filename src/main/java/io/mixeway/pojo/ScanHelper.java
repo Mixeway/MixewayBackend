@@ -98,7 +98,6 @@ public class ScanHelper {
         }
         return interfacesToScan;
     }
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void updateInterfaceState(NessusScan nessusScan, boolean state){
         // SETTING INTERFACE.SCANRUNNING
         for (String ip : prepareTargetsForScan(nessusScan,false)){
