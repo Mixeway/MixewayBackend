@@ -116,7 +116,7 @@ public class ScanHelper {
                 Optional<Interface> inter = interfaceRepository.findByAssetInAndPrivateipAndActive(nessusScan.getProject().getAssets(), ip, true);
                 if (inter.isPresent()) {
                     inter.get().setScanRunning(true);
-                    interfaceRepository.save(inter.get());
+                    interfaceRepository.saveAndFlush(inter.get());
                 }
             }
             nessusScanRepository.save(nessusScan);
