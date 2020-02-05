@@ -80,9 +80,10 @@ public class NetworkScanScheduler {
 
 				}
 			}
-		} catch (UnexpectedRollbackException | JSONException | CertificateException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyManagementException | KeyStoreException | IOException | JAXBException ce ){
-			ce.printStackTrace();
+		} catch (UnexpectedRollbackException | JSONException | CertificateException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyManagementException | KeyStoreException | IOException | JAXBException| HttpClientErrorException ce ){
+			log.warn("Exception during Network Scan synchro {}", ce.getLocalizedMessage());
 		}
+		log.info("Successfully loaded Network scan results");
 	}
 	//Every 12h
 	@Scheduled(cron="#{@getNetworkCronExpresion}" )
