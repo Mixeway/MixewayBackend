@@ -14,7 +14,7 @@ public interface NessusScanRepository extends JpaRepository<NessusScan, Long>{
 	List<NessusScan> findByProject(Project project);
 	List<NessusScan> findByProjectAndIsAutomatic(Project project, Boolean isAutomatic);
 	List<NessusScan> findByRunning(Boolean running);
-	List<NessusScan> findTop10ByRunningOrOrderByIdAsc(Boolean running);
+	List<NessusScan> findTop10ByRunningOrderByIdAsc(Boolean running);
 	List<NessusScan> findByIsAutomatic(Boolean isAutomatic);
 	List<NessusScan> findByIsAutomaticAndScanFrequency(Boolean isAutomatic, int scanFrequency);
 	List<NessusScan> findByIsAutomaticAndRunning(Boolean isAutomatic, Boolean running);

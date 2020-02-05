@@ -61,7 +61,7 @@ public class NetworkScanScheduler {
 	//Every 5min
 	@Scheduled(initialDelay=0,fixedDelay = 30000)
 	public void checkScanStatus(){
-		List<NessusScan> nsl = nessusScanRepository.findTop10ByRunningOrOrderByIdAsc(true);
+		List<NessusScan> nsl = nessusScanRepository.findTop10ByRunningOrderByIdAsc(true);
 		try {
 			for (NessusScan ns : nsl) {
 				if (ns.getNessus().getStatus()) {
