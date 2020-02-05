@@ -5,12 +5,14 @@ import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.ScannerRepository;
 import io.mixeway.db.repository.ScannerTypeRepository;
+import io.mixeway.plugins.codescan.checkmarx.model.CxLoginResponse;
+import io.mixeway.plugins.codescan.model.CodeRequestHelper;
+import io.mixeway.plugins.codescan.model.TokenValidator;
 import io.mixeway.plugins.codescan.service.CodeScanClient;
 import io.mixeway.pojo.SecureRestTemplate;
 import io.mixeway.pojo.SecurityScanner;
 import io.mixeway.rest.model.ScannerModel;
 import org.codehaus.jettison.json.JSONException;
-import org.codehaus.jettison.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,14 +24,12 @@ import org.springframework.web.client.RestTemplate;
 
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -44,7 +44,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
     private final ScannerRepository scannerRepository;
     private final VaultOperations operations;
     private final SecureRestTemplate secureRestTemplate;
-
+    private TokenValidator tokenValidator = new TokenValidator();
     @Autowired
     CheckmarxApiClient(ScannerTypeRepository scannerTypeRepository, ScannerRepository scannerRepository,
                        VaultOperations operations, SecureRestTemplate secureRestTemplate){
@@ -75,6 +75,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
 
     @Override
     public boolean initialize(Scanner scanner) throws JSONException, ParseException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, JAXBException, Exception {
+
         return false;
     }
 
@@ -103,6 +104,12 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
         operations.write("secret/" + checkmarx.getPassword(), passwordKeyMap);
         scannerRepository.save(checkmarx);
     }
+
+    /**
+     * Function calling Checkmarx rest API login function
+     *
+     * @param scanner
+     */
     private boolean generateToken(io.mixeway.db.entity.Scanner scanner) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, JSONException, ParseException {
         Map<String, String> formEncodedForLogin = createFormForLogin(scanner);
         RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(scanner);
@@ -110,14 +117,12 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
         headers.set("Content-Type", "application/x-www-form-urlencoded");
         HttpEntity<Map<String, String>> entity = new HttpEntity<>(formEncodedForLogin, headers);
         String API_GET_TOKEN = "/cxrestapi/auth/identity/connect/token";
-        //TODO: mapresponse to object
-        ResponseEntity<String> response = restTemplate.exchange(scanner.getApiUrl() + API_GET_TOKEN, HttpMethod.POST, entity, String.class);
+        ResponseEntity<CxLoginResponse> response = restTemplate.exchange(scanner.getApiUrl() + API_GET_TOKEN, HttpMethod.POST, entity, CxLoginResponse.class);
         if (response.getStatusCode() == HttpStatus.CREATED) {
-            //GET TOKEN AND SET EXPIRATION
             Date dt = new Date();
-            LocalDateTime ldt = LocalDateTime.from(dt.toInstant()).plusSeconds(123L);
+            LocalDateTime ldt = LocalDateTime.from(dt.toInstant()).plusSeconds(Objects.requireNonNull(response.getBody()).getExpires_in());
             scanner.setFortifytokenexpiration(ldt.format(sdf));
-            //set token valye
+            scanner.setFortifytoken(response.getBody().getAccess_token());
             if(!scanner.getStatus()){
                 scanner.setStatus(true);
             }
@@ -140,6 +145,17 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
         form.put(Constants.CHECKMARX_LOGIN_FORM_CLIENTID, Constants.CHECKMARX_LOGIN_FORM_CLIENTID_VALUE);
         form.put(Constants.CHECKMARX_LOGIN_FORM_CLIENTSECRET, Constants.CHECKMARX_LOGIN_FORM_CLIENTSECRET_VALUE);
         return form;
+    }
+    private CodeRequestHelper prepareRestTemplate(io.mixeway.db.entity.Scanner scanner) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
+        if (tokenValidator.isTokenValid(scanner.getFortifytoken(), LocalDateTime.parse(scanner.getFortifytokenexpiration()))) {
+            generateToken(scanner);
+        }
+        RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(scanner);
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(Constants.HEADER_AUTHORIZATION, Constants.BEARER_TOKEN + " " + scanner.getFortifytoken());
+        HttpEntity entity = new HttpEntity(headers);
+
+        return new CodeRequestHelper(restTemplate,entity);
     }
 
 }

@@ -48,6 +48,9 @@ public class Constants {
 	public static final String FORTIFY_SCOPE_ALL = "ALL";
 	public static final String FORTIFY_LINE_NUMVER = "lineNumber";
 
+	//CHECKMARX
+	public static final String BEARER_TOKEN = "Bearer";
+
 	//VULN HISTORY
 	public static final String VULN_HISTORY_ALL = "complete";
 

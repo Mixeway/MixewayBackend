@@ -58,7 +58,7 @@ public class SecureRestTemplate {
         if(scanner != null && scanner.getProxies() !=null){
             httpClient = HttpClients
                     .custom()
-                    .setProxy(new HttpHost(scanner.getProxies().getIp(), Integer.valueOf(scanner.getProxies().getPort())))
+                    .setProxy(new HttpHost(scanner.getProxies().getIp(), Integer.parseInt(scanner.getProxies().getPort())))
                     .setSSLContext(sslContext)
                     .build();
         }else {
@@ -70,9 +70,7 @@ public class SecureRestTemplate {
 
         ClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
 
-        RestTemplate restTemplate = new RestTemplate(requestFactory);
-
-        return restTemplate;
+        return new RestTemplate(requestFactory);
     }
     public RestTemplate restTemplateForIaasApi(IaasApi api) throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException, KeyManagementException {
         //SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();

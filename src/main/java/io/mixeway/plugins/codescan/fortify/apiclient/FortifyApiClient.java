@@ -9,11 +9,11 @@ import io.mixeway.plugins.audit.dependencytrack.apiclient.DependencyTrackApiClie
 import io.mixeway.plugins.bugtracker.BugTracking;
 import io.mixeway.plugins.codescan.fortify.model.FileContentDataModel;
 import io.mixeway.plugins.codescan.fortify.model.IssueDetailDataModel;
-import io.mixeway.plugins.codescan.model.SSCRequestHelper;
+import io.mixeway.plugins.codescan.model.TokenValidator;
+import io.mixeway.plugins.codescan.model.CodeRequestHelper;
 import io.mixeway.plugins.codescan.service.CodeScanClient;
 import io.mixeway.pojo.*;
 import io.mixeway.rest.model.ScannerModel;
-import io.mixeway.rest.project.service.BugTrackerService;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -85,7 +85,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 	}
 
 	private JsonObject unifiedTokenObject = new JsonObject();
-	private FortifyTokenValidator fortifyTokenValidator = new FortifyTokenValidator();
+	private TokenValidator tokenValidator = new TokenValidator();
 
 	//SSC Generation
 	@Override
@@ -143,7 +143,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 	@Override
 	public void loadVulnerabilities(io.mixeway.db.entity.Scanner scanner, CodeGroup codeGroup, String urlToGetNext, Boolean single, CodeProject codeProject, List<CodeVuln> codeVulns) throws ParseException, JSONException {
 		try {
-			SSCRequestHelper sscRequestHelper = prepareRestTemplate(scanner);
+			CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
 			String url;
 			String API_DOWNLOAD_ISSUES = "/api/v1/projectVersions/versionid/issues?qm=issues&q=[fortify+priority+order]:high+OR+[fortify+priority+order]:critical";
 			if (single) {
@@ -155,9 +155,9 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 			}
 			if (urlToGetNext != null)
 				url = url+"&"+urlToGetNext.split("&")[2];
-			ResponseEntity<String> response = sscRequestHelper
+			ResponseEntity<String> response = codeRequestHelper
 					.getRestTemplate()
-					.exchange(url, HttpMethod.GET, sscRequestHelper.getHttpEntity(), String.class);
+					.exchange(url, HttpMethod.GET, codeRequestHelper.getHttpEntity(), String.class);
 			if (response.getStatusCode() == HttpStatus.OK) {
 				JSONObject responseJson = new JSONObject(Objects.requireNonNull(response.getBody()));
 				saveVulnerabilities(codeGroup, responseJson.getJSONArray(Constants.VULNERABILITIES_LIST),codeProject,scanner);
@@ -238,10 +238,10 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 	private CodeVuln createDescriptionAndState(String instanceId, Long id, int versionid, io.mixeway.db.entity.Scanner scanner, CodeVuln codeVuln) throws ParseException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, IOException, URISyntaxException {
 		StringBuilder issueDetails = new StringBuilder();
 		codeVuln.setExternalId((id));
-		SSCRequestHelper sscRequestHelper = prepareRestTemplate(scanner);
-		ResponseEntity<IssueDetailDataModel> response = sscRequestHelper
+		CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
+		ResponseEntity<IssueDetailDataModel> response = codeRequestHelper
 				.getRestTemplate()
-				.exchange(scanner.getApiUrl()+"/api/v1/issueDetails/"+id, HttpMethod.GET, sscRequestHelper.getHttpEntity(), IssueDetailDataModel.class);
+				.exchange(scanner.getApiUrl()+"/api/v1/issueDetails/"+id, HttpMethod.GET, codeRequestHelper.getHttpEntity(), IssueDetailDataModel.class);
 		if (response.getStatusCode() == HttpStatus.OK) {
 			issueDetails.append("Severity: ")
 					.append(codeVuln.getSeverity());
@@ -288,11 +288,11 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 
 	private String getCodeSnippet(io.mixeway.db.entity.Scanner scanner, int versionid, String fullFileName, int lineNumber) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, JSONException, ParseException {
 		String codeSnippet = "";
-		SSCRequestHelper sscRequestHelper = prepareRestTemplate(scanner);
-		ResponseEntity<FileContentDataModel> response = sscRequestHelper
+		CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
+		ResponseEntity<FileContentDataModel> response = codeRequestHelper
 				.getRestTemplate()
 				.exchange(scanner.getApiUrl()+"/api/v1/projectVersions/"+versionid+"/sourceFiles?q=path:\""
-				+fullFileName+"\"", HttpMethod.GET, sscRequestHelper.getHttpEntity(), FileContentDataModel.class);
+				+fullFileName+"\"", HttpMethod.GET, codeRequestHelper.getHttpEntity(), FileContentDataModel.class);
 		if (response.getStatusCode() == HttpStatus.OK) {
 			List<String> lines = new BufferedReader(new StringReader(Objects.requireNonNull(response.getBody()).getFileContentModel().get(0).getFileContent()))
 					.lines()
@@ -322,11 +322,11 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 	private boolean verifyCloudScanJob(CodeGroup cg, FortifySingleApp fortifySingleApp) throws ParseException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, IOException {
 		try {
 			io.mixeway.db.entity.Scanner scanner = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_FORTIFY)).get(0);
-			SSCRequestHelper sscRequestHelper = prepareRestTemplate(scanner);
+			CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
 			String API_JOB_STATE = "/api/v1/cloudjobs";
-			ResponseEntity<CloudJobState> response = sscRequestHelper
+			ResponseEntity<CloudJobState> response = codeRequestHelper
 					.getRestTemplate()
-					.exchange(scanner.getApiUrl() + API_JOB_STATE + "/" + (fortifySingleApp == null ? cg.getScanid() : fortifySingleApp.getJobToken()), HttpMethod.GET, sscRequestHelper.getHttpEntity(), CloudJobState.class);
+					.exchange(scanner.getApiUrl() + API_JOB_STATE + "/" + (fortifySingleApp == null ? cg.getScanid() : fortifySingleApp.getJobToken()), HttpMethod.GET, codeRequestHelper.getHttpEntity(), CloudJobState.class);
 			if (response.getStatusCode() == HttpStatus.OK) {
 				if (Objects.requireNonNull(response.getBody()).getData().getJobState().equals(Constants.FORTIFY_UPLOAD_COMPLETED)) {
 					codeGroupRepository.save(cg);
@@ -359,10 +359,10 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 		}
 		return false;
 	}
-	private SSCRequestHelper prepareRestTemplate(io.mixeway.db.entity.Scanner scanner) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
+	private CodeRequestHelper prepareRestTemplate(io.mixeway.db.entity.Scanner scanner) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
 		Date fortifyTokenExpirationDate = sdf.parse(scanner.getFortifytokenexpiration()+".123");
 		LocalDateTime fortifyTokenExpiration = LocalDateTime.ofInstant(fortifyTokenExpirationDate.toInstant(), ZoneId.systemDefault());
-		if (fortifyTokenValidator.isTokenValid(scanner.getFortifytoken(), fortifyTokenExpiration)) {
+		if (tokenValidator.isTokenValid(scanner.getFortifytoken(), fortifyTokenExpiration)) {
 			generateToken(scanner);
 		}
 		RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(scanner);
@@ -370,7 +370,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 		headers.set(Constants.HEADER_AUTHORIZATION, Constants.FORTIFY_TOKEN + " " + scanner.getFortifytoken());
 		HttpEntity entity = new HttpEntity(headers);
 
-		return new SSCRequestHelper(restTemplate,entity);
+		return new CodeRequestHelper(restTemplate,entity);
 	}
 
 	private CreateFortifyScanRequest prepareScanRequestForGroup(CodeGroup cg){
