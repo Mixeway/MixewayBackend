@@ -59,9 +59,9 @@ public class NetworkScanScheduler {
 	private static final Logger log = LoggerFactory.getLogger(NetworkScanScheduler.class);
 
 	//Every 5min
-	@Scheduled(initialDelay=0,fixedDelay = 3000)
+	@Scheduled(initialDelay=0,fixedDelay = 30000)
 	public void checkScanStatus(){
-		List<NessusScan> nsl = nessusScanRepository.findByRunning(true);
+		List<NessusScan> nsl = nessusScanRepository.findTop10ByRunningOrOrderByIdAsc(true);
 		try {
 			for (NessusScan ns : nsl) {
 				if (ns.getNessus().getStatus()) {
