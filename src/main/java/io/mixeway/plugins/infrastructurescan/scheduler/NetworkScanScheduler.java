@@ -63,8 +63,8 @@ public class NetworkScanScheduler {
 	//Every 5min
 	@Scheduled(initialDelay=0,fixedDelay = 30000)
 	public void checkScanStatus(){
-		List<NessusScan> nsl = nessusScanRepository.findTop10ByRunningOrderByIdAsc(true);
 		try {
+			List<NessusScan> nsl = nessusScanRepository.findTop10ByRunningOrderByIdAsc(true);
 			for (NessusScan ns : nsl) {
 				if (ns.getNessus().getStatus()) {
 					for (NetworkScanClient networkScanClient :networkScanClients) {
@@ -80,8 +80,8 @@ public class NetworkScanScheduler {
 
 				}
 			}
-		} catch (Exception ce ){
-			log.debug("Connection refused for one of scanners");
+		} catch (UnexpectedRollbackException | JSONException | CertificateException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyManagementException | KeyStoreException | IOException | JAXBException ce ){
+			ce.printStackTrace();
 		}
 	}
 	//Every 12h
