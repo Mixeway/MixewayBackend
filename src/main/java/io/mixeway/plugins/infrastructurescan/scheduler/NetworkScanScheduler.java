@@ -80,6 +80,10 @@ public class NetworkScanScheduler {
 
 				}
 			}
+			//Change state of interface which was not loaded for some reason
+			if (nessusScanRepository.findByRunning(true).size() == 0 ){
+				interfaceRepository.updateStateForNotRunningScan();
+			}
 		} catch (UnexpectedRollbackException | JSONException | CertificateException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyManagementException | KeyStoreException | IOException | JAXBException| HttpClientErrorException ce ){
 			log.warn("Exception during Network Scan synchro {}", ce.getLocalizedMessage());
 		}
