@@ -837,3 +837,6 @@ alter table codeproject add column dtrackuuid text;
 --changeset siewer:160
 alter table settings add column trendemailcron text;
 update settings set trendemailcron='0 0 14 * * FRI';
+
+--changeset siewer:161
+insert into scannertype (name, authapikey, authsecrettoken, authaccesstoken, authusername,authpassword,authcloudctrltoken) values ('Checkmarx', false,false,false,true,true,false);s
