@@ -9,6 +9,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.vault.core.VaultOperations;
 import org.springframework.vault.support.VaultResponseSupport;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import io.mixeway.db.entity.Scanner;
 import io.mixeway.plugins.remotefirewall.model.Rule;
@@ -39,10 +40,14 @@ public class RfwApiClient {
     }
 
     public void operateOnRfwRule(Scanner scanner, String ipAddress,HttpMethod operation) throws KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, CertificateException, IOException {
-        RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(null);
-        ResponseEntity<String> response = restTemplate.exchange(scanner.getRfwUrl() + "/accept/forward/any/"+scanner.getRfwScannerIp()+"/any/"+ ipAddress, operation, prepareAuthHeader(scanner), String.class);
-        if (response.getStatusCode() != HttpStatus.OK)
-            log.warn("RFW rule for {} was not set - error occured",ipAddress);
+        try {
+            RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(null);
+            ResponseEntity<String> response = restTemplate.exchange(scanner.getRfwUrl() + "/accept/forward/any/" + scanner.getRfwScannerIp() + "/any/" + ipAddress, operation, prepareAuthHeader(scanner), String.class);
+            if (response.getStatusCode() != HttpStatus.OK)
+                log.warn("RFW rule for {} was not set - error occured", ipAddress);
+        } catch (HttpClientErrorException e){
+            log.warn("Got Http exception while calling RFW with operation {} and ip {} message is {}", operation.toString(),ipAddress,e.getLocalizedMessage());
+        }
     }
     public List<Rule> getListOfRules(Scanner scanner) throws KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, CertificateException, IOException {
         List<Rule> rules = null;
