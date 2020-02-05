@@ -6,6 +6,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.sql.SQLException;
 import java.util.List;
 
 import javax.transaction.Transactional;
@@ -27,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.UnexpectedRollbackException;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
@@ -34,7 +36,6 @@ import org.springframework.web.client.ResourceAccessException;
 import io.mixeway.plugins.infrastructurescan.service.NetworkScanService;
 
 @Component
-@Transactional
 public class NetworkScanScheduler {
 	private NessusScanRepository nessusScanRepository;
 	private ScannerTypeRepository scannerTypeRepository;
@@ -78,7 +79,7 @@ public class NetworkScanScheduler {
 
 				}
 			}
-		} catch (Exception ce){
+		} catch (Exception ce ){
 			log.debug("Connection refused for one of scanners");
 		}
 	}

@@ -238,7 +238,7 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 		JSONArray vulns = vuln.getJSONArray(Constants.IF_VULNS);
 		JSONObject v;
 		Interface intfActive;
-
+		log.info("OpenVas loading {} vulns for {}", vulns.length(),ns.getProject().getName());
 		for (int i = 0; i < vulns.length(); i++) {
 			v = vulns.getJSONObject(i);
 			intfActive = loadInterface(ns,assetsActive,v.getString(Constants.IF_VULN_HOST) );
@@ -334,7 +334,6 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 			i.getVulns().clear();
 			interfaceRepository.save(i);
 		}
-		log.info("Deleted old vulns for scan - {} - {}",ns.getProject().getName(), deleted);
 		return tmpVulns;
 	}
 
