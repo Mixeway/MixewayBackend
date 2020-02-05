@@ -36,6 +36,7 @@ import org.springframework.web.client.ResourceAccessException;
 import io.mixeway.plugins.infrastructurescan.service.NetworkScanService;
 
 @Component
+@Transactional
 public class NetworkScanScheduler {
 	private NessusScanRepository nessusScanRepository;
 	private ScannerTypeRepository scannerTypeRepository;
