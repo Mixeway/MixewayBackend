@@ -64,7 +64,7 @@ public class NetworkScanScheduler {
 	@Scheduled(initialDelay=0,fixedDelay = 30000)
 	public void checkScanStatus(){
 		try {
-			List<NessusScan> nsl = nessusScanRepository.findTop10ByRunningOrderByIdAsc(true);
+			List<NessusScan> nsl = nessusScanRepository.findTop4ByRunningOrderByIdAsc(true);
 			for (NessusScan ns : nsl) {
 				if (ns.getNessus().getStatus()) {
 					for (NetworkScanClient networkScanClient :networkScanClients) {
