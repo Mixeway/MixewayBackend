@@ -64,7 +64,7 @@ public class NetworkScanScheduler {
 	@Scheduled(initialDelay=0,fixedDelay = 30000)
 	public void checkScanStatus(){
 		try {
-			List<NessusScan> nsl = nessusScanRepository.findTop4ByRunningOrderByIdAsc(true);
+			List<NessusScan> nsl = nessusScanRepository.findTop10ByRunningOrderByIdAsc(true);
 			for (NessusScan ns : nsl) {
 				if (ns.getNessus().getStatus()) {
 					for (NetworkScanClient networkScanClient :networkScanClients) {
@@ -79,6 +79,7 @@ public class NetworkScanScheduler {
 					}
 
 				}
+				log.info("Successfully loaded Network scan results");
 			}
 			//Change state of interface which was not loaded for some reason
 			if (nessusScanRepository.findByRunning(true).size() == 0 ){
@@ -87,7 +88,6 @@ public class NetworkScanScheduler {
 		} catch (UnexpectedRollbackException | JSONException | CertificateException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyManagementException | KeyStoreException | IOException | JAXBException| HttpClientErrorException ce ){
 			log.warn("Exception during Network Scan synchro {}", ce.getLocalizedMessage());
 		}
-		log.info("Successfully loaded Network scan results");
 	}
 	//Every 12h
 	@Scheduled(cron="#{@getNetworkCronExpresion}" )
