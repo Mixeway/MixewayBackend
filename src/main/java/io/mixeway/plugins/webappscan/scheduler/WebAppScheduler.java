@@ -56,7 +56,7 @@ public class WebAppScheduler {
 		List<WebApp> apps = waRepository.findByRunning(true);
 		ScannerType scannerType = scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_ACUNETIX);
 		Optional<io.mixeway.db.entity.Scanner> scanner = scannerRepository.findByScannerType(scannerType).stream().findFirst();
-		if (scanner.isPresent()) {
+		if (scanner.isPresent() && scanner.get().getStatus()) {
 			for (WebApp app : apps) {
 				try {
 					for (WebAppScanClient webAppScanClient : webAppScanClients){
@@ -94,7 +94,7 @@ public class WebAppScheduler {
 		Optional<Scanner> scanner = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_ACUNETIX)).stream().findFirst();
 		int limit;
 		List<WebApp> appsToScan = new ArrayList<>();
-		if (count <= Constants.ACUNETIX_TARGET_LIMIT && scanner.isPresent()) {
+		if (count <= Constants.ACUNETIX_TARGET_LIMIT && scanner.isPresent() && scanner.get().getStatus()) {
 			limit = (int) (Constants.ACUNETIX_TARGET_LIMIT - count);
 			if (limit > 0) {
 				appsToScan = webAppRepository.getXInQueue(true, limit);
@@ -115,12 +115,15 @@ public class WebAppScheduler {
 
 	@Scheduled(cron="#{@getWebAppCronExpresion}" )
 	public void startAutomaticWebAppScans(){
+		Optional<Scanner> scanner = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_ACUNETIX)).stream().findFirst();
 		//List<WebApp> webApps = webAppRepository.findByAutoStart(true);
-		List<Project> projects = projectRepository.findByAutoWebAppScan(true);
-		for (Project p : projects){
-			for (WebApp webApp : p.getWebapps()){
-				webApp.setInQueue(true);
-				webAppRepository.save(webApp);
+		if (scanner.isPresent() && scanner.get().getStatus()) {
+			List<Project> projects = projectRepository.findByAutoWebAppScan(true);
+			for (Project p : projects) {
+				for (WebApp webApp : p.getWebapps()) {
+					webApp.setInQueue(true);
+					webAppRepository.save(webApp);
+				}
 			}
 		}
 	}
