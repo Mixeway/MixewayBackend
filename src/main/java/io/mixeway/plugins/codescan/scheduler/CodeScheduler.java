@@ -59,7 +59,7 @@ public class CodeScheduler {
 	@Transactional
 	@Scheduled(fixedRate = 3000000)
 	//@Scheduled(fixedDelay = 30000)
-	public void getReportForAllGroups() throws JSONException, ParseException {
+	public void getReportForAllGroups() throws JSONException, ParseException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
 		List<CodeGroup> groups = codeGroupRepository.findAll();
 		Optional<Scanner> fortify = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_FORTIFY)).stream().findFirst();
 		if (fortify.isPresent() && fortify.get().getStatus()) {
@@ -80,7 +80,7 @@ public class CodeScheduler {
 	//Uruchomienie skanow dla grup
 	@Transactional
 	@Scheduled(cron="#{@getCodeCronExpression}" )
-	public void runScheduledScans() throws KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, CertificateException, IOException {
+	public void runScheduledScans() throws KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, CertificateException, IOException, JSONException, ParseException {
 		log.info("Starting Fortify Scheduled Scans");
 		//List<CodeGroup> groups = codeGroupRepository.findByAuto(true);
 		List<Project> projects = projectRepository.findByAutoCodeScan(true);
@@ -173,6 +173,10 @@ public class CodeScheduler {
 			log.debug("Fortify configuration missing");
 		} catch (HttpClientErrorException ex){
 			log.warn("HttpClientErrorException with code [{}] during cloud scan job synchro ",ex.getStatusCode().toString());
+		} catch (ParseException e) {
+			e.printStackTrace();
+		} catch (JSONException e) {
+			e.printStackTrace();
 		}
 	}
 	

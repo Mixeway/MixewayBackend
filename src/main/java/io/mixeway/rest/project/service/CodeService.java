@@ -2,12 +2,14 @@ package io.mixeway.rest.project.service;
 
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.Project;
-import io.mixeway.db.repository.CodeProjectRepository;
+import io.mixeway.db.entity.Scanner;
+import io.mixeway.db.repository.*;
 import io.mixeway.plugins.audit.dependencytrack.apiclient.DependencyTrackApiClient;
 import io.mixeway.plugins.audit.dependencytrack.model.Projects;
 import io.mixeway.plugins.codescan.service.CodeScanClient;
 import io.mixeway.rest.project.model.*;
 import io.mixeway.rest.utils.ProjectRiskAnalyzer;
+import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,14 +21,12 @@ import org.springframework.vault.core.VaultOperations;
 import io.mixeway.db.entity.CodeGroup;
 import io.mixeway.db.entity.CodeProject;
 import io.mixeway.db.entity.CodeVuln;
-import io.mixeway.db.repository.CodeGroupRepository;
-import io.mixeway.db.repository.CodeVulnRepository;
-import io.mixeway.db.repository.ProjectRepository;
 import io.mixeway.pojo.Status;
 
 import java.io.IOException;
 import java.security.*;
 import java.security.cert.CertificateException;
+import java.text.ParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -42,14 +42,19 @@ public class CodeService {
     private final List<CodeScanClient> codeScanClients;
     private final CodeVulnRepository codeVulnRepository;
     private final DependencyTrackApiClient dependencyTrackApiClient;
+    private final ScannerRepository scannerRepository;
+    private final ScannerTypeRepository scanneTypeRepository;
 
     @Autowired
     CodeService(ProjectRepository projectRepository, CodeProjectRepository codeProjectRepository,
                 ProjectRiskAnalyzer projectRiskAnalyzer, CodeGroupRepository codeGroupRepository,
                 VaultOperations operations, List<CodeScanClient> codeScanClients,
-                CodeVulnRepository codeVulnRepository, DependencyTrackApiClient dependencyTrackApiClient) {
+                CodeVulnRepository codeVulnRepository, DependencyTrackApiClient dependencyTrackApiClient,
+                ScannerTypeRepository scanneTypeRepository, ScannerRepository scannerRepository) {
         this.projectRepository = projectRepository;
         this.codeProjectRepository = codeProjectRepository;
+        this.scannerRepository = scannerRepository;
+        this.scanneTypeRepository = scanneTypeRepository;
         this.dependencyTrackApiClient = dependencyTrackApiClient;
         this.projectRiskAnalyzer = projectRiskAnalyzer;
         this.operations = operations;
@@ -165,11 +170,12 @@ public class CodeService {
                     }
                 }
                 log.info("{} - Run SAST scan for {} - scope partial", username, project.get().getName());
+
                 return new ResponseEntity<>(null, HttpStatus.OK);
             } else {
                 return new ResponseEntity<>(null, HttpStatus.EXPECTATION_FAILED);
             }
-        } catch (IndexOutOfBoundsException ioob){
+        } catch (IndexOutOfBoundsException | ParseException | JSONException ioob){
             return new ResponseEntity<>(null, HttpStatus.EXPECTATION_FAILED);
         }
     }
@@ -202,7 +208,7 @@ public class CodeService {
             }
             log.info("{} - Run SAST scan for {} - scope single", username, codeProject.orElse(null).getCodeGroup().getProject().getName());
             return new ResponseEntity<>(null, HttpStatus.OK);
-        } catch (IndexOutOfBoundsException e) {
+        } catch (IndexOutOfBoundsException | JSONException | ParseException e) {
             return new ResponseEntity<>(null, HttpStatus.EXPECTATION_FAILED);
         }
     }
@@ -281,5 +287,35 @@ public class CodeService {
 
     public ResponseEntity<List<Projects>> getdTracksProjects() throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         return new ResponseEntity<>(dependencyTrackApiClient.getProjects(), HttpStatus.OK);
+    }
+
+    public ResponseEntity<List<SASTProject>> getCodeProjects() throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
+        List<Scanner>  scanners = scannerRepository.findByScannerTypeIn(scanneTypeRepository.getCodeScanners());
+        if (scanners.size() < 2 && scanners.stream().findFirst().isPresent()){
+            for (CodeScanClient csc : codeScanClients){
+                if (csc.canProcessRequest(scanners.stream().findFirst().get())){
+                    return new ResponseEntity<>(csc.getProjects(scanners.stream().findFirst().get()), HttpStatus.OK);
+                }
+            }
+        }
+        return new ResponseEntity<>( HttpStatus.OK);
+    }
+
+    public ResponseEntity<Status> createRemoteProject(Long id, Long projectId) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
+        Optional<Project> project = projectRepository.findById(projectId);
+        Optional<CodeProject> codeProject = codeProjectRepository.findById(id);
+        List<Scanner>  scanners = scannerRepository.findByScannerTypeIn(scanneTypeRepository.getCodeScanners());
+        if (project.isPresent()
+                && codeProject.isPresent()
+                && project.get().getId().equals(codeProject.get().getCodeGroup().getProject().getId())
+                && scanners.size() < 2
+                && scanners.stream().findFirst().isPresent()){
+            for (CodeScanClient csc : codeScanClients){
+                if (csc.canProcessRequest(scanners.stream().findFirst().get()) && csc.createProject(scanners.stream().findFirst().get(), codeProject.get())){
+                    return new ResponseEntity<>(new Status("created"), HttpStatus.CREATED);
+                }
+            }
+        }
+        return new ResponseEntity<>(HttpStatus.PRECONDITION_FAILED);
     }
 }

@@ -31,6 +31,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -73,7 +74,7 @@ public class ScanManagerService {
         this.acunetixService = acunetixService;
         this.codeScanService = codeScanService;
     }
-    public ResponseEntity<Status> createScanManageRequest(CreateScanManageRequest createScanManageRequest) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, IOException, JAXBException {
+    public ResponseEntity<Status> createScanManageRequest(CreateScanManageRequest createScanManageRequest) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, IOException, JAXBException, ParseException {
         if (createScanManageRequest.getTestType().equals(Constants.REQUEST_SCAN_NETWORK)){
             return processNetworkScanRequest(createScanManageRequest.getNetworkScanRequest());
         } else if (createScanManageRequest.getTestType().equals(Constants.REQUEST_SCAN_CODE)){
@@ -111,7 +112,7 @@ public class ScanManagerService {
         }
     }
 
-    private ResponseEntity<Status> processCodeScanRequest(CodeScanRequestModel codeScanRequest) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+    private ResponseEntity<Status> processCodeScanRequest(CodeScanRequestModel codeScanRequest) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, JSONException, ParseException {
 
         return codeScanService.performScanFromScanManager(codeScanRequest);
     }

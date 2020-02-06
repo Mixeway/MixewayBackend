@@ -14,6 +14,7 @@ import io.mixeway.plugins.codescan.model.CodeRequestHelper;
 import io.mixeway.plugins.codescan.service.CodeScanClient;
 import io.mixeway.pojo.*;
 import io.mixeway.rest.model.ScannerModel;
+import io.mixeway.rest.project.model.SASTProject;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -464,36 +465,51 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 	}
 
 	@Override
+	public List<SASTProject> getProjects(Scanner scanner) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
+		return null;
+	}
+
+	@Override
+	public boolean createProject(Scanner scanner, CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
+		return false;
+	}
+
+	@Override
 	public boolean canProcessRequest(ScannerType scannerType) {
 		return scannerType.getName().equals(Constants.SCANNER_TYPE_FORTIFY) || scannerType.getName().equals(Constants.SCANNER_TYPE_FORTIFY_SCA);
 	}
 
 	@Override
-	public void saveScanner(ScannerModel scannerModel) {
-		ScannerType scannerType = scannerTypeRepository.findByNameIgnoreCase(scannerModel.getScannerType());
-		if (scannerType.getName().equals(Constants.SCANNER_TYPE_FORTIFY)){
-			io.mixeway.db.entity.Scanner fortify = new io.mixeway.db.entity.Scanner();
-			fortify.setApiUrl(scannerModel.getApiUrl());
-			fortify.setPassword(UUID.randomUUID().toString());
-			fortify.setUsername(scannerModel.getUsername());
-			fortify.setStatus(false);
-			fortify.setScannerType(scannerType);
-			// api key put to vault
-			Map<String, String> passwordKeyMap = new HashMap<>();
-			passwordKeyMap.put("password", scannerModel.getPassword());
-			operations.write("secret/" + fortify.getPassword(), passwordKeyMap);
-			scannerRepository.save(fortify);
-		} else if (scannerType.getName().equals(Constants.SCANNER_TYPE_FORTIFY_SCA)){
-			io.mixeway.db.entity.Scanner fortify = new io.mixeway.db.entity.Scanner();
-			fortify.setApiUrl(scannerModel.getApiUrl());
-			fortify.setFortifytoken(UUID.randomUUID().toString());
-			fortify.setStatus(false);
-			fortify.setScannerType(scannerType);
-			// api key put to vault
-			Map<String, String> passwordKeyMap = new HashMap<>();
-			passwordKeyMap.put("password", scannerModel.getCloudCtrlToken());
-			operations.write("secret/" + fortify.getFortifytoken(), passwordKeyMap);
-			scannerRepository.save(fortify);
+	public void saveScanner(ScannerModel scannerModel) throws Exception {
+		List<Scanner>  scanners = scannerRepository.findByScannerTypeIn(scannerTypeRepository.getCodeScanners());
+		if (scanners.stream().findFirst().isPresent()){
+			throw new Exception(Constants.SAST_SCANNER_ALREADY_REGISTERED);
+		} else {
+			ScannerType scannerType = scannerTypeRepository.findByNameIgnoreCase(scannerModel.getScannerType());
+			if (scannerType.getName().equals(Constants.SCANNER_TYPE_FORTIFY)) {
+				io.mixeway.db.entity.Scanner fortify = new io.mixeway.db.entity.Scanner();
+				fortify.setApiUrl(scannerModel.getApiUrl());
+				fortify.setPassword(UUID.randomUUID().toString());
+				fortify.setUsername(scannerModel.getUsername());
+				fortify.setStatus(false);
+				fortify.setScannerType(scannerType);
+				// api key put to vault
+				Map<String, String> passwordKeyMap = new HashMap<>();
+				passwordKeyMap.put("password", scannerModel.getPassword());
+				operations.write("secret/" + fortify.getPassword(), passwordKeyMap);
+				scannerRepository.save(fortify);
+			} else if (scannerType.getName().equals(Constants.SCANNER_TYPE_FORTIFY_SCA)) {
+				io.mixeway.db.entity.Scanner fortify = new io.mixeway.db.entity.Scanner();
+				fortify.setApiUrl(scannerModel.getApiUrl());
+				fortify.setFortifytoken(UUID.randomUUID().toString());
+				fortify.setStatus(false);
+				fortify.setScannerType(scannerType);
+				// api key put to vault
+				Map<String, String> passwordKeyMap = new HashMap<>();
+				passwordKeyMap.put("password", scannerModel.getCloudCtrlToken());
+				operations.write("secret/" + fortify.getFortifytoken(), passwordKeyMap);
+				scannerRepository.save(fortify);
+			}
 		}
 	}
 

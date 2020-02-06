@@ -1,6 +1,7 @@
 package io.mixeway.plugins.codescan.controller;
 
 import io.mixeway.plugins.codescan.service.CodeScanClient;
+import org.codehaus.jettison.json.JSONException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -19,6 +20,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.text.ParseException;
 import java.util.List;
 
 @RestController
@@ -39,7 +41,7 @@ public class CodeScanController {
     @RequestMapping(value = "/api/sast/{projectId}/create/{groupName}/{projectName}", method = RequestMethod.PUT,produces= MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Status> createScanForProject(@PathVariable(value = "projectId") Long id,
                                                        @PathVariable(value="groupName") String groupName,
-                                                       @PathVariable(value="projectName") String projectName) throws IOException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException {
+                                                       @PathVariable(value="projectName") String projectName) throws IOException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, JSONException, ParseException {
         SASTRequestVerify sastRequestVerify = codeAccessVerifier.verifyPermissions(id,groupName,projectName,false);
         if (sastRequestVerify.getValid()){
             for(CodeScanClient codeScanClient : codeScanClients){

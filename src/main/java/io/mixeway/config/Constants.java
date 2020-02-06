@@ -228,4 +228,5 @@ public class Constants {
 	public static final String CX_REPORT_DESCRIPTION = "Link";
 
     public static final String CX_REPORT_STATE = "Result Status";
+    public static final String SAST_SCANNER_ALREADY_REGISTERED = "Current Version of Mixeway support only one instance of SAST Scanner";
 }

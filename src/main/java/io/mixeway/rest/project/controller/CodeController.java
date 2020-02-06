@@ -2,6 +2,7 @@ package io.mixeway.rest.project.controller;
 
 import io.mixeway.plugins.audit.dependencytrack.model.Projects;
 import io.mixeway.rest.project.model.*;
+import org.codehaus.jettison.json.JSONException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -15,6 +16,7 @@ import io.mixeway.rest.project.service.CodeService;
 import java.io.IOException;
 import java.security.*;
 import java.security.cert.CertificateException;
+import java.text.ParseException;
 import java.util.List;
 
 @Controller
@@ -92,5 +94,15 @@ public class CodeController {
     @GetMapping(value = "/dtrackprojects")
     public ResponseEntity<List<Projects>> getdTracksProjects() throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         return codeService.getdTracksProjects();
+    }
+    @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
+    @GetMapping(value = "/codeprojects")
+    public ResponseEntity<List<SASTProject>> getCodeProjects() throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, JSONException, ParseException {
+        return codeService.getCodeProjects();
+    }
+    @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
+    @PutMapping(value = "/{projectId}/createremoteproject/{id}")
+    public ResponseEntity<Status> createRemoteProject(@PathVariable("id")Long id,@PathVariable("projectId")Long projectId) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, JSONException, ParseException {
+        return codeService.createRemoteProject(id, projectId);
     }
 }

@@ -283,14 +283,4 @@ public class CronScheduler {
        }
        return vulns;
     }
-
-    @Scheduled(initialDelay=0,fixedDelay = 1500)
-    public void test() throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
-       Optional<Scanner> scanner = scannerRepository.getById(17L);
-       CodeGroup codeGroup = new CodeGroup();
-       codeGroup.setName("testowagrupa");
-       checkmarxApiClient.createProject(scanner.get(),codeGroup);
-
-
-    }
 }

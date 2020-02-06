@@ -35,6 +35,7 @@ public class ProjectRestService {
     private final CodeVulnRepository codeVulnRepository;
     private final WebAppVulnRepository webAppVulnRepository;
     private final SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository;
+    private final ScannerRepository scannerRepository;
 
     @Autowired
     ProjectRestService(RoutingDomainRepository routingDomainRepository,
@@ -47,7 +48,8 @@ public class ProjectRestService {
                         InfrastructureVulnRepository infrastructureVulnRepository,
                         CodeVulnRepository codeVulnRepository,
                         WebAppVulnRepository webAppVulnRepository,
-                        SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository){
+                        SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository,
+                        ScannerRepository scannerRepository){
         this.routingDomainRepository = routingDomainRepository;
         this.proxiesRepository = proxiesRepository;
         this.projectRepository = projectRepository;
@@ -58,6 +60,7 @@ public class ProjectRestService {
         this.infrastructureVulnRepository = infrastructureVulnRepository;
         this.codeVulnRepository = codeVulnRepository;
         this.webAppVulnRepository = webAppVulnRepository;
+        this.scannerRepository = scannerRepository;
         this.softwarePacketVulnerabilityRepository = softwarePacketVulnerabilityRepository;
     }
 
@@ -204,5 +207,9 @@ public class ProjectRestService {
             result = false;
         }
         return result;
+    }
+
+    public ResponseEntity<List<ScannerType>> scannersAvaliable() {
+        return new ResponseEntity<>(scannerRepository.getDistinctScannerTypes(), HttpStatus.OK);
     }
 }
