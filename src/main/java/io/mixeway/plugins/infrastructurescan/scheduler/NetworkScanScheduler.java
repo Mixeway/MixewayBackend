@@ -79,7 +79,6 @@ public class NetworkScanScheduler {
 					}
 
 				}
-				log.info("Successfully loaded Network scan results");
 			}
 			//Change state of interface which was not loaded for some reason
 			if (nessusScanRepository.findByRunning(true).size() == 0 ){

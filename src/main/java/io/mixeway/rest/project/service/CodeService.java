@@ -132,7 +132,7 @@ public class CodeService {
     public ResponseEntity<Status> saveCodeProject(Long id, CodeProjectPutModel codeProjectPutModel, String username) {
         Optional<Project> project = projectRepository.findById(id);
         Optional<CodeGroup> codeGroup = codeGroupRepository.findById(codeProjectPutModel.getCodeGroup());
-        if (project.isPresent() && codeGroup.isPresent() && codeGroup.get().getProject() == project.get()){
+        if (project.isPresent() && codeGroup.isPresent() && codeGroup.get().getProject().getId().equals(project.get().getId())){
             CodeProject codeProject = new CodeProject();
             codeProject.setCodeGroup(codeGroup.get());
             codeProject.setName(codeProjectPutModel.getCodeProjectName());
