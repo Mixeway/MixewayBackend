@@ -78,6 +78,13 @@
 			<artifactId>jackson-annotations</artifactId>
 			<version>2.10.0</version>
 		</dependency>
+
+		<dependency>
+			<groupId>com.opencsv</groupId>
+			<artifactId>opencsv</artifactId>
+			<version>4.1</version>
+		</dependency>
+
 		<!-- Apache dependencies -->
 		<dependency>
 			<groupId>org.apache.commons</groupId>

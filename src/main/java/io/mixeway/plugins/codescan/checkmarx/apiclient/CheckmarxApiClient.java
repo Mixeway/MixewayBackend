@@ -1,9 +1,14 @@
 package io.mixeway.plugins.codescan.checkmarx.apiclient;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.opencsv.CSVReader;
+import com.opencsv.bean.CsvToBean;
+import com.opencsv.bean.HeaderColumnNameTranslateMappingStrategy;
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.CodeGroupRepository;
+import io.mixeway.db.repository.CodeProjectRepository;
 import io.mixeway.db.repository.ScannerRepository;
 import io.mixeway.db.repository.ScannerTypeRepository;
 import io.mixeway.plugins.codescan.checkmarx.model.*;
@@ -14,6 +19,7 @@ import io.mixeway.pojo.SecureRestTemplate;
 import io.mixeway.pojo.SecurityScanner;
 import io.mixeway.rest.model.ScannerModel;
 import io.mixeway.rest.project.model.SASTProject;
+import org.apache.tomcat.util.bcel.Const;
 import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +27,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.vault.core.VaultOperations;
 import org.springframework.vault.support.VaultResponseSupport;
 import org.springframework.web.client.HttpClientErrorException;
@@ -28,6 +36,7 @@ import org.springframework.web.client.RestTemplate;
 
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
+import java.io.StringReader;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -49,13 +58,15 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
     private final VaultOperations operations;
     private final SecureRestTemplate secureRestTemplate;
     private final CodeGroupRepository codeGroupRepository;
+    private final CodeProjectRepository codeProjectRepository;
     private TokenValidator tokenValidator = new TokenValidator();
     @Autowired
-    CheckmarxApiClient(ScannerTypeRepository scannerTypeRepository, ScannerRepository scannerRepository,
+    CheckmarxApiClient(ScannerTypeRepository scannerTypeRepository, ScannerRepository scannerRepository, CodeProjectRepository codeProjectRepository,
                        VaultOperations operations, SecureRestTemplate secureRestTemplate, CodeGroupRepository codeGroupRepository){
         this.operations = operations;
         this.scannerRepository = scannerRepository;
         this.scannerTypeRepository = scannerTypeRepository;
+        this.codeProjectRepository = codeProjectRepository;
         this.codeGroupRepository = codeGroupRepository;
         this.secureRestTemplate = secureRestTemplate;
     }
@@ -116,18 +127,18 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
      *
      * @param scanner
      */
-    private boolean generateToken(io.mixeway.db.entity.Scanner scanner) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, JSONException, ParseException {
+    public boolean generateToken(io.mixeway.db.entity.Scanner scanner) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, JSONException, ParseException {
         try {
-            Map<String, String> formEncodedForLogin = createFormForLogin(scanner);
-            RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(scanner);
+            MultiValueMap<String, String> formEncodedForLogin = createFormForLogin(scanner);
+            RestTemplate restTemplate = secureRestTemplate.noVerificationClient(scanner);
             HttpHeaders headers = new HttpHeaders();
-            headers.set("Content-Type", "application/x-www-form-urlencoded");
-            HttpEntity<Map<String, String>> entity = new HttpEntity<>(formEncodedForLogin, headers);
+            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+            HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(formEncodedForLogin, headers);
             String API_GET_TOKEN = "/cxrestapi/auth/identity/connect/token";
             ResponseEntity<CxLoginResponse> response = restTemplate.exchange(scanner.getApiUrl() + API_GET_TOKEN, HttpMethod.POST, entity, CxLoginResponse.class);
-            if (response.getStatusCode() == HttpStatus.CREATED) {
+            if (response.getStatusCode() == HttpStatus.OK) {
                 Date dt = new Date();
-                LocalDateTime ldt = LocalDateTime.from(dt.toInstant()).plusSeconds(Objects.requireNonNull(response.getBody()).getExpires_in());
+                LocalDateTime ldt = LocalDateTime.now().plusSeconds(Objects.requireNonNull(response.getBody()).getExpires_in());
                 scanner.setFortifytokenexpiration(ldt.format(sdf));
                 scanner.setFortifytoken(response.getBody().getAccess_token());
                 if(!scanner.getStatus()){
@@ -147,30 +158,30 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
 
     }
 
-    private Map<String, String> createFormForLogin(Scanner scanner) {
+    private MultiValueMap<String, String> createFormForLogin(Scanner scanner) {
         VaultResponseSupport<Map<String, Object>> password = operations.read("secret/" + scanner.getPassword());
         assert password != null;
-        Map<String, String> form = new HashMap<>();
-        form.put(Constants.CHECKMARX_LOGIN_FORM_USERNAME, scanner.getUsername());
-        form.put(Constants.CHECKMARX_LOGIN_FORM_PASSWORD, Objects.requireNonNull(password.getData()).get("password").toString());
-        form.put(Constants.CHECKMARX_LOGIN_FORM_GRANT_TYPE, Constants.CHECKMARX_LOGIN_FORM_GRANT_TYPE_VALUE);
-        form.put(Constants.CHECKMARX_LOGIN_FORM_SCOPE,Constants.CHECKMARX_LOGIN_FORM_SCOPE_VALUE);
-        form.put(Constants.CHECKMARX_LOGIN_FORM_CLIENTID, Constants.CHECKMARX_LOGIN_FORM_CLIENTID_VALUE);
-        form.put(Constants.CHECKMARX_LOGIN_FORM_CLIENTSECRET, Constants.CHECKMARX_LOGIN_FORM_CLIENTSECRET_VALUE);
+        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+        form.add(Constants.CHECKMARX_LOGIN_FORM_USERNAME, scanner.getUsername());
+        form.add(Constants.CHECKMARX_LOGIN_FORM_PASSWORD, Objects.requireNonNull(password.getData()).get("password").toString());
+        form.add(Constants.CHECKMARX_LOGIN_FORM_GRANT_TYPE, Constants.CHECKMARX_LOGIN_FORM_GRANT_TYPE_VALUE);
+        form.add(Constants.CHECKMARX_LOGIN_FORM_SCOPE,Constants.CHECKMARX_LOGIN_FORM_SCOPE_VALUE);
+        form.add(Constants.CHECKMARX_LOGIN_FORM_CLIENTID, Constants.CHECKMARX_LOGIN_FORM_CLIENTID_VALUE);
+        form.add(Constants.CHECKMARX_LOGIN_FORM_CLIENTSECRET, Constants.CHECKMARX_LOGIN_FORM_CLIENTSECRET_VALUE);
         return form;
     }
     private CodeRequestHelper prepareRestTemplate(Scanner scanner) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
-        if (tokenValidator.isTokenValid(scanner.getFortifytoken(), LocalDateTime.parse(scanner.getFortifytokenexpiration()))) {
+        if (tokenValidator.isTokenValid(scanner.getFortifytoken(), LocalDateTime.parse(scanner.getFortifytokenexpiration(), sdf))) {
             generateToken(scanner);
         }
-        RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(scanner);
+        RestTemplate restTemplate = secureRestTemplate.noVerificationClient(scanner);
         HttpHeaders headers = new HttpHeaders();
         headers.set(Constants.HEADER_AUTHORIZATION, Constants.BEARER_TOKEN + " " + scanner.getFortifytoken());
         HttpEntity entity = new HttpEntity(headers);
 
         return new CodeRequestHelper(restTemplate,entity);
     }
-    private boolean getTeam(Scanner scanner) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
+    public boolean getTeam(Scanner scanner) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
         CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
         try {
             ResponseEntity<List<CxTeamResponse>> response = codeRequestHelper
@@ -186,7 +197,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
         }
         return false;
     }
-    private List<SASTProject> getProjects(Scanner scanner) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
+    public List<SASTProject> getProjects(Scanner scanner) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
         CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
         List<SASTProject> sastProjects = new ArrayList<>();
         try {
@@ -203,17 +214,23 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
         }
         return sastProjects;
     }
-    private boolean createProject(Scanner scanner, CodeGroup codeGroup) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
+    public boolean createProject(Scanner scanner, CodeGroup codeGroup) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
         CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
         try {
+            ObjectMapper objectMapper = new ObjectMapper();
+
+            String objJackson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(new CxProjectCreate(codeGroup.getName(), scanner));
+            log.info("trying to creat project {}", objJackson);
+
             ResponseEntity<CxResponseId> response = codeRequestHelper
                     .getRestTemplate()
                     .exchange(scanner.getApiUrl() + Constants.CX_CREATE_PROJECT_API, HttpMethod.POST,
-                            new HttpEntity<>(new CxProject(codeGroup.getName(), scanner),codeRequestHelper.getHttpEntity().getHeaders()),
+                            new HttpEntity<>(new CxProjectCreate(codeGroup.getName(), scanner),codeRequestHelper.getHttpEntity().getHeaders()),
                             CxResponseId.class);
             if (response.getStatusCode().equals(HttpStatus.CREATED) ) {
                 codeGroup.setVersionIdAll((int) Objects.requireNonNull(response.getBody()).getId());
                 codeGroupRepository.save(codeGroup);
+                log.info("CX - Successfull project creation for {}", codeGroup.getName());
                 return true;
             }
         } catch (HttpClientErrorException e){
@@ -222,15 +239,18 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
         return false;
     }
 
-    private boolean createProjectGitLink(Scanner scanner, CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
+    public boolean createProjectGitLink(Scanner scanner, CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
         CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
         try {
+            VaultResponseSupport<Map<String, Object>> password = operations.read("secret/" + codeProject.getCodeGroup().getRepoPassword());
+            assert password != null;
             ResponseEntity<String> response = codeRequestHelper
                     .getRestTemplate()
-                    .exchange(scanner.getApiUrl() + Constants.CX_CREATE_GIT_FOR_PROJECT_API, HttpMethod.POST,
-                            new HttpEntity<>(new CxGitCreate(codeProject,"test"),codeRequestHelper.getHttpEntity().getHeaders()),
+                    .exchange(scanner.getApiUrl() + Constants.CX_CREATE_GIT_FOR_PROJECT_API.replace(Constants.CX_PROJECTID, String.valueOf(codeProject.getCodeGroup().getVersionIdAll())), HttpMethod.POST,
+                            new HttpEntity<>(new CxGitCreate(codeProject,Objects.requireNonNull(password.getData()).get("password").toString()),codeRequestHelper.getHttpEntity().getHeaders()),
                             String.class);
-            if (response.getStatusCode().equals(HttpStatus.CREATED) ) {
+            if (response.getStatusCode().equals(HttpStatus.NO_CONTENT) || response.getStatusCode().equals(HttpStatus.OK)) {
+                log.info("CX - Successfull set GIT for {}", codeProject.getName());
                 return true;
             }
         } catch (HttpClientErrorException e){
@@ -238,5 +258,123 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
         }
         return false;
     }
+    public boolean createScan(Scanner scanner, CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
+        CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
+        try {
+            ResponseEntity<CxResponseId> response = codeRequestHelper
+                    .getRestTemplate()
+                    .exchange(scanner.getApiUrl() + Constants.CX_CREATE_SCAN_API, HttpMethod.POST,
+                            new HttpEntity<>(new CxCreateScan(codeProject),codeRequestHelper.getHttpEntity().getHeaders()),
+                            CxResponseId.class);
+            if (response.getStatusCode().equals(HttpStatus.CREATED) ) {
+                codeProject.setRunning(true);
+                codeProject.getCodeGroup().setRunning(true);
+                codeProject.getCodeGroup().setScanid(Long.toString(Objects.requireNonNull(response.getBody()).getId()));
+                codeGroupRepository.save(codeProject.getCodeGroup());
+                codeProjectRepository.save(codeProject);
+                log.info("CX - Successfull Created and started scan for {}", codeProject.getName());
+                return true;
+            }
+        } catch (HttpClientErrorException e){
+            log.error("Error during loading projects from Checkmarx - {}", e.getLocalizedMessage());
+        }
+        return false;
+    }
+    public CxScan getScanInfo(Scanner scanner, CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
+        CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
+        try {
+            ResponseEntity<CxScan> response = codeRequestHelper
+                    .getRestTemplate()
+                    .exchange(scanner.getApiUrl() + Constants.CX_GET_SCAN_API.replace(Constants.CX_SCANID, codeProject.getCodeGroup().getScanid()), HttpMethod.GET,
+                            codeRequestHelper.getHttpEntity(),
+                           CxScan.class);
+            if (response.getStatusCode().equals(HttpStatus.OK) ) {
+                return response.getBody();
+            }
+        } catch (HttpClientErrorException e){
+            log.error("Error during loading projects from Checkmarx - {}", e.getLocalizedMessage());
+        }
+        return null;
+    }
+    public boolean generateReport(Scanner scanner, CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
+        CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
+        try {
+            ResponseEntity<CxResponseId> response = codeRequestHelper
+                    .getRestTemplate()
+                    .exchange(scanner.getApiUrl() + Constants.CX_CREATE_SCAN_API, HttpMethod.POST,
+                            new HttpEntity<>(new CxReportGenerate(codeProject),codeRequestHelper.getHttpEntity().getHeaders()),
+                            CxResponseId.class);
+            if (response.getStatusCode().equals(HttpStatus.ACCEPTED) ) {
+                codeProject.getCodeGroup().setJobId(String.valueOf(Objects.requireNonNull(response.getBody()).getReportId()));
+                codeGroupRepository.save(codeProject.getCodeGroup());
+                log.info("CX - Successfull genarate report  for {}", codeProject.getName());
+                return true;
+            }
+        } catch (HttpClientErrorException e){
+            log.error("Error during loading projects from Checkmarx - {}", e.getLocalizedMessage());
+        }
+        return false;
+    }
+    public boolean checkReportState(Scanner scanner, CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
+        CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
+        try {
+            ResponseEntity<CxReportStatus> response = codeRequestHelper
+                    .getRestTemplate()
+                    .exchange(scanner.getApiUrl() + Constants.CX_GET_REPORT_STATUS_API.replace(Constants.CX_REPORTID,codeProject.getCodeGroup().getJobId()), HttpMethod.GET,
+                            codeRequestHelper.getHttpEntity(),
+                            CxReportStatus.class);
+            if (response.getStatusCode().equals(HttpStatus.OK) ) {
+                if (response.getBody().getStatus().getName().equals(Constants.CX_STATUS_FINISHED)){
+                    log.info("CX - Successfull genarate report  for {}", codeProject.getName());
+                    return true;
+                }
+
+            }
+        } catch (HttpClientErrorException e){
+            log.error("Error during loading projects from Checkmarx - {}", e.getLocalizedMessage());
+        }
+        return false;
+    }
+    public boolean downloadResultsForScan(Scanner scanner, CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
+        CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
+        try {
+            ResponseEntity<String> response = codeRequestHelper
+                    .getRestTemplate()
+                    .exchange(scanner.getApiUrl() + Constants.CX_GET_RESULTS_API.replace(Constants.CX_REPORTID,codeProject.getCodeGroup().getJobId()), HttpMethod.GET,
+                            codeRequestHelper.getHttpEntity(),
+                            String.class);
+            if (response.getStatusCode().equals(HttpStatus.OK) ) {
+                processCsvReport(response.getBody(),codeProject);
+                log.info("CX - Successfull processed report for {}", codeProject.getName());
+                return true;
+            }
+        } catch (HttpClientErrorException e){
+            log.error("Error during loading projects from Checkmarx - {}", e.getLocalizedMessage());
+        }
+        return false;
+    }
+
+    private void processCsvReport(String body, CodeProject codeProject) {
+        Map<String, String> mapping = new
+                HashMap<String, String>();
+        mapping.put(Constants.CX_REPORT_QUERY, "query");
+        mapping.put(Constants.CX_REPORT_DSTFILE, "dstLocation");
+        mapping.put(Constants.CX_REPORT_DSTLINENO, "dstLine");
+        mapping.put(Constants.CX_REPORT_ANALYSIS, "analysis");
+        mapping.put(Constants.CX_REPORT_SEVERITY, "severity");
+        mapping.put(Constants.CX_REPORT_DESCRIPTION, "description");
+        mapping.put(Constants.CX_REPORT_STATE, "state");
+        // HeaderColumnNameTranslateMappingStrategy
+        // for Student class
+        HeaderColumnNameTranslateMappingStrategy<CxResult> strategy =
+                new HeaderColumnNameTranslateMappingStrategy<CxResult>();
+        strategy.setType(CxResult.class);
+        strategy.setColumnMapping(mapping);
+        CSVReader csvReader = null;
+        csvReader = new CSVReader(new StringReader(body));
+        CsvToBean csvToBean = new CsvToBean();
+        List<CxResult> results = csvToBean.parse(strategy, csvReader);
+    }
+
 
 }

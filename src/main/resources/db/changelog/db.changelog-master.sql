@@ -842,4 +842,4 @@ update settings set trendemailcron='0 0 14 * * FRI';
 insert into scannertype (name, authapikey, authsecrettoken, authaccesstoken, authusername,authpassword,authcloudctrltoken) values ('Checkmarx', false,false,false,true,true,false);
 
 --changeset siewer:162
-alter table scanner add column team text;
+alter table nessus add column team text;

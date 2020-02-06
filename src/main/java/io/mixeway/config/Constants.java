@@ -199,10 +199,10 @@ public class Constants {
 	public static final String CHECKMARX_LOGIN_FORM_GRANT_TYPE = "grant_type";
 	public static final String CHECKMARX_LOGIN_FORM_SCOPE = "scope";
 	public static final String CHECKMARX_LOGIN_FORM_CLIENTID = "client_id";
-	public static final String CHECKMARX_LOGIN_FORM_CLIENTSECRET = "resource_owner_client";
+	public static final String CHECKMARX_LOGIN_FORM_CLIENTSECRET = "client_secret";
 	public static final String CHECKMARX_LOGIN_FORM_GRANT_TYPE_VALUE = "password";
 	public static final String CHECKMARX_LOGIN_FORM_SCOPE_VALUE = "sast_rest_api";
-	public static final String CHECKMARX_LOGIN_FORM_CLIENTID_VALUE = "client_secret";
+	public static final String CHECKMARX_LOGIN_FORM_CLIENTID_VALUE = "resource_owner_client";
 	public static final String CHECKMARX_LOGIN_FORM_CLIENTSECRET_VALUE = "014DF517-39D1-4453-B7B3-9930C563627C";
     public static final String CX_GET_TEAMS_API = "/cxrestapi/auth/teams";
     public static final String CX_LOGIN_API = "/cxrestapi/auth/identity/connect/token";
@@ -217,6 +217,15 @@ public class Constants {
     public static final String CX_PROJECTID = "projectid";
     public static final String CX_SCANID = "scanid";
     public static final String CX_REPORTID = "reportid";
+    public static final String CX_SCAN_COMMENT = "Scan requested from Mixeway";
+	public static final String CX_REPORT_TYPE = "csv";
+	public static final String CX_STATUS_FINISHED = "Finished";
+	public static final String CX_REPORT_QUERY = "Query";
+	public static final String CX_REPORT_DSTFILE = "DestFileName";
+	public static final String CX_REPORT_DSTLINENO = "DestLine";
+	public static final String CX_REPORT_ANALYSIS = "Result State";
+	public static final String CX_REPORT_SEVERITY = "Result Severity";
+	public static final String CX_REPORT_DESCRIPTION = "Link";
 
-
+    public static final String CX_REPORT_STATE = "Result Status";
 }

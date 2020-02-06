@@ -1,34 +1,27 @@
 package io.mixeway.plugins.codescan.checkmarx.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.mixeway.db.entity.Scanner;
 
-public class CxProject {
-    private long id;
-    private String teamId;
+public class CxProjectCreate {
+    private String owningTeam;
     private String name;
+    @JsonProperty("isPublic")
     private boolean isPublic;
 
-    public CxProject(String name, Scanner scanner){
+    public CxProjectCreate(String name, Scanner scanner){
         this.name = name;
-        this.teamId = scanner.getTeam();
+        this.owningTeam = scanner.getTeam();
         this.isPublic = true;
     }
-    public CxProject(){}
+    public CxProjectCreate(){}
 
-    public long getId() {
-        return id;
+    public String getOwningTeam() {
+        return owningTeam;
     }
 
-    public void setId(long id) {
-        this.id = id;
-    }
-
-    public String getTeamId() {
-        return teamId;
-    }
-
-    public void setTeamId(String teamId) {
-        this.teamId = teamId;
+    public void setOwningTeam(String owningTeam) {
+        this.owningTeam = owningTeam;
     }
 
     public String getName() {
