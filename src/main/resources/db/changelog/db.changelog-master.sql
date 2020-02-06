@@ -843,3 +843,7 @@ insert into scannertype (name, authapikey, authsecrettoken, authaccesstoken, aut
 
 --changeset siewer:162
 alter table nessus add column team text;
+
+--changeset siewer:163
+update scannertype set authapikey=false,authsecrettoken=false,authaccesstoken=false,authusername=true,authpassword=true,authcloudctrltoken=false where name='OpenVAS Socket';
+update scannertype set authapikey=false,authsecrettoken=false,authaccesstoken=false,authusername=true,authpassword=true,authcloudctrltoken=false where name='OpenVAS';

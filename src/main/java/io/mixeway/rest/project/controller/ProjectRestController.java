@@ -58,7 +58,7 @@ public class ProjectRestController {
         return projectService.updateContactList(id,contactList);
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
-    @PatchMapping(value = "/scannersavaliable")
+    @GetMapping(value = "/scannersavaliable")
     public ResponseEntity<List<ScannerType>> scannersAvaliable() {
         return projectService.scannersAvaliable();
     }

@@ -61,7 +61,10 @@ public class JwtUserDetailsService implements UserDetailsService {
             Settings settings = settingsRepository.findAll().stream().findFirst().orElse(null);
             assert settings != null;
             if ( settings.getMasterApiKey() != null && username.equals(settings.getMasterApiKey()))
-                return new User(username, "", AuthorityUtils.commaSeparatedStringToAuthorityList("ROLE_API"));
+                return new User(username, "", AuthorityUtils.commaSeparatedStringToAuthorityList("ROLE_API"
+                                + "," +Constants.ROLE_USER
+                                + "," +Constants.ROLE_EDITOR_RUNNER
+                                + "," +Constants.ROLE_ADMIN ));
             if (locations.length > 0 && locations[1].equals(Constants.API_URL)) {
                 if (locations[2].equals(Constants.KOORDYNATOR_API_URL) || locations[3].equals(Constants.SCANMANAGE_API)) {
                     if (settings.getMasterApiKey() != null && username.equals(settings.getMasterApiKey()))
