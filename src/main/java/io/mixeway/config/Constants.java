@@ -192,6 +192,8 @@ public class Constants {
     public static final String SCANNER_TYPE_DEPENDENCYTRACK = "OWASP Dependency Track";
     public static final String DTRACK_AUTH_HEADER = "X-Api-Key";
     public static final String SCANNER_TYPE_CHECKMARX = "Checmkarx";
+
+    //Checmkarx
 	public static final String CHECKMARX_LOGIN_FORM_USERNAME = "username";
 	public static final String CHECKMARX_LOGIN_FORM_PASSWORD = "password";
 	public static final String CHECKMARX_LOGIN_FORM_GRANT_TYPE = "grant_type";
@@ -202,4 +204,19 @@ public class Constants {
 	public static final String CHECKMARX_LOGIN_FORM_SCOPE_VALUE = "sast_rest_api";
 	public static final String CHECKMARX_LOGIN_FORM_CLIENTID_VALUE = "client_secret";
 	public static final String CHECKMARX_LOGIN_FORM_CLIENTSECRET_VALUE = "014DF517-39D1-4453-B7B3-9930C563627C";
+    public static final String CX_GET_TEAMS_API = "/cxrestapi/auth/teams";
+    public static final String CX_LOGIN_API = "/cxrestapi/auth/identity/connect/token";
+    public static final String CX_GET_PROJECTS_API = "/cxrestapi/projects";
+    public static final String CX_CREATE_PROJECT_API = "/cxrestapi/projects";
+    public static final String CX_CREATE_GIT_FOR_PROJECT_API = "/cxrestapi/projects/projectid/sourceCode/remoteSettings/git";
+    public static final String CX_CREATE_SCAN_API = "/cxrestapi/sast/scans";
+    public static final String CX_GET_SCAN_API = "/cxrestapi/sast/scans/scanid";
+    public static final String CX_GET_REPORT_STATUS_API = "/cxrestapi/reports/sastScan/reportid/status";
+    public static final String CX_GNERATE_REPORT_API = "/cxrestapi/reports/sastScan";
+    public static final String CX_GET_RESULTS_API = "/cxrestapi/reports/sastScan/reportid";
+    public static final String CX_PROJECTID = "projectid";
+    public static final String CX_SCANID = "scanid";
+    public static final String CX_REPORTID = "reportid";
+
+
 }
