@@ -117,7 +117,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
 
     @Override
     public void saveScanner(ScannerModel scannerModel) throws Exception {
-        List<Scanner>  scanners = scannerRepository.findByScannerTypeIn(scannerTypeRepository.getCodeScanners());
+        List<Scanner>  scanners = scannerRepository.findByScannerTypeInAndStatus(scannerTypeRepository.getCodeScanners(), true);
         Optional<Proxies> proxies = proxiesRepository.findById(scannerModel.getProxy());
         if (scanners.stream().findFirst().isPresent()){
             throw new Exception(Constants.SAST_SCANNER_ALREADY_REGISTERED);
@@ -168,7 +168,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
                 log.error("Checkmarx Authorization failure");
                 return false;
             }
-        } catch (HttpClientErrorException e){
+        } catch (Exception e){
             log.error("Error during getting teams from Checkmarx - {}", e.getLocalizedMessage());
             return false;
         }
@@ -189,7 +189,11 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
         return form;
     }
     private CodeRequestHelper prepareRestTemplate(Scanner scanner) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
-        if (tokenValidator.isTokenValid(scanner.getFortifytoken(), LocalDateTime.parse(scanner.getFortifytokenexpiration(), sdf))) {
+        try {
+            if (tokenValidator.isTokenValid(scanner.getFortifytoken(), LocalDateTime.parse(scanner.getFortifytokenexpiration(), sdf))) {
+                generateToken(scanner);
+            }
+        } catch (NullPointerException e){
             generateToken(scanner);
         }
         RestTemplate restTemplate = secureRestTemplate.noVerificationClient(scanner);
@@ -228,7 +232,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
                     sastProjects.add(new SASTProject(project.getId(),project.getName()));
                 }
             }
-        } catch (HttpClientErrorException e){
+        } catch (Exception e){
             log.error("Error during loading projects from Checkmarx - {}", e.getLocalizedMessage());
         }
         return sastProjects;
@@ -237,11 +241,6 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
     public boolean createProject(Scanner scanner, CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
         CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
-
-            String objJackson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(new CxProjectCreate(codeProject.getCodeGroup().getName(), scanner));
-            log.info("trying to creat project {}", objJackson);
-
             ResponseEntity<CxResponseId> response = codeRequestHelper
                     .getRestTemplate()
                     .exchange(scanner.getApiUrl() + Constants.CX_CREATE_PROJECT_API, HttpMethod.POST,
@@ -253,7 +252,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
                 log.info("CX - Successfull project creation for {}", codeProject.getCodeGroup().getName());
                 return true;
             }
-        } catch (HttpClientErrorException e){
+        } catch (Exception e){
             log.error("Error during loading projects from Checkmarx - {}", e.getLocalizedMessage());
         }
         return false;

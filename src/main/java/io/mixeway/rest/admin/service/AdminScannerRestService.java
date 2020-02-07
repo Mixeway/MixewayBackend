@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.vault.core.VaultOperations;
 import io.mixeway.db.entity.ScannerType;
 import io.mixeway.pojo.Status;
@@ -75,9 +76,9 @@ public class AdminScannerRestService {
             return new ResponseEntity<>(new Status("not ok"), HttpStatus.PRECONDITION_FAILED);
         }
     }
-
+    @Transactional
     public ResponseEntity<Status> deleteScanner(Long id, String name) {
-        Optional<io.mixeway.db.entity.Scanner> scanner = scannerRepository.findById(id);
+        Optional<io.mixeway.db.entity.Scanner> scanner = scannerRepository.getById(id);
         if (scanner.isPresent()){
             scannerRepository.delete(scanner.get());
             log.info("{} - Deleted scanner {}", name, scanner.get().getApiUrl());

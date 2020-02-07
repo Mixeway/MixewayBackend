@@ -553,7 +553,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 
 	@Override
 	public void saveScanner(ScannerModel scannerModel) throws Exception {
-		List<Scanner>  scanners = scannerRepository.findByScannerTypeIn(scannerTypeRepository.getCodeScanners());
+		List<Scanner>  scanners = scannerRepository.findByScannerTypeInAndStatus(scannerTypeRepository.getCodeScanners(), true);
 		if (scanners.stream().findFirst().isPresent()){
 			throw new Exception(Constants.SAST_SCANNER_ALREADY_REGISTERED);
 		} else {

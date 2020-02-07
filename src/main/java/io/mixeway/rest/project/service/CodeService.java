@@ -298,7 +298,7 @@ public class CodeService {
     }
 
     public ResponseEntity<List<SASTProject>> getCodeProjects() throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
-        List<Scanner>  scanners = scannerRepository.findByScannerTypeIn(scanneTypeRepository.getCodeScanners());
+        List<Scanner>  scanners = scannerRepository.findByScannerTypeInAndStatus(scanneTypeRepository.getCodeScanners(), true);
         if (scanners.size() < 2 && scanners.stream().findFirst().isPresent()){
             for (CodeScanClient csc : codeScanClients){
                 if (csc.canProcessRequest(scanners.stream().findFirst().get())){
@@ -312,7 +312,7 @@ public class CodeService {
     public ResponseEntity<Status> createRemoteProject(Long id, Long projectId) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
         Optional<Project> project = projectRepository.findById(projectId);
         Optional<CodeProject> codeProject = codeProjectRepository.findById(id);
-        List<Scanner>  scanners = scannerRepository.findByScannerTypeIn(scanneTypeRepository.getCodeScanners());
+        List<Scanner>  scanners = scannerRepository.findByScannerTypeInAndStatus(scanneTypeRepository.getCodeScanners(), true);
         if (project.isPresent()
                 && codeProject.isPresent()
                 && project.get().getId().equals(codeProject.get().getCodeGroup().getProject().getId())
