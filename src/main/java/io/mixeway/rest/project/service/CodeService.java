@@ -259,10 +259,16 @@ public class CodeService {
     public ResponseEntity<Status> editCodeProject(Long id, EditCodeProjectModel editCodeProjectModel, String name) {
         Optional<CodeProject> codeProject = codeProjectRepository.findById(id);
         try{
-            if (codeProject.isPresent() && editCodeProjectModel.getdTrackUuid() != null) {
+            if (codeProject.isPresent() && (editCodeProjectModel.getdTrackUuid() != null && editCodeProjectModel.getdTrackUuid() != "")) {
                 UUID uuid = UUID.fromString(editCodeProjectModel.getdTrackUuid());
                 codeProject.get().setdTrackUuid(editCodeProjectModel.getdTrackUuid());
                 codeProjectRepository.save(codeProject.get());
+                log.info("{} Successfully Edited codeProject {}", name, codeProject.get().getName());
+                return new ResponseEntity<>(HttpStatus.OK);
+            }
+            if (codeProject.isPresent() && editCodeProjectModel.getSastProject() > 0) {
+                codeProject.get().getCodeGroup().setVersionIdAll(editCodeProjectModel.getSastProject());
+                codeGroupRepository.save(codeProject.get().getCodeGroup());
                 log.info("{} Successfully Edited codeProject {}", name, codeProject.get().getName());
                 return new ResponseEntity<>(HttpStatus.OK);
             }

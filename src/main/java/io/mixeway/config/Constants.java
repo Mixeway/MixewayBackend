@@ -218,7 +218,7 @@ public class Constants {
     public static final String CX_SCANID = "scanid";
     public static final String CX_REPORTID = "reportid";
     public static final String CX_SCAN_COMMENT = "Scan requested from Mixeway";
-	public static final String CX_REPORT_TYPE = "csv";
+	public static final String CX_REPORT_TYPE = "CSV";
 	public static final String CX_STATUS_FINISHED = "Finished";
 	public static final String CX_REPORT_QUERY = "Query";
 	public static final String CX_REPORT_DSTFILE = "DestFileName";

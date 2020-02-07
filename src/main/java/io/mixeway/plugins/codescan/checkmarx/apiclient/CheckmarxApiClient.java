@@ -321,7 +321,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
         try {
             ResponseEntity<CxResponseId> response = codeRequestHelper
                     .getRestTemplate()
-                    .exchange(scanner.getApiUrl() + Constants.CX_CREATE_SCAN_API, HttpMethod.POST,
+                    .exchange(scanner.getApiUrl() + Constants.CX_GNERATE_REPORT_API, HttpMethod.POST,
                             new HttpEntity<>(new CxReportGenerate(codeGroup),codeRequestHelper.getHttpEntity().getHeaders()),
                             CxResponseId.class);
             if (response.getStatusCode().equals(HttpStatus.ACCEPTED) ) {
@@ -344,7 +344,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
                             codeRequestHelper.getHttpEntity(),
                             CxReportStatus.class);
             if (response.getStatusCode().equals(HttpStatus.OK) ) {
-                if (response.getBody().getStatus().getName().equals(Constants.CX_STATUS_FINISHED)){
+                if (response.getBody().getStatus().getValue().equals(Constants.CX_STATUS_FINISHED)){
                     log.info("CX - Successfull genarate report  for {}", codeGroup.getName());
                     codeGroup.setRunning(false);
                     codeGroupRepository.saveAndFlush(codeGroup);
@@ -370,11 +370,15 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
                             codeRequestHelper.getHttpEntity(),
                             String.class);
             if (response.getStatusCode().equals(HttpStatus.OK) ) {
+                codeGroup.setRunning(false);
+                codeGroupRepository.save(codeGroup);
                 processCsvReport(response.getBody(),codeProject);
                 log.info("CX - Successfull processed report for {}", codeProject.getName());
             }
         } catch (HttpClientErrorException e){
             log.error("Error during loading projects from Checkmarx - {}", e.getLocalizedMessage());
+        } catch (NullPointerException npe ){
+            log.warn("CX - cannot download report for {} - no report Id avaliable", codeGroup.getName());
         }
     }
 

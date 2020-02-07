@@ -489,7 +489,6 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 			List<SASTProject> sastProjects = new ArrayList<>();
 			HttpEntity<FortifyProjectVersions> entity = new HttpEntity<>(new FortifyProjectVersions(codeProject, scanner), codeRequestHelper.getHttpEntity().getHeaders());
 			String API_GET_VERSIONS = "/api/v1/projectVersions";
-			log.info(new ObjectMapper().writeValueAsString(new FortifyProjectVersions(codeProject, scanner)));
 			ResponseEntity<FortifyCreateProjectResponse> response = codeRequestHelper
 					.getRestTemplate()
 					.exchange(scanner.getApiUrl() + API_GET_VERSIONS, HttpMethod.POST, entity, FortifyCreateProjectResponse.class);

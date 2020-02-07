@@ -3,6 +3,15 @@ package io.mixeway.plugins.codescan.checkmarx.model;
 public class CxStatus {
     private long id;
     private String name;
+    private String value;
+
+    public String getValue() {
+        return value;
+    }
+
+    public void setValue(String value) {
+        this.value = value;
+    }
 
     public long getId() {
         return id;

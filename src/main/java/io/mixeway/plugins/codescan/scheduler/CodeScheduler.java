@@ -101,7 +101,7 @@ public class CodeScheduler {
 	}
 	@Scheduled(fixedDelay = 30000)
 	public void getVulns() throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
-		Optional<Scanner> sastScanner = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_FORTIFY)).stream().findFirst();
+		Optional<Scanner> sastScanner = scannerRepository.findByScannerTypeIn(scannerTypeRepository.getCodeScanners()).stream().findFirst();
 		if (sastScanner.isPresent()) {
 			for (FortifySingleApp app : fortifySingleAppRepository.findByFinishedAndDownloaded(true, false)) {
 				List<CodeVuln> codeVulns = codeVulns = deleteVulnsForProject(app.getCodeProject());
