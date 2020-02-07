@@ -71,6 +71,7 @@ public class CodeService {
             List<CodeModel> codeModels = new ArrayList<>();
             for (CodeProject cp : codeProjectRepository.findByCodeGroupIn(project.get().getCodes())){
                 CodeModel codeModel = new CodeModel();
+                codeModel.setVersionId(cp.getCodeGroup().getVersionIdAll());
                 codeModel.setCodeProject(cp.getName());
                 codeModel.setCodeGroup(cp.getCodeGroup().getName());
                 codeModel.setId(cp.getId());
@@ -165,6 +166,7 @@ public class CodeService {
                         for(CodeScanClient codeScanClient : codeScanClients){
                             if (codeScanClient.canProcessRequest(codeProject.get().getCodeGroup())){
                                 codeScanClient.runScan(codeProject.get().getCodeGroup(), codeProject.get());
+                                break;
                             }
                         }
                     }
@@ -203,6 +205,7 @@ public class CodeService {
                 for(CodeScanClient codeScanClient : codeScanClients){
                     if (codeScanClient.canProcessRequest(codeProject.get().getCodeGroup())){
                         codeScanClient.runScan(codeProject.get().getCodeGroup(), codeProject.get());
+                        break;
                     }
                 }
             }
@@ -256,15 +259,14 @@ public class CodeService {
     public ResponseEntity<Status> editCodeProject(Long id, EditCodeProjectModel editCodeProjectModel, String name) {
         Optional<CodeProject> codeProject = codeProjectRepository.findById(id);
         try{
-            if (codeProject.isPresent()) {
+            if (codeProject.isPresent() && editCodeProjectModel.getdTrackUuid() != null) {
                 UUID uuid = UUID.fromString(editCodeProjectModel.getdTrackUuid());
                 codeProject.get().setdTrackUuid(editCodeProjectModel.getdTrackUuid());
                 codeProjectRepository.save(codeProject.get());
                 log.info("{} Successfully Edited codeProject {}", name, codeProject.get().getName());
                 return new ResponseEntity<>(HttpStatus.OK);
-
             }
-        } catch (IllegalArgumentException exception){
+        } catch (IllegalArgumentException | NullPointerException exception){
             log.warn("{} failed to edit codeProject {} due to wrong UUID format", name, id);
         }
         return new ResponseEntity<>(HttpStatus.BAD_REQUEST);

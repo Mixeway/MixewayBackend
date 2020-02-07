@@ -229,4 +229,6 @@ public class Constants {
 
     public static final String CX_REPORT_STATE = "Result Status";
     public static final String SAST_SCANNER_ALREADY_REGISTERED = "Current Version of Mixeway support only one instance of SAST Scanner";
+    public static final String CREATED_BY_MIXEWAY = "Created by Mixeway";
+    public static final String FORTIFY_ISSUE_TEMPLATE = "Prioritized-HighRisk-Project-Template";
 }

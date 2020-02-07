@@ -1,5 +1,6 @@
 package io.mixeway.plugins.codescan.fortify.apiclient;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonObject;
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
@@ -7,8 +8,7 @@ import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.*;
 import io.mixeway.plugins.audit.dependencytrack.apiclient.DependencyTrackApiClient;
 import io.mixeway.plugins.bugtracker.BugTracking;
-import io.mixeway.plugins.codescan.fortify.model.FileContentDataModel;
-import io.mixeway.plugins.codescan.fortify.model.IssueDetailDataModel;
+import io.mixeway.plugins.codescan.fortify.model.*;
 import io.mixeway.plugins.codescan.model.TokenValidator;
 import io.mixeway.plugins.codescan.model.CodeRequestHelper;
 import io.mixeway.plugins.codescan.service.CodeScanClient;
@@ -21,6 +21,7 @@ import org.codehaus.jettison.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
@@ -466,11 +467,83 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 
 	@Override
 	public List<SASTProject> getProjects(Scanner scanner) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
-		return null;
+		CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
+		List<SASTProject> sastProjects = new ArrayList<>();
+		String API_GET_VERSIONS = "/api/v1/projectVersions";
+		ResponseEntity<FortifyProjectVersionDto> response = codeRequestHelper
+				.getRestTemplate()
+				.exchange(scanner.getApiUrl() + API_GET_VERSIONS, HttpMethod.GET, codeRequestHelper.getHttpEntity(), FortifyProjectVersionDto.class);
+		if (response.getStatusCode() == HttpStatus.OK) {
+			for (FortifyProjectVersions fpv : response.getBody().getFortifyProjectVersions()){
+				SASTProject sastProject = new SASTProject(fpv.getId(), fpv.getProject().getName()+" - "+fpv.getName());
+				sastProjects.add(sastProject);
+			}
+		}
+		return sastProjects;
 	}
 
 	@Override
 	public boolean createProject(Scanner scanner, CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
+		try {
+			CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
+			List<SASTProject> sastProjects = new ArrayList<>();
+			HttpEntity<FortifyProjectVersions> entity = new HttpEntity<>(new FortifyProjectVersions(codeProject, scanner), codeRequestHelper.getHttpEntity().getHeaders());
+			String API_GET_VERSIONS = "/api/v1/projectVersions";
+			log.info(new ObjectMapper().writeValueAsString(new FortifyProjectVersions(codeProject, scanner)));
+			ResponseEntity<FortifyCreateProjectResponse> response = codeRequestHelper
+					.getRestTemplate()
+					.exchange(scanner.getApiUrl() + API_GET_VERSIONS, HttpMethod.POST, entity, FortifyCreateProjectResponse.class);
+			if (response.getStatusCode() == HttpStatus.CREATED &&
+					fortifyCreateAttributes(scanner,codeProject, response.getBody().getFortifyProjectVersions().getId()) &&
+					fortifyCommitProject(scanner, codeProject, response.getBody().getFortifyProjectVersions().getId())) {
+				codeProject.getCodeGroup().setVersionIdAll(response.getBody().getFortifyProjectVersions().getId());
+				codeGroupRepository.save(codeProject.getCodeGroup());
+				log.info("Successfully created Fortify SSC Project for {} with id {}", codeProject.getCodeGroup().getName(), codeProject.getCodeGroup().getVersionIdAll());
+				return true;
+			}
+		} catch (HttpClientErrorException e){
+			log.warn("Exception during FortifySSC project creation - {}", e.getLocalizedMessage());
+		}
+		return false;
+	}
+
+	private boolean fortifyCommitProject(Scanner scanner, CodeProject codeProject, int versionId) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
+		try {
+			CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
+			HttpEntity<FortifyProjectVersions> entity = new HttpEntity<>(new FortifyProjectVersions(codeProject, scanner), codeRequestHelper.getHttpEntity().getHeaders());
+			String API_GET_VERSIONS = "/api/v1/projectVersions/"+versionId;
+			ResponseEntity<String> response = codeRequestHelper
+					.getRestTemplate()
+					.exchange(scanner.getApiUrl() + API_GET_VERSIONS, HttpMethod.PUT, entity, String.class);
+			if (response.getStatusCode() == HttpStatus.OK ) {
+				return true;
+			}
+		} catch (HttpClientErrorException e){
+			log.warn("Exception during FortifySSC project creation - {}", e.getLocalizedMessage());
+		}
+		return false;
+	}
+
+	private boolean fortifyCreateAttributes(Scanner scanner, CodeProject codeProject, int versionId)throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
+		try {
+			List<FortifyProjectAttributes> fortifyProjectAttributes = new ArrayList<>();
+			fortifyProjectAttributes.add(new FortifyProjectAttributes("DevPhase",5,"New"));
+			fortifyProjectAttributes.add(new FortifyProjectAttributes("DevPhase",6,"Internal"));
+			fortifyProjectAttributes.add(new FortifyProjectAttributes("DevPhase",7,"internalnetwork"));
+			fortifyProjectAttributes.add(new FortifyProjectAttributes("DevPhase",1,"High"));
+			CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
+			List<SASTProject> sastProjects = new ArrayList<>();
+			HttpEntity<List<FortifyProjectAttributes>> entity = new HttpEntity<>(fortifyProjectAttributes, codeRequestHelper.getHttpEntity().getHeaders());
+			String API_GET_VERSIONS = "/api/v1/projectVersions/" + versionId + "/attributes";
+			ResponseEntity<String> response = codeRequestHelper
+					.getRestTemplate()
+					.exchange(scanner.getApiUrl() + API_GET_VERSIONS, HttpMethod.PUT, entity, String.class);
+			if (response.getStatusCode() == HttpStatus.OK ) {
+				return true;
+			}
+		} catch (HttpClientErrorException e){
+			log.warn("Exception during FortifySSC project creation - {}", e.getLocalizedMessage());
+		}
 		return false;
 	}
 

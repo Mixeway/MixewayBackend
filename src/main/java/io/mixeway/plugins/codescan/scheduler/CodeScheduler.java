@@ -61,14 +61,14 @@ public class CodeScheduler {
 	//@Scheduled(fixedDelay = 30000)
 	public void getReportForAllGroups() throws JSONException, ParseException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
 		List<CodeGroup> groups = codeGroupRepository.findAll();
-		Optional<Scanner> fortify = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_FORTIFY)).stream().findFirst();
-		if (fortify.isPresent() && fortify.get().getStatus()) {
+		Optional<Scanner> sastScanner = scannerRepository.findByScannerTypeIn(scannerTypeRepository.getCodeScanners()).stream().findFirst();
+		if (sastScanner.isPresent() && sastScanner.get().getStatus()) {
 			for (CodeGroup group : groups) {
 				List<CodeVuln> tmpVulns = deleteOldVulns(group);
 				if (group.getVersionIdAll() > 0) {
 					for(CodeScanClient codeScanClient : codeScanClients){
-						if (codeScanClient.canProcessRequest(group)){
-							codeScanClient.loadVulnerabilities(fortify.get(),group,null,false,null,tmpVulns);
+						if (codeScanClient.canProcessRequest(sastScanner.get())){
+							codeScanClient.loadVulnerabilities(sastScanner.get(),group,null,false,null,tmpVulns);
 						}
 					}
 				}
@@ -84,13 +84,13 @@ public class CodeScheduler {
 		log.info("Starting Fortify Scheduled Scans");
 		//List<CodeGroup> groups = codeGroupRepository.findByAuto(true);
 		List<Project> projects = projectRepository.findByAutoCodeScan(true);
-		List<Scanner> fortify = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_FORTIFY));
-		if ( fortify.size() > 0 &&  fortify.get(0).getStatus()) {
+		Optional<Scanner> sastScanner = scannerRepository.findByScannerTypeIn(scannerTypeRepository.getCodeScanners()).stream().findFirst();
+		if ( sastScanner.isPresent() &&  sastScanner.get().getStatus()) {
 			for (Project p : projects){
 				for (CodeGroup cg : p.getCodes()){
 					if (!cg.getRepoPassword().equals("") && cg.getRepoPassword() != null){
 						for(CodeScanClient codeScanClient : codeScanClients){
-							if (codeScanClient.canProcessRequest(cg)){
+							if (codeScanClient.canProcessRequest(sastScanner.get())){
 								codeScanClient.runScan(cg,null);
 							}
 						}
@@ -101,13 +101,13 @@ public class CodeScheduler {
 	}
 	@Scheduled(fixedDelay = 30000)
 	public void getVulns() throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
-		Optional<Scanner> fortify = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_FORTIFY)).stream().findFirst();
-		if (fortify.isPresent()) {
+		Optional<Scanner> sastScanner = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_FORTIFY)).stream().findFirst();
+		if (sastScanner.isPresent()) {
 			for (FortifySingleApp app : fortifySingleAppRepository.findByFinishedAndDownloaded(true, false)) {
 				List<CodeVuln> codeVulns = codeVulns = deleteVulnsForProject(app.getCodeProject());
 				for (CodeScanClient codeScanClient : codeScanClients) {
-					if (codeScanClient.canProcessRequest(app.getCodeGroup()) && codeScanClient.isScanDone(app.getCodeGroup())) {
-						codeScanClient.loadVulnerabilities(fortify.get(), app.getCodeGroup(), null, true, app.getCodeProject(), codeVulns);
+					if (codeScanClient.canProcessRequest(sastScanner.get()) && codeScanClient.isScanDone(app.getCodeGroup())) {
+						codeScanClient.loadVulnerabilities(sastScanner.get(), app.getCodeGroup(), null, true, app.getCodeProject(), codeVulns);
 						log.info("Vulerabilities for codescan for {} with scope of {} loaded - single app", app.getCodeGroup().getName(), app.getCodeProject().getName());
 						app.setDownloaded(true);
 						fortifySingleAppRepository.save(app);
@@ -122,9 +122,9 @@ public class CodeScheduler {
 			List<CodeGroup> codeGroups = codeGroupRepository.findByRunning(true);
 			for (CodeGroup codeGroup : codeGroups) {
 				for (CodeScanClient codeScanClient : codeScanClients) {
-					if (codeScanClient.canProcessRequest(codeGroup) && codeScanClient.isScanDone(codeGroup)) {
+					if (codeScanClient.canProcessRequest(sastScanner.get()) && codeScanClient.isScanDone(codeGroup)) {
 						deleteOldVulns(codeGroup);
-						codeScanClient.loadVulnerabilities(fortify.get(), codeGroup, null, false, null, null);
+						codeScanClient.loadVulnerabilities(sastScanner.get(), codeGroup, null, false, null, null);
 						codeGroup.setRunning(false);
 						codeGroup.setRequestid(null);
 						codeGroup.setScanid(null);
@@ -139,44 +139,41 @@ public class CodeScheduler {
 	@Transactional
 	@Scheduled(fixedDelay = 60000)
 	public void checkAndRunFromQueue() throws CertificateException, IOException, NoSuchAlgorithmException, KeyManagementException, UnrecoverableKeyException, KeyStoreException {
-		try {
-			Scanner fortify = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_FORTIFY))
-					.stream()
-					.findFirst()
-					.orElse(null);
-			for (CodeProject cp : codeProjectRepository.findByInQueue(true)){
-				if (codeGroupRepository.countByRunning(true) == 0){
-					for(CodeScanClient codeScanClient : codeScanClients){
-						if (codeScanClient.canProcessRequest(cp.getCodeGroup())){
-							log.info("Ready to scan [scope {}] {}, taking it from the queue",cp.getName(), cp.getCodeGroup().getName());
-							cp.setInQueue(false);
-							codeProjectRepository.saveAndFlush(cp);
-							codeScanClient.runScan(cp.getCodeGroup(), cp);
+		Optional<Scanner> fortify = scannerRepository.findByScannerTypeIn(scannerTypeRepository.getCodeScanners()).stream().findFirst();
+		if (fortify.isPresent() && fortify.get().getStatus()) {
+			try {
+				for (CodeProject cp : codeProjectRepository.findByInQueue(true)) {
+					if (codeGroupRepository.countByRunning(true) == 0) {
+						for (CodeScanClient codeScanClient : codeScanClients) {
+							if (codeScanClient.canProcessRequest(cp.getCodeGroup())) {
+								log.info("Ready to scan [scope {}] {}, taking it from the queue", cp.getName(), cp.getCodeGroup().getName());
+								cp.setInQueue(false);
+								codeProjectRepository.saveAndFlush(cp);
+								codeScanClient.runScan(cp.getCodeGroup(), cp);
+							}
 						}
 					}
 				}
-			}
-			for (CodeGroup cg : codeGroupRepository.findByInQueue(true)) {
-				if (codeGroupRepository.countByRunning(true) == 0) {
-					for(CodeScanClient codeScanClient : codeScanClients){
-						if (codeScanClient.canProcessRequest(cg)){
-							log.info("Ready to scan [scope ALL] {}, taking it from the queue", cg.getName());
-							cg.setInQueue(false);
-							codeGroupRepository.saveAndFlush(cg);
-							codeScanClient.runScan(cg, null);
+				for (CodeGroup cg : codeGroupRepository.findByInQueue(true)) {
+					if (codeGroupRepository.countByRunning(true) == 0) {
+						for (CodeScanClient codeScanClient : codeScanClients) {
+							if (codeScanClient.canProcessRequest(cg)) {
+								log.info("Ready to scan [scope ALL] {}, taking it from the queue", cg.getName());
+								cg.setInQueue(false);
+								codeGroupRepository.saveAndFlush(cg);
+								codeScanClient.runScan(cg, null);
+							}
 						}
 					}
 				}
-			}
 
-		} catch (IndexOutOfBoundsException ex){
-			log.debug("Fortify configuration missing");
-		} catch (HttpClientErrorException ex){
-			log.warn("HttpClientErrorException with code [{}] during cloud scan job synchro ",ex.getStatusCode().toString());
-		} catch (ParseException e) {
-			e.printStackTrace();
-		} catch (JSONException e) {
-			e.printStackTrace();
+			} catch (IndexOutOfBoundsException ex) {
+				log.debug("Fortify configuration missing");
+			} catch (HttpClientErrorException ex) {
+				log.warn("HttpClientErrorException with code [{}] during cloud scan job synchro ", ex.getStatusCode().toString());
+			} catch (ParseException | JSONException e) {
+				log.warn("Exception came up during running scan {}", e.getLocalizedMessage());
+			}
 		}
 	}
 	

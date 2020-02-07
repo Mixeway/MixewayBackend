@@ -7,10 +7,7 @@ import com.opencsv.bean.HeaderColumnNameTranslateMappingStrategy;
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
-import io.mixeway.db.repository.CodeGroupRepository;
-import io.mixeway.db.repository.CodeProjectRepository;
-import io.mixeway.db.repository.ScannerRepository;
-import io.mixeway.db.repository.ScannerTypeRepository;
+import io.mixeway.db.repository.*;
 import io.mixeway.plugins.codescan.checkmarx.model.*;
 import io.mixeway.plugins.codescan.model.CodeRequestHelper;
 import io.mixeway.plugins.codescan.model.TokenValidator;
@@ -56,12 +53,15 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
     private final SecureRestTemplate secureRestTemplate;
     private final CodeGroupRepository codeGroupRepository;
     private final CodeProjectRepository codeProjectRepository;
+    private final ProxiesRepository proxiesRepository;
     private TokenValidator tokenValidator = new TokenValidator();
     @Autowired
-    CheckmarxApiClient(ScannerTypeRepository scannerTypeRepository, ScannerRepository scannerRepository, CodeProjectRepository codeProjectRepository,
+    CheckmarxApiClient(ScannerTypeRepository scannerTypeRepository, ScannerRepository scannerRepository,
+                       CodeProjectRepository codeProjectRepository, ProxiesRepository proxiesRepository,
                        VaultOperations operations, SecureRestTemplate secureRestTemplate, CodeGroupRepository codeGroupRepository){
         this.operations = operations;
         this.scannerRepository = scannerRepository;
+        this.proxiesRepository = proxiesRepository;
         this.scannerTypeRepository = scannerTypeRepository;
         this.codeProjectRepository = codeProjectRepository;
         this.codeGroupRepository = codeGroupRepository;
@@ -118,6 +118,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
     @Override
     public void saveScanner(ScannerModel scannerModel) throws Exception {
         List<Scanner>  scanners = scannerRepository.findByScannerTypeIn(scannerTypeRepository.getCodeScanners());
+        Optional<Proxies> proxies = proxiesRepository.findById(scannerModel.getProxy());
         if (scanners.stream().findFirst().isPresent()){
             throw new Exception(Constants.SAST_SCANNER_ALREADY_REGISTERED);
         } else {
@@ -128,6 +129,8 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
             checkmarx.setUsername(scannerModel.getUsername());
             checkmarx.setStatus(false);
             checkmarx.setScannerType(scannerType);
+            if (proxies.isPresent())
+                checkmarx.setProxies(proxies.get());
             // api key put to vault
             Map<String, String> passwordKeyMap = new HashMap<>();
             passwordKeyMap.put("password", scannerModel.getPassword());
