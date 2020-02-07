@@ -16,8 +16,8 @@ import io.mixeway.plugins.webappscan.acunetix.apiclient.AcunetixApiClient;
 import io.mixeway.plugins.infrastructurescan.nessus.apiclient.NessusApiClient;
 import io.mixeway.plugins.infrastructurescan.openvas.apiclient.OpenVasApiClient;
 import io.mixeway.rest.vulnmanage.model.Vulnerabilities;
+import org.springframework.transaction.annotation.Transactional;
 
-import javax.transaction.Transactional;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.DateFormat;
@@ -180,6 +180,7 @@ public class GetVulnerabilitiesService {
         return vulns;
     }
 
+    @Transactional
     Vulnerabilities setCodeVulns(Vulnerabilities vulns, Project project) {
         List<Vuln> tmpVulns = vulns.getVulnerabilities();
         List<CodeVuln> codeVulns = null;
