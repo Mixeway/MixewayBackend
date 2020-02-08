@@ -42,6 +42,7 @@ import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
@@ -54,13 +55,15 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
     private final CodeGroupRepository codeGroupRepository;
     private final CodeProjectRepository codeProjectRepository;
     private final ProxiesRepository proxiesRepository;
+    private final CodeVulnRepository codeVulnRepository;
     private TokenValidator tokenValidator = new TokenValidator();
     @Autowired
     CheckmarxApiClient(ScannerTypeRepository scannerTypeRepository, ScannerRepository scannerRepository,
-                       CodeProjectRepository codeProjectRepository, ProxiesRepository proxiesRepository,
+                       CodeProjectRepository codeProjectRepository, ProxiesRepository proxiesRepository, CodeVulnRepository codeVulnRepository,
                        VaultOperations operations, SecureRestTemplate secureRestTemplate, CodeGroupRepository codeGroupRepository){
         this.operations = operations;
         this.scannerRepository = scannerRepository;
+        this.codeVulnRepository = codeVulnRepository;
         this.proxiesRepository = proxiesRepository;
         this.scannerTypeRepository = scannerTypeRepository;
         this.codeProjectRepository = codeProjectRepository;
@@ -391,8 +394,6 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
         mapping.put(Constants.CX_REPORT_SEVERITY, "severity");
         mapping.put(Constants.CX_REPORT_DESCRIPTION, "description");
         mapping.put(Constants.CX_REPORT_STATE, "state");
-        // HeaderColumnNameTranslateMappingStrategy
-        // for Student class
         HeaderColumnNameTranslateMappingStrategy<CxResult> strategy =
                 new HeaderColumnNameTranslateMappingStrategy<CxResult>();
         strategy.setType(CxResult.class);
@@ -401,7 +402,19 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
         csvReader = new CSVReader(new StringReader(body));
         CsvToBean csvToBean = new CsvToBean();
         List<CxResult> results = csvToBean.parse(strategy, csvReader);
-        log.info("get {} results", results.size());
+        processVulnReportForCodeProject(results,codeProject);
+    }
+    // TODO: to check in checkmarx API options for state and analysis
+    private void processVulnReportForCodeProject(List<CxResult> results, CodeProject codeProject) {
+        codeVulnRepository.deleteVulnsForCodeProject(codeProject);
+        for (CxResult result : results.stream().filter(cr ->
+                cr.getSeverity().equals(Constants.API_SEVERITY_CRITICAL) ||
+                        cr.getSeverity().equals(Constants.API_SEVERITY_HIGH)).collect(Collectors.toList())){
+            CodeVuln codeVuln = new CodeVuln();
+            codeVuln.setCodeProject(codeProject);
+            codeVuln.setCodeGroup(codeProject.getCodeGroup());
+            //codeVuln.set
+        }
     }
 
 
