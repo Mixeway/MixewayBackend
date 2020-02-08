@@ -3,10 +3,10 @@ package io.mixeway.plugins.codescan.model;
 import org.springframework.http.HttpEntity;
 import org.springframework.web.client.RestTemplate;
 
-public class SSCRequestHelper {
+public class CodeRequestHelper {
     RestTemplate restTemplate;
     HttpEntity httpEntity;
-    public SSCRequestHelper(RestTemplate restTemplate, HttpEntity httpEntity){
+    public CodeRequestHelper(RestTemplate restTemplate, HttpEntity httpEntity){
         this.httpEntity = httpEntity;
         this.restTemplate = restTemplate;
     }

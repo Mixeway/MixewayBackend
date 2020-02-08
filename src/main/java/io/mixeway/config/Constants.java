@@ -48,6 +48,9 @@ public class Constants {
 	public static final String FORTIFY_SCOPE_ALL = "ALL";
 	public static final String FORTIFY_LINE_NUMVER = "lineNumber";
 
+	//CHECKMARX
+	public static final String BEARER_TOKEN = "Bearer";
+
 	//VULN HISTORY
 	public static final String VULN_HISTORY_ALL = "complete";
 
@@ -188,15 +191,44 @@ public class Constants {
 	public static final String FORTIFY_UPLOAD_FAILED = "UPLOAD_FAILED";
     public static final String SCANNER_TYPE_DEPENDENCYTRACK = "OWASP Dependency Track";
     public static final String DTRACK_AUTH_HEADER = "X-Api-Key";
-    public static final String SCANNER_TYPE_CHECKMARX = "Checmkarx";
+    public static final String SCANNER_TYPE_CHECKMARX = "Checkmarx";
+
+    //Checmkarx
 	public static final String CHECKMARX_LOGIN_FORM_USERNAME = "username";
 	public static final String CHECKMARX_LOGIN_FORM_PASSWORD = "password";
 	public static final String CHECKMARX_LOGIN_FORM_GRANT_TYPE = "grant_type";
 	public static final String CHECKMARX_LOGIN_FORM_SCOPE = "scope";
 	public static final String CHECKMARX_LOGIN_FORM_CLIENTID = "client_id";
-	public static final String CHECKMARX_LOGIN_FORM_CLIENTSECRET = "resource_owner_client";
+	public static final String CHECKMARX_LOGIN_FORM_CLIENTSECRET = "client_secret";
 	public static final String CHECKMARX_LOGIN_FORM_GRANT_TYPE_VALUE = "password";
 	public static final String CHECKMARX_LOGIN_FORM_SCOPE_VALUE = "sast_rest_api";
-	public static final String CHECKMARX_LOGIN_FORM_CLIENTID_VALUE = "client_secret";
+	public static final String CHECKMARX_LOGIN_FORM_CLIENTID_VALUE = "resource_owner_client";
 	public static final String CHECKMARX_LOGIN_FORM_CLIENTSECRET_VALUE = "014DF517-39D1-4453-B7B3-9930C563627C";
+    public static final String CX_GET_TEAMS_API = "/cxrestapi/auth/teams";
+    public static final String CX_LOGIN_API = "/cxrestapi/auth/identity/connect/token";
+    public static final String CX_GET_PROJECTS_API = "/cxrestapi/projects";
+    public static final String CX_CREATE_PROJECT_API = "/cxrestapi/projects";
+    public static final String CX_CREATE_GIT_FOR_PROJECT_API = "/cxrestapi/projects/projectid/sourceCode/remoteSettings/git";
+    public static final String CX_CREATE_SCAN_API = "/cxrestapi/sast/scans";
+    public static final String CX_GET_SCAN_API = "/cxrestapi/sast/scans/scanid";
+    public static final String CX_GET_REPORT_STATUS_API = "/cxrestapi/reports/sastScan/reportid/status";
+    public static final String CX_GNERATE_REPORT_API = "/cxrestapi/reports/sastScan";
+    public static final String CX_GET_RESULTS_API = "/cxrestapi/reports/sastScan/reportid";
+    public static final String CX_PROJECTID = "projectid";
+    public static final String CX_SCANID = "scanid";
+    public static final String CX_REPORTID = "reportid";
+    public static final String CX_SCAN_COMMENT = "Scan requested from Mixeway";
+	public static final String CX_REPORT_TYPE = "CSV";
+	public static final String CX_STATUS_FINISHED = "Finished";
+	public static final String CX_REPORT_QUERY = "Query";
+	public static final String CX_REPORT_DSTFILE = "DestFileName";
+	public static final String CX_REPORT_DSTLINENO = "DestLine";
+	public static final String CX_REPORT_ANALYSIS = "Result State";
+	public static final String CX_REPORT_SEVERITY = "Result Severity";
+	public static final String CX_REPORT_DESCRIPTION = "Link";
+
+    public static final String CX_REPORT_STATE = "Result Status";
+    public static final String SAST_SCANNER_ALREADY_REGISTERED = "Current Version of Mixeway support only one instance of SAST Scanner";
+    public static final String CREATED_BY_MIXEWAY = "Created by Mixeway";
+    public static final String FORTIFY_ISSUE_TEMPLATE = "Prioritized-HighRisk-Project-Template";
 }

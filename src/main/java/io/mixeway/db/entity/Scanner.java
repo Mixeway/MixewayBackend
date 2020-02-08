@@ -29,6 +29,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 public class Scanner {
 	private Long id;
 	@JsonIgnore private String accessKey;
+	private String team;
 	@JsonIgnore private String secretKey;
 	private String apiUrl;
 	@JsonIgnore private String network;
@@ -53,6 +54,15 @@ public class Scanner {
 	@JsonIgnore private String template;
 	@JsonIgnore private Integer engineId;
 	@JsonIgnore private String rfwScannerIp;
+
+	public String getTeam() {
+		return team;
+	}
+
+	public void setTeam(String team) {
+		this.team = team;
+	}
+
 	@Column(name="rfwscannerip")
 	public String getRfwScannerIp() {
 		return rfwScannerIp;

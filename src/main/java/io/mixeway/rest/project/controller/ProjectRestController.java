@@ -2,6 +2,7 @@ package io.mixeway.rest.project.controller;
 
 import io.mixeway.db.entity.Proxies;
 import io.mixeway.db.entity.RoutingDomain;
+import io.mixeway.db.entity.ScannerType;
 import io.mixeway.db.entity.Status;
 import io.mixeway.rest.project.model.ContactList;
 import io.mixeway.rest.project.model.ProjectVulnTrendChart;
@@ -55,6 +56,11 @@ public class ProjectRestController {
     @PatchMapping(value = "/{id}/contactlist")
     public ResponseEntity<Status> updateContactList(@PathVariable("id")Long id, @RequestBody ContactList contactList) {
         return projectService.updateContactList(id,contactList);
+    }
+    @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
+    @GetMapping(value = "/scannersavaliable")
+    public ResponseEntity<List<ScannerType>> scannersAvaliable() {
+        return projectService.scannersAvaliable();
     }
 
     //endregion

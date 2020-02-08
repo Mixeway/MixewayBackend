@@ -17,6 +17,12 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 public class ScannerType {
 	private Long id;
 	private String name;
+	private boolean authsecrettoken;
+	private boolean authaccesstoken;
+	private boolean authusername;
+	private boolean authpassword;
+	private boolean authcloudctrltoken;
+	private boolean authapikey;
 	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
 	public Long getId() {
@@ -31,7 +37,52 @@ public class ScannerType {
 	public void setName(String name) {
 		this.name = name;
 	}
-	
-	
 
+	public boolean isAuthsecrettoken() {
+		return authsecrettoken;
+	}
+
+	public void setAuthsecrettoken(boolean authsecrettoken) {
+		this.authsecrettoken = authsecrettoken;
+	}
+
+	public boolean isAuthaccesstoken() {
+		return authaccesstoken;
+	}
+
+	public void setAuthaccesstoken(boolean authaccesstoken) {
+		this.authaccesstoken = authaccesstoken;
+	}
+
+	public boolean isAuthusername() {
+		return authusername;
+	}
+
+	public void setAuthusername(boolean authusername) {
+		this.authusername = authusername;
+	}
+
+	public boolean isAuthpassword() {
+		return authpassword;
+	}
+
+	public void setAuthpassword(boolean authpassword) {
+		this.authpassword = authpassword;
+	}
+
+	public boolean isAuthcloudctrltoken() {
+		return authcloudctrltoken;
+	}
+
+	public void setAuthcloudctrltoken(boolean authcloudctrltoken) {
+		this.authcloudctrltoken = authcloudctrltoken;
+	}
+
+	public boolean isAuthapikey() {
+		return authapikey;
+	}
+
+	public void setAuthapikey(boolean authapikey) {
+		this.authapikey = authapikey;
+	}
 }

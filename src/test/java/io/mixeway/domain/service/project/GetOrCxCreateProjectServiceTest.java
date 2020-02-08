@@ -9,7 +9,7 @@ import static java.util.Optional.of;
 import static org.mockito.Mockito.*;
 
 @RunWith(SpringRunner.class)
-public class GetOrCreateProjectServiceTest {
+public class GetOrCxCreateProjectServiceTest {
 
     @Mock
     private FindProjectService findProjectService;

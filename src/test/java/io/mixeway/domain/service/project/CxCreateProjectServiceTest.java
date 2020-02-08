@@ -10,7 +10,7 @@ import io.mixeway.db.repository.ProjectRepository;
 
 
 @RunWith(SpringRunner.class)
-public class CreateProjectServiceTest {
+public class CxCreateProjectServiceTest {
 
     @Mock
     private ProjectRepository projectRepository;

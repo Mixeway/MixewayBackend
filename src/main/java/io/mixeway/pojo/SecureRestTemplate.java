@@ -5,6 +5,7 @@ import org.apache.http.HttpHost;
 import org.apache.http.client.HttpClient;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.TrustStrategy;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.springframework.beans.factory.annotation.Value;
@@ -54,25 +55,25 @@ public class SecureRestTemplate {
         SSLContext sslContext = null;
         sslContext = SSLContext.getInstance("TLS");
         sslContext.init(kms, tms, new SecureRandom());
-        HttpClient httpClient;
+        CloseableHttpClient httpClient;
         if(scanner != null && scanner.getProxies() !=null){
             httpClient = HttpClients
                     .custom()
-                    .setProxy(new HttpHost(scanner.getProxies().getIp(), Integer.valueOf(scanner.getProxies().getPort())))
+                    .setProxy(new HttpHost(scanner.getProxies().getIp(), Integer.parseInt(scanner.getProxies().getPort())))
+                    .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE)
                     .setSSLContext(sslContext)
                     .build();
         }else {
             httpClient = HttpClients
                     .custom()
+                    .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE)
                     .setSSLContext(sslContext)
                     .build();
         }
 
         ClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
 
-        RestTemplate restTemplate = new RestTemplate(requestFactory);
-
-        return restTemplate;
+        return new RestTemplate(requestFactory);
     }
     public RestTemplate restTemplateForIaasApi(IaasApi api) throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException, KeyManagementException {
         //SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();

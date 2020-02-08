@@ -3,6 +3,7 @@ package io.mixeway.plugins.codescan.service;
 import io.mixeway.db.entity.Project;
 import io.mixeway.db.repository.CodeProjectRepository;
 import io.mixeway.plugins.codescan.model.CodeScanRequestModel;
+import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +27,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.text.ParseException;
 import java.util.*;
 
 @SuppressWarnings("OptionalGetWithoutIsPresent")
@@ -84,7 +86,7 @@ public class CodeScanService {
         return null;
     }
 
-    public ResponseEntity<Status> performScanFromScanManager(CodeScanRequestModel codeScanRequest) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+    public ResponseEntity<Status> performScanFromScanManager(CodeScanRequestModel codeScanRequest) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, JSONException, ParseException {
         if (codeScanRequest.getCiid() != null && !codeScanRequest.getCiid().equals("")){
             Optional<List<Project>> projects = projectRepository.findByCiid(codeScanRequest.getCiid());
             Project project;
@@ -105,7 +107,7 @@ public class CodeScanService {
         }
     }
 
-    private String verifyAndCreateOrUpdateCodeProjectInformations(CodeScanRequestModel codeScanRequest, Project project) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+    private String verifyAndCreateOrUpdateCodeProjectInformations(CodeScanRequestModel codeScanRequest, Project project) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, JSONException, ParseException {
         String requestId;
         Optional<CodeGroup> codeGroup = codeGroupRepository.findByProjectAndName(project,codeScanRequest.getCodeGroupName());
         if (codeGroup.isPresent()){

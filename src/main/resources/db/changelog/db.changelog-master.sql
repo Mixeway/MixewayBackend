@@ -840,3 +840,10 @@ update settings set trendemailcron='0 0 14 * * FRI';
 
 --changeset siewer:161
 insert into scannertype (name, authapikey, authsecrettoken, authaccesstoken, authusername,authpassword,authcloudctrltoken) values ('Checkmarx', false,false,false,true,true,false);
+
+--changeset siewer:162
+alter table nessus add column team text;
+
+--changeset siewer:163
+update scannertype set authapikey=false,authsecrettoken=false,authaccesstoken=false,authusername=true,authpassword=true,authcloudctrltoken=false where name='OpenVAS Socket';
+update scannertype set authapikey=false,authsecrettoken=false,authaccesstoken=false,authusername=true,authpassword=true,authcloudctrltoken=false where name='OpenVAS';
