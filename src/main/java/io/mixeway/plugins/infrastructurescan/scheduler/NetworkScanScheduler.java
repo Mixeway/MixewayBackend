@@ -6,6 +6,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.sql.SQLException;
 import java.util.List;
 
 import javax.transaction.Transactional;
@@ -27,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.UnexpectedRollbackException;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
@@ -59,10 +61,10 @@ public class NetworkScanScheduler {
 	private static final Logger log = LoggerFactory.getLogger(NetworkScanScheduler.class);
 
 	//Every 5min
-	@Scheduled(initialDelay=0,fixedDelay = 3000)
+	@Scheduled(initialDelay=0,fixedDelay = 30000)
 	public void checkScanStatus(){
-		List<NessusScan> nsl = nessusScanRepository.findByRunning(true);
 		try {
+			List<NessusScan> nsl = nessusScanRepository.findTop10ByRunningOrderByIdAsc(true);
 			for (NessusScan ns : nsl) {
 				if (ns.getNessus().getStatus()) {
 					for (NetworkScanClient networkScanClient :networkScanClients) {
@@ -78,8 +80,12 @@ public class NetworkScanScheduler {
 
 				}
 			}
-		} catch (Exception ce){
-			log.debug("Connection refused for one of scanners");
+			//Change state of interface which was not loaded for some reason
+			if (nessusScanRepository.findByRunning(true).size() == 0 ){
+				interfaceRepository.updateStateForNotRunningScan();
+			}
+		} catch (UnexpectedRollbackException | JSONException | CertificateException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyManagementException | KeyStoreException | IOException | JAXBException| HttpClientErrorException ce ){
+			log.warn("Exception during Network Scan synchro {}", ce.getLocalizedMessage());
 		}
 	}
 	//Every 12h

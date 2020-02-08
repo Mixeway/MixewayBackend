@@ -47,5 +47,7 @@ public interface InterfaceRepository extends JpaRepository<Interface, Long>{
 	Optional<Interface> findByAssetInAndPrivateipAndActive(Set<Asset> assets, String privateip, Boolean active);
 	@Query(value = "select * from interface where privateip ilike %?1% limit 100", nativeQuery = true)
 	List<Interface> searchForIp(@Param("ip") String ip);
-
+	@Modifying
+	@Query(value = "update interface set scanrunning=false where scanrunning=true", nativeQuery = true)
+    void updateStateForNotRunningScan();
 }
