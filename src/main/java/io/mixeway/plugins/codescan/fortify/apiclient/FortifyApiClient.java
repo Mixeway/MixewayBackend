@@ -467,17 +467,22 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 
 	@Override
 	public List<SASTProject> getProjects(Scanner scanner) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
-		CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
 		List<SASTProject> sastProjects = new ArrayList<>();
-		String API_GET_VERSIONS = "/api/v1/projectVersions";
-		ResponseEntity<FortifyProjectVersionDto> response = codeRequestHelper
-				.getRestTemplate()
-				.exchange(scanner.getApiUrl() + API_GET_VERSIONS, HttpMethod.GET, codeRequestHelper.getHttpEntity(), FortifyProjectVersionDto.class);
-		if (response.getStatusCode() == HttpStatus.OK) {
-			for (FortifyProjectVersions fpv : response.getBody().getFortifyProjectVersions()){
-				SASTProject sastProject = new SASTProject(fpv.getId(), fpv.getProject().getName()+" - "+fpv.getName());
-				sastProjects.add(sastProject);
+		try {
+			CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
+
+			String API_GET_VERSIONS = "/api/v1/projectVersions";
+			ResponseEntity<FortifyProjectVersionDto> response = codeRequestHelper
+					.getRestTemplate()
+					.exchange(scanner.getApiUrl() + API_GET_VERSIONS, HttpMethod.GET, codeRequestHelper.getHttpEntity(), FortifyProjectVersionDto.class);
+			if (response.getStatusCode() == HttpStatus.OK) {
+				for (FortifyProjectVersions fpv : response.getBody().getFortifyProjectVersions()) {
+					SASTProject sastProject = new SASTProject(fpv.getId(), fpv.getProject().getName() + " - " + fpv.getName());
+					sastProjects.add(sastProject);
+				}
 			}
+		} catch (Exception e) {
+			log.error("Exception came up during getting Fortify SSC projects");
 		}
 		return sastProjects;
 	}
