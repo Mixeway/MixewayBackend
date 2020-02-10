@@ -470,12 +470,10 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 		CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
 		List<SASTProject> sastProjects = new ArrayList<>();
 		String API_GET_VERSIONS = "/api/v1/projectVersions";
-		log.info("Trying to load projects from Fortify ssc");
 		ResponseEntity<FortifyProjectVersionDto> response = codeRequestHelper
 				.getRestTemplate()
 				.exchange(scanner.getApiUrl() + API_GET_VERSIONS, HttpMethod.GET, codeRequestHelper.getHttpEntity(), FortifyProjectVersionDto.class);
 		if (response.getStatusCode() == HttpStatus.OK) {
-			log.info("Projcets loaded");
 			for (FortifyProjectVersions fpv : response.getBody().getFortifyProjectVersions()){
 				SASTProject sastProject = new SASTProject(fpv.getId(), fpv.getProject().getName()+" - "+fpv.getName());
 				sastProjects.add(sastProject);
