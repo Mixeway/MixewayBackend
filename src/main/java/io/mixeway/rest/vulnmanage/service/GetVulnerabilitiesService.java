@@ -223,7 +223,7 @@ public class GetVulnerabilitiesService {
         List<Vuln> tmpVulns = vulns.getVulnerabilities();
         List<WebAppVuln> webAppVulns = null;
         if (project != null)
-            webAppVulns = webAppVulnRepository.findByWebAppIn(project.getWebapps()).stream().collect(Collectors.toList());
+            webAppVulns = new ArrayList<>(webAppVulnRepository.findByWebAppIn(project.getWebapps()));
         else
             webAppVulns = webAppVulnRepository.findAll();
         for (WebAppVuln wav : webAppVulns) {
@@ -361,38 +361,51 @@ public class GetVulnerabilitiesService {
             Vulnerabilities vulns = new Vulnerabilities();
             List<Vuln> vulnList = new ArrayList<>();
             vulns.setVulnerabilities(vulnList);
-            if (type.equals(Constants.API_SCANNER_OPENVAS))
-                vulns = setInfrastructureVulns(vulns,project);
-            else if (type.equals(Constants.API_SCANNER_WEBAPP))
-                vulns = setWebApplicationVulns(vulns,project);
-            else if (type.equals(Constants.API_SCANNER_CODE))
-                vulns = setCodeVulns(vulns,project);
-            else if (type.equals(Constants.API_SCANNER_AUDIT))
-                vulns = setAuditResults(vulns,project);
-            else
-                vulns = setPackageVulns(vulns,project);
-            return new ResponseEntity(new Gson().toJson(vulns).toString(), HttpStatus.OK);
+            switch (type) {
+                case Constants.API_SCANNER_OPENVAS:
+                    vulns = setInfrastructureVulns(vulns, project);
+                    break;
+                case Constants.API_SCANNER_WEBAPP:
+                    vulns = setWebApplicationVulns(vulns, project);
+                    break;
+                case Constants.API_SCANNER_CODE:
+                    vulns = setCodeVulns(vulns, project);
+                    break;
+                case Constants.API_SCANNER_AUDIT:
+                    vulns = setAuditResults(vulns, project);
+                    break;
+                default:
+                    vulns = setPackageVulns(vulns, project);
+                    break;
+            }
+            return new ResponseEntity(new Gson().toJson(vulns), HttpStatus.OK);
         } else
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Proper scanner type is: networkScanner,webApplicationScanner,codeScanner, audit,packageScan");
 
     }
-    @Transactional
     public ResponseEntity<String> getVulnerabilitiesByType(String type) throws UnknownHostException {
         if (scannerTypes.contains(type)) {
             log.info("Vulnerabilities access granted: {}",type);
             Vulnerabilities vulns = new Vulnerabilities();
             List<Vuln> vulnList = new ArrayList<>();
             vulns.setVulnerabilities(vulnList);
-            if (type.equals(Constants.API_SCANNER_OPENVAS))
-                vulns = setInfrastructureVulns(vulns,null);
-            else if (type.equals(Constants.API_SCANNER_WEBAPP))
-                vulns = setWebApplicationVulns(vulns,null);
-            else if (type.equals(Constants.API_SCANNER_CODE))
-                vulns = setCodeVulns(vulns,null);
-            else if (type.equals(Constants.API_SCANNER_AUDIT))
-                vulns = setAuditResults(vulns,null);
-            else
-                vulns = setPackageVulns(vulns,null);
+            switch (type) {
+                case Constants.API_SCANNER_OPENVAS:
+                    vulns = setInfrastructureVulns(vulns, null);
+                    break;
+                case Constants.API_SCANNER_WEBAPP:
+                    vulns = setWebApplicationVulns(vulns, null);
+                    break;
+                case Constants.API_SCANNER_CODE:
+                    vulns = setCodeVulns(vulns, null);
+                    break;
+                case Constants.API_SCANNER_AUDIT:
+                    vulns = setAuditResults(vulns, null);
+                    break;
+                default:
+                    vulns = setPackageVulns(vulns, null);
+                    break;
+            }
             return new ResponseEntity(new Gson().toJson(vulns).toString(), HttpStatus.OK);
         } else
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Proper scanner type is: networkScanner,webApplicationScanner,codeScanner, audit,packageScan");
