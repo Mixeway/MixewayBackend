@@ -1,5 +1,8 @@
 package io.mixeway.rest.vulnmanage.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import io.mixeway.db.entity.RoutingDomain;
+
 public class Vuln {
 	private String vulnerabilityName;
 	private String type;
@@ -19,10 +22,17 @@ public class Vuln {
 	private String packetName;
 	private String dateCreated;
 	private String ciid;
+	@JsonInclude(JsonInclude.Include.NON_DEFAULT)
+	private String routingDomainName;
 
-	
-		
-	
+	public String getRoutingDomainName() {
+		return routingDomainName;
+	}
+
+	public void setRoutingDomainName(String routingDomainName) {
+		this.routingDomainName = routingDomainName;
+	}
+
 	public String getCiid() {
 		return ciid;
 	}

@@ -312,6 +312,7 @@ public class GetVulnerabilitiesService {
             v.setDateCreated(iv.getInserted());
             if (iv.getIntf().getAsset().getProject().getCiid() != null && !iv.getIntf().getAsset().getProject().getCiid().isEmpty())
             	v.setCiid(iv.getIntf().getAsset().getProject().getCiid());
+            v.setRoutingDomainName(iv.getIntf().getRoutingDomain() != null ? iv.getIntf().getRoutingDomain().getName() : "");
             v.setPort(iv.getPort().split("/")[0].trim().replace(" ",""));
             v.setIpProtocol(iv.getPort().split("/")[1].trim().replace(" ",""));
             v.setType(Constants.API_SCANNER_OPENVAS);
