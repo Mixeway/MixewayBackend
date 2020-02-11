@@ -23,14 +23,14 @@ public class Vuln {
 	private String dateCreated;
 	private String ciid;
 	@JsonInclude(JsonInclude.Include.NON_DEFAULT)
-	private RoutingDomain routingDomain;
+	private String routingDomainName;
 
-	public RoutingDomain getRoutingDomain() {
-		return routingDomain;
+	public String getRoutingDomainName() {
+		return routingDomainName;
 	}
 
-	public void setRoutingDomain(RoutingDomain routingDomain) {
-		this.routingDomain = routingDomain;
+	public void setRoutingDomainName(String routingDomainName) {
+		this.routingDomainName = routingDomainName;
 	}
 
 	public String getCiid() {
