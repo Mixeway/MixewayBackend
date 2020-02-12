@@ -518,6 +518,9 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 		codeGroup.setScanid(jobId);
 		codeGroup.setRequestid("xx");
 		codeGroupRepository.saveAndFlush(codeGroup);
+		codeProject.setRunning(true);
+		codeProject.setRequestId("xx");
+		codeProjectRepository.saveAndFlush(codeProject);
 		FortifySingleApp fortifySingleApp = new FortifySingleApp();
 		fortifySingleApp.setCodeGroup(codeGroup);
 		fortifySingleApp.setCodeProject(codeProject);
