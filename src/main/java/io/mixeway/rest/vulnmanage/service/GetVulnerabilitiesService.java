@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
+import io.mixeway.plugins.audit.dependencytrack.apiclient.DependencyTrackApiClient;
 import io.mixeway.pojo.*;
 import io.mixeway.rest.vulnmanage.model.Vuln;
 import org.slf4j.Logger;
@@ -18,8 +19,14 @@ import io.mixeway.plugins.infrastructurescan.openvas.apiclient.OpenVasApiClient;
 import io.mixeway.rest.vulnmanage.model.Vulnerabilities;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -93,6 +100,8 @@ public class GetVulnerabilitiesService {
     CodeGroupRepository codeGroupRepository;
     @Autowired
     SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository;
+    @Autowired
+    DependencyTrackApiClient dependencyTrackApiClient;
 
     DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
@@ -412,10 +421,13 @@ public class GetVulnerabilitiesService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Proper scanner type is: networkScanner,webApplicationScanner,codeScanner, audit,packageScan");
 
     }
-    public ResponseEntity<CIVulnManageResponse> getCiScoreForCodeProject(String codeGroup, String codeProject, Long id){
+    public ResponseEntity<CIVulnManageResponse> getCiScoreForCodeProject(String codeGroup, String codeProject, Long id) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         Optional<CodeProject> cp = codeProjectRepository.getCodeProjectByNameCodeGroupNameAndProjectId(codeProject,codeGroup,id);
         CIVulnManageResponse ciVulnManageResponse = new CIVulnManageResponse();
         if (cp.isPresent()){
+            if (cp.get().getdTrackUuid() != null && !cp.get().getdTrackUuid().isEmpty()){
+                dependencyTrackApiClient.loadVulnerabilities(cp.get());
+            }
             List<VulnManageResponse> vmr = createVulnManageResponseForCodeProject(cp.get());
             ciVulnManageResponse.setVulnManageResponseList(vmr);
             if (vmr.size()>3){

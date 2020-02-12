@@ -11,7 +11,13 @@ import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.net.UnknownHostException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 
 @Controller
 public class VulnManageApiController {
@@ -67,7 +73,7 @@ public class VulnManageApiController {
     @GetMapping(value = "/api/vulns/{projectId}/{codeGroup}/{codeProject}",produces = "application/json")
     public ResponseEntity<CIVulnManageResponse> getVulnerabilities(@PathVariable(value = "codeGroup") String codeGroup,
                                                                    @PathVariable(value = "codeProject") String codeProject,
-                                                                   @PathVariable(value = "projectId") Long id) {
+                                                                   @PathVariable(value = "projectId") Long id) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         return getVulnerabilitiesService.getCiScoreForCodeProject(codeGroup,codeProject, id);
     }
 }
