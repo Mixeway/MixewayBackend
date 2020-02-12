@@ -456,7 +456,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 
 	@Override
 	public boolean canProcessRequest(CodeGroup cg) {
-		Optional<io.mixeway.db.entity.Scanner> fortify = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_FORTIFY_SCA)).stream().findFirst();
+		Optional<io.mixeway.db.entity.Scanner> fortify = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_FORTIFY_SCC)).stream().findFirst();
 		return fortify.isPresent();
 	}
 
@@ -509,6 +509,24 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 			log.warn("Exception during FortifySSC project creation - {}", e.getLocalizedMessage());
 		}
 		return false;
+	}
+
+	@Override
+	public void putInformationAboutScanFromRemote(CodeProject codeProject, CodeGroup codeGroup, String jobId) {
+		codeGroup.setScope(codeProject.getName());
+		codeGroup.setRunning(true);
+		codeGroup.setScanid(jobId);
+		codeGroup.setRequestid("xx");
+		codeGroupRepository.saveAndFlush(codeGroup);
+		FortifySingleApp fortifySingleApp = new FortifySingleApp();
+		fortifySingleApp.setCodeGroup(codeGroup);
+		fortifySingleApp.setCodeProject(codeProject);
+		fortifySingleApp.setRequestId("XXX");
+		fortifySingleApp.setJobToken(jobId);
+		fortifySingleApp.setFinished(true);
+		fortifySingleApp.setDownloaded(false);
+		fortifySingleAppRepository.saveAndFlush(fortifySingleApp);
+		log.info("Successfully put job {} from remote regarding {} / {}", jobId, codeGroup.getName(),codeProject.getName());
 	}
 
 	private boolean fortifyCommitProject(Scanner scanner, CodeProject codeProject, int versionId) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {

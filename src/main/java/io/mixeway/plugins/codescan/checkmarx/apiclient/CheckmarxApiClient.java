@@ -261,6 +261,11 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
         return false;
     }
 
+    @Override
+    public void putInformationAboutScanFromRemote(CodeProject codeProject, CodeGroup codeGroup, String jobId) {
+        log.info("Checkmarx putInformationAboutScanFromRemote not yet implemented");
+    }
+
     private boolean createProjectGitLink(Scanner scanner, CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
         CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
         try {

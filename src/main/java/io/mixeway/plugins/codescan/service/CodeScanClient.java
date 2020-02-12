@@ -24,6 +24,6 @@ public interface CodeScanClient {
     boolean canProcessRequest(Scanner scanner);
     List<SASTProject> getProjects(Scanner scanner) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException;
     boolean createProject(Scanner scanner, CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException;
-
+    void putInformationAboutScanFromRemote(CodeProject codeProject, CodeGroup codeGroup, String jobId);
 
     }

@@ -58,6 +58,25 @@ public class CodeScanController {
         }
         return new ResponseEntity<>(new Status("Something went wrong"), HttpStatus.PRECONDITION_FAILED);
     }
+    @PreAuthorize("hasAuthority('ROLE_API')")
+    @RequestMapping(value = "/api/sast/{projectId}/running/{groupName}/{projectName}/{jobId}", method = RequestMethod.PUT,produces= MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Status> putInformationAboutJob(@PathVariable(value = "projectId") Long id,
+                                                       @PathVariable(value="groupName") String groupName,
+                                                       @PathVariable(value="projectName") String projectName,
+                                                         @PathVariable(value="jobId") String jobId) throws IOException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, JSONException, ParseException {
+        SASTRequestVerify sastRequestVerify = codeAccessVerifier.verifyPermissions(id,groupName,projectName,false);
+        if (sastRequestVerify.getValid()){
+            for(CodeScanClient codeScanClient : codeScanClients){
+                if (codeScanClient.canProcessRequest(sastRequestVerify.getCg())){
+                    codeScanClient.putInformationAboutScanFromRemote(sastRequestVerify.getCp(), sastRequestVerify.getCg(), jobId);
+                    return new ResponseEntity<>(new Status("OK"), HttpStatus.OK);
+                }
+            }
+        } else {
+            return new ResponseEntity<>(new Status("Scan for given resource is not yet configured."), HttpStatus.PRECONDITION_FAILED);
+        }
+        return new ResponseEntity<>(new Status("Something went wrong"), HttpStatus.PRECONDITION_FAILED);
+    }
 
 //    @PreAuthorize("hasAuthority('ROLE_API')")
 //    @PutMapping("/api/sast/create/{projectId}/{groupName}")
