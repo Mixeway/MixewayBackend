@@ -7,6 +7,7 @@ import io.mixeway.db.repository.*;
 import io.mixeway.plugins.audit.dependencytrack.model.*;
 import io.mixeway.pojo.SecureRestTemplate;
 import io.mixeway.pojo.SecurityScanner;
+import io.mixeway.pojo.VaultHelper;
 import io.mixeway.rest.model.ScannerModel;
 import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
@@ -41,7 +42,7 @@ public class DependencyTrackApiClient implements SecurityScanner {
     private final ScannerRepository scannerRepository;
     private final ScannerTypeRepository scannerTypeRepository;
     private final SecureRestTemplate secureRestTemplate;
-    private final VaultOperations operations;
+    private final VaultHelper vaultHelper;
     private final ProxiesRepository proxiesRepository;
     private final RoutingDomainRepository routingDomainRepository;
     private final SoftwarePacketRepository softwarePacketRepository;
@@ -50,11 +51,11 @@ public class DependencyTrackApiClient implements SecurityScanner {
     private final CodeProjectRepository codeProjectRepository;
     @Autowired
     public DependencyTrackApiClient(ScannerRepository scannerRepository, ScannerTypeRepository scannerTypeRepository, StatusRepository statusRepository,
-                                    SecureRestTemplate secureRestTemplate, VaultOperations operations, CodeProjectRepository codeProjectRepository,
+                                    SecureRestTemplate secureRestTemplate, VaultHelper vaultHelper, CodeProjectRepository codeProjectRepository,
                                     ProxiesRepository proxiesRepository, RoutingDomainRepository routingDomainRepository,
                                     SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository, SoftwarePacketRepository softwarePacketRepository){
         this.scannerRepository = scannerRepository;
-        this.operations = operations;
+        this.vaultHelper = vaultHelper;
         this.statusRepository = statusRepository;
         this.codeProjectRepository = codeProjectRepository;
         this.routingDomainRepository = routingDomainRepository;
@@ -185,10 +186,8 @@ public class DependencyTrackApiClient implements SecurityScanner {
     }
 
     private HttpHeaders prepareAuthHeader(Scanner scanner) {
-        VaultResponseSupport<Map<String,Object>> password = operations.read("secret/"+scanner.getApiKey());
         HttpHeaders headers = new HttpHeaders();
-        assert password != null;
-        headers.set(Constants.DTRACK_AUTH_HEADER, Objects.requireNonNull(password.getData()).get("password").toString());
+        headers.set(Constants.DTRACK_AUTH_HEADER, vaultHelper.getPassword(scanner.getApiKey()));
         return headers;
     }
 
@@ -236,13 +235,14 @@ public class DependencyTrackApiClient implements SecurityScanner {
             scanner.setRoutingDomain(routingDomainRepository.getOne(scannerModel.getRoutingDomain()));
         scanner.setProxies(proxy);
         scanner.setApiUrl(scannerModel.getApiUrl());
-        scanner.setApiKey(UUID.randomUUID().toString());
+        String uuid = UUID.randomUUID().toString();
         scanner.setStatus(false);
         scanner.setScannerType(scannerType);
-        // api key put to vault
-        Map<String, String> apiKeyMap = new HashMap<>();
-        apiKeyMap.put("password", scannerModel.getApiKey());
-        operations.write("secret/"+scanner.getApiKey(), apiKeyMap);
+        if (vaultHelper.savePassword(scannerModel.getApiKey(), uuid)){
+            scanner.setApiKey(uuid);
+        } else {
+            scanner.setApiKey(scannerModel.getApiKey());
+        }
         scannerRepository.save(scanner);
 
     }
