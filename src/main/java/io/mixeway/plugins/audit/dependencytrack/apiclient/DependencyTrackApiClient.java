@@ -15,6 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.vault.core.VaultOperations;
 import org.springframework.vault.support.VaultResponseSupport;
 import org.springframework.web.client.HttpClientErrorException;
@@ -65,6 +67,7 @@ public class DependencyTrackApiClient implements SecurityScanner {
         this.softwarePacketVulnerabilityRepository = softwarePacketVulnerabilityRepository;
     }
 
+    @Transactional
     public void loadVulnerabilities(CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         List<Scanner> dTrack = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_DEPENDENCYTRACK));
         //Multiple dTrack instances not yet supported
@@ -137,8 +140,9 @@ public class DependencyTrackApiClient implements SecurityScanner {
         return null;
     }
 
-    private void createVulns(CodeProject codeProject, List<DTrackVuln> body) {
+    public void createVulns(CodeProject codeProject, List<DTrackVuln> body) {
         codeProject.getSoftwarePackets().removeAll(codeProject.getSoftwarePackets());
+        codeProjectRepository.saveAndFlush(codeProject);
         for(DTrackVuln dTrackVuln : body){
             List<SoftwarePacket> softwarePackets = new ArrayList<>();
             for(Component component : dTrackVuln.getComponents()){
@@ -165,11 +169,11 @@ public class DependencyTrackApiClient implements SecurityScanner {
                         vulnerability.setProject(codeProject.getCodeGroup().getProject());
                         vulnerability.setScore(createScore(dTrackVuln.getSeverity()));
                         vulnerability.setStatus(statusRepository.findByName(Constants.STATUS_EXISTING));
-                        softwarePacketVulnerabilityRepository.save(vulnerability);
+                        softwarePacketVulnerabilityRepository.saveAndFlush(vulnerability);
                     }
                 }
             }
-            codeProjectRepository.save(codeProject);
+            codeProjectRepository.saveAndFlush(codeProject);
         }
     }
 
