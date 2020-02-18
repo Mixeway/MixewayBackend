@@ -335,6 +335,9 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 					if (fortifySingleApp != null) {
 						fortifySingleApp.setFinished(true);
 						fortifySingleAppRepository.save(fortifySingleApp);
+						CodeProject cp = fortifySingleApp.getCodeProject();
+						cp.setRunning(false);
+						codeProjectRepository.save(cp);
 					}
 					log.info("CloudScan ended for {}", cg.getName());
 					return true;
