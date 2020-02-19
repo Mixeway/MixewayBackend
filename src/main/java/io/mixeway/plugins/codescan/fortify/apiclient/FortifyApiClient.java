@@ -53,7 +53,7 @@ import java.util.stream.Collectors;
 @Component
 public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 	private static final Logger log = LoggerFactory.getLogger(FortifyApiClient.class);
-	private VaultOperations operations;
+	private VaultHelper vaultHelper;
 	private ScannerRepository scannerRepository;
 	private CodeVulnRepository codeVulnRepository;
 	private CodeProjectRepository codeProjectRepository;
@@ -69,10 +69,10 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 	private SimpleDateFormat sdfForFortify = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
 	@Autowired
-	FortifyApiClient(VaultOperations operations, ScannerRepository scannerRepository, CodeVulnRepository codeVulnRepository, List<BugTracking> bugTrackings, DependencyTrackApiClient dependencyTrackApiClient,
+	FortifyApiClient(VaultHelper vaultHelper, ScannerRepository scannerRepository, CodeVulnRepository codeVulnRepository, List<BugTracking> bugTrackings, DependencyTrackApiClient dependencyTrackApiClient,
 					 CodeProjectRepository codeProjectRepository, CodeGroupRepository codeGroupRepository, FortifySingleAppRepository fortifySingleAppRepository,
 					 StatusRepository statusRepository, SecureRestTemplate secureRestTemplate, ScannerTypeRepository scannerTypeRepository, BugTrackerRepository bugTrackerRepository){
-		this.operations = operations;
+		this.vaultHelper = vaultHelper;
 		this.bugTrackerRepository = bugTrackerRepository;
 		this.scannerRepository = scannerRepository;
 		this.codeVulnRepository = codeVulnRepository;
@@ -114,9 +114,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 	private boolean generateToken(io.mixeway.db.entity.Scanner scanner) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, JSONException, ParseException {
 		unifiedTokenObject.addProperty("type", "UnifiedLoginToken");
 		RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(scanner);
-		VaultResponseSupport<Map<String, Object>> password = operations.read("secret/" + scanner.getPassword());
-		assert password != null;
-		final String passwordToEncode = scanner.getUsername() + ":" + Objects.requireNonNull(password.getData()).get("password").toString();
+		final String passwordToEncode = scanner.getUsername() + ":" + vaultHelper.getPassword(scanner.getPassword());
 		final byte[] passwordToEncodeBytes = passwordToEncode.getBytes(StandardCharsets.UTF_8);
 		HttpHeaders headers = new HttpHeaders();
 		headers.set("Content-Type", "application/json");
@@ -378,15 +376,11 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 	private CreateFortifyScanRequest prepareScanRequestForGroup(CodeGroup cg){
 		List<io.mixeway.db.entity.Scanner> fortify = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_FORTIFY_SCA));
 		CreateFortifyScanRequest fortifyScanRequest = new CreateFortifyScanRequest();
-		VaultResponseSupport<Map<String,Object>> token = operations.read("secret/"+fortify.get(0).getFortifytoken());
-		assert token != null;
-		fortifyScanRequest.setCloudCtrlToken(Objects.requireNonNull(token.getData()).get("password").toString());
+		fortifyScanRequest.setCloudCtrlToken(vaultHelper.getPassword(fortify.get(0).getFortifytoken()));
 		fortifyScanRequest.setGroupName(cg.getName());
 		fortifyScanRequest.setUsername(cg.getRepoUsername());
 		fortifyScanRequest.setSingle(false);;
-		VaultResponseSupport<Map<String,Object>> password = operations.read("secret/"+cg.getRepoPassword());
-		assert password != null;
-		fortifyScanRequest.setPassword( Objects.requireNonNull(password.getData()).get("password").toString());
+		fortifyScanRequest.setPassword(vaultHelper.getPassword(cg.getRepoPassword()));
 		fortifyScanRequest.setVersionId(cg.getVersionIdAll());
 		fortifyScanRequest.setProjects(prepareProjectCodeForGroup(cg));
 		return fortifyScanRequest;
@@ -411,16 +405,12 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 		List<io.mixeway.db.entity.Scanner> fortify = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_FORTIFY_SCA));
 		if (fortify.size()>0) {
 			CreateFortifyScanRequest fortifyScanRequest = new CreateFortifyScanRequest();
-			VaultResponseSupport<Map<String, Object>> token = operations.read("secret/" + fortify.get(0).getFortifytoken());
-			assert token != null;
-			fortifyScanRequest.setCloudCtrlToken(Objects.requireNonNull(token.getData()).get("password").toString());
+			fortifyScanRequest.setCloudCtrlToken(vaultHelper.getPassword(fortify.get(0).getFortifytoken()));
 			fortifyScanRequest.setGroupName(cp.getCodeGroup().getName());
 			fortifyScanRequest.setSingle(true);
 			fortifyScanRequest.setdTrackUuid(cp.getdTrackUuid());
 			fortifyScanRequest.setUsername(cp.getCodeGroup().getRepoUsername());
-			VaultResponseSupport<Map<String, Object>> password = operations.read("secret/" + cp.getCodeGroup().getRepoPassword());
-			assert password != null;
-			fortifyScanRequest.setPassword(Objects.requireNonNull(password.getData()).get("password").toString());
+			fortifyScanRequest.setPassword(vaultHelper.getPassword(cp.getCodeGroup().getRepoPassword()));
 			fortifyScanRequest.setVersionId(cp.getCodeGroup().getVersionIdsingle()>0 ? cp.getCodeGroup().getVersionIdsingle() : cp.getCodeGroup().getVersionIdAll() );
 			ProjectCode pc = new ProjectCode();
 			pc.setTechnique(cp.getTechnique());
@@ -587,25 +577,29 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 			if (scannerType.getName().equals(Constants.SCANNER_TYPE_FORTIFY)) {
 				io.mixeway.db.entity.Scanner fortify = new io.mixeway.db.entity.Scanner();
 				fortify.setApiUrl(scannerModel.getApiUrl());
-				fortify.setPassword(UUID.randomUUID().toString());
 				fortify.setUsername(scannerModel.getUsername());
 				fortify.setStatus(false);
 				fortify.setScannerType(scannerType);
 				// api key put to vault
-				Map<String, String> passwordKeyMap = new HashMap<>();
-				passwordKeyMap.put("password", scannerModel.getPassword());
-				operations.write("secret/" + fortify.getPassword(), passwordKeyMap);
+				String uuidToken = UUID.randomUUID().toString();
+				if (vaultHelper.savePassword(scannerModel.getPassword(), uuidToken)){
+					fortify.setPassword(uuidToken);
+				} else {
+					fortify.setPassword(scannerModel.getPassword());
+				}
 				scannerRepository.save(fortify);
 			} else if (scannerType.getName().equals(Constants.SCANNER_TYPE_FORTIFY_SCA)) {
 				io.mixeway.db.entity.Scanner fortify = new io.mixeway.db.entity.Scanner();
 				fortify.setApiUrl(scannerModel.getApiUrl());
-				fortify.setFortifytoken(UUID.randomUUID().toString());
 				fortify.setStatus(false);
 				fortify.setScannerType(scannerType);
 				// api key put to vault
-				Map<String, String> passwordKeyMap = new HashMap<>();
-				passwordKeyMap.put("password", scannerModel.getCloudCtrlToken());
-				operations.write("secret/" + fortify.getFortifytoken(), passwordKeyMap);
+				String uuidToken = UUID.randomUUID().toString();
+				if (vaultHelper.savePassword(scannerModel.getCloudCtrlToken(),uuidToken)){
+					fortify.setFortifytoken(uuidToken);
+				} else {
+					fortify.setFortifytoken(scannerModel.getCloudCtrlToken());
+				}
 				scannerRepository.save(fortify);
 			}
 		}

@@ -6,6 +6,7 @@ import io.mixeway.db.repository.*;
 import io.mixeway.plugins.infrastructurescan.openvas.model.*;
 import io.mixeway.plugins.infrastructurescan.openvas.model.User;
 import io.mixeway.pojo.ScanHelper;
+import io.mixeway.pojo.VaultHelper;
 import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +39,7 @@ import java.util.*;
 public class OpenVasSocketClient implements NetworkScanClient, SecurityScanner {
     private final static Logger log = LoggerFactory.getLogger(OpenVasSocketClient.class);
 
-    private final VaultOperations operations;
+    private final VaultHelper vaultHelper;
     private final ScannerRepository scannerRepository;
     private final NessusScanRepository nessusScanRepository;
     private final ScanHelper scanHelper;
@@ -54,11 +55,11 @@ public class OpenVasSocketClient implements NetworkScanClient, SecurityScanner {
 
 
     @Autowired
-    OpenVasSocketClient(VaultOperations operations, ScannerRepository scannerRepository,ScannerTypeRepository scannerTypeRepository,
+    OpenVasSocketClient(VaultHelper vaultHelper, ScannerRepository scannerRepository,ScannerTypeRepository scannerTypeRepository,
                         NessusScanRepository nessusScanRepository, ScanHelper scanHelper, RoutingDomainRepository routingDomainRepository,
                         InterfaceRepository interfaceRepository, InfrastructureVulnRepository infrastructureVulnRepository,
                         AssetRepository assetRepository, StatusRepository statusRepository, ProxiesRepository proxiesRepository){
-        this.operations = operations;
+        this.vaultHelper = vaultHelper;
         this.scannerRepository = scannerRepository;
         this.proxiesRepository = proxiesRepository;
         this.routingDomainRepository = routingDomainRepository;
@@ -87,9 +88,7 @@ public class OpenVasSocketClient implements NetworkScanClient, SecurityScanner {
         return nessusScan;
     }
     private User getUserForScanner(Scanner scanner){
-        VaultResponseSupport<Map<String,Object>> password = operations.read("secret/"+scanner.getPassword());
-        assert password != null;
-        return new User(scanner.getUsername(), Objects.requireNonNull(password.getData()).get("password").toString());
+        return new User(scanner.getUsername(), vaultHelper.getPassword(scanner.getPassword()));
     }
 
     public void configureManualScan(NessusScan scan) throws JAXBException {
@@ -362,11 +361,14 @@ public class OpenVasSocketClient implements NetworkScanClient, SecurityScanner {
                 scannerType.getName().equals(Constants.SCANNER_TYPE_OPENVAS_SOCKET)) {
             Scanner nessus = new Scanner();
             nessus.setUsername(scannerModel.getUsername());
-            nessus.setPassword(UUID.randomUUID().toString());
+
             nessus = nessusOperations(scannerModel.getRoutingDomain(),nessus,proxy,scannerModel.getApiUrl(),scannerType);
-            Map<String, String> upassMap = new HashMap<>();
-            upassMap.put("password", scannerModel.getPassword());
-            operations.write("secret/"+nessus.getPassword(), upassMap);
+            String uuidToken = UUID.randomUUID().toString();
+            if (vaultHelper.savePassword(scannerModel.getPassword(), uuidToken)){
+                nessus.setPassword(uuidToken);
+            } else {
+                nessus.setPassword(scannerModel.getPassword());
+            }
         }
     }
     private Scanner nessusOperations(Long domainId, Scanner nessus, Proxies proxy, String apiurl, ScannerType scannerType) throws Exception{

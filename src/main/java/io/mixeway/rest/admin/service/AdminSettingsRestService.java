@@ -1,6 +1,7 @@
 package io.mixeway.rest.admin.service;
 
 import io.mixeway.pojo.LogUtil;
+import io.mixeway.pojo.VaultHelper;
 import io.mixeway.rest.admin.model.CronSettings;
 import io.mixeway.rest.admin.model.SmtpSettingsModel;
 import org.quartz.CronExpression;
@@ -30,16 +31,16 @@ import java.util.UUID;
 @Service
 public class AdminSettingsRestService {
     private final SettingsRepository settingsRepository;
-    private final VaultOperations operations;
+    private final VaultHelper vaultHelper;
     private final RoutingDomainRepository routingDomainRepository;
     private final ProxiesRepository proxiesRepository;
     private static final Logger log = LoggerFactory.getLogger(AdminSettingsRestService.class);
 
     @Autowired
-    public AdminSettingsRestService(SettingsRepository settingsRepository, VaultOperations operations,
+    public AdminSettingsRestService(SettingsRepository settingsRepository, VaultHelper vaultHelper,
                                     RoutingDomainRepository routingDomainRepository, ProxiesRepository proxiesRepository){
         this.settingsRepository = settingsRepository;
-        this.operations = operations;
+        this.vaultHelper = vaultHelper;
         this.proxiesRepository = proxiesRepository;
         this.routingDomainRepository = routingDomainRepository;
     }
@@ -56,11 +57,13 @@ public class AdminSettingsRestService {
             if (smtpSettingsModel.getSmtpAuth() && smtpSettingsModel.getSmtpPassword()!=null && smtpSettingsModel.getSmtpUsername()!=null){
                 settingsToUpdate.setSmtpAuth(smtpSettingsModel.getSmtpAuth());
                 settingsToUpdate.setSmtpUsername(smtpSettingsModel.getSmtpUsername());
-                settingsToUpdate.setSmtpPassword(UUID.randomUUID().toString());
                 settingsToUpdate.setDomain(smtpSettingsModel.getDomain());
-                Map<String, String> upassMap = new HashMap<>();
-                upassMap.put("password", smtpSettingsModel.getSmtpPassword());
-                operations.write("secret/"+settingsToUpdate.getSmtpPassword(), upassMap);
+                String uuidToken = UUID.randomUUID().toString();
+                if (vaultHelper.savePassword(smtpSettingsModel.getSmtpPassword(),uuidToken)) {
+                    settingsToUpdate.setSmtpPassword(uuidToken);
+                } else {
+                    settingsToUpdate.setSmtpPassword(smtpSettingsModel.getSmtpPassword());
+                }
             } else if (smtpSettingsModel.getSmtpAuth() && (smtpSettingsModel.getSmtpPassword()!=null || smtpSettingsModel.getSmtpUsername()!=null) ){
                 return new ResponseEntity<>( HttpStatus.EXPECTATION_FAILED);
             }

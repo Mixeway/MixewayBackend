@@ -2,6 +2,7 @@ package io.mixeway.plugins.remotefirewall.apiclient;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.mixeway.pojo.VaultHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,13 +30,13 @@ import io.mixeway.pojo.SecureRestTemplate;
 @Component
 public class RfwApiClient {
 
-    private final VaultOperations operations;
+    private final VaultHelper vaultHelper;
     private final static Logger log = LoggerFactory.getLogger(RfwApiClient.class);
     private final SecureRestTemplate secureRestTemplate;
 
     @Autowired
-    RfwApiClient (VaultOperations operations, SecureRestTemplate secureRestTemplate){
-        this.operations = operations;
+    RfwApiClient (VaultHelper vaultHelper, SecureRestTemplate secureRestTemplate){
+        this.vaultHelper = vaultHelper;
         this.secureRestTemplate = secureRestTemplate;
     }
 
@@ -68,9 +69,7 @@ public class RfwApiClient {
     }
 
     private HttpEntity<String> prepareAuthHeader(Scanner scanner){
-        VaultResponseSupport<Map<String,Object>> password = operations.read("secret/"+scanner.getRfwPassword());
-        assert password != null;
-        final String passwordToEncode = scanner.getRfwUser()+":"+ Objects.requireNonNull(password.getData()).get("password").toString();
+        final String passwordToEncode = scanner.getRfwUser()+":"+ vaultHelper.getPassword(scanner.getRfwPassword());
         final byte[] passwordToEncodeBytes = passwordToEncode.getBytes(StandardCharsets.UTF_8);
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "Basic "+ Base64.getEncoder().encodeToString(passwordToEncodeBytes));

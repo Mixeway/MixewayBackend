@@ -1,5 +1,6 @@
 package io.mixeway.rest.project.service;
 
+import io.mixeway.pojo.VaultHelper;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -37,12 +38,12 @@ public class IaasApiServiceTest {
     @Mock
     OpenStackApiClient openStackApiClient;
     @Mock
-    VaultOperations operations;
+    VaultHelper vaultHelper;
 
     @Before
     public void setUp(){
 
-        iaasApiService = new IaasApiService(projectRepository,routingDomainRepository,iaasApiRepository, operations, openStackApiClient);
+        iaasApiService = new IaasApiService(projectRepository,routingDomainRepository,iaasApiRepository, vaultHelper, openStackApiClient);
     }
 
     @Test

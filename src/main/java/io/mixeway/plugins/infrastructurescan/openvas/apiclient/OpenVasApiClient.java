@@ -24,6 +24,7 @@ import io.mixeway.plugins.infrastructurescan.openvas.model.User;
 import io.mixeway.plugins.infrastructurescan.service.NetworkScanClient;
 import io.mixeway.pojo.SecureRestTemplate;
 import io.mixeway.pojo.SecurityScanner;
+import io.mixeway.pojo.VaultHelper;
 import io.mixeway.rest.model.ScannerModel;
 import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jettison.json.JSONArray;
@@ -61,7 +62,7 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 	private String trustStorePassword;
 	private final static Logger log = LoggerFactory.getLogger(OpenVasApiClient.class);
 	private DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-	private VaultOperations operations;
+	private VaultHelper vaultHelper;
 	private ScannerRepository nessusRepository;
 	private NessusScanRepository nessusScanRepository;
 	private InterfaceRepository interfaceRepository;
@@ -75,11 +76,11 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 	private ProxiesRepository proxiesRepository;
 	private RoutingDomainRepository routingDomainRepository;
 
-	OpenVasApiClient(VaultOperations operations, ScannerRepository nessusRepository, NessusScanRepository nessusScanRepository, InterfaceRepository interfaceRepository,
+	OpenVasApiClient(VaultHelper vaultHelper, ScannerRepository nessusRepository, NessusScanRepository nessusScanRepository, InterfaceRepository interfaceRepository,
 					 InfrastructureVulnRepository infrastructureVulnRepository, SoftwareRepository softwareRepository, AssetRepository assetRepository,
 					 StatusRepository statusRepository, SecureRestTemplate secureRestTemplate, ScannerRepository scannerRepository,
 					 ScannerTypeRepository scannerTypeRepository, ProxiesRepository proxiesRepository, RoutingDomainRepository routingDomainRepository){
-		this.operations = operations;
+		this.vaultHelper = vaultHelper;
 		this.nessusRepository = nessusRepository;
 		this.scannerRepository = scannerRepository;
 		this.scannerTypeRepository = scannerTypeRepository;
@@ -187,9 +188,7 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 	public boolean initialize(io.mixeway.db.entity.Scanner nessus) throws JSONException, KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, CertificateException, IOException {
 		ResponseEntity<String> response;
 		try {
-			VaultResponseSupport<Map<String,Object>> password = operations.read("secret/"+nessus.getPassword());
-			assert password != null;
-			String userString = new JSONObject(createUser(nessus.getUsername(), Objects.requireNonNull(password.getData()).get("password").toString())).toString();
+			String userString = new JSONObject(createUser(nessus.getUsername(), vaultHelper.getPassword(nessus.getPassword()))).toString();
 			response = createRequest(nessus.getApiUrl() + "/initialize",null,userString,HttpMethod.POST);
 
 			if (response.getStatusCode() == HttpStatus.OK) {
@@ -462,11 +461,9 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 	}
 	public RestRequestBody bodyPrepare(NessusScan ns) {
 		try {
-			VaultResponseSupport<Map<String, Object>> password = operations.read("secret/" + ns.getNessus().getPassword());
 			User u = new User();
 			u.setUsername(ns.getNessus().getUsername());
-			assert password != null;
-			u.setPassword(Objects.requireNonNull(password.getData()).get("password").toString());
+			u.setPassword(vaultHelper.getPassword(ns.getNessus().getPassword()));
 			RestRequestBody rrb = new RestRequestBody();
 			rrb.setUser(u);
 			return rrb;
@@ -544,11 +541,13 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 				scannerType.getName().equals(Constants.SCANNER_TYPE_OPENVAS_SOCKET)) {
 			io.mixeway.db.entity.Scanner nessus = new io.mixeway.db.entity.Scanner();
 			nessus.setUsername(scannerModel.getUsername());
-			nessus.setPassword(UUID.randomUUID().toString());
 			nessus = nessusOperations(scannerModel.getRoutingDomain(),nessus,proxy,scannerModel.getApiUrl(),scannerType);
-			Map<String, String> upassMap = new HashMap<>();
-			upassMap.put("password", scannerModel.getPassword());
-			operations.write("secret/"+nessus.getPassword(), upassMap);
+			String uuidToken = UUID.randomUUID().toString();
+			if (vaultHelper.savePassword(scannerModel.getPassword(), uuidToken)){
+				nessus.setPassword(uuidToken);
+			} else {
+				nessus.setPassword(scannerModel.getPassword());
+			}
 		}
 	}
 	private io.mixeway.db.entity.Scanner nessusOperations(Long domainId, Scanner nessus, Proxies proxy, String apiurl, ScannerType scannerType) throws Exception{

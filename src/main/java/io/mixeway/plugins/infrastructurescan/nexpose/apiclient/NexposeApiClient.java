@@ -6,10 +6,7 @@ import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.*;
 import io.mixeway.plugins.infrastructurescan.nexpose.model.*;
 import io.mixeway.plugins.infrastructurescan.service.NetworkScanClient;
-import io.mixeway.pojo.RestTemplateBasicAuth;
-import io.mixeway.pojo.ScanHelper;
-import io.mixeway.pojo.SecureRestTemplate;
-import io.mixeway.pojo.SecurityScanner;
+import io.mixeway.pojo.*;
 import io.mixeway.rest.model.ScannerModel;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -32,7 +29,7 @@ import java.util.*;
 @Component
 public class NexposeApiClient implements NetworkScanClient, SecurityScanner {
     private final static Logger log = LoggerFactory.getLogger(NexposeApiClient.class);
-    private final VaultOperations operations;
+    private final VaultHelper vaultHelper;
     private final SecureRestTemplate secureRestTemplate;
     private final ScannerRepository scannerRepository;
     private final ScanHelper scanHelper;
@@ -45,11 +42,11 @@ public class NexposeApiClient implements NetworkScanClient, SecurityScanner {
     private final ScannerTypeRepository scannerTypeRepository;
 
     @Autowired
-    NexposeApiClient(VaultOperations operations, SecureRestTemplate secureRestTemplate, ScannerRepository scannerRepository,
+    NexposeApiClient(VaultHelper vaultHelper, SecureRestTemplate secureRestTemplate, ScannerRepository scannerRepository,
                      ScanHelper scanHelper, NessusScanRepository nessusScanRepository, InterfaceRepository interfaceRepository,
                      AssetRepository assetRepository,InfrastructureVulnRepository infrastructureVulnRepository, ScannerTypeRepository scannerTypeRepository,
                      ProxiesRepository proxiesRepository, RoutingDomainRepository routingDomainRepository){
-        this.operations = operations;
+        this.vaultHelper = vaultHelper;
         this.secureRestTemplate = secureRestTemplate;
         this.scannerRepository = scannerRepository;
         this.scanHelper = scanHelper;
@@ -67,7 +64,7 @@ public class NexposeApiClient implements NetworkScanClient, SecurityScanner {
         RestTemplateBasicAuth templateBasicAuth = new RestTemplateBasicAuth();
         RestTemplate restTemplate = secureRestTemplate.noVerificationClient(scanner);
         ResponseEntity<ScanEnginesResponseDTO> response = restTemplate.exchange(scanner.getApiUrl() + "/api/3/scan_engines",
-                HttpMethod.GET, templateBasicAuth.prepareTemplateHedersBasicAndJson(scanner,operations),ScanEnginesResponseDTO.class);
+                HttpMethod.GET, templateBasicAuth.prepareTemplateHedersBasicAndJson(scanner,vaultHelper),ScanEnginesResponseDTO.class);
         if (response.getStatusCode().equals(HttpStatus.OK)){
             scanner.setEngineId(Objects.requireNonNull(Objects.requireNonNull(response.getBody()).getResources()
                     .stream()
@@ -83,7 +80,7 @@ public class NexposeApiClient implements NetworkScanClient, SecurityScanner {
         RestTemplateBasicAuth templateBasicAuth = new RestTemplateBasicAuth();
         RestTemplate restTemplate = secureRestTemplate.noVerificationClient(scanner);
         ResponseEntity<ScanTemplateResponseDTO> response = restTemplate.exchange(scanner.getApiUrl() + "/api/3/scan_templates",
-                HttpMethod.GET, templateBasicAuth.prepareTemplateHedersBasicAndJson(scanner,operations),ScanTemplateResponseDTO.class);
+                HttpMethod.GET, templateBasicAuth.prepareTemplateHedersBasicAndJson(scanner,vaultHelper),ScanTemplateResponseDTO.class);
         if (response.getStatusCode().equals(HttpStatus.OK)){
             scanner.setTemplate(Objects.requireNonNull(Objects.requireNonNull(response.getBody()).getResources()
                     .stream()
@@ -101,7 +98,7 @@ public class NexposeApiClient implements NetworkScanClient, SecurityScanner {
         RestTemplateBasicAuth templateBasicAuth = new RestTemplateBasicAuth();
         RestTemplate restTemplate = secureRestTemplate.noVerificationClient(scan.getNessus());
         ResponseEntity<CreateSiteResponseDTO> response = restTemplate.exchange(scan.getNessus().getApiUrl() + "/api/3/sites",
-                HttpMethod.POST, templateBasicAuth.prepareTemplateWithBasicAuthAndBody(scan.getNessus(),operations, request),CreateSiteResponseDTO.class);
+                HttpMethod.POST, templateBasicAuth.prepareTemplateWithBasicAuthAndBody(scan.getNessus(),vaultHelper, request),CreateSiteResponseDTO.class);
         if (response.getStatusCode().equals(HttpStatus.CREATED)){
             scan.setTaskId(String.valueOf(Objects.requireNonNull(response.getBody()).getId()));
             nessusScanRepository.save(scan);
@@ -112,7 +109,7 @@ public class NexposeApiClient implements NetworkScanClient, SecurityScanner {
         RestTemplateBasicAuth templateBasicAuth = new RestTemplateBasicAuth();
         RestTemplate restTemplate = secureRestTemplate.noVerificationClient(scan.getNessus());
         ResponseEntity<CreateSiteResponseDTO> response = restTemplate.exchange(scan.getNessus().getApiUrl() + "/api/3/sites/"+scan.getTaskId()+"/included_targets",
-                HttpMethod.PUT, templateBasicAuth.prepareTemplateWithBasicAuthAndBody(scan.getNessus(),operations, scanHelper.prepareTargetsForScan(scan,true)),CreateSiteResponseDTO.class);
+                HttpMethod.PUT, templateBasicAuth.prepareTemplateWithBasicAuthAndBody(scan.getNessus(),vaultHelper, scanHelper.prepareTargetsForScan(scan,true)),CreateSiteResponseDTO.class);
         response.getStatusCode();
     }
 
@@ -121,7 +118,7 @@ public class NexposeApiClient implements NetworkScanClient, SecurityScanner {
         RestTemplateBasicAuth templateBasicAuth = new RestTemplateBasicAuth();
         RestTemplate restTemplate = secureRestTemplate.noVerificationClient(scan.getNessus());
         ResponseEntity<SiteAssetsDTO> response = restTemplate.exchange(scan.getNessus().getApiUrl() + "/api/3/sites/"+scan.getTaskId()+"/assets?page=0&size=500&sort=id,asc",
-                HttpMethod.GET, templateBasicAuth.prepareTemplateHedersBasicAndJson(scan.getNessus(),operations),SiteAssetsDTO.class);
+                HttpMethod.GET, templateBasicAuth.prepareTemplateHedersBasicAndJson(scan.getNessus(),vaultHelper),SiteAssetsDTO.class);
         if (response.getStatusCode().equals(HttpStatus.OK)){
             for (SiteAssetsResources a: Objects.requireNonNull(response.getBody()).getResources()){
                 Interface intf = verifyAndCreateAsset(scan,a);
@@ -144,7 +141,7 @@ public class NexposeApiClient implements NetworkScanClient, SecurityScanner {
         RestTemplateBasicAuth templateBasicAuth = new RestTemplateBasicAuth();
         RestTemplate restTemplate = secureRestTemplate.noVerificationClient(scan.getNessus());
         ResponseEntity<AssetVulnerabilitiesResponseDTO> response = restTemplate.exchange(scan.getNessus().getApiUrl() + "/api/3/assets/"+id+"/vulnerabilities?page="+page+"&size=500&sort=id,asc",
-                HttpMethod.GET, templateBasicAuth.prepareTemplateHedersBasicAndJson(scan.getNessus(),operations),AssetVulnerabilitiesResponseDTO.class);
+                HttpMethod.GET, templateBasicAuth.prepareTemplateHedersBasicAndJson(scan.getNessus(),vaultHelper),AssetVulnerabilitiesResponseDTO.class);
         if (response.getStatusCode().equals(HttpStatus.OK)){
             for (AssetVulnerabilitiesResource avr : Objects.requireNonNull(response.getBody()).getResources()){
                 VulnerabilityDetailsDTO vulnDetails = getVulnDetailsForId(scan,avr.getId());
@@ -184,7 +181,7 @@ public class NexposeApiClient implements NetworkScanClient, SecurityScanner {
         RestTemplateBasicAuth templateBasicAuth = new RestTemplateBasicAuth();
         RestTemplate restTemplate = secureRestTemplate.noVerificationClient(scan.getNessus());
         ResponseEntity<VulnerabilityDetailsDTO> response = restTemplate.exchange(scan.getNessus().getApiUrl() + "/api/3/vulnerabilities/"+id,
-                HttpMethod.GET, templateBasicAuth.prepareTemplateHedersBasicAndJson(scan.getNessus(),operations),VulnerabilityDetailsDTO.class);
+                HttpMethod.GET, templateBasicAuth.prepareTemplateHedersBasicAndJson(scan.getNessus(),vaultHelper),VulnerabilityDetailsDTO.class);
         if (response.getStatusCode().equals(HttpStatus.OK)){
             return response.getBody();
         }
@@ -230,7 +227,7 @@ public class NexposeApiClient implements NetworkScanClient, SecurityScanner {
         RestTemplateBasicAuth templateBasicAuth= new RestTemplateBasicAuth();
         RestTemplate restTemplate = secureRestTemplate.noVerificationClient(scan.getNessus());
         ResponseEntity<ScanResponse> response = restTemplate.exchange(scan.getNessus().getApiUrl()+"/api/3/sites/"+scan.getTaskId()+"/scans", HttpMethod.POST,
-                templateBasicAuth.prepareTemplateWithBasicAuthAndBody(scan.getNessus(),operations,"{}"),ScanResponse.class);
+                templateBasicAuth.prepareTemplateWithBasicAuthAndBody(scan.getNessus(),vaultHelper,"{}"),ScanResponse.class);
         if (response.getStatusCode().equals(HttpStatus.CREATED)){
             scan.setRunning(true);
             scan.setScanId(Objects.requireNonNull(response.getBody()).getId());
@@ -269,7 +266,7 @@ public class NexposeApiClient implements NetworkScanClient, SecurityScanner {
             RestTemplateBasicAuth templateBasicAuth = new RestTemplateBasicAuth();
             RestTemplate restTemplate = secureRestTemplate.noVerificationClient(nessusScan.getNessus());
             ResponseEntity<ScanStatusResponse> response = restTemplate.exchange(nessusScan.getNessus().getApiUrl() + "/api/3/scans/"+nessusScan.getScanId(),
-                    HttpMethod.GET, templateBasicAuth.prepareTemplateHedersBasicAndJson(nessusScan.getNessus(),operations),ScanStatusResponse.class);
+                    HttpMethod.GET, templateBasicAuth.prepareTemplateHedersBasicAndJson(nessusScan.getNessus(),vaultHelper),ScanStatusResponse.class);
             if(response.getStatusCode().equals(HttpStatus.OK)){
                 return Objects.requireNonNull(response.getBody()).getStatus().equals(Constants.NEXPOSE_STATUS_END);
             }
@@ -300,11 +297,13 @@ public class NexposeApiClient implements NetworkScanClient, SecurityScanner {
                 scannerType.getName().equals(Constants.SCANNER_TYPE_OPENVAS_SOCKET)) {
             io.mixeway.db.entity.Scanner nessus = new io.mixeway.db.entity.Scanner();
             nessus.setUsername(scannerModel.getUsername());
-            nessus.setPassword(UUID.randomUUID().toString());
             nessus = nessusOperations(scannerModel.getRoutingDomain(), nessus, proxy, scannerModel.getApiUrl(), scannerType);
-            Map<String, String> upassMap = new HashMap<>();
-            upassMap.put("password", scannerModel.getPassword());
-            operations.write("secret/" + nessus.getPassword(), upassMap);
+            String uuidToken = UUID.randomUUID().toString();
+            if (vaultHelper.savePassword(scannerModel.getPassword(),uuidToken)){
+                nessus.setPassword(uuidToken);
+            } else {
+                nessus.setPassword(scannerModel.getPassword());
+            }
         }
     }
     private io.mixeway.db.entity.Scanner nessusOperations(Long domainId, Scanner nessus, Proxies proxy, String apiurl, ScannerType scannerType) throws Exception{

@@ -10,6 +10,7 @@ import com.atlassian.jira.rest.client.internal.async.AsynchronousJiraRestClientF
 import io.atlassian.util.concurrent.Promise;
 import io.mixeway.db.entity.*;
 import io.mixeway.pojo.LogUtil;
+import io.mixeway.pojo.VaultHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,12 +34,12 @@ import java.util.Properties;
 @Service
 public class JiraService implements BugTracking {
     private static final Logger log = LoggerFactory.getLogger(JiraService.class);
-    private final VaultOperations operations;
+    private final VaultHelper vaultHelper;
     private final BugTrackerRepository bugTrackerRepository;
 
     @Autowired
-    JiraService(VaultOperations operations, BugTrackerRepository bugTrackerRepository){
-        this.operations = operations;
+    JiraService(VaultHelper vaultHelper, BugTrackerRepository bugTrackerRepository){
+        this.vaultHelper = vaultHelper;
         this.bugTrackerRepository = bugTrackerRepository;
     }
 
@@ -54,7 +55,7 @@ public class JiraService implements BugTracking {
         }
         origProp.setProperty("jsse.enableSNIExtension","false");
         JiraRestClientFactory factory = new AsynchronousJiraRestClientFactory();
-        String password = operations.read("secret/"+bugTracker.getPassword()).getData().get("password").toString();
+        String password =vaultHelper.getPassword(bugTracker.getPassword());
         URI uri = new URI(bugTracker.getUrl());
 
         JiraRestClient client = factory.createWithBasicHttpAuthentication(uri, bugTracker.getUsername(), password);
@@ -96,7 +97,7 @@ public class JiraService implements BugTracking {
     @Override
     public void closeIssue(String ticketId, BugTracker bugTracker) throws URISyntaxException {
         JiraRestClientFactory factory = new AsynchronousJiraRestClientFactory();
-        String password = Objects.requireNonNull(Objects.requireNonNull(operations.read("secret/" + bugTracker.getPassword())).getData()).get("password").toString();
+        String password = vaultHelper.getPassword(bugTracker.getPassword());
         URI uri = new URI(bugTracker.getUrl());
         JiraRestClient client = factory.createWithBasicHttpAuthentication(uri, bugTracker.getUsername(), password);
         Promise promise = client.getIssueClient().getIssue("ticketId");

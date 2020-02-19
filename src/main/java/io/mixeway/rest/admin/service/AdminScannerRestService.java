@@ -7,6 +7,7 @@ import io.mixeway.db.repository.ScannerTypeRepository;
 import io.mixeway.plugins.remotefirewall.apiclient.RfwApiClient;
 import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.SecurityScanner;
+import io.mixeway.pojo.VaultHelper;
 import io.mixeway.rest.model.RfwModel;
 import io.mixeway.rest.model.ScannerModel;
 import org.slf4j.Logger;
@@ -35,17 +36,17 @@ public class AdminScannerRestService {
     private final ScannerRepository scannerRepository;
     private final ScannerTypeRepository scannerTypeRepository;
     private final ProxiesRepository proxiesRepository;
-    private final VaultOperations operations;
+    private final VaultHelper vaultHelper;
     private final RfwApiClient rfwApiClient;
     private final RoutingDomainRepository routingDomainRepository;
     private final List<SecurityScanner> securityScanners;
     @Autowired
     AdminScannerRestService(RoutingDomainRepository routingDomainRepository, List<SecurityScanner> securityScanners,
-                            RfwApiClient rfwApiClient, VaultOperations vaultOperations,
+                            RfwApiClient rfwApiClient, VaultHelper vaultHelper,
                             ProxiesRepository proxiesRepository, ScannerTypeRepository scannerTypeRepository, ScannerRepository scannerRepository){
         this.routingDomainRepository = routingDomainRepository;
         this.rfwApiClient = rfwApiClient;
-        this.operations = vaultOperations;
+        this.vaultHelper = vaultHelper;
         this.proxiesRepository = proxiesRepository;
         this.securityScanners = securityScanners;
         this.scannerRepository = scannerRepository;
@@ -114,10 +115,12 @@ public class AdminScannerRestService {
                 scanner.get().setRfwUrl(rfwModel.getRfwUrl());
                 scanner.get().setRfwUser(rfwModel.getRfwUsername());
                 scanner.get().setRfwScannerIp(rfwModel.getRfwScannerIp());
-                scanner.get().setRfwPassword(UUID.randomUUID().toString());
-                Map<String, String> upassMap = new HashMap<>();
-                upassMap.put("password", rfwModel.getRfwPassword());
-                operations.write("secret/" + scanner.get().getRfwPassword(), upassMap);
+                String uuidToken = UUID.randomUUID().toString();
+                if (vaultHelper.savePassword(rfwModel.getRfwPassword(), uuidToken)){
+                    scanner.get().setRfwPassword(uuidToken);
+                } else {
+                    scanner.get().setRfwPassword(rfwModel.getRfwPassword());
+                }
                 log.info("{} - User added rfw for {} rules are {}", name, scanner.get().getApiUrl(), rfwApiClient.getListOfRules(scanner.get()));
                 scannerRepository.save(scanner.get());
                 return new ResponseEntity<>(new Status("ok"), HttpStatus.CREATED);

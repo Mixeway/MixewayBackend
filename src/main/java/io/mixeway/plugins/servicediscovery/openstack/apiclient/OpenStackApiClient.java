@@ -20,6 +20,7 @@ import io.mixeway.db.entity.Asset;
 import io.mixeway.db.entity.IaasApi;
 import io.mixeway.db.repository.IaasApiRepository;
 import io.mixeway.pojo.SecureRestTemplate;
+import io.mixeway.pojo.VaultHelper;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -42,21 +43,19 @@ public class OpenStackApiClient {
     private final static Logger log = LoggerFactory.getLogger(OpenStackApiClient.class);
 	private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private IaasApiRepository iaasApiRepository;
-	private VaultOperations operations;
+	private VaultHelper vaultHelper;
 	private SecureRestTemplate secureRestTemplate;
 
 	@Autowired
-	OpenStackApiClient(IaasApiRepository iaasApiRepository, VaultOperations operations, SecureRestTemplate secureRestTemplate){
-		this.operations = operations;
+	OpenStackApiClient(IaasApiRepository iaasApiRepository, VaultHelper vaultHelper, SecureRestTemplate secureRestTemplate){
+		this.vaultHelper = vaultHelper;
 		this.secureRestTemplate = secureRestTemplate;
 		this.iaasApiRepository = iaasApiRepository;
 	}
 	
 	private String buildJsonPostAuth(IaasApi api) throws JSONException {
-		VaultResponseSupport<Map<String,Object>> response = operations.read("secret/"+api.getPassword());
 		JSONArray ar = new JSONArray();
 		ar.put("password");
-		assert response != null;
 		String jsonString = new JSONObject()
                 .put("auth", new JSONObject()
                      .put("identity", new JSONObject()
@@ -64,7 +63,7 @@ public class OpenStackApiClient {
                     		 .put("password", new JSONObject().
                     				 put("user", new JSONObject().
                     						 put("name", api.getUsername()).
-                    						 put("password", Objects.requireNonNull(response.getData()).get("password")).
+                    						 put("password", vaultHelper.getPassword(api.getPassword())).
                     						 put("domain", new JSONObject().
                     								 put("name", api.getDomain()))))).
                      put("scope",new JSONObject().put("project", new JSONObject().put("id",api.getTenantId())))).toString();

@@ -11,19 +11,18 @@ import java.util.Base64;
 import java.util.Map;
 
 public class RestTemplateBasicAuth {
-    public HttpEntity<String> prepareTemplateHedersBasicAndJson(Scanner scanner, VaultOperations operations){
-        HttpEntity<String> entity = new HttpEntity<String>(getPasswordEncodedString(operations, scanner));
+    public HttpEntity<String> prepareTemplateHedersBasicAndJson(Scanner scanner, VaultHelper vaultHelper){
+        HttpEntity<String> entity = new HttpEntity<String>(getPasswordEncodedString(vaultHelper, scanner));
         return entity;
     }
-    public HttpEntity<Object> prepareTemplateWithBasicAuthAndBody(Scanner scanner, VaultOperations operations, Object body){
+    public HttpEntity<Object> prepareTemplateWithBasicAuthAndBody(Scanner scanner, VaultHelper vaultHelper, Object body){
 
-        HttpEntity<Object> entity = new HttpEntity<Object>(body,getPasswordEncodedString(operations,scanner));
+        HttpEntity<Object> entity = new HttpEntity<Object>(body,getPasswordEncodedString(vaultHelper,scanner));
         return entity;
     }
-    public HttpHeaders getPasswordEncodedString(VaultOperations operations, Scanner scanner){
+    public HttpHeaders getPasswordEncodedString(VaultHelper vaultHelper, Scanner scanner){
         HttpHeaders headers = new HttpHeaders();
-        VaultResponseSupport<Map<String,Object>> password = operations.read("secret/"+scanner.getPassword());
-        final String passwordToEncode = scanner.getUsername()+":"+password.getData().get("password").toString();
+        final String passwordToEncode = scanner.getUsername()+":"+vaultHelper.getPassword(scanner.getPassword());
         final byte[] passwordToEncodeBytes = passwordToEncode.getBytes(StandardCharsets.UTF_8);
         headers.set("Authorization", "Basic "+ Base64.getEncoder().encodeToString(passwordToEncodeBytes));
         headers.set("Content-Type", "application/json");
