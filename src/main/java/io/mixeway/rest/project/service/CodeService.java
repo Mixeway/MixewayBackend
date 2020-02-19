@@ -7,6 +7,7 @@ import io.mixeway.db.repository.*;
 import io.mixeway.plugins.audit.dependencytrack.apiclient.DependencyTrackApiClient;
 import io.mixeway.plugins.audit.dependencytrack.model.Projects;
 import io.mixeway.plugins.codescan.service.CodeScanClient;
+import io.mixeway.pojo.VaultHelper;
 import io.mixeway.rest.project.model.*;
 import io.mixeway.rest.utils.ProjectRiskAnalyzer;
 import org.codehaus.jettison.json.JSONException;
@@ -38,7 +39,7 @@ public class CodeService {
     private final CodeProjectRepository codeProjectRepository;
     private final ProjectRiskAnalyzer projectRiskAnalyzer;
     private final CodeGroupRepository codeGroupRepository;
-    private final VaultOperations operations;
+    private final VaultHelper vaultHelper;
     private final List<CodeScanClient> codeScanClients;
     private final CodeVulnRepository codeVulnRepository;
     private final DependencyTrackApiClient dependencyTrackApiClient;
@@ -48,7 +49,7 @@ public class CodeService {
     @Autowired
     CodeService(ProjectRepository projectRepository, CodeProjectRepository codeProjectRepository,
                 ProjectRiskAnalyzer projectRiskAnalyzer, CodeGroupRepository codeGroupRepository,
-                VaultOperations operations, List<CodeScanClient> codeScanClients,
+                VaultHelper vaultHelper, List<CodeScanClient> codeScanClients,
                 CodeVulnRepository codeVulnRepository, DependencyTrackApiClient dependencyTrackApiClient,
                 ScannerTypeRepository scanneTypeRepository, ScannerRepository scannerRepository) {
         this.projectRepository = projectRepository;
@@ -57,7 +58,7 @@ public class CodeService {
         this.scanneTypeRepository = scanneTypeRepository;
         this.dependencyTrackApiClient = dependencyTrackApiClient;
         this.projectRiskAnalyzer = projectRiskAnalyzer;
-        this.operations = operations;
+        this.vaultHelper = vaultHelper;
         this.codeGroupRepository = codeGroupRepository;
         this.codeVulnRepository = codeVulnRepository;
         this.codeScanClients = codeScanClients;
@@ -103,7 +104,6 @@ public class CodeService {
             codeGroup.setName(codeGroupPutModel.getCodeGroupName());
             codeGroup.setRepoUrl(codeGroupPutModel.getGiturl());
             codeGroup.setRepoUsername(codeGroupPutModel.getGitusername());
-            codeGroup.setRepoPassword(UUID.randomUUID().toString());
             codeGroup.setTechnique(codeGroupPutModel.getTech());
             codeGroup.setHasProjects(codeGroupPutModel.isChilds());
             codeGroup.setAuto(codeGroupPutModel.isAutoScan());
@@ -113,9 +113,12 @@ public class CodeService {
             codeGroupRepository.save(codeGroup);
             if (!codeGroup.getHasProjects())
                 createProjectForCodeGroup(codeGroup,codeGroupPutModel);
-            Map<String, String> mapa = new HashMap<>();
-            mapa.put("password", codeGroupPutModel.getGitpassword());
-            operations.write("secret/"+codeGroup.getRepoPassword(), mapa);
+            String uuidToken = UUID.randomUUID().toString();
+            if (vaultHelper.savePassword(codeGroupPutModel.getGitpassword(), uuidToken)) {
+                codeGroup.setRepoPassword(uuidToken);
+            } else {
+                codeGroup.setRepoPassword(codeGroupPutModel.getGitpassword());
+            }
             log.info("{} - Created new CodeGroup [{}] {}", username, project.get().getName(), codeGroup.getName());
             return new ResponseEntity<>(null,HttpStatus.CREATED);
         } else {

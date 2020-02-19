@@ -14,6 +14,7 @@ import io.mixeway.plugins.codescan.model.TokenValidator;
 import io.mixeway.plugins.codescan.service.CodeScanClient;
 import io.mixeway.pojo.SecureRestTemplate;
 import io.mixeway.pojo.SecurityScanner;
+import io.mixeway.pojo.VaultHelper;
 import io.mixeway.rest.model.ScannerModel;
 import io.mixeway.rest.project.model.SASTProject;
 import org.codehaus.jettison.json.JSONException;
@@ -50,7 +51,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
     private static final Logger log = LoggerFactory.getLogger(CheckmarxApiClient.class);
     private final ScannerTypeRepository scannerTypeRepository;
     private final ScannerRepository scannerRepository;
-    private final VaultOperations operations;
+    private final VaultHelper vaultHelper;
     private final SecureRestTemplate secureRestTemplate;
     private final CodeGroupRepository codeGroupRepository;
     private final CodeProjectRepository codeProjectRepository;
@@ -60,8 +61,8 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
     @Autowired
     CheckmarxApiClient(ScannerTypeRepository scannerTypeRepository, ScannerRepository scannerRepository,
                        CodeProjectRepository codeProjectRepository, ProxiesRepository proxiesRepository, CodeVulnRepository codeVulnRepository,
-                       VaultOperations operations, SecureRestTemplate secureRestTemplate, CodeGroupRepository codeGroupRepository){
-        this.operations = operations;
+                       VaultHelper vaultHelper, SecureRestTemplate secureRestTemplate, CodeGroupRepository codeGroupRepository){
+        this.vaultHelper = vaultHelper;
         this.scannerRepository = scannerRepository;
         this.codeVulnRepository = codeVulnRepository;
         this.proxiesRepository = proxiesRepository;
@@ -128,16 +129,19 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
             ScannerType scannerType = scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_CHECKMARX);
             Scanner checkmarx = new io.mixeway.db.entity.Scanner();
             checkmarx.setApiUrl(scannerModel.getApiUrl());
-            checkmarx.setPassword(UUID.randomUUID().toString());
+            String uuidToken = UUID.randomUUID().toString();
+            //checkmarx.setPassword(UUID.randomUUID().toString());
             checkmarx.setUsername(scannerModel.getUsername());
             checkmarx.setStatus(false);
             checkmarx.setScannerType(scannerType);
             if (proxies.isPresent())
                 checkmarx.setProxies(proxies.get());
             // api key put to vault
-            Map<String, String> passwordKeyMap = new HashMap<>();
-            passwordKeyMap.put("password", scannerModel.getPassword());
-            operations.write("secret/" + checkmarx.getPassword(), passwordKeyMap);
+            if (vaultHelper.savePassword(scannerModel.getPassword(), uuidToken)){
+                checkmarx.setPassword(uuidToken);
+            } else {
+                checkmarx.setPassword(scannerModel.getPassword());
+            }
             scannerRepository.save(checkmarx);
         }
 
@@ -180,11 +184,9 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
     }
 
     private MultiValueMap<String, String> createFormForLogin(Scanner scanner) {
-        VaultResponseSupport<Map<String, Object>> password = operations.read("secret/" + scanner.getPassword());
-        assert password != null;
         MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
         form.add(Constants.CHECKMARX_LOGIN_FORM_USERNAME, scanner.getUsername());
-        form.add(Constants.CHECKMARX_LOGIN_FORM_PASSWORD, Objects.requireNonNull(password.getData()).get("password").toString());
+        form.add(Constants.CHECKMARX_LOGIN_FORM_PASSWORD, vaultHelper.getPassword(scanner.getPassword()));
         form.add(Constants.CHECKMARX_LOGIN_FORM_GRANT_TYPE, Constants.CHECKMARX_LOGIN_FORM_GRANT_TYPE_VALUE);
         form.add(Constants.CHECKMARX_LOGIN_FORM_SCOPE,Constants.CHECKMARX_LOGIN_FORM_SCOPE_VALUE);
         form.add(Constants.CHECKMARX_LOGIN_FORM_CLIENTID, Constants.CHECKMARX_LOGIN_FORM_CLIENTID_VALUE);
@@ -269,12 +271,10 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
     private boolean createProjectGitLink(Scanner scanner, CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
         CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
         try {
-            VaultResponseSupport<Map<String, Object>> password = operations.read("secret/" + codeProject.getCodeGroup().getRepoPassword());
-            assert password != null;
             ResponseEntity<String> response = codeRequestHelper
                     .getRestTemplate()
                     .exchange(scanner.getApiUrl() + Constants.CX_CREATE_GIT_FOR_PROJECT_API.replace(Constants.CX_PROJECTID, String.valueOf(codeProject.getCodeGroup().getVersionIdAll())), HttpMethod.POST,
-                            new HttpEntity<>(new CxGitCreate(codeProject,Objects.requireNonNull(password.getData()).get("password").toString()),codeRequestHelper.getHttpEntity().getHeaders()),
+                            new HttpEntity<>(new CxGitCreate(codeProject,vaultHelper.getPassword(codeProject.getCodeGroup().getRepoPassword())),codeRequestHelper.getHttpEntity().getHeaders()),
                             String.class);
             if (response.getStatusCode().equals(HttpStatus.NO_CONTENT) || response.getStatusCode().equals(HttpStatus.OK)) {
                 log.info("CX - Successfull set GIT for {}", codeProject.getName());

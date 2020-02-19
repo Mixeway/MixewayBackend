@@ -1,6 +1,7 @@
 package io.mixeway.rest.project.service;
 
 import io.mixeway.db.entity.Project;
+import io.mixeway.pojo.VaultHelper;
 import io.mixeway.rest.project.model.IaasApiPutModel;
 import io.mixeway.rest.project.model.IaasModel;
 import org.slf4j.Logger;
@@ -29,17 +30,17 @@ public class IaasApiService {
     private final ProjectRepository projectRepository;
     private final RoutingDomainRepository routingDomainRepository;
     private final IaasApiRepository iaasApiRepository;
-    private final VaultOperations operations;
+    private final VaultHelper vaultHelper;
     private final OpenStackApiClient openStackApiClient;
 
     @Autowired
     IaasApiService(ProjectRepository projectRepository, RoutingDomainRepository routingDomainRepository,
-                   IaasApiRepository iaasApiRepository, VaultOperations operations, OpenStackApiClient openStackApiClient){
+                   IaasApiRepository iaasApiRepository, VaultHelper vaultHelper, OpenStackApiClient openStackApiClient){
         this.projectRepository = projectRepository;
         this.routingDomainRepository = routingDomainRepository;
         this.iaasApiRepository = iaasApiRepository;
         this.openStackApiClient = openStackApiClient;
-        this.operations = operations;
+        this.vaultHelper = vaultHelper;
     }
 
     public ResponseEntity<IaasModel> showIaasApi(Long id) {
@@ -77,15 +78,17 @@ public class IaasApiService {
                 iaasApi.setTenantId(iaasApiPutModel.getProjectid());
                 iaasApi.setUsername(iaasApiPutModel.getUsername());
                 iaasApi.setRoutingDomain(routingDomainRepository.getOne(iaasApiPutModel.getRoutingDomainForIaasApi()));
-                iaasApi.setPassword(UUID.randomUUID().toString());
                 iaasApi.setProject(project.get());
                 iaasApi.setEnabled(false);
                 iaasApi.setStatus(false);
                 iaasApi.setExternal(false);
                 iaasApiRepository.save(iaasApi);
-                Map<String, String> mapa = new HashMap<>();
-                mapa.put("password", iaasApiPutModel.getPassword());
-                operations.write("secret/"+iaasApi.getPassword(), mapa);
+                String uuidToken = UUID.randomUUID().toString();
+                if (vaultHelper.savePassword(iaasApiPutModel.getPassword(), uuidToken)){
+                    iaasApi.setPassword(uuidToken);
+                } else {
+                    iaasApi.setPassword(iaasApiPutModel.getPassword());
+                }
                 log.info("{} - Saved new IaasApi for project {}", username, project.get().getName());
                 return new ResponseEntity<>(new Status("ok"), HttpStatus.CREATED);
             }

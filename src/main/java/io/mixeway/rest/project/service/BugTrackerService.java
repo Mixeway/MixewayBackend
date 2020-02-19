@@ -3,6 +3,7 @@ package io.mixeway.rest.project.service;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
 import io.mixeway.pojo.LogUtil;
+import io.mixeway.pojo.VaultHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +24,7 @@ public class BugTrackerService {
     private static final Logger log = LoggerFactory.getLogger(BugTrackerService.class);
     private final BugTrackerTypeRepository bugTrackerTypeRepository;
     private final BugTrackerRepository bugTrackerRepository;
-    private final VaultOperations vaultOperations;
+    private final VaultHelper vaultHelper;
     private final ProjectRepository projectRepository;
     private final InfrastructureVulnRepository infrastructureVulnRepository;
     private final WebAppVulnRepository webAppVulnRepository;
@@ -34,11 +35,11 @@ public class BugTrackerService {
     private List<String> strategy = Arrays.asList("Manual", "High", "Medium","Low");
     @Autowired
     BugTrackerService(BugTrackerTypeRepository bugTrackerTypeRepository, BugTrackerRepository bugTrackerRepository,
-                      VaultOperations vaultOperations, ProjectRepository projectRepository, List<BugTracking> bugTrackings,
+                      VaultHelper vaultHelper, ProjectRepository projectRepository, List<BugTracking> bugTrackings,
                       InfrastructureVulnRepository infrastructureVulnRepository, WebAppVulnRepository webAppVulnRepository,
                       CodeVulnRepository codeVulnRepository, SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository){
         this.bugTrackerTypeRepository = bugTrackerTypeRepository;
-        this.vaultOperations = vaultOperations;
+        this.vaultHelper = vaultHelper;
         this.projectRepository = projectRepository;
         this.infrastructureVulnRepository = infrastructureVulnRepository;
         this.webAppVulnRepository = webAppVulnRepository;
@@ -61,11 +62,10 @@ public class BugTrackerService {
         if (project.isPresent() && types.contains(bugTracker.getVulns()) && strategy.contains(bugTracker.getAutoStrategy()) &&
                 !bugTrackerRepository.findByProjectAndVulns(project.get(),bugTracker.getVulns()).isPresent()) {
             String uuidPass = UUID.randomUUID().toString();
-            Map<String, String> upassMap = new HashMap<>();
-            upassMap.put("password", bugTracker.getPassword());
-            vaultOperations.write("secret/"+uuidPass, upassMap);
+            if (vaultHelper.savePassword(bugTracker.getPassword(),uuidPass)){
+                bugTracker.setPassword(uuidPass);
+            }
             bugTracker.setProject(project.get());
-            bugTracker.setPassword(uuidPass);
             bugTrackerRepository.save(bugTracker);
             log.info("{} - Created new BugTracker for {} vulns {}", name, LogUtil.prepare(bugTracker.getProject().getName()), LogUtil.prepare(bugTracker.getVulns()));
             return new ResponseEntity<>(new Status("OK"), HttpStatus.CREATED);

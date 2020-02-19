@@ -6,6 +6,7 @@ import io.mixeway.db.entity.CodeVuln;
 import io.mixeway.db.entity.Project;
 import io.mixeway.db.repository.*;
 import io.mixeway.plugins.codescan.service.CodeScanClient;
+import io.mixeway.pojo.VaultHelper;
 import io.mixeway.rest.project.model.CodeCard;
 import io.mixeway.rest.project.model.CodeGroupPutModel;
 import io.mixeway.rest.project.model.CodeProjectPutModel;
@@ -63,7 +64,7 @@ public class CodeServiceTest {
     @Autowired
     CodeGroupRepository codeGroupRepository;
     @Mock
-    VaultOperations operations;
+    VaultHelper vaultHelper;
     @Mock
     FortifyApiClient fortifyApiClient;
     @Autowired
@@ -80,7 +81,7 @@ public class CodeServiceTest {
         MockitoAnnotations.initMocks(this);
         codeScanClients.add(fortifyApiClient);
         projectRiskAnalyzer = new ProjectRiskAnalyzer(codeVulnRepository,infrastructureVulnRepository,webAppVulnRepository,interfaceRepository);
-        codeService = new CodeService(projectRepository,codeProjectRepository,projectRiskAnalyzer,codeGroupRepository,operations,codeScanClients,codeVulnRepository,null,
+        codeService = new CodeService(projectRepository,codeProjectRepository,projectRiskAnalyzer,codeGroupRepository,vaultHelper,codeScanClients,codeVulnRepository,null,
                 null, null);
         initializeDB();
     }

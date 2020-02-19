@@ -1,5 +1,6 @@
 package io.mixeway.rest.admin.service;
 
+import io.mixeway.pojo.VaultHelper;
 import io.mixeway.rest.admin.model.AuthSettingsModel;
 import io.mixeway.rest.admin.model.SmtpSettingsModel;
 import org.assertj.core.api.Assertions;
@@ -51,12 +52,12 @@ public class AdminSettingsRestServiceTest {
     ProxiesRepository proxiesRepository;
     private AdminSettingsRestService adminSettingsRestService;
     @Mock
-    VaultOperations operations;
+    VaultHelper vaultHelper;
 
     @Before
     public void setUp(){
         MockitoAnnotations.initMocks(this);
-        adminSettingsRestService = new AdminSettingsRestService(settingsRepository,operations,routingDomainRepository,proxiesRepository);
+        adminSettingsRestService = new AdminSettingsRestService(settingsRepository,vaultHelper,routingDomainRepository,proxiesRepository);
     }
 
 
@@ -70,7 +71,7 @@ public class AdminSettingsRestServiceTest {
 
     @Test
     public void updateSmtpSettings() {
-        Mockito.when(operations.write(any(String.class), any(String.class))).thenReturn(null);
+        Mockito.when(vaultHelper.savePassword(any(String.class), any(String.class))).thenReturn(true);
         SmtpSettingsModel smtpSettingsModel = new SmtpSettingsModel();
         smtpSettingsModel.setSmtpAuth(true);
         smtpSettingsModel.setSmtpHost("test");

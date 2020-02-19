@@ -3,6 +3,7 @@ package io.mixeway.plugins.codescan.service;
 import io.mixeway.db.entity.Project;
 import io.mixeway.db.repository.CodeProjectRepository;
 import io.mixeway.plugins.codescan.model.CodeScanRequestModel;
+import io.mixeway.pojo.VaultHelper;
 import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,19 +40,19 @@ public class CodeScanService {
     private final CodeProjectRepository codeProjectRepository;
     private final CodeVulnRepository codeVulnRepository;
     private final CodeAccessVerifier codeAccessVerifier;
-    private final VaultOperations operations;
+    private final VaultHelper vaultHelper;
     private final List<CodeScanClient> codeScanClients;
 
     @Autowired
     CodeScanService(ProjectRepository projectRepository, CodeGroupRepository codeGroupRepository, CodeProjectRepository codeProjectRepository,
-                    CodeVulnRepository codeVulnRepository, CodeAccessVerifier codeAccessVerifier, VaultOperations operations,
+                    CodeVulnRepository codeVulnRepository, CodeAccessVerifier codeAccessVerifier, VaultHelper vaultHelper,
                     List<CodeScanClient> codeScanClients){
         this.projectRepository = projectRepository;
         this.codeGroupRepository = codeGroupRepository;
         this.codeProjectRepository = codeProjectRepository;
         this.codeVulnRepository = codeVulnRepository;
         this.codeAccessVerifier = codeAccessVerifier;
-        this.operations = operations;
+        this.vaultHelper = vaultHelper;
         this.codeScanClients = codeScanClients;
     }
 
@@ -179,12 +180,14 @@ public class CodeScanService {
     private CodeGroup updateCodeGroup(CodeScanRequestModel codeScanRequest, CodeGroup newCodeGroup) {
         newCodeGroup.setTechnique(codeScanRequest.getTech());
         newCodeGroup.setRepoUrl(codeScanRequest.getRepoUrl());
-        newCodeGroup.setRepoPassword(UUID.randomUUID().toString());
         newCodeGroup.setVersionIdAll(codeScanRequest.getFortifySSCVersionId());
         newCodeGroup = codeGroupRepository.save(newCodeGroup);
-        Map<String, String> mapa = new HashMap<>();
-        mapa.put("password", codeScanRequest.getRepoPassword());
-        operations.write("secret/"+newCodeGroup.getRepoPassword(), mapa);
+        String uuidToken = UUID.randomUUID().toString();
+        if (vaultHelper.savePassword(codeScanRequest.getRepoPassword(), uuidToken)){
+            newCodeGroup.setRepoPassword(uuidToken);
+        } else {
+            newCodeGroup.setRepoPassword(codeScanRequest.getRepoPassword());
+        }
         return newCodeGroup;
     }
 }

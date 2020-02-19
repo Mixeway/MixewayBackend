@@ -1,5 +1,6 @@
 package io.mixeway.rest.admin.service;
 
+import io.mixeway.pojo.VaultHelper;
 import org.assertj.core.api.Assertions;
 import org.codehaus.jettison.json.JSONException;
 import org.junit.Before;
@@ -66,7 +67,7 @@ public class AdminScannerRestServiceTest {
     @Autowired
     private ProxiesRepository proxiesRepository;
     @Mock
-    private VaultOperations operations;
+    private VaultHelper vaultHelper;
     @Mock
     private FortifyApiClient fortifyApiClient;
     @Mock
@@ -85,7 +86,7 @@ public class AdminScannerRestServiceTest {
         securityScanners.add(nessusApiClient);
         networkScanClients.add(nessusApiClient);
         adminScannerRestService = new AdminScannerRestService(routingDomainRepository,securityScanners,rfwApiClient,
-                operations,proxiesRepository,scannerTypeRepository, scannerRepository);
+                vaultHelper,proxiesRepository,scannerTypeRepository, scannerRepository);
         
         Scanner scanner = new Scanner();
         scanner.setScannerType(scannerTypeRepository.findByNameIgnoreCase("nessus"));
@@ -108,7 +109,7 @@ public class AdminScannerRestServiceTest {
 
     @Test
     public void addScanner() {
-        Mockito.when(operations.write(any(String.class), any(String.class))).thenReturn(null);
+        Mockito.when(vaultHelper.savePassword(any(String.class), any(String.class))).thenReturn(true);
         ScannerModel scannerModel = new ScannerModel();
         scannerModel.setAccesskey("test");
         scannerModel.setSecretkey("test");
@@ -122,7 +123,7 @@ public class AdminScannerRestServiceTest {
 
     @Test
     public void deleteScanner() {
-        Mockito.when(operations.write(any(String.class), any(String.class))).thenReturn(null);
+        Mockito.when(vaultHelper.savePassword(any(String.class), any(String.class))).thenReturn(true);
         ScannerModel scannerModel = new ScannerModel();
         scannerModel.setAccesskey("test");
         scannerModel.setSecretkey("test");
@@ -141,7 +142,7 @@ public class AdminScannerRestServiceTest {
 
     @Test
     public void testScanner() throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, IOException, JAXBException {
-        Mockito.when(operations.write(any(String.class), any(String.class))).thenReturn(null);
+        Mockito.when(vaultHelper.savePassword(any(String.class), any(String.class))).thenReturn(true);
         Mockito.when(nessusApiClient.initialize(any(Scanner.class))).thenReturn(true);
         ScannerModel scannerModel = new ScannerModel();
         scannerModel.setAccesskey("test");
@@ -159,7 +160,7 @@ public class AdminScannerRestServiceTest {
 
     @Test
     public void addRfw() throws Exception {
-        Mockito.when(operations.write(any(String.class), any(String.class))).thenReturn(null);
+        Mockito.when(vaultHelper.savePassword(any(String.class), any(String.class))).thenReturn(true);
         for (SecurityScanner securityScanner: securityScanners){
             Mockito.doNothing().when(securityScanner).saveScanner(any(ScannerModel.class));
         }

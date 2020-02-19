@@ -13,6 +13,7 @@ import io.mixeway.plugins.webappscan.acunetix.model.AcunetixSeverity;
 import io.mixeway.plugins.webappscan.model.*;
 import io.mixeway.pojo.SecureRestTemplate;
 import io.mixeway.pojo.SecurityScanner;
+import io.mixeway.pojo.VaultHelper;
 import io.mixeway.rest.model.ScannerModel;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
@@ -27,6 +28,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.vault.core.VaultOperations;
@@ -45,7 +47,7 @@ import javax.transaction.Transactional;
 @Service
 public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 	private final static Logger log = LoggerFactory.getLogger(AcunetixApiClient.class);
-	private final VaultOperations operations;
+	private final VaultHelper vaultHelper;
 	private final WebAppRepository webAppRepository;
 	private final WebAppVulnRepository webAppVulnRepository;
 	private final SecureRestTemplate secureRestTemplate;
@@ -56,10 +58,10 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 	private final ProxiesRepository proxiesRepository;
 
 	@Autowired
-	AcunetixApiClient(VaultOperations operations, WebAppRepository webAppRepository, WebAppVulnRepository webAppVulnRepository,
+	AcunetixApiClient(VaultHelper vaultHelper, WebAppRepository webAppRepository, WebAppVulnRepository webAppVulnRepository,
 					  SecureRestTemplate secureRestTemplate, StatusRepository statusRepository, RoutingDomainRepository routingDomainRepository,
 					  ScannerRepository scannerRepository, ScannerTypeRepository scannerTypeRepository, ProxiesRepository proxiesRepository){
-		this.operations = operations;
+		this.vaultHelper = vaultHelper;
 		this.webAppRepository = webAppRepository;
 		this.routingDomainRepository = routingDomainRepository;
 		this.scannerRepository = scannerRepository;
@@ -75,10 +77,8 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 	
 	private HttpHeaders prepareAuthHeader(io.mixeway.db.entity.Scanner scanner) throws Exception {
 		if (scanner.getScannerType().getName().equals(Constants.SCANNER_TYPE_ACUNETIX)) {
-			VaultResponseSupport<Map<String,Object>> password = operations.read("secret/"+scanner.getApiKey());
 			HttpHeaders headers = new HttpHeaders();
-			assert password != null;
-			headers.set("X-Auth", Objects.requireNonNull(password.getData()).get("password").toString());
+			headers.set("X-Auth", vaultHelper.getPassword(scanner.getApiKey()));
 			return headers;
 		} else
 			throw new Exception("Trying to prepare auth for non acunetix scanner. Somtheing went wrong..");
@@ -370,13 +370,15 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 			acunetix.setRoutingDomain(routingDomainRepository.getOne(scannerModel.getRoutingDomain()));
 		acunetix.setProxies(proxy);
 		acunetix.setApiUrl(scannerModel.getApiUrl());
-		acunetix.setApiKey(UUID.randomUUID().toString());
 		acunetix.setStatus(false);
 		acunetix.setScannerType(scannerType);
 		// api key put to vault
-		Map<String, String> apiKeyMap = new HashMap<>();
-		apiKeyMap.put("password", scannerModel.getApiKey());
-		operations.write("secret/"+acunetix.getApiKey(), apiKeyMap);
+		String uuidToken = UUID.randomUUID().toString();
+		if (vaultHelper.savePassword(scannerModel.getApiKey(), uuidToken )) {
+			acunetix.setApiKey(uuidToken);
+		} else {
+			acunetix.setApiKey(scannerModel.getApiKey());
+		}
 		scannerRepository.save(acunetix);
 	}
 

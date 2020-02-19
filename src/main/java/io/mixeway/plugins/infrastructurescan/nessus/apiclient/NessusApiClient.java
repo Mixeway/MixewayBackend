@@ -21,6 +21,7 @@ import io.mixeway.plugins.remotefirewall.apiclient.RfwApiClient;
 import io.mixeway.pojo.ScanHelper;
 import io.mixeway.pojo.SecureRestTemplate;
 import io.mixeway.pojo.SecurityScanner;
+import io.mixeway.pojo.VaultHelper;
 import io.mixeway.rest.model.ScannerModel;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
@@ -49,7 +50,7 @@ import io.mixeway.plugins.infrastructurescan.nessus.model.CreateScanRequest;
 @Component
 public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 	private final static Logger log = LoggerFactory.getLogger(NessusApiClient.class);
-	private final VaultOperations operations;
+	private final VaultHelper vaultHelper;
 	private final ScannerRepository scannerRepository;
 	private final NessusScanTemplateRepository nessusScanTemplateRepository;
 	private final AssetRepository assetRepository;
@@ -67,12 +68,12 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 	private final NetworkScanService networkScanService;
 	@Autowired
 	@Lazy
-	NessusApiClient(VaultOperations operations, ScannerRepository scannerRepository, NessusScanTemplateRepository nessusScanTemplateRepository,
+	NessusApiClient(VaultHelper vaultHelper, ScannerRepository scannerRepository, NessusScanTemplateRepository nessusScanTemplateRepository,
 					AssetRepository assetRepository, InterfaceRepository interfaceRepository, NessusScanRepository nessusScanRepository,
 					InfrastructureVulnRepository infrastructureVulnRepository, RfwApiClient rfwApiClient, ScanHelper scanHelper, NetworkScanService networkScanService,
 					SecureRestTemplate secureRestTemplate, ServiceRepository serviceRepository, StatusRepository statusRepository,
 					ScannerTypeRepository scannerTypeRepository, RoutingDomainRepository routingDomainRepository, ProxiesRepository proxiesRepository){
-		this.operations = operations;
+		this.vaultHelper = vaultHelper;
 		this.scannerRepository = scannerRepository;
 		this.nessusScanRepository = nessusScanRepository;
 		this.assetRepository = assetRepository;
@@ -125,17 +126,20 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 		if (scannerModel.getProxy() != 0)
 			proxy = proxiesRepository.getOne(scannerModel.getProxy());
 		io.mixeway.db.entity.Scanner nessus = new io.mixeway.db.entity.Scanner();
-		nessus.setAccessKey(UUID.randomUUID().toString());
-		nessus.setSecretKey(UUID.randomUUID().toString());
 		nessusOperations(scannerModel.getRoutingDomain(),nessus,proxy,scannerModel.getApiUrl(),scannerType);
 		// Secret key put to vault
-		Map<String, String> secretKeyMap = new HashMap<>();
-		secretKeyMap.put("password", scannerModel.getSecretkey());
-		operations.write("secret/"+nessus.getSecretKey(), secretKeyMap);
-		// Access key put to vault
-		secretKeyMap = new HashMap<>();
-		secretKeyMap.put("password", scannerModel.getAccesskey());
-		operations.write("secret/"+nessus.getAccessKey(), secretKeyMap);
+		String uuidTokenAccess = UUID.randomUUID().toString();
+		if (vaultHelper.savePassword(scannerModel.getAccesskey(), uuidTokenAccess)){
+			nessus.setAccessKey(uuidTokenAccess);
+		} else {
+			nessus.setAccessKey(scannerModel.getAccesskey());
+		}
+		String uuidTokenSecret = UUID.randomUUID().toString();
+		if (vaultHelper.savePassword(scannerModel.getSecretkey(), uuidTokenSecret)){
+			nessus.setSecretKey(uuidTokenSecret);
+		} else {
+			nessus.setSecretKey(scannerModel.getSecretkey());
+		}
 	}
 	private io.mixeway.db.entity.Scanner nessusOperations(Long domainId, io.mixeway.db.entity.Scanner nessus, Proxies proxy, String apiurl, ScannerType scannerType) throws Exception{
 		if(domainId == 0)
@@ -154,18 +158,10 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 
 
 	private HttpHeaders prepareAuthHeaderForNessus(io.mixeway.db.entity.Scanner scanner){
-		VaultResponseSupport<Map<String,Object>> secretKey = operations.read("secret/"+scanner.getSecretKey());
-		VaultResponseSupport<Map<String,Object>> accessKey = operations.read("secret/"+scanner.getAccessKey());
 		HttpHeaders headers = new HttpHeaders();
-		assert accessKey != null;
-		assert secretKey != null;
 		headers.set(Constants.NESSUS_APIKEYS, "accessKey="+
-				Objects.requireNonNull(accessKey.getData())
-						.get("password")
-						.toString()+"; secretKey="+
-				Objects.requireNonNull(secretKey.getData())
-						.get("password")
-						.toString());
+				vaultHelper.getPassword(scanner.getAccessKey())+"; secretKey="+
+				vaultHelper.getPassword(scanner.getSecretKey()));
 		return headers;
 	}
 	
