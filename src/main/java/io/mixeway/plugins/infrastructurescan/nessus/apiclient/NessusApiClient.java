@@ -214,13 +214,16 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 
 	//TODO: String to objectModel maping
 	private void createScan(NessusScan nessusScan) throws JSONException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
-		RestTemplate restTemplate =secureRestTemplate.prepareClientWithCertificate(nessusScan.getNessus());
-		ResponseEntity<String> response = restTemplate.exchange(nessusScan.getNessus().getApiUrl() + "/scans", HttpMethod.POST, prepareEntityForCreateUpdate(nessusScan), String.class);
-		if (response.getStatusCode() == HttpStatus.OK) {
-			handleCreateScanResponse(nessusScan, response.getBody());
-		}
-		else {
-			log.error("Error during Scan creation for {} and {} - {}",nessusScan.getNessus().getApiUrl(),nessusScan.getProject().getName(),response.getStatusCode().toString());
+		try {
+			RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(nessusScan.getNessus());
+			ResponseEntity<String> response = restTemplate.exchange(nessusScan.getNessus().getApiUrl() + "/scans", HttpMethod.POST, prepareEntityForCreateUpdate(nessusScan), String.class);
+			if (response.getStatusCode() == HttpStatus.OK) {
+				handleCreateScanResponse(nessusScan, response.getBody());
+			} else {
+				log.error("Error during Scan creation for {} and {} - {}", nessusScan.getNessus().getApiUrl(), nessusScan.getProject().getName(), response.getStatusCode().toString());
+			}
+		} catch (HttpClientErrorException e) {
+			log.error("Error during Nessus scan creation for {} - {}", nessusScan.getProject().getName(), e.getStatusCode());
 		}
 	}
 	//TODO: String to objectModel maping

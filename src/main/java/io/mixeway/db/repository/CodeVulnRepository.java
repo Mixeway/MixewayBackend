@@ -41,6 +41,7 @@ public interface CodeVulnRepository extends JpaRepository<CodeVuln, Long>{
 	@Query(value="select cv from CodeVuln cv where cv.analysis=:analysis")
 	Stream<CodeVuln> findAllCodeVulns(@Param("analysis") String analysis);
 	Stream<CodeVuln> findByCodeGroupInAndAnalysisNot(Set<CodeGroup> groups, String analysis);
+	Stream<CodeVuln> findByCodeGroupInAndAnalysis(Set<CodeGroup> groups, String analysis);
 	List<CodeVuln> findByCodeProjectInAndAnalysisNot(List<CodeProject> project, String analysis);
 	List<CodeVuln> findByCodeGroupInAndSeverityIn(Set<CodeGroup> groups, List<String> severities);
 	List<CodeVuln> findByCodeGroupInAndSeverityInAndAnalysis(Set<CodeGroup> groups, List<String> severities, String analysis);

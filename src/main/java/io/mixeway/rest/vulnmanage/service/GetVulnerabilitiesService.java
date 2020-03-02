@@ -194,7 +194,7 @@ public class GetVulnerabilitiesService {
         List<Vuln> tmpVulns = vulns.getVulnerabilities();
         List<CodeVuln> codeVulns = null;
         if (project != null) {
-            try (Stream<CodeVuln> vulnsForProject = codeVulnRepository.findByCodeGroupInAndAnalysisNot(project.getCodes(), "Not an Issue")) {
+            try (Stream<CodeVuln> vulnsForProject = codeVulnRepository.findByCodeGroupInAndAnalysis(project.getCodes(), Constants.FORTIFY_ANALYSIS_EXPLOITABLE)) {
                 codeVulns = vulnsForProject.collect(Collectors.toList());
             }
         }
