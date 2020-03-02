@@ -3,8 +3,7 @@ services: docker
 addons:
   sonarcloud:
     organization: "mixeway" # the key of the org you chose at step #3
-    token:
-      secure: $SONAR_TOKEN
+    token:  ${SONAR_TOKEN}
 
 
 script:
