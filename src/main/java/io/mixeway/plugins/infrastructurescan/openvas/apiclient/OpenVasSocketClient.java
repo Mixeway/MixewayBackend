@@ -369,6 +369,7 @@ public class OpenVasSocketClient implements NetworkScanClient, SecurityScanner {
             } else {
                 nessus.setPassword(scannerModel.getPassword());
             }
+            scannerRepository.save(nessus);
         }
     }
     private Scanner nessusOperations(Long domainId, Scanner nessus, Proxies proxy, String apiurl, ScannerType scannerType) throws Exception{

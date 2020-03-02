@@ -382,7 +382,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 		fortifyScanRequest.setCloudCtrlToken(vaultHelper.getPassword(fortify.get(0).getFortifytoken()));
 		fortifyScanRequest.setGroupName(cg.getName());
 		fortifyScanRequest.setUsername(cg.getRepoUsername());
-		fortifyScanRequest.setSingle(false);;
+		fortifyScanRequest.setSingle(false);
 		fortifyScanRequest.setPassword(vaultHelper.getPassword(cg.getRepoPassword()));
 		fortifyScanRequest.setVersionId(cg.getVersionIdAll());
 		fortifyScanRequest.setProjects(prepareProjectCodeForGroup(cg));
@@ -469,7 +469,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 					.getRestTemplate()
 					.exchange(scanner.getApiUrl() + API_GET_VERSIONS, HttpMethod.GET, codeRequestHelper.getHttpEntity(), FortifyProjectVersionDto.class);
 			if (response.getStatusCode() == HttpStatus.OK) {
-				for (FortifyProjectVersions fpv : response.getBody().getFortifyProjectVersions()) {
+				for (FortifyProjectVersions fpv : Objects.requireNonNull(response.getBody()).getFortifyProjectVersions()) {
 					SASTProject sastProject = new SASTProject(fpv.getId(), fpv.getProject().getName() + " - " + fpv.getName());
 					sastProjects.add(sastProject);
 				}

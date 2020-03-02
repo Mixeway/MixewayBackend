@@ -140,6 +140,7 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 		} else {
 			nessus.setSecretKey(scannerModel.getSecretkey());
 		}
+		scannerRepository.save(nessus);
 	}
 	private io.mixeway.db.entity.Scanner nessusOperations(Long domainId, io.mixeway.db.entity.Scanner nessus, Proxies proxy, String apiurl, ScannerType scannerType) throws Exception{
 		if(domainId == 0)

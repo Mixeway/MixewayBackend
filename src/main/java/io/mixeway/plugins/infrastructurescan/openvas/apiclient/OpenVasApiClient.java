@@ -548,6 +548,7 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 			} else {
 				nessus.setPassword(scannerModel.getPassword());
 			}
+			scannerRepository.save(nessus);
 		}
 	}
 	private io.mixeway.db.entity.Scanner nessusOperations(Long domainId, Scanner nessus, Proxies proxy, String apiurl, ScannerType scannerType) throws Exception{
