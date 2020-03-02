@@ -55,21 +55,17 @@ public class CronScheduler {
     private final RfwApiClient rfwApiClient;
     private final ScanHelper scanHelper;
     private final DependencyTrackApiClient dependencyTrackApiClient;
-    private final CheckmarxApiClient checkmarxApiClient;
-    private final ScannerRepository scannerRepository;
     @Autowired
-    public CronScheduler(SettingsRepository settingsRepository, VulnHistoryRepository vulnHistoryRepository, CheckmarxApiClient checkmarxApiClient,
+    public CronScheduler(SettingsRepository settingsRepository, VulnHistoryRepository vulnHistoryRepository,
             ProjectRepository projectRepository, WebAppVulnRepository webAppVulnRepository, DependencyTrackApiClient dependencyTrackApiClient,
             CodeVulnRepository codeVulnRepository,  NodeAuditRepository nodeAuditRepository, InfrastructureVulnRepository infrastructureVulnRepository,
             InterfaceRepository interfaceRepository, NessusScanRepository nessusScanRepository, JavaMailSender sender,
             SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository,RfwApiClient rfwApiClient,
-            ScanHelper scanHelper, CodeProjectRepository codeProjectRepository, ScannerRepository scannerRepository) {
+            ScanHelper scanHelper, CodeProjectRepository codeProjectRepository) {
         this.settingsRepository = settingsRepository;
         this.codeProjectRepository = codeProjectRepository;
-        this.scannerRepository = scannerRepository;
         this.projectRepository = projectRepository;
         this.vulnHistoryRepository = vulnHistoryRepository;
-        this.checkmarxApiClient = checkmarxApiClient;
         this.webAppVulnRepository = webAppVulnRepository;
         this.codeVulnRepository = codeVulnRepository;
         this.dependencyTrackApiClient = dependencyTrackApiClient;
@@ -214,70 +210,80 @@ public class CronScheduler {
         vulnsForProject.sort(Comparator.comparing(VulnHistory::getInserted));
        //Network scan
        try {
-           if (vulnsForProject.get(6).getInfrastructureVulnHistory() > vulnsForProject.get(0).getInfrastructureVulnHistory()) {
-               vulns.add(new EmailVulnHelper(project, (int) (vulnsForProject.get(6).getInfrastructureVulnHistory() - vulnsForProject.get(0).getInfrastructureVulnHistory()),
-                       "Increased     (+", "Network Security Test", "red", vulnsForProject.get(6).getInserted(), vulnsForProject.get(0).getInserted(),
-                       vulnsForProject.get(6).getInfrastructureVulnHistory().intValue()));
-           } else if (vulnsForProject.get(6).getInfrastructureVulnHistory() < vulnsForProject.get(0).getInfrastructureVulnHistory()) {
-               vulns.add(new EmailVulnHelper(project, (int) (vulnsForProject.get(0).getInfrastructureVulnHistory() - vulnsForProject.get(6).getInfrastructureVulnHistory()),
-                       "Decreased     (-", "Network Security Test", "green", vulnsForProject.get(6).getInserted(), vulnsForProject.get(0).getInserted(),
-                       vulnsForProject.get(6).getInfrastructureVulnHistory().intValue()));
-           } else
-               vulns.add(new EmailVulnHelper(project, 0,
-                       "Not changed  (", "Network Security Test", "blue", vulnsForProject.get(6).getInserted(), vulnsForProject.get(0).getInserted(),
-                       vulnsForProject.get(6).getInfrastructureVulnHistory().intValue()));
+           if (project.getAssets().size() > 0) {
+               if (vulnsForProject.get(6).getInfrastructureVulnHistory() > vulnsForProject.get(0).getInfrastructureVulnHistory()) {
+                   vulns.add(new EmailVulnHelper(project, (int) (vulnsForProject.get(6).getInfrastructureVulnHistory() - vulnsForProject.get(0).getInfrastructureVulnHistory()),
+                           "Increased     (+", "Network Security Test", "red", vulnsForProject.get(6).getInserted(), vulnsForProject.get(0).getInserted(),
+                           vulnsForProject.get(6).getInfrastructureVulnHistory().intValue()));
+               } else if (vulnsForProject.get(6).getInfrastructureVulnHistory() < vulnsForProject.get(0).getInfrastructureVulnHistory()) {
+                   vulns.add(new EmailVulnHelper(project, (int) (vulnsForProject.get(0).getInfrastructureVulnHistory() - vulnsForProject.get(6).getInfrastructureVulnHistory()),
+                           "Decreased     (-", "Network Security Test", "green", vulnsForProject.get(6).getInserted(), vulnsForProject.get(0).getInserted(),
+                           vulnsForProject.get(6).getInfrastructureVulnHistory().intValue()));
+               } else
+                   vulns.add(new EmailVulnHelper(project, 0,
+                           "Not changed  (", "Network Security Test", "blue", vulnsForProject.get(6).getInserted(), vulnsForProject.get(0).getInserted(),
+                           vulnsForProject.get(6).getInfrastructureVulnHistory().intValue()));
+           }
            //Audit
-           if (vulnsForProject.get(6).getAuditVulnHistory() > vulnsForProject.get(0).getAuditVulnHistory()) {
-               vulns.add(new EmailVulnHelper(project, (int) (vulnsForProject.get(6).getAuditVulnHistory() - vulnsForProject.get(0).getAuditVulnHistory()),
-                       "Increased    (+", "CIS Compliance", "red", vulnsForProject.get(6).getInserted(), vulnsForProject.get(0).getInserted(),
-                       vulnsForProject.get(6).getAuditVulnHistory().intValue()));
-           } else if (vulnsForProject.get(6).getAuditVulnHistory() < vulnsForProject.get(0).getAuditVulnHistory()) {
-               vulns.add(new EmailVulnHelper(project, (int) (vulnsForProject.get(0).getAuditVulnHistory() - vulnsForProject.get(6).getAuditVulnHistory()),
-                       "Decreased    (-", "CIS Compliance", "green", vulnsForProject.get(6).getInserted(), vulnsForProject.get(0).getInserted(),
-                       vulnsForProject.get(6).getAuditVulnHistory().intValue()));
-           } else
-               vulns.add(new EmailVulnHelper(project, 0,
-                       "Not changed  (", "CIS Compliance", "blue", vulnsForProject.get(6).getInserted(), vulnsForProject.get(0).getInserted(),
-                       vulnsForProject.get(6).getAuditVulnHistory().intValue()));
+           if (project.getNodes().size() > 0 ) {
+               if (vulnsForProject.get(6).getAuditVulnHistory() > vulnsForProject.get(0).getAuditVulnHistory()) {
+                   vulns.add(new EmailVulnHelper(project, (int) (vulnsForProject.get(6).getAuditVulnHistory() - vulnsForProject.get(0).getAuditVulnHistory()),
+                           "Increased    (+", "CIS Compliance", "red", vulnsForProject.get(6).getInserted(), vulnsForProject.get(0).getInserted(),
+                           vulnsForProject.get(6).getAuditVulnHistory().intValue()));
+               } else if (vulnsForProject.get(6).getAuditVulnHistory() < vulnsForProject.get(0).getAuditVulnHistory()) {
+                   vulns.add(new EmailVulnHelper(project, (int) (vulnsForProject.get(0).getAuditVulnHistory() - vulnsForProject.get(6).getAuditVulnHistory()),
+                           "Decreased    (-", "CIS Compliance", "green", vulnsForProject.get(6).getInserted(), vulnsForProject.get(0).getInserted(),
+                           vulnsForProject.get(6).getAuditVulnHistory().intValue()));
+               } else
+                   vulns.add(new EmailVulnHelper(project, 0,
+                           "Not changed  (", "CIS Compliance", "blue", vulnsForProject.get(6).getInserted(), vulnsForProject.get(0).getInserted(),
+                           vulnsForProject.get(6).getAuditVulnHistory().intValue()));
+           }
            //CODE scan
-           if (vulnsForProject.get(6).getCodeVulnHistory() > vulnsForProject.get(0).getCodeVulnHistory()) {
-               vulns.add(new EmailVulnHelper(project, (int) (vulnsForProject.get(6).getCodeVulnHistory() - vulnsForProject.get(0).getCodeVulnHistory()),
-                       "Increased    (+", "Static Source Code Security Audit", "red", vulnsForProject.get(6).getInserted(),
-                       vulnsForProject.get(0).getInserted(), vulnsForProject.get(6).getCodeVulnHistory().intValue()));
-           } else if (vulnsForProject.get(6).getCodeVulnHistory() < vulnsForProject.get(0).getCodeVulnHistory()) {
-               vulns.add(new EmailVulnHelper(project, (int) (vulnsForProject.get(0).getCodeVulnHistory() - vulnsForProject.get(6).getCodeVulnHistory()),
-                       "Decreased    (-", "Static Source Code Security Audit", "green", vulnsForProject.get(6).getInserted(),
-                       vulnsForProject.get(0).getInserted(), vulnsForProject.get(6).getCodeVulnHistory().intValue()));
-           } else
-               vulns.add(new EmailVulnHelper(project, 0,
-                       "Not changed  (", "Static Source Code Security Audit", "blue", vulnsForProject.get(6).getInserted(),
-                       vulnsForProject.get(0).getInserted(), vulnsForProject.get(6).getCodeVulnHistory().intValue()));
+           if ( project.getCodes().size() > 0) {
+               if (vulnsForProject.get(6).getCodeVulnHistory() > vulnsForProject.get(0).getCodeVulnHistory()) {
+                   vulns.add(new EmailVulnHelper(project, (int) (vulnsForProject.get(6).getCodeVulnHistory() - vulnsForProject.get(0).getCodeVulnHistory()),
+                           "Increased    (+", "Static Source Code Security Audit", "red", vulnsForProject.get(6).getInserted(),
+                           vulnsForProject.get(0).getInserted(), vulnsForProject.get(6).getCodeVulnHistory().intValue()));
+               } else if (vulnsForProject.get(6).getCodeVulnHistory() < vulnsForProject.get(0).getCodeVulnHistory()) {
+                   vulns.add(new EmailVulnHelper(project, (int) (vulnsForProject.get(0).getCodeVulnHistory() - vulnsForProject.get(6).getCodeVulnHistory()),
+                           "Decreased    (-", "Static Source Code Security Audit", "green", vulnsForProject.get(6).getInserted(),
+                           vulnsForProject.get(0).getInserted(), vulnsForProject.get(6).getCodeVulnHistory().intValue()));
+               } else
+                   vulns.add(new EmailVulnHelper(project, 0,
+                           "Not changed  (", "Static Source Code Security Audit", "blue", vulnsForProject.get(6).getInserted(),
+                           vulnsForProject.get(0).getInserted(), vulnsForProject.get(6).getCodeVulnHistory().intValue()));
+
+               //OpenSource
+               if (vulnsForProject.get(6).getSoftwarePacketVulnNumber() > vulnsForProject.get(0).getSoftwarePacketVulnNumber()) {
+                   vulns.add(new EmailVulnHelper(project, (int) (vulnsForProject.get(6).getSoftwarePacketVulnNumber() - vulnsForProject.get(0).getSoftwarePacketVulnNumber()),
+                           "Increased    (+", "OpenSource Scanner", "red", vulnsForProject.get(6).getInserted(),
+                           vulnsForProject.get(0).getInserted(), vulnsForProject.get(6).getSoftwarePacketVulnNumber().intValue()));
+               } else if (vulnsForProject.get(6).getSoftwarePacketVulnNumber() < vulnsForProject.get(0).getSoftwarePacketVulnNumber()) {
+                   vulns.add(new EmailVulnHelper(project, (int) (vulnsForProject.get(0).getSoftwarePacketVulnNumber() - vulnsForProject.get(6).getSoftwarePacketVulnNumber()),
+                           "Decreased    (-", "OpenSource Scanner", "green", vulnsForProject.get(6).getInserted(),
+                           vulnsForProject.get(0).getInserted(), vulnsForProject.get(6).getSoftwarePacketVulnNumber().intValue()));
+               } else
+                   vulns.add(new EmailVulnHelper(project, 0,
+                           "Not changed  (", "OpenSource Scanner", "blue", vulnsForProject.get(6).getInserted(),
+                           vulnsForProject.get(0).getInserted(), vulnsForProject.get(6).getSoftwarePacketVulnNumber().intValue()));
+           }
            //DAST
-           if (vulnsForProject.get(6).getWebAppVulnHistory() > vulnsForProject.get(0).getWebAppVulnHistory()) {
-               vulns.add(new EmailVulnHelper(project, (int) (vulnsForProject.get(6).getWebAppVulnHistory() - vulnsForProject.get(0).getWebAppVulnHistory()),
-                       "Increased    (+", "Dynamic Web Application Scanner", "red", vulnsForProject.get(6).getInserted(),
-                       vulnsForProject.get(0).getInserted(), vulnsForProject.get(6).getWebAppVulnHistory().intValue()));
-           } else if (vulnsForProject.get(6).getWebAppVulnHistory() < vulnsForProject.get(0).getWebAppVulnHistory()) {
-               vulns.add(new EmailVulnHelper(project, (int) (vulnsForProject.get(0).getWebAppVulnHistory() - vulnsForProject.get(6).getWebAppVulnHistory()),
-                       "Decreased    (-", "Dynamic Web Application Scanner", "green", vulnsForProject.get(6).getInserted(),
-                       vulnsForProject.get(0).getInserted(), vulnsForProject.get(6).getWebAppVulnHistory().intValue()));
-           } else
-               vulns.add(new EmailVulnHelper(project, 0,
-                       "Not changed  (", "Dynamic Web Application Scanner", "blue", vulnsForProject.get(6).getInserted(),
-                       vulnsForProject.get(0).getInserted(), vulnsForProject.get(6).getWebAppVulnHistory().intValue()));
-           //OpenSource
-           if (vulnsForProject.get(6).getSoftwarePacketVulnNumber() > vulnsForProject.get(0).getSoftwarePacketVulnNumber()) {
-               vulns.add(new EmailVulnHelper(project, (int) (vulnsForProject.get(6).getSoftwarePacketVulnNumber() - vulnsForProject.get(0).getSoftwarePacketVulnNumber()),
-                       "Increased    (+", "OpenSource Scanner", "red", vulnsForProject.get(6).getInserted(),
-                       vulnsForProject.get(0).getInserted(), vulnsForProject.get(6).getSoftwarePacketVulnNumber().intValue()));
-           } else if (vulnsForProject.get(6).getSoftwarePacketVulnNumber() < vulnsForProject.get(0).getSoftwarePacketVulnNumber()) {
-               vulns.add(new EmailVulnHelper(project, (int) (vulnsForProject.get(0).getSoftwarePacketVulnNumber() - vulnsForProject.get(6).getSoftwarePacketVulnNumber()),
-                       "Decreased    (-", "OpenSource Scanner", "green", vulnsForProject.get(6).getInserted(),
-                       vulnsForProject.get(0).getInserted(), vulnsForProject.get(6).getSoftwarePacketVulnNumber().intValue()));
-           } else
-               vulns.add(new EmailVulnHelper(project, 0,
-                       "Not changed  (", "OpenSource Scanner", "blue", vulnsForProject.get(6).getInserted(),
-                       vulnsForProject.get(0).getInserted(), vulnsForProject.get(6).getSoftwarePacketVulnNumber().intValue()));
+           if ( project.getWebapps().size() > 0 ) {
+               if (vulnsForProject.get(6).getWebAppVulnHistory() > vulnsForProject.get(0).getWebAppVulnHistory()) {
+                   vulns.add(new EmailVulnHelper(project, (int) (vulnsForProject.get(6).getWebAppVulnHistory() - vulnsForProject.get(0).getWebAppVulnHistory()),
+                           "Increased    (+", "Dynamic Web Application Scanner", "red", vulnsForProject.get(6).getInserted(),
+                           vulnsForProject.get(0).getInserted(), vulnsForProject.get(6).getWebAppVulnHistory().intValue()));
+               } else if (vulnsForProject.get(6).getWebAppVulnHistory() < vulnsForProject.get(0).getWebAppVulnHistory()) {
+                   vulns.add(new EmailVulnHelper(project, (int) (vulnsForProject.get(0).getWebAppVulnHistory() - vulnsForProject.get(6).getWebAppVulnHistory()),
+                           "Decreased    (-", "Dynamic Web Application Scanner", "green", vulnsForProject.get(6).getInserted(),
+                           vulnsForProject.get(0).getInserted(), vulnsForProject.get(6).getWebAppVulnHistory().intValue()));
+               } else
+                   vulns.add(new EmailVulnHelper(project, 0,
+                           "Not changed  (", "Dynamic Web Application Scanner", "blue", vulnsForProject.get(6).getInserted(),
+                           vulnsForProject.get(0).getInserted(), vulnsForProject.get(6).getWebAppVulnHistory().intValue()));
+           }
+
        } catch (IndexOutOfBoundsException e){
            throw new Exception("Cannot create Trend Email not enough data");
        }
