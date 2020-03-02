@@ -1,6 +1,9 @@
 package io.mixeway.pojo;
 
 import io.mixeway.config.Constants;
+import io.mixeway.plugins.infrastructurescan.nessus.apiclient.NessusApiClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -14,6 +17,7 @@ import java.util.Objects;
 
 @Component
 public class VaultHelper {
+    private final static Logger log = LoggerFactory.getLogger(VaultHelper.class);
 
     @Value("${spring.cloud.vault.host}")
     private String vaultHostname;
@@ -50,13 +54,19 @@ public class VaultHelper {
     }
 
     public String getPassword(String passwordLoc){
-        if (vaultHostname.equals(Constants.DEFAULT)){
-            return passwordLoc;
-        } else {
-            VaultResponseSupport<Map<String,Object>> password = vaultOperations.read("secret/"+passwordLoc);
-            assert password != null;
-            return Objects.requireNonNull(password.getData()).get(Constants.PASSWORD).toString();
+        try {
+            if (vaultHostname.equals(Constants.DEFAULT)) {
+                return passwordLoc;
+            } else {
+                VaultResponseSupport<Map<String, Object>> password = vaultOperations.read("secret/" + passwordLoc);
+                assert password != null;
+                return Objects.requireNonNull(password.getData()).get(Constants.PASSWORD).toString();
+            }
+        } catch (NullPointerException ne) {
+            log.error("Error during Vault getting password. There might be problem while integrating Vault on already working instance");
         }
+        return "";
+
     }
 
 

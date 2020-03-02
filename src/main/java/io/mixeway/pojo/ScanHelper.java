@@ -30,6 +30,7 @@ public class ScanHelper {
     private NessusScanRepository nessusScanRepository;
     private List<NetworkScanClient> networkScanClients;
 
+
     @Lazy
     @Autowired
     ScanHelper(AssetRepository assetRepository, InterfaceRepository interfaceRepository, ScannerTypeRepository scannerTypeRepository,
@@ -175,6 +176,7 @@ public class ScanHelper {
                     networkScanClient.runScanManual(scan);
                 }
             }
+            updateInterfaceState(scan,true);
             return true;
         } catch (Exception e){
             e.printStackTrace();
