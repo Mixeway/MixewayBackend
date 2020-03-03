@@ -357,6 +357,10 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 			}
 		} catch (HttpClientErrorException e){
 			log.error("Client Exception occured - {} - during scan status check for url {}", e.getStatusCode(),ns.getNessus().getApiUrl() + "/scans/" + ns.getScanId());
+			if (ns.getScanId() == 0) {
+				ns.setRunning(false);
+				nessusScanRepository.save(ns);
+			}
 		}
 		return false;
 	}
