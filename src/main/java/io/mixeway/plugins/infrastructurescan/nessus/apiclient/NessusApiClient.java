@@ -221,7 +221,10 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 				handleCreateScanResponse(nessusScan, response.getBody());
 			}
 		} catch (HttpClientErrorException e) {
-			log.error("Error during Nessus scan creation for {} - {} - {} - {}", nessusScan.getProject().getName(), e.getStatusCode(),nessusScan.getNessus().getApiUrl() + "/scans", e.getResponseBodyAsString());
+			log.error("Error during Nessus scan creation for {} - {} - {} - {} ", nessusScan.getProject().getName(), e.getStatusCode(),nessusScan.getNessus().getApiUrl() + "/scans", e.getResponseBodyAsString());
+			e.getResponseHeaders().forEach((k, v) -> {
+				System.out.println("Key: " + k + ", Value: " + v);
+			});
 		}
 	}
 	//TODO: String to objectModel maping
