@@ -16,7 +16,6 @@ public class TrustStoreConfig {
     private void configureSSL() {
         System.setProperty("javax.net.ssl.trustStore", trustStorePath);
         System.setProperty("javax.net.ssl.trustStorePassword",trustStorePassword);
-        System.out.println("Properly set truststore for Project");
 
     }
 }

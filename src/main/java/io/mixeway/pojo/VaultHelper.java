@@ -31,14 +31,14 @@ public class VaultHelper {
     @PostConstruct
     private void warrning() {
         if (vaultHostname == null || vaultHostname.equals(Constants.DEFAULT)){
-            System.out.println("####################################");
-            System.out.println("#             WARRNING!            #");
-            System.out.println("# Vault Configuration is not set   #");
-            System.out.println("# Scanner passwords will be stored #");
-            System.out.println("# in clear text. It is recommended #");
-            System.out.println("# To use vault.                    #");
-            System.out.println("# Read Mixeway docummentation      #");
-            System.out.println("####################################");
+            System.out.println("####################################################################################################################");
+            System.out.println("#                                                   WARRNING!                                                      #");
+            System.out.println("#                                         Vault Configuration is not set                                           #");
+            System.out.println("#                                         Scanner passwords will be stored                                         #");
+            System.out.println("#                                         in clear text. It is recommended                                         #");
+            System.out.println("#                                         To use vault.                                                            #");
+            System.out.println("#                                         Read Mixeway docummentation                                              #");
+            System.out.println("####################################################################################################################");
         }
     }
 
