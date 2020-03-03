@@ -49,7 +49,7 @@ import io.mixeway.plugins.infrastructurescan.nessus.model.CreateScanRequest;
 
 @Component
 public class NessusApiClient implements NetworkScanClient, SecurityScanner {
-	private final static Logger log = LoggerFactory.getLogger(NessusApiClient.class);
+		private final static Logger log = LoggerFactory.getLogger(NessusApiClient.class);
 	private final VaultHelper vaultHelper;
 	private final ScannerRepository scannerRepository;
 	private final NessusScanTemplateRepository nessusScanTemplateRepository;
@@ -337,30 +337,32 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 
 	//TODO: String to objectModel maping
 	public boolean isScanDone(NessusScan ns) throws JSONException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, IOException, KeyStoreException, KeyManagementException {
-		RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(ns.getNessus());
-		HttpEntity<String> entity = new HttpEntity<>(prepareAuthHeaderForNessus(ns.getNessus()));
-		ResponseEntity<String> response = restTemplate.exchange(ns.getNessus().getApiUrl() + "/scans/"+ns.getScanId(),
-				HttpMethod.GET, entity, String.class);
-		
-		if (response.getStatusCode() == HttpStatus.OK) {
-			String scanStatus = new JSONObject(Objects.requireNonNull(response.getBody())).getJSONObject(Constants.NESSUS_SCAN_INFO).getString(Constants.NESSUS_SCAN_STATUS);
-			if (scanStatus.equals(Constants.NESSUS_SCAN_STATUS_COMPLETED) || scanStatus.equals(Constants.NESSUS_SCAN_STATUS_ABORTED)) {
-				try {
-					this.setHostsForInterfaces(response.getBody(),ns);
-				} catch (JSONException ex) {
-					ns.setRunning(false);
-					nessusScanRepository.save(ns);
-					log.warn("Nessus scan completed for {} but no hosts found", ns.getProject().getName());
+		try {
+			RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(ns.getNessus());
+			HttpEntity<String> entity = new HttpEntity<>(prepareAuthHeaderForNessus(ns.getNessus()));
+			ResponseEntity<String> response = restTemplate.exchange(ns.getNessus().getApiUrl() + "/scans/" + ns.getScanId(),
+					HttpMethod.GET, entity, String.class);
+
+			if (response.getStatusCode() == HttpStatus.OK) {
+				String scanStatus = new JSONObject(Objects.requireNonNull(response.getBody())).getJSONObject(Constants.NESSUS_SCAN_INFO).getString(Constants.NESSUS_SCAN_STATUS);
+				if (scanStatus.equals(Constants.NESSUS_SCAN_STATUS_COMPLETED) || scanStatus.equals(Constants.NESSUS_SCAN_STATUS_ABORTED)) {
+					try {
+						this.setHostsForInterfaces(response.getBody(), ns);
+					} catch (JSONException ex) {
+						ns.setRunning(false);
+						nessusScanRepository.save(ns);
+						log.warn("Nessus scan completed for {} but no hosts found", ns.getProject().getName());
+					}
+					log.info("Scan for {} is done", ns.getProject().getName());
+					return true;
 				}
-				log.info("Scan for {} is done",ns.getProject().getName());
-				return true;
+			} else {
+				log.error("Getting scan results of scanner {} failed return code is: {}", ns.getNessus().getApiUrl(), response.getStatusCode().toString());
 			}
-			else return false;
+		} catch (HttpClientErrorException e){
+			log.error("Client Exception occured - {} - during scan status check for url {}", e.getStatusCode(),ns.getNessus().getApiUrl() + "/scans/" + ns.getScanId());
 		}
-		else {
-			log.error("Getting scan results of scanner {} failed return code is: {}",ns.getNessus().getApiUrl(),response.getStatusCode().toString());
-			return false;
-		}
+		return false;
 	}
 
 
@@ -463,6 +465,8 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 			interfaceRepository.saveAndFlush(i);
 		} catch (NullPointerException e){
 			log.warn("Nullpoitnter during loading vuln for project {} asset {}", i.getAsset().getProject().getName(),i.getAsset().getName());
+		} catch (HttpClientErrorException e){
+			log.error("Client Exception - {} - during loading vulnerabilities for {}", e.getStatusCode(), ns.getNessus().getApiUrl() + "/scans/" + ns.getScanId() + "/hosts/" + i.getHostid());
 		}
 		
 	}

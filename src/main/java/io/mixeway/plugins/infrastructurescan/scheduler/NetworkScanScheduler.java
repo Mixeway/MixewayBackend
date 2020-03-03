@@ -84,7 +84,7 @@ public class NetworkScanScheduler {
 			if (nessusScanRepository.findByRunning(true).size() == 0 ){
 				interfaceRepository.updateStateForNotRunningScan();
 			}
-		} catch (UnexpectedRollbackException | JSONException | CertificateException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyManagementException | KeyStoreException | IOException | JAXBException| HttpClientErrorException ce ){
+		} catch (UnexpectedRollbackException | JSONException | CertificateException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyManagementException | KeyStoreException | IOException | JAXBException ce ){
 			log.warn("Exception during Network Scan synchro {}", ce.getLocalizedMessage());
 		}
 	}
