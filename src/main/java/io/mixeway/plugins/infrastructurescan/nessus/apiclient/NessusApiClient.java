@@ -219,11 +219,9 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 			ResponseEntity<String> response = restTemplate.exchange(nessusScan.getNessus().getApiUrl() + "/scans", HttpMethod.POST, prepareEntityForCreateUpdate(nessusScan), String.class);
 			if (response.getStatusCode() == HttpStatus.OK) {
 				handleCreateScanResponse(nessusScan, response.getBody());
-			} else {
-				log.error("Error during Scan creation for {} and {} - {}", nessusScan.getNessus().getApiUrl(), nessusScan.getProject().getName(), response.getStatusCode().toString());
 			}
 		} catch (HttpClientErrorException e) {
-			log.error("Error during Nessus scan creation for {} - {}", nessusScan.getProject().getName(), e.getStatusCode());
+			log.error("Error during Nessus scan creation for {} - {} - {} ", nessusScan.getProject().getName(), e.getStatusCode(),nessusScan.getNessus().getApiUrl() + "/scans");
 		}
 	}
 	//TODO: String to objectModel maping
@@ -262,11 +260,9 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 			if (response.getStatusCode() == HttpStatus.OK) {
 				nessusScan.setRunning(true);
 				nessusScanRepository.save(nessusScan);
-			} else {
-				log.error("Error during Scan Launching for {} and {} - {}", nessusScan.getNessus().getApiUrl(), nessusScan.getProject().getName(), response.getStatusCode().toString());
 			}
 		} catch (HttpClientErrorException e){
-			log.error("Error during Scan Launching for {} and {}", nessusScan.getNessus().getApiUrl(), nessusScan.getProject().getName());
+			log.error("Error during Scan Launching for {} - {} - ", nessusScan.getProject().getName(), e.getStatusCode(),nessusScan.getNessus().getApiUrl() + "/scans/" + nessusScan.getScanId() + "/launch");
 		}
 	}
 	private void putRulesOnRfw(NessusScan nessusScan)throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
