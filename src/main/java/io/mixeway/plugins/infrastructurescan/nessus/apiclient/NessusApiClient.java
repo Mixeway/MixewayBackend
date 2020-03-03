@@ -322,12 +322,16 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 
 	@Override
 	public void runScanManual(NessusScan nessusScan) throws Exception {
-		if (nessusScan.getScanId() == 0) {
-			this.createScan(nessusScan);
-			this.launchScan(nessusScan);
-		} else {
-			this.updateScan(nessusScan);
-			this.launchScan(nessusScan);
+		try {
+			if (nessusScan.getScanId() == 0) {
+				this.createScan(nessusScan);
+				this.launchScan(nessusScan);
+			} else {
+				this.updateScan(nessusScan);
+				this.launchScan(nessusScan);
+			}
+		} catch (Exception e){
+			log.error(e.getLocalizedMessage());
 		}
 	}
 
