@@ -29,7 +29,7 @@ public class NetworkScanApiController {
 
     @PreAuthorize("hasAuthority('ROLE_API')")
     @RequestMapping(value = "/api/koordynator/network",method = RequestMethod.POST)
-    public ResponseEntity<Status> createAndRunNetworkscan(@RequestBody NetworkScanRequestModel req) throws KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, CertificateException, JSONException, IOException, JAXBException {
+    public ResponseEntity<Status> createAndRunNetworkscan(@RequestBody NetworkScanRequestModel req) throws Exception {
         return networkScanService.createAndRunNetworkScan(req);
     }
     @PreAuthorize("hasAuthority('ROLE_API')")

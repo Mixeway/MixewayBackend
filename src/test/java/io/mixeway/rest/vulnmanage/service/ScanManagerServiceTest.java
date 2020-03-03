@@ -178,7 +178,7 @@ public class ScanManagerServiceTest {
     }
 
     @Test
-    public void createScanManageRequest() throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, IOException, JAXBException, ParseException {
+    public void createScanManageRequest() throws Exception {
         Mockito.when(networkScanService.createAndRunNetworkScan(any(NetworkScanRequestModel.class))).thenReturn(new ResponseEntity<>(new Status("OK","1"), HttpStatus.CREATED));
         Mockito.when(acunetixService.processScanWebAppRequest(any(Long.class), anyList())).thenReturn(new ResponseEntity<>(new Status("ok","1"), HttpStatus.CREATED));
         CreateScanManageRequest createScanManageRequest = new CreateScanManageRequest();

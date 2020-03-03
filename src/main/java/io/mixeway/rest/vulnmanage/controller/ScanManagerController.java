@@ -44,7 +44,7 @@ public class ScanManagerController {
     @PreAuthorize("hasAuthority('ROLE_API')")
     @PutMapping(value = "/create",produces = "application/json")
     public ResponseEntity<Status> createScanManageRequest(@Valid @RequestBody CreateScanManageRequest createScanManageRequest,
-                                                           Errors errors) throws IOException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, JAXBException, ParseException {
+                                                           Errors errors) throws Exception {
         if (errors.hasErrors() || !createScanManageRequest.isValid()){
             return new ResponseEntity<>(new Status("Allowed testTypes are: `network`,`webApp`,`code`"), HttpStatus.BAD_REQUEST);
         } else {

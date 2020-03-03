@@ -13,10 +13,8 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 
 public interface NetworkScanClient {
-    boolean runScan(NessusScan nessusScan) throws JSONException, CertificateException, UnrecoverableKeyException,
-            NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, JAXBException;
-    void runScanManual(NessusScan nessusScan) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException,
-            KeyManagementException, JSONException, KeyStoreException, IOException, JAXBException;
+    boolean runScan(NessusScan nessusScan) throws Exception;
+    void runScanManual(NessusScan nessusScan) throws Exception;
     boolean isScanDone(NessusScan nessusScan) throws JSONException, CertificateException, UnrecoverableKeyException,
             NoSuchAlgorithmException, IOException, KeyStoreException, KeyManagementException, JAXBException;
     void loadVulnerabilities(NessusScan nessusScan) throws JSONException, CertificateException, UnrecoverableKeyException,

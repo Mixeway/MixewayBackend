@@ -86,8 +86,7 @@ public class NetworkScanService {
             return new ResponseEntity<>(new Status("Project not found"), HttpStatus.NOT_FOUND);
         }
     }
-    public ResponseEntity<Status> createAndRunNetworkScan(NetworkScanRequestModel req) throws JSONException, KeyManagementException,
-            UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, CertificateException, IOException, JAXBException {
+    public ResponseEntity<Status> createAndRunNetworkScan(NetworkScanRequestModel req) throws Exception {
         log.info("Got request for scan from koordynator - system {}, asset no: {}", LogUtil.prepare(req.getProjectName()),req.getIpAddresses().size());
         Optional<List<Project>> projectFromReq = projectRepository.findByCiid(req.getCiid());
         Project project;
@@ -142,7 +141,7 @@ public class NetworkScanService {
             assetRepository.save(asset);
         }
     }
-    private NessusScan configureKoordynatorScan(Project project, List<Interface> intfs) throws JSONException, KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, CertificateException, IOException, JAXBException {
+    private NessusScan configureKoordynatorScan(Project project, List<Interface> intfs) throws Exception {
 
         io.mixeway.db.entity.Scanner nessus = findNessusForInterfaces(new HashSet<>(intfs));
         NessusScan scan = new NessusScan();

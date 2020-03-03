@@ -246,8 +246,7 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 		}
 	}
 	//TODO: String to objectModel maping
-	private void launchScan(NessusScan nessusScan) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException,
-			KeyManagementException, KeyStoreException, IOException {
+	private void launchScan(NessusScan nessusScan) throws Exception {
 		try {
 			RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(nessusScan.getNessus());
 			HttpEntity<String> entity = new HttpEntity<>(prepareAuthHeaderForNessus(nessusScan.getNessus()));
@@ -262,7 +261,8 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 				nessusScanRepository.save(nessusScan);
 			}
 		} catch (HttpClientErrorException e){
-			log.error("Error during Scan Launching for {} - {} - ", nessusScan.getProject().getName(), e.getStatusCode(),nessusScan.getNessus().getApiUrl() + "/scans/" + nessusScan.getScanId() + "/launch");
+			log.error("Error during Scan Launching for {} - {} - {}", nessusScan.getProject().getName(), e.getStatusCode(),nessusScan.getNessus().getApiUrl() + "/scans/" + nessusScan.getScanId() + "/launch");
+			throw new Exception("Error during Scan Launching");
 		}
 	}
 	private void putRulesOnRfw(NessusScan nessusScan)throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
@@ -308,7 +308,7 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 	}
 
 	@Override
-	public boolean runScan(NessusScan nessusScan) throws JSONException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+	public boolean runScan(NessusScan nessusScan) throws Exception {
 		if (!nessusScan.getRunning()) {
 			runScanManual(nessusScan);
 			//this.launchScan(nessusScan);
@@ -321,7 +321,7 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 	}
 
 	@Override
-	public void runScanManual(NessusScan nessusScan) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, IOException {
+	public void runScanManual(NessusScan nessusScan) throws Exception {
 		if (nessusScan.getScanId() == 0) {
 			this.createScan(nessusScan);
 			this.launchScan(nessusScan);

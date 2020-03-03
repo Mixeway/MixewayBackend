@@ -108,6 +108,8 @@ public class NetworkScanScheduler {
 					}
 				} catch (ResourceAccessException | NullPointerException | HttpServerErrorException | JAXBException | HttpClientErrorException e) {
 					log.error("Exception - {} came up during scan for {}",e.getLocalizedMessage(), ns.getProject().getName());
+				} catch (Exception e) {
+					log.error(e.getLocalizedMessage());
 				}
 			}
 		}
