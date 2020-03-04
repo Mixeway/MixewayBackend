@@ -125,7 +125,6 @@ public class CronScheduler {
             }
             log.info("Successfully synchronized with OpenSource scanner");
         } catch (Exception ignored) {
-            ignored.printStackTrace();
         }
 
     }
@@ -172,8 +171,7 @@ public class CronScheduler {
                         sender.send(message);
                     }
                 } catch( Exception e){
-                    e.printStackTrace();
-                    log.warn(e.getLocalizedMessage());
+                     log.warn(e.getLocalizedMessage());
                 }
             }
 
@@ -185,7 +183,7 @@ public class CronScheduler {
 
     }
     @Transactional
-    Long createCodeVulnHistory(Project p){
+    public Long createCodeVulnHistory(Project p){
         try (Stream<CodeVuln> codeVulnStream = codeVulnRepository.findByCodeGroupInAndAnalysisNot(p.getCodes(), "Not an Issue")){
             return codeVulnStream.count();
         }

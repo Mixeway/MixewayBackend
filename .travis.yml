@@ -10,5 +10,5 @@ script:
   - export VERSION=1.0.0
   - mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar -Dmaven.test.skip=true -Dsonar.projectKey=Mixeway_MixewayBackend -Dsonar.login=${SONAR_TOKEN}
   - docker build -t mixeway/backend:$VERSION .
-  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-  - docker push mixeway/backend:$VERSION
+  - if [[ $TRAVIS_BRANCH == 'master' ]]; then echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin; fi
+  - if [[ $TRAVIS_BRANCH == 'master' ]]; then docker push mixeway/backend:$VERSION; fi

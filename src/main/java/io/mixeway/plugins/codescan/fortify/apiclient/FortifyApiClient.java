@@ -18,6 +18,7 @@ import io.mixeway.rest.project.model.SASTProject;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
+import org.hibernate.jpa.internal.util.LogHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -522,7 +523,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 		fortifySingleApp.setFinished(true);
 		fortifySingleApp.setDownloaded(false);
 		fortifySingleAppRepository.saveAndFlush(fortifySingleApp);
-		log.info("Successfully put job {} from remote regarding {} / {}", jobId, codeGroup.getName(),codeProject.getName());
+		log.info("Successfully put job {} from remote regarding {} / {}", LogUtil.prepare(jobId), codeGroup.getName(),codeProject.getName());
 	}
 
 	private boolean fortifyCommitProject(Scanner scanner, CodeProject codeProject, int versionId) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {

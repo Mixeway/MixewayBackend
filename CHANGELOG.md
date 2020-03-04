@@ -1,5 +1,13 @@
+<a name="1.0.0"></a>
+## 1.0.0 (2020-02-08)
+
+### Info
+
+* Fixed vulnerabilities and bugs
+* Vault integration is now optional however no integration will cause password to be stored in plain text
+
 <a name="0.9.2"></a>
-## 0.9.1 (2020-02-08)
+## 0.9.2 (2020-02-08)
 
 ### Info
 

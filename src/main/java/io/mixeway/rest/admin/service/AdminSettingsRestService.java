@@ -229,7 +229,7 @@ public class AdminSettingsRestService {
             if (settings.isPresent()){
                 settings.get().setTrendEmailCron(cronSettings.getExpression());
                 settingsRepository.save(settings.get());
-                log.info("{} - Changed Cron auto scan start for code to {}", name, LogUtil.prepare(cronSettings.getExpression()));
+                log.info("{} - Changed Cron auto scan start for code to {}", LogUtil.prepare(name), LogUtil.prepare(cronSettings.getExpression()));
                 return new ResponseEntity<>( HttpStatus.OK);
             }
         } catch (ParseException e) {
