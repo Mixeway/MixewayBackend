@@ -190,7 +190,7 @@ public class GetVulnerabilitiesService {
     }
 
     @Transactional
-    Vulnerabilities setCodeVulns(Vulnerabilities vulns, Project project) {
+    public Vulnerabilities setCodeVulns(Vulnerabilities vulns, Project project) {
         List<Vuln> tmpVulns = vulns.getVulnerabilities();
         List<CodeVuln> codeVulns = null;
         if (project != null) {

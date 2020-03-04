@@ -262,7 +262,7 @@ public class CodeService {
     public ResponseEntity<Status> editCodeProject(Long id, EditCodeProjectModel editCodeProjectModel, String name) {
         Optional<CodeProject> codeProject = codeProjectRepository.findById(id);
         try{
-            if (codeProject.isPresent() && (editCodeProjectModel.getdTrackUuid() != null && editCodeProjectModel.getdTrackUuid() != "")) {
+            if (codeProject.isPresent() && (editCodeProjectModel.getdTrackUuid() != null && !editCodeProjectModel.getdTrackUuid().equals(""))) {
                 UUID uuid = UUID.fromString(editCodeProjectModel.getdTrackUuid());
                 codeProject.get().setdTrackUuid(editCodeProjectModel.getdTrackUuid());
                 codeProjectRepository.save(codeProject.get());
@@ -304,8 +304,8 @@ public class CodeService {
         List<Scanner>  scanners = scannerRepository.findByScannerTypeInAndStatus(scanneTypeRepository.getCodeScanners(), true);
         if (scanners.size() < 2 && scanners.stream().findFirst().isPresent()){
             for (CodeScanClient csc : codeScanClients){
-                if (csc.canProcessRequest(scanners.stream().findFirst().get())){
-                    return new ResponseEntity<>(csc.getProjects(scanners.stream().findFirst().get()), HttpStatus.OK);
+                if (csc.canProcessRequest(scanners.stream().findFirst().orElse(null))){
+                    return new ResponseEntity<>(csc.getProjects(scanners.stream().findFirst().orElse(null)), HttpStatus.OK);
                 }
             }
         }
@@ -322,7 +322,7 @@ public class CodeService {
                 && scanners.size() < 2
                 && scanners.stream().findFirst().isPresent()){
             for (CodeScanClient csc : codeScanClients){
-                if (csc.canProcessRequest(scanners.stream().findFirst().get()) && csc.createProject(scanners.stream().findFirst().get(), codeProject.get())){
+                if (csc.canProcessRequest(scanners.stream().findFirst().orElse(null)) && csc.createProject(scanners.stream().findFirst().orElse(null), codeProject.get())){
                     return new ResponseEntity<>(new Status("created"), HttpStatus.CREATED);
                 }
             }
