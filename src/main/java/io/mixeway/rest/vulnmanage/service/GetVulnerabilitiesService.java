@@ -189,8 +189,7 @@ public class GetVulnerabilitiesService {
         return vulns;
     }
 
-    @Transactional
-    public Vulnerabilities setCodeVulns(Vulnerabilities vulns, Project project) {
+    private Vulnerabilities setCodeVulns(Vulnerabilities vulns, Project project) {
         List<Vuln> tmpVulns = vulns.getVulnerabilities();
         List<CodeVuln> codeVulns = null;
         if (project != null) {
@@ -363,7 +362,7 @@ public class GetVulnerabilitiesService {
         vulns.setVulnerabilities(tmpVulns);
         return vulns;
     }
-
+    @Transactional
     public ResponseEntity<String> getVulnerabilitiesByProjectAndType(String type, Long id) throws UnknownHostException {
         Project project = projectRepository.getOne(id);
         if (scannerTypes.contains(type) && project != null) {
@@ -393,6 +392,7 @@ public class GetVulnerabilitiesService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Proper scanner type is: networkScanner,webApplicationScanner,codeScanner, audit,packageScan");
 
     }
+    @Transactional
     public ResponseEntity<String> getVulnerabilitiesByType(String type) throws UnknownHostException {
         if (scannerTypes.contains(type)) {
             log.info("Vulnerabilities access granted: {}",type);
@@ -491,7 +491,7 @@ public class GetVulnerabilitiesService {
         }
         return vulnManageResponses;
     }
-
+    @Transactional
     public ResponseEntity<Vulnerabilities> getVulnerabilitiesByProject(Long id) throws UnknownHostException {
         Vulnerabilities vulns = new Vulnerabilities();
         Project project = projectRepository.getOne(id);

@@ -215,7 +215,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
                     .getRestTemplate()
                     .exchange(scanner.getApiUrl() + Constants.CX_GET_TEAMS_API, HttpMethod.GET, codeRequestHelper.getHttpEntity(), new ParameterizedTypeReference<List<CxTeamResponse>>() {});
             if (response.getStatusCode().equals(HttpStatus.OK) && Objects.requireNonNull(response.getBody()).stream().findFirst().isPresent()) {
-                scanner.setTeam(Objects.requireNonNull(response.getBody()).stream().filter(Objects::nonNull).findFirst().get().getId());
+                scanner.setTeam(Objects.requireNonNull(Objects.requireNonNull(response.getBody()).stream().findFirst().orElse(null)).getId());
                 scannerRepository.save(scanner);
                 return true;
             }

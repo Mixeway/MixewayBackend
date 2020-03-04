@@ -18,17 +18,16 @@ import java.util.Objects;
 @Component
 public class VaultHelper {
     private final static Logger log = LoggerFactory.getLogger(VaultHelper.class);
-
-    @Value("${spring.cloud.vault.host}")
     private String vaultHostname;
+
     private final VaultOperations vaultOperations;
     @Autowired
-    public VaultHelper(VaultOperations vaultOperations){
+    public VaultHelper(@Value("${spring.cloud.vault.host}") String vaultHostname, VaultOperations vaultOperations){
         this.vaultOperations = vaultOperations;
+        this.vaultHostname = vaultHostname;
         warrning();
 
     }
-    @PostConstruct
     private void warrning() {
         if (vaultHostname == null || vaultHostname.equals(Constants.DEFAULT)){
             System.out.println("####################################################################################################################");
