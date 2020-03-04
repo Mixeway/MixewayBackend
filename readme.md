@@ -6,11 +6,6 @@
 
 # Mixeway Backend <img src="https://mixeway.github.io/img/logo_dashboard.png" height="60px">
 
-### Disclaimer:
-> The current version of Mixaway (0.9) is considered as beta. It contains several bugs and vulnerabilities. Every fix
-is put on the board and proceed to make sure version 1.0 will be vulnerability and bug-free. 
-
-
 ### About Mixeway:
 Mixeway is an OpenSource software that is meant to simplify the process of security assurance of projects which are implemented using CICD procedures. **Mixawey is not another vulnerability scanning
 software - it is security orchestration tool**.
@@ -20,7 +15,7 @@ With number of plugins for Vulnerability Scanners :
 <img src="https://mixeway.github.io/img/openvas.jpg" height="50px">
 <img src="https://mixeway.github.io/img/acunetix.jpg" height="50px">
 <img src="https://mixeway.github.io/img/fortify.jpg" height="50px">
-<img src="https://mixeway.github.io/img/depcheck.png" height="50px">
+<img src="https://mixeway.github.io/img/deptrack.png" height="50px">
 <img src="https://mixeway.github.io/img/cis.png" height="50px">
 <img src="https://mixeway.github.io/img/jenkins.jpg" height="50px">
 <img src="https://mixeway.github.io/img/jira.jpg" height="50px">
@@ -36,8 +31,8 @@ With all this available, Mixeway provides functionalities to:
 Elements of a system:
 - <a href="https://github.com/Mixeway/MixewayBackend">Backend - Spring Boot REST API</a>
 - <a href="https://github.com/Mixeway/MixewayFrontend">Frontend - Angular 8 application </a>
-- <a href="https://hub.docker.com/repository/docker/mixeway/db">DB - postgres database</a>
-- <a href="https://hub.docker.com/repository/docker/mixeway/vault">Vault - password store</a>
+- <a href="https://hub.docker.com/_/postgres">DB - postgres database</a>
+- <a href="https://www.vaultproject.io/">Vault - password store</a>
 - <a href="https://github.com/Mixeway/MixewayHub">MixewayHub - parent project which contain docker-compose and one click instalation </a>
 
 ###### Mixeway Backend Description:
@@ -52,6 +47,12 @@ With Hashicorp Vault integration passwords for each security scanner (which is t
 
 <a href="https://mixeway.github.io">More detailed and technical docs are here</a>
 
+###### Hashicorp Vault integration:
+Mixeway has to be able to reuse given passwords and api keys in order to use them with Vulnerability Scanning interactions.
+
+**Vault integration is optional but it is strongly recommended to be included - otherwise password for vulnerability scanners will
+be stored in plaintext.**
+
 ###### Mixeway User Interface Tech stack:
 <img src="https://mixeway.github.io/img/spring.jpg" height="50px">
 <img src="https://mixeway.github.io/img/postgres.jpg" height="50px">
@@ -59,26 +60,20 @@ With Hashicorp Vault integration passwords for each security scanner (which is t
 <img src="https://mixeway.github.io/img/docker.png" height="50px">
 
 ###### Requirements:
-- Running and working DB - <a href="https://hub.docker.com/repository/docker/mixeway/db">docker image</a>
-- Running and working Vault - <a href="https://hub.docker.com/repository/docker/mixeway/vault">docker image</a>
-- Docker-compose
+- Running and working DB 
 - JAVA 1.8
 - SSL Certificates
 
+###### Good to have:
+- Hashicorp Vault up and running
+
 ###### Running in development mode:
-Make sure that docker is binding properly docker names to a network interface, to make sure put hosts file as follows
-```$xslt
-127.0.0.1 MixerDB MixerVault
-```
-Run DB and Vault dockers. You can do that using docker-compose prepared for development purposes
-```$xslt
-docker-compose -f docker-compose-db-vault.yml up -d
-```
-Make Sure to generate certificates. You need private key and certificate
+1. Make sure DB is up and running (You can use guide how to use postgres docker here https://hub.docker.com/_/postgres)
+2. Optionally make sure Vault is up and running (You can use guide how to use Vault docker here https://hub.docker.com/_/vault)
+3. Generate certificates and convert them to PKCS12 (yes certificates are required even in dev)
 ```$xslt
 openssl req -newkey rsa:2048 -nodes -keyout key.pem -x509 -days 365 -out certificate.pem
 ```
-PKCS12 is needed to run backend:
 ```$xslt
 openssl pkcs12 -inkey key.pem -in certificate.pem -export -out certificate.p12
 ```
@@ -91,4 +86,13 @@ java -jar --server.ssl.trust-store=/etc/pki/cacerts \
           --server.ssl.key-store=/etc/pki/localhost.p12 \
           --server.ssl.key-store-password=changeit \
           --server.ssl.keyAlias=localhost \
-          --spring.profiles.active=dev```
+          --spring.profiles.active=dev \
+          --spring.datasource.url=jdbc:postgresql://127.0.0.1:5432/mixer \
+          --spring.datasource.username=mixewayuser \
+          --spring.datasource.password=mixewaypassword \
+          --spring.cloud.vault.token=ffffffff-ffff-ffff-ffff-ffffffffffff \
+          --spring.cloud.vault.scheme=http \
+          --spring.cloud.vault.port=8200 \
+          --spring.cloud.vault.host=MixerVault
+```
+ REST API will be exposed on port `:8443`
