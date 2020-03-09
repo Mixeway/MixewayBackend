@@ -1,6 +1,7 @@
 package io.mixeway.db.repository;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 import io.mixeway.db.entity.Interface;
 import io.mixeway.pojo.BarChartProjection;
@@ -24,6 +25,14 @@ public interface InfrastructureVulnRepository extends JpaRepository<Infrastructu
 	List<InfrastructureVuln> findByIntfIn(List<Interface> intf);
 	List<InfrastructureVuln> findByIntfInAndSeverityContainingIgnoreCase(List<Interface> intf, String threat);
 	List<InfrastructureVuln> findByIntfInAndSeverityNot(List<Interface> intf, String threat);
+	@Query(value= "select * from infrastructurevuln where interface_id in " +
+			"(select id from interface where asset_id in (select id from asset where project_id =:projectId)) " +
+			"and threat not in ('Log','Info')", nativeQuery = true)
+	Stream<InfrastructureVuln> getVulnsForProject(@Param("projectId") Long projectId);
+
+
+
+
 	List<InfrastructureVuln> findByIntfInAndSeverityNotIn(List<Interface> intf, List<String> strings);
 	List<InfrastructureVuln> findByNameLikeIgnoreCaseAndIntfIn(String name, List<Interface> intf);
 	List<InfrastructureVuln> findByName(String name);

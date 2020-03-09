@@ -310,10 +310,12 @@ public class GetVulnerabilitiesService {
         List<Vuln> tmpVulns = vulns.getVulnerabilities();
         List<InfrastructureVuln> infraVulns = null;
         if (project != null) {
-            infraVulns = infrastractureVulnRepository
-                    .findByIntfInAndSeverityNot(interfaceRepository.findByAssetInAndActive(new ArrayList<>(project.getAssets()), true),"Log");
-        } else
+            try (Stream<InfrastructureVuln> vulnsForProject = infrastractureVulnRepository.getVulnsForProject(project.getId())) {
+                infraVulns = vulnsForProject.collect(Collectors.toList());
+            }
+        } else {
             infraVulns = infrastractureVulnRepository.findBySeverityNot("Log");
+        }
         for (InfrastructureVuln iv : infraVulns) {
             Vuln v = new Vuln();
             v.setVulnerabilityName(iv.getName());
@@ -412,14 +414,16 @@ public class GetVulnerabilitiesService {
         if (project != null) {
             List<SoftVuln> softVulns = new ArrayList<>();
             for (CodeProject cp : codeProjectRepository.findByCodeGroupIn(project.getCodes())){
-                List<SoftwarePacketVulnerability> softwarePacketVulnerabilities = softwarePacketVulnerabilityRepository.getSoftwareVulnsForCodeProject(cp.getId());
-                for (SoftwarePacketVulnerability spv : softwarePacketVulnerabilities){
-                    Vuln v = new Vuln();
-                    v.setSeverity(spv.getSeverity());
-                    v.setDateCreated(spv.getInserted());
-                    v.setVulnerabilityName(spv.getName());
-                    v.setLocation("["+cp.getCodeGroup().getName()+"] "+ cp.getName());
-                    tmpVulns.add(v);
+                try (Stream<SoftwarePacketVulnerability> softwarePacketVulnerabilities = softwarePacketVulnerabilityRepository.getSoftwareVulnsForCodeProjectWithStream(cp.getId());) {
+                    for (SoftwarePacketVulnerability spv : softwarePacketVulnerabilities.collect(Collectors.toList())){
+                        Vuln v = new Vuln();
+                        v.setSeverity(spv.getSeverity());
+                        v.setDateCreated(spv.getInserted());
+                        v.setVulnerabilityName(spv.getName());
+                        v.setPacketName(spv.getSoftwarepacket().getName());
+                        v.setLocation("["+cp.getCodeGroup().getName()+"] "+ cp.getName());
+                        tmpVulns.add(v);
+                    }
                 }
             }
             vulns.setVulnerabilities(tmpVulns);
