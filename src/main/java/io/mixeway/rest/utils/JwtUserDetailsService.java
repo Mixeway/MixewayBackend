@@ -74,7 +74,7 @@ public class JwtUserDetailsService implements UserDetailsService {
                 } else {
                     Optional<Project> project = projectRepository.findByIdAndApiKey(Long.valueOf(locations[3]),username);
                     if (project.isPresent() || (settings.getMasterApiKey() != null && username.equals(settings.getMasterApiKey()))) {
-                        return new User(username, "", AuthorityUtils.commaSeparatedStringToAuthorityList("ROLE_API"));
+                        return new User(username, "", AuthorityUtils.commaSeparatedStringToAuthorityList("ROLE_API"+ "," +Constants.ROLE_USER));
                     } else {
                         throw new UsernameNotFoundException("No permisions");
                     }
