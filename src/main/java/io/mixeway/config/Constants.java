@@ -95,6 +95,7 @@ public class Constants {
 	public static final String API_TYPE_CIS_K8S = "cis-k8s";
 	public static final String API_SCANNER_OPENVAS = "networkScanner";
 	public static final String API_SCANNER_WEBAPP = "webApplicationScanner";
+	public static final String API_SCANNER_OPENSOURCE = "openSourceScanner";
 	public static final String API_SCANNER_CODE = "codeScanner";
 	public static final String API_SCANNER_AUDIT = "audit";
 	public static final String API_SCANNER_PACKAGE = "packageScan";

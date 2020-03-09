@@ -6,6 +6,7 @@ import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
 import io.mixeway.plugins.audit.dependencytrack.apiclient.DependencyTrackApiClient;
 import io.mixeway.pojo.*;
+import io.mixeway.rest.project.model.SoftVuln;
 import io.mixeway.rest.vulnmanage.model.Vuln;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -102,11 +103,13 @@ public class GetVulnerabilitiesService {
     SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository;
     @Autowired
     DependencyTrackApiClient dependencyTrackApiClient;
+    @Autowired
+    SoftwarePacketVulnerabilityRepository getSoftwarePacketVulnerabilityReposutitory;
 
     DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     private final List<String> scannerTypes = Arrays.asList(Constants.API_SCANNER_AUDIT, Constants.API_SCANNER_CODE, Constants.API_SCANNER_OPENVAS,
-            Constants.API_SCANNER_PACKAGE,Constants.API_SCANNER_WEBAPP);
+            Constants.API_SCANNER_PACKAGE,Constants.API_SCANNER_WEBAPP, Constants.API_SCANNER_OPENSOURCE);
     private final List<String> severities = Arrays.asList(Constants.API_SEVERITY_CRITICAL,Constants.API_SEVERITY_HIGH, Constants.API_SEVERITY_INFO,
             Constants.API_SEVERITY_LOW, Constants.API_SEVERITY_MEDIUM);
 
@@ -390,6 +393,9 @@ public class GetVulnerabilitiesService {
                 case Constants.API_SCANNER_AUDIT:
                     vulns = setAuditResults(vulns, project);
                     break;
+                case Constants.API_SCANNER_OPENSOURCE:
+                    vulns = setOpenSourceResults(vulns, project);
+                    break;
                 default:
                     vulns = setPackageVulns(vulns, project);
                     break;
@@ -399,6 +405,28 @@ public class GetVulnerabilitiesService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Proper scanner type is: networkScanner,webApplicationScanner,codeScanner, audit,packageScan");
 
     }
+
+    private Vulnerabilities setOpenSourceResults(Vulnerabilities vulns, Project project) {
+        List<Vuln> tmpVulns = vulns.getVulnerabilities();
+        List<SoftwarePacketVulnerability> osVulns = null;
+        if (project != null) {
+            List<SoftVuln> softVulns = new ArrayList<>();
+            for (CodeProject cp : codeProjectRepository.findByCodeGroupIn(project.getCodes())){
+                List<SoftwarePacketVulnerability> softwarePacketVulnerabilities = softwarePacketVulnerabilityRepository.getSoftwareVulnsForCodeProject(cp.getId());
+                for (SoftwarePacketVulnerability spv : softwarePacketVulnerabilities){
+                    Vuln v = new Vuln();
+                    v.setSeverity(spv.getSeverity());
+                    v.setDateCreated(spv.getInserted());
+                    v.setVulnerabilityName(spv.getName());
+                    v.setLocation("["+cp.getCodeGroup().getName()+"] "+ cp.getName());
+                    tmpVulns.add(v);
+                }
+            }
+            vulns.setVulnerabilities(tmpVulns);
+        }
+        return vulns;
+    }
+
     @Transactional
     public ResponseEntity<String> getVulnerabilitiesByType(String type) throws UnknownHostException {
         if (scannerTypes.contains(type)) {

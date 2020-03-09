@@ -76,4 +76,5 @@ public class VulnManageApiController {
                                                                    @PathVariable(value = "projectId") Long id) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         return getVulnerabilitiesService.getCiScoreForCodeProject(codeGroup,codeProject, id);
     }
+
 }
