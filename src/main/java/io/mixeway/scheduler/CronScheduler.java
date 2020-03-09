@@ -184,7 +184,7 @@ public class CronScheduler {
     }
     @Transactional
     public Long createCodeVulnHistory(Project p){
-        try (Stream<CodeVuln> codeVulnStream = codeVulnRepository.findByCodeGroupInAndAnalysisNot(p.getCodes(), "Not an Issue")){
+        try (Stream<CodeVuln> codeVulnStream = codeVulnRepository.findByCodeGroupInAndAnalysis(p.getCodes(), Constants.FORTIFY_ANALYSIS_EXPLOITABLE)){
             return codeVulnStream.count();
         }
     }

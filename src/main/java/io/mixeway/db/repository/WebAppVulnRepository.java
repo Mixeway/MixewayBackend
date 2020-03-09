@@ -2,6 +2,7 @@ package io.mixeway.db.repository;
 
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import io.mixeway.pojo.BarChartProjection;
 import io.mixeway.pojo.BarChartProjection2;
@@ -17,6 +18,10 @@ WebAppVulnRepository extends JpaRepository<WebAppVuln, Long>{
 
 	Long deleteByWebApp(WebApp webApp);
 	Set<WebAppVuln> findByWebAppIn(Set<WebApp> webApps);
+	@Query(value = "SELECT * from webappvuln where webapp_id in (select id from webapp where project_id=:projectId)", nativeQuery = true)
+	Stream<WebAppVuln> getWebAppVulnsForProject(@Param("projectId")Long projectId);
+	@Query(value = "SELECT * from webappvuln", nativeQuery = true)
+	Stream<WebAppVuln> getAllWebAppVulns();
 	Set<WebAppVuln> findByWebAppInAndSeverityNot(Set<WebApp> webApps, String severity);
 	Set<WebAppVuln> findByWebAppInAndSeverityIn(Set<WebApp> webApps, List<String> severities);
 	List<WebAppVuln> findByWebAppInAndSeverityContainingIgnoreCase(List<WebApp> webApps, String severity);

@@ -230,10 +230,17 @@ public class GetVulnerabilitiesService {
     private Vulnerabilities setWebApplicationVulns(Vulnerabilities vulns,Project project) throws UnknownHostException {
         List<Vuln> tmpVulns = vulns.getVulnerabilities();
         List<WebAppVuln> webAppVulns = null;
-        if (project != null)
-            webAppVulns = new ArrayList<>(webAppVulnRepository.findByWebAppIn(project.getWebapps()));
-        else
-            webAppVulns = webAppVulnRepository.findAll();
+        if (project != null) {
+            //webAppVulns = new ArrayList<>(webAppVulnRepository.findByWebAppIn(project.getWebapps()));
+            try (Stream<WebAppVuln> vulnsForProject = webAppVulnRepository.getWebAppVulnsForProject(project.getId())) {
+                webAppVulns = vulnsForProject.collect(Collectors.toList());
+            }
+        }
+        else {
+            try (Stream<WebAppVuln> vulnsForProject = webAppVulnRepository.getAllWebAppVulns()) {
+                webAppVulns = vulnsForProject.collect(Collectors.toList());
+            }
+        }
         for (WebAppVuln wav : webAppVulns) {
             Vuln v = new Vuln();
             v.setVulnerabilityName(wav.getName());
