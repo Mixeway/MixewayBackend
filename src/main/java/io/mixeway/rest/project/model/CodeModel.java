@@ -6,7 +6,16 @@ public class CodeModel {
     String codeProject;
     Boolean running;
     String dTrackUuid;
+    String branch;
     int versionId;
+
+    public String getBranch() {
+        return branch;
+    }
+
+    public void setBranch(String branch) {
+        this.branch = branch;
+    }
 
     public int getVersionId() {
         return versionId;

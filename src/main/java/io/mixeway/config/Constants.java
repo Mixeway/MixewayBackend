@@ -236,4 +236,5 @@ public class Constants {
     public static final String PROFILE_TEST = "test";
     public static final String DEFAULT = "default";
 	public static final String PASSWORD = "password";
+    public static final String CODE_PROJECT_DEFAULT_BRANCH = "master";
 }
