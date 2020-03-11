@@ -7,9 +7,11 @@ import io.mixeway.db.repository.*;
 import io.mixeway.plugins.audit.dependencytrack.apiclient.DependencyTrackApiClient;
 import io.mixeway.plugins.audit.dependencytrack.model.Projects;
 import io.mixeway.plugins.codescan.service.CodeScanClient;
+import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.VaultHelper;
 import io.mixeway.rest.project.model.*;
 import io.mixeway.rest.utils.ProjectRiskAnalyzer;
+import org.apache.tomcat.util.bcel.Const;
 import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,6 +77,7 @@ public class CodeService {
                 codeModel.setVersionId(cp.getCodeGroup().getVersionIdAll());
                 codeModel.setCodeProject(cp.getName());
                 codeModel.setCodeGroup(cp.getCodeGroup().getName());
+                codeModel.setBranch(cp.getBranch());
                 codeModel.setId(cp.getId());
                 codeModel.setdTrackUuid(cp.getdTrackUuid());
                 codeModel.setRunning(cp.getCodeGroup().isRunning());
@@ -267,14 +270,21 @@ public class CodeService {
                 codeProject.get().setdTrackUuid(editCodeProjectModel.getdTrackUuid());
                 codeProjectRepository.save(codeProject.get());
                 log.info("{} Successfully Edited codeProject {}", name, codeProject.get().getName());
-                return new ResponseEntity<>(HttpStatus.OK);
             }
             if (codeProject.isPresent() && editCodeProjectModel.getSastProject() > 0) {
                 codeProject.get().getCodeGroup().setVersionIdAll(editCodeProjectModel.getSastProject());
                 codeGroupRepository.save(codeProject.get().getCodeGroup());
                 log.info("{} Successfully Edited codeProject {}", name, codeProject.get().getName());
-                return new ResponseEntity<>(HttpStatus.OK);
             }
+            if (editCodeProjectModel.getBranch().equals("") || editCodeProjectModel.getBranch() == null){
+                codeProject.get().setBranch(Constants.CODE_PROJECT_DEFAULT_BRANCH);
+                log.warn("{} passed null branch for {}, setting to default {}", name, codeProject.get().getName(), Constants.CODE_PROJECT_DEFAULT_BRANCH);
+            } else {
+                codeProject.get().setBranch(editCodeProjectModel.getBranch());
+                log.info("{} Setting branch for {} - {}", name, codeProject.get().getName(), LogUtil.prepare(editCodeProjectModel.getBranch()));
+            }
+            codeProjectRepository.save(codeProject.get());
+            return new ResponseEntity<>(HttpStatus.OK);
         } catch (IllegalArgumentException | NullPointerException exception){
             log.warn("{} failed to edit codeProject {} due to wrong UUID format", name, id);
         }
