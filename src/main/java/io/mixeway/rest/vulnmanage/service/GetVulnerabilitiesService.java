@@ -251,6 +251,7 @@ public class GetVulnerabilitiesService {
             v.setDescription(wav.getDescription()+"\n\n"+wav.getRecommendation());
             v.setBaseURL(wav.getWebApp().getUrl());
             v.setLocation(wav.getLocation());
+            v.setRoutingDomainName(wav.getWebApp().getPublicscan() ? "Internet":"Intranet");
             String ipA = getIpAddressFromUrl(wav.getWebApp().getUrl());
             String ipP = getPortFromUrl(wav.getWebApp().getUrl());
             v.setIpAddress(ipA);
