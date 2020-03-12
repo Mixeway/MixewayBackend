@@ -122,6 +122,7 @@ public class CodeService {
             } else {
                 codeGroup.setRepoPassword(codeGroupPutModel.getGitpassword());
             }
+            codeGroupRepository.save(codeGroup);
             log.info("{} - Created new CodeGroup [{}] {}", username, project.get().getName(), codeGroup.getName());
             return new ResponseEntity<>(null,HttpStatus.CREATED);
         } else {
@@ -265,26 +266,29 @@ public class CodeService {
     public ResponseEntity<Status> editCodeProject(Long id, EditCodeProjectModel editCodeProjectModel, String name) {
         Optional<CodeProject> codeProject = codeProjectRepository.findById(id);
         try{
-            if (codeProject.isPresent() && (editCodeProjectModel.getdTrackUuid() != null && !editCodeProjectModel.getdTrackUuid().equals(""))) {
-                UUID uuid = UUID.fromString(editCodeProjectModel.getdTrackUuid());
-                codeProject.get().setdTrackUuid(editCodeProjectModel.getdTrackUuid());
+            if (codeProject.isPresent() ){
+                if ((editCodeProjectModel.getdTrackUuid() != null && !editCodeProjectModel.getdTrackUuid().equals(""))) {
+                    UUID uuid = UUID.fromString(editCodeProjectModel.getdTrackUuid());
+                    codeProject.get().setdTrackUuid(editCodeProjectModel.getdTrackUuid());
+                    codeProjectRepository.save(codeProject.get());
+                    log.info("{} Successfully Edited codeProject {}", name, codeProject.get().getName());
+                }
+                if (editCodeProjectModel.getSastProject() > 0) {
+                    codeProject.get().getCodeGroup().setVersionIdAll(editCodeProjectModel.getSastProject());
+                    codeGroupRepository.save(codeProject.get().getCodeGroup());
+                    log.info("{} Successfully Edited codeProject {}", name, codeProject.get().getName());
+                }
+                if (editCodeProjectModel.getBranch().equals("") || editCodeProjectModel.getBranch() == null){
+                    codeProject.get().setBranch(Constants.CODE_PROJECT_DEFAULT_BRANCH);
+                    log.warn("{} passed null branch for {}, setting to default {}", name, codeProject.get().getName(), Constants.CODE_PROJECT_DEFAULT_BRANCH);
+                } else {
+                    codeProject.get().setBranch(editCodeProjectModel.getBranch());
+                    log.info("{} Setting branch for {} - {}", name, codeProject.get().getName(), LogUtil.prepare(editCodeProjectModel.getBranch()));
+                }
                 codeProjectRepository.save(codeProject.get());
-                log.info("{} Successfully Edited codeProject {}", name, codeProject.get().getName());
+                return new ResponseEntity<>(HttpStatus.OK);
             }
-            if (codeProject.isPresent() && editCodeProjectModel.getSastProject() > 0) {
-                codeProject.get().getCodeGroup().setVersionIdAll(editCodeProjectModel.getSastProject());
-                codeGroupRepository.save(codeProject.get().getCodeGroup());
-                log.info("{} Successfully Edited codeProject {}", name, codeProject.get().getName());
-            }
-            if (editCodeProjectModel.getBranch().equals("") || editCodeProjectModel.getBranch() == null){
-                codeProject.get().setBranch(Constants.CODE_PROJECT_DEFAULT_BRANCH);
-                log.warn("{} passed null branch for {}, setting to default {}", name, codeProject.get().getName(), Constants.CODE_PROJECT_DEFAULT_BRANCH);
-            } else {
-                codeProject.get().setBranch(editCodeProjectModel.getBranch());
-                log.info("{} Setting branch for {} - {}", name, codeProject.get().getName(), LogUtil.prepare(editCodeProjectModel.getBranch()));
-            }
-            codeProjectRepository.save(codeProject.get());
-            return new ResponseEntity<>(HttpStatus.OK);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         } catch (IllegalArgumentException | NullPointerException exception){
             log.warn("{} failed to edit codeProject {} due to wrong UUID format", name, id);
         }
