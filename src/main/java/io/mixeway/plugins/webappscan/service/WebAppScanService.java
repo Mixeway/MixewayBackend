@@ -9,6 +9,7 @@ import io.mixeway.plugins.webappscan.model.RequestHeaders;
 import io.mixeway.plugins.webappscan.model.WebAppScanHelper;
 import io.mixeway.plugins.webappscan.model.WebAppScanModel;
 import io.mixeway.pojo.Status;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,9 +21,12 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.NonUniqueResultException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class WebAppScanService {
@@ -50,7 +54,7 @@ public class WebAppScanService {
         this.webAppHeaderRepository = webAppHeaderRepository;
     }
 
-    private DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     private String getUrltoCompare(String url){
         String urlToSend = url.split("\\?")[0];
@@ -81,7 +85,7 @@ public class WebAppScanService {
                                 requestId = createAndPutWebAppToQueue(webAppScanModel, project.get());
                             }
                         }
-                    } catch (NonUniqueResultException | IncorrectResultSizeDataAccessException ex){
+                    } catch (NonUniqueResultException | IncorrectResultSizeDataAccessException | ParseException ex){
                         waRepository.flush();
                         return new ResponseEntity<>(HttpStatus.PRECONDITION_FAILED);
                     }
@@ -116,7 +120,7 @@ public class WebAppScanService {
         webApp.setRunning(false);
         webApp.setInQueue(true);
         webApp.setRequestId(UUID.randomUUID().toString());
-        webApp.setInserted(dateNow.format(dateFormatter));
+        webApp.setInserted(sdf.format(dateNow));
         webApp.setPublicscan(webAppScanModel.getIsPublic());
         webApp.setUrl(webAppScanModel.getUrl());
         webApp = waRepository.save(webApp);
@@ -127,15 +131,27 @@ public class WebAppScanService {
         return webApp.getRequestId();
     }
 
-    private String updateAndPutWebAppToQueue(WebApp webApp, WebAppScanModel webAppScanModel) {
+    private String updateAndPutWebAppToQueue(WebApp webApp, WebAppScanModel webAppScanModel) throws ParseException {
         webApp.setUrl(webAppScanModel.getUrl());
-        webApp.setInQueue(true);
+        webApp.setInQueue(canPutWebAppToQueueDueToLastExecuted(webApp));
         webApp.setRequestId(UUID.randomUUID().toString());
         waRepository.save(webApp);
         webApp = setCodeProjectLink(webApp, webApp.getProject(), webAppScanModel);
         this.updateHeadersAndCookies(webAppScanModel.getHeaders(),webAppScanModel.getCookies(),webApp);
         log.debug("Modified WebApp '{}' and set {} headers", webApp.getUrl(), webApp.getHeaders().size());
         return webApp.getRequestId();
+    }
+
+    private boolean canPutWebAppToQueueDueToLastExecuted(WebApp webApp) throws ParseException {
+       if (webApp.getRunning()){
+           return false;
+       } else if (webApp.getLastExecuted() == null) {
+            return true;
+        } else {
+            Date dtExecuted = sdf.parse(webApp.getLastExecuted());
+            long diff = new Date().getTime() - dtExecuted.getTime();
+            return TimeUnit.MILLISECONDS.toHours(diff) > 8;
+        }
     }
 
     synchronized private void updateHeadersAndCookies(List<RequestHeaders> headers, List<CustomCookie> cookies, WebApp webApp) {
