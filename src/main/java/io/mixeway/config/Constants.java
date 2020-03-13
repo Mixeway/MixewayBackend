@@ -85,7 +85,7 @@ public class Constants {
 	public static final String ACUNETIX_VULN_RECOMMENDATION = "recommendation";
 	public static final String ACUNETIX_VULN_ID = "vuln_id";
 	public static final String ACUNETIX_SEVERITY = "severity";
-	public static final int ACUNETIX_TARGET_LIMIT = 25;
+	public static final int ACUNETIX_TARGET_LIMIT = 15;
 	public static final String ACUNETIX_PAGINATION = "pagination";
 	public static final String ACUNETIX_NETX_CURSOR = "next_cursor";
 	public static final String ACUNETIX_IMPACT = "impact";

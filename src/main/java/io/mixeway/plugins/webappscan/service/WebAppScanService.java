@@ -113,14 +113,13 @@ public class WebAppScanService {
     }
 
     private String createAndPutWebAppToQueue(WebAppScanModel webAppScanModel, Project project) {
-        LocalDateTime dateNow = LocalDateTime.now();
         WebApp webApp = new WebApp();
         webApp.setProject(project);
         webApp = setCodeProjectLink(webApp, project, webAppScanModel);
         webApp.setRunning(false);
         webApp.setInQueue(true);
         webApp.setRequestId(UUID.randomUUID().toString());
-        webApp.setInserted(sdf.format(dateNow));
+        webApp.setInserted(sdf.format(new Date()));
         webApp.setPublicscan(webAppScanModel.getIsPublic());
         webApp.setUrl(webAppScanModel.getUrl());
         webApp = waRepository.save(webApp);
