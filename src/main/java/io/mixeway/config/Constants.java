@@ -237,4 +237,7 @@ public class Constants {
     public static final String DEFAULT = "default";
 	public static final String PASSWORD = "password";
     public static final String CODE_PROJECT_DEFAULT_BRANCH = "master";
+    public static final String AUTH_TYPE_JWT_TOKEN = "jwt";
+	public static final String AUTH_TYPE_APIKEY = "apiKey";
+	public static final String AUTH_TYPE_X509 = "x509";
 }
