@@ -847,3 +847,9 @@ alter table nessus add column team text;
 --changeset siewer:163
 update scannertype set authapikey=false,authsecrettoken=false,authaccesstoken=false,authusername=true,authpassword=true,authcloudctrltoken=false where name='OpenVAS Socket';
 update scannertype set authapikey=false,authsecrettoken=false,authaccesstoken=false,authusername=true,authpassword=true,authcloudctrltoken=false where name='OpenVAS';
+
+--changeset siewer:164
+create table user_project (
+    users_id int references users(id),
+    project_id int references project(id)
+)

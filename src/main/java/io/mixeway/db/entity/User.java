@@ -1,16 +1,12 @@
 package io.mixeway.db.entity;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EntityListeners;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.util.Set;
 
 @Entity
 @EntityScan
@@ -27,6 +23,21 @@ public class User {
 	private String username;
 	private int logins;
 	private int failedLogins;
+	private Set<Project> projects;
+
+	@ManyToMany(cascade = { CascadeType.ALL })
+	@JoinTable(
+			name = "user_project",
+			joinColumns = { @JoinColumn(name = "users_id") },
+			inverseJoinColumns = { @JoinColumn(name = "project_id") }
+	)
+	public Set<Project> getProjects() {
+		return projects;
+	}
+
+	public void setProjects(Set<Project> projects) {
+		this.projects = projects;
+	}
 
 	public int getLogins() {
 		return logins;

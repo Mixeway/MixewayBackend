@@ -1,7 +1,7 @@
 package io.mixeway.rest.admin.service;
 import io.mixeway.db.repository.UserRepository;
 import io.mixeway.pojo.LogUtil;
-import io.mixeway.rest.model.NewPasswordModel;
+import io.mixeway.rest.model.EditUserModel;
 import io.mixeway.rest.model.UserModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +49,8 @@ public class AdminUserRestService {
             if ( userModel.getPasswordAuth())
                 userToCreate.setPassword(bCryptPasswordEncoder.encode(userModel.getUserPassword()));
             userRepository.save(userToCreate);
+            userToCreate.setProjects(new HashSet<>(userModel.getProjects()));
+            userRepository.save(userToCreate);
             log.info("{} - Created new user {} with role {}", name, LogUtil.prepare(userToCreate.getCommonName()), LogUtil.prepare(userToCreate.getPermisions()));
             return new ResponseEntity<>(new Status("ok"), HttpStatus.CREATED);
         }
@@ -78,10 +80,13 @@ public class AdminUserRestService {
         }
     }
 
-    public ResponseEntity<Status> editUser(Long id, NewPasswordModel userModel, String name) {
+    public ResponseEntity<Status> editUser(Long id, EditUserModel userModel, String name) {
         Optional<User> user =  userRepository.findById(id);
         if (user.isPresent()) {
             user.get().setPassword(bCryptPasswordEncoder.encode(userModel.getNewPassword()));
+            user.get().setProjects(new HashSet<>(userModel.getProjects()));
+            if (roles.contains(userModel.getRole()))
+                user.get().setPermisions(userModel.getRole());
             userRepository.save(user.get());
             log.info("{} - Updated password for user {}", name, user.get().getUsername()!=null ? user.get().getUsername() : user.get().getCommonName());
             return new ResponseEntity<>(new Status("ok"), HttpStatus.OK);

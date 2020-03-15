@@ -21,9 +21,10 @@ public class Project implements Serializable{
     private Long id;
 	
     private String name;
-    
     @JsonIgnore
-	private String ciid;
+	Set<User> users;
+    
+    @JsonIgnore private String ciid;
 
 	@JsonIgnore private String description;
 
@@ -46,6 +47,15 @@ public class Project implements Serializable{
 	@JsonIgnore private boolean autoInfraScan;
 	@JsonIgnore private String apiKey;
 	@JsonIgnore private Set<VulnHistory> vulnHistories;
+
+	@ManyToMany(mappedBy = "projects")
+	public Set<User> getUsers() {
+		return users;
+	}
+
+	public void setUsers(Set<User> users) {
+		this.users = users;
+	}
 
 	@Column(name = "autoinfrascan")
 	public boolean isAutoInfraScan() {

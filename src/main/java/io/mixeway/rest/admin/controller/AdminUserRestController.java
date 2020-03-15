@@ -1,6 +1,6 @@
 package io.mixeway.rest.admin.controller;
 
-import io.mixeway.rest.model.NewPasswordModel;
+import io.mixeway.rest.model.EditUserModel;
 import io.mixeway.rest.model.UserModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -38,7 +38,7 @@ public class AdminUserRestController {
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PatchMapping(value = "/user/{id}")
-    public ResponseEntity<Status> editUser(@PathVariable("id") Long id, @RequestBody NewPasswordModel userModel, Principal principal) {
+    public ResponseEntity<Status> editUser(@PathVariable("id") Long id, @RequestBody EditUserModel userModel, Principal principal) {
         return adminRestService.editUser(id, userModel,principal.getName());
     }
 
