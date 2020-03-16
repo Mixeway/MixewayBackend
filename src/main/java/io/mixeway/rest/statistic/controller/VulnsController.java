@@ -20,32 +20,32 @@ public class VulnsController {
         this.vulnsService = vulnsService;
     }
 
-    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @GetMapping(value = "/codevulns")
     public ResponseEntity<List<BarChartProjection2>> getCodeVulnsTop() {
         return vulnsService.getCodeVulnsTop();
     }
-    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @GetMapping(value = "/codeprojects")
     public ResponseEntity<List<BarChartProjection2>> getCodeProjectsTop() {
         return vulnsService.getCodeProjectsTop();
     }
-    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @GetMapping(value = "/infravulns")
     public ResponseEntity<List<BarChartProjection2>> getInfraVulnsTop() {
         return vulnsService.getInfraVulnsTop();
     }
-    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @GetMapping(value = "/infraintfs")
     public ResponseEntity<List<BarChartProjection2>> getInfraIntfsTop() {
         return vulnsService.getInfraIntfsTop();
     }
-    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @GetMapping(value = "/webvulns")
     public ResponseEntity<List<BarChartProjection2>> getWebVulnsTop() {
         return vulnsService.getWebVulnsTop();
     }
-    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @GetMapping(value = "/webapps")
     public ResponseEntity<List<BarChartProjection2>> getWebAppsTop() {
         return vulnsService.getWebAppsTop();

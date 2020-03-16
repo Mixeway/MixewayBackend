@@ -82,7 +82,7 @@ public class CodeServiceTest {
         codeScanClients.add(fortifyApiClient);
         projectRiskAnalyzer = new ProjectRiskAnalyzer(codeVulnRepository,infrastructureVulnRepository,webAppVulnRepository,interfaceRepository);
         codeService = new CodeService(projectRepository,codeProjectRepository,projectRiskAnalyzer,codeGroupRepository,vaultHelper,codeScanClients,codeVulnRepository,null,
-                null, null);
+                null, null,null);
         initializeDB();
     }
 
@@ -119,7 +119,7 @@ public class CodeServiceTest {
     public void showCodeRepos() {
         Optional<Project> project = Optional.of(projectRepository.findByName("test").get().get(0));
         Assertions.assertThat(project.isPresent()).isTrue();
-        ResponseEntity<CodeCard> test = codeService.showCodeRepos(project.get().getId());
+        ResponseEntity<CodeCard> test = codeService.showCodeRepos(project.get().getId(),null);
         Assertions.assertThat(test.getStatusCode()).isEqualTo(HttpStatus.OK);
         Assertions.assertThat(test.getBody().getCodeModels().size()).isEqualTo(1);
     }
@@ -128,7 +128,7 @@ public class CodeServiceTest {
     public void showCodeGroups() {
         Optional<Project> project = Optional.of(projectRepository.findByName("test").get().get(0));
         Assertions.assertThat(project.isPresent()).isTrue();
-        ResponseEntity<List<CodeGroup>> test = codeService.showCodeGroups(project.get().getId());
+        ResponseEntity<List<CodeGroup>> test = codeService.showCodeGroups(project.get().getId(),null);
         Assertions.assertThat(test.getStatusCode()).isEqualTo(HttpStatus.OK);
         Assertions.assertThat(test.getBody().size()).isEqualTo(1);
     }
@@ -212,7 +212,7 @@ public class CodeServiceTest {
     public void showCodeVulns() {
         Optional<Project> project = Optional.of(projectRepository.findByName("test").get().get(0));
         Assertions.assertThat(project.isPresent()).isTrue();
-        ResponseEntity<List<CodeVuln>> i = codeService.showCodeVulns(project.get().getId());
+        ResponseEntity<List<CodeVuln>> i = codeService.showCodeVulns(project.get().getId(),null);
         Assertions.assertThat(i.getStatusCode()).isEqualTo(HttpStatus.OK);
         Assertions.assertThat(i.getBody().size()).isEqualTo(1);
     }

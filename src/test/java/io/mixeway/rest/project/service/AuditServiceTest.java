@@ -49,7 +49,7 @@ public class AuditServiceTest {
     RequirementRepository requirementRepository;
     @Before
     public void setUp(){
-        auditService = new AuditService(projectRepository);
+        auditService = new AuditService(projectRepository,null);
         initializeDb();
     }
 
@@ -83,7 +83,7 @@ public class AuditServiceTest {
     public void showAudit() {
         Optional<Project> project = Optional.of(projectRepository.findByName("test").get().get(0));
         Assertions.assertThat(project.isPresent()).isTrue();
-        ResponseEntity<List<NodeAudit>> audit = auditService.showAudit(project.get().getId());
+        ResponseEntity<List<NodeAudit>> audit = auditService.showAudit(project.get().getId(),null);
         Assertions.assertThat(audit.getStatusCode()).isEqualTo(HttpStatus.OK);
         Assertions.assertThat(audit.getBody().size()).isEqualTo(1);
 

@@ -25,7 +25,7 @@ public class IaasApiController {
         this.iaasApiService = iaasApiService;
     }
 
-    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @GetMapping(value = "/{id}/iaasapi")
     public ResponseEntity<IaasModel> showIaasApi(@PathVariable("id")Long id) {
         return iaasApiService.showIaasApi(id);

@@ -5,6 +5,7 @@ import io.mixeway.db.repository.*;
 import io.mixeway.domain.service.project.CreateProjectService;
 import io.mixeway.domain.service.project.FindProjectService;
 import io.mixeway.pojo.LogUtil;
+import io.mixeway.pojo.PermissionFactory;
 import io.mixeway.rest.dashboard.model.SearchRequest;
 import io.mixeway.rest.model.OverAllVulnTrendChartData;
 import io.mixeway.rest.model.Projects;
@@ -40,16 +41,18 @@ public class DashboardService {
     private final WebAppVulnRepository webAppVulnRepository;
     private final CodeVulnRepository codeVulnRepository;
     private final InfrastructureVulnRepository infrastructureVulnRepository;
+    private final PermissionFactory permissionFactory;
 
     @Autowired
     DashboardService(InfrastructureVulnRepository infrastructureVulnRepository, CodeVulnRepository codeVulnRepository, WebAppVulnRepository webAppVulnRepository,
                      CodeProjectRepository codeProjectRepository, WebAppRepository webAppRepository, InterfaceRepository interfaceRepository,
                      UserRepository userRepository, ProjectRiskAnalyzer projectRiskAnalyzer, ProjectRepository projectRepository, VulnHistoryRepository vulnHistoryRepository,
-                     FindProjectService findProjectService, CreateProjectService createProjectService){
+                     FindProjectService findProjectService, CreateProjectService createProjectService,PermissionFactory permissionFactory){
         this.createProjectService = createProjectService;
         this.findProjectService = findProjectService;
         this.userRepository = userRepository;
         this.projectRiskAnalyzer = projectRiskAnalyzer;
+        this.permissionFactory = permissionFactory;
         this.projectRepository = projectRepository;
         this.vulnHistoryRepository = vulnHistoryRepository;
         this.codeProjectRepository = codeProjectRepository;
@@ -69,9 +72,9 @@ public class DashboardService {
 
         return vulnHistoryRepository.getSourceTrendChart();
     }
-    public List<Projects> getProjects() {
+    public List<Projects> getProjects(Principal principal) {
         List<Projects> projects = new ArrayList<>();
-        for (Project p : projectRepository.findAll()){
+        for (Project p : permissionFactory.getProjectForPrincipal(principal)){
             int risk = projectRiskAnalyzer.getProjectAuditRisk(p) +
                     projectRiskAnalyzer.getProjectInfraRisk(p) +
                     projectRiskAnalyzer.getProjectCodeRisk(p) +

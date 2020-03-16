@@ -39,7 +39,7 @@ public class OpenSourceServiceTest {
     SoftwarePacketRepository softwarePacketRepository;
     @Before
     public void setUp(){
-        openSourceServie = new OpenSourceService(projectRepository, codeProjectRepository, softwarePacketVulnerabilityRepository);
+        openSourceServie = new OpenSourceService(projectRepository, codeProjectRepository, softwarePacketVulnerabilityRepository,null);
         initializeDB();
     }
 

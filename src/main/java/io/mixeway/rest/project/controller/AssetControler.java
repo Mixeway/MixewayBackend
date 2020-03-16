@@ -28,8 +28,8 @@ public class AssetControler {
 
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping(value = "/{id}/assets")
-    public ResponseEntity<AssetCard> showAssets(@PathVariable("id")Long id) {
-        return assetService.showAssets(id);
+    public ResponseEntity<AssetCard> showAssets(Principal principal, @PathVariable("id")Long id) {
+        return assetService.showAssets(id,principal);
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @PutMapping(value = "/{id}/asset/add")
@@ -58,8 +58,8 @@ public class AssetControler {
     }
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping(value = "/{id}/vulns/infra")
-    public ResponseEntity<List<InfrastructureVuln>> showInfraVulns(@PathVariable("id")Long id) {
-        return assetService.showInfraVulns(id);
+    public ResponseEntity<List<InfrastructureVuln>> showInfraVulns(Principal principal,@PathVariable("id")Long id) {
+        return assetService.showInfraVulns(id,principal);
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @PutMapping(value = "/{id}/asset/infraautoscan")

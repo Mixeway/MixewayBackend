@@ -1,5 +1,6 @@
 package io.mixeway.rest.admin.service;
 
+import io.mixeway.rest.model.EditUserModel;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
@@ -17,7 +18,6 @@ import io.mixeway.config.TestConfig;
 import io.mixeway.db.entity.User;
 import io.mixeway.db.repository.UserRepository;
 import io.mixeway.pojo.Status;
-import io.mixeway.rest.model.NewPasswordModel;
 import io.mixeway.rest.model.UserModel;
 
 import javax.persistence.PersistenceContext;
@@ -42,7 +42,7 @@ public class AdminUserRestServiceTest {
 
     @Before
     public void setUp(){
-        adminUserRestService = new AdminUserRestService(userRepository,bCryptPasswordEncoder);
+        adminUserRestService = new AdminUserRestService(userRepository,bCryptPasswordEncoder,null);
     }
 
     @Test
@@ -101,7 +101,7 @@ public class AdminUserRestServiceTest {
         user.setPermisions("ROLE_USER");
         user.setUsername("test");
         user = userRepository.save(user);
-        NewPasswordModel userModel = new NewPasswordModel();
+        EditUserModel userModel = new EditUserModel();
         userModel.setNewPassword("Test");
         ResponseEntity<Status> result = adminUserRestService.editUser(user.getId(),userModel, "test");
         Assertions.assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);

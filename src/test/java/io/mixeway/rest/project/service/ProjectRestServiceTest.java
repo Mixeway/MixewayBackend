@@ -50,7 +50,7 @@ public class ProjectRestServiceTest {
     public void showProjectRisk() {
         projectRiskAnalyzer = new ProjectRiskAnalyzer(codeVulnRepository,infrastructureVulnRepository,webAppVulnRepository,interfaceRepository);
         projectRestService = new ProjectRestService(routingDomainRepository,proxiesRepository,projectRepository,interfaceRepository,projectRiskAnalyzer,codeProjectRepository,
-                vulnHistoryRepository,infrastructureVulnRepository,codeVulnRepository,webAppVulnRepository,softwarePacketVulnerabilityRepository,null);
+                vulnHistoryRepository,infrastructureVulnRepository,codeVulnRepository,webAppVulnRepository,softwarePacketVulnerabilityRepository,null,null);
     }
 
     @Test

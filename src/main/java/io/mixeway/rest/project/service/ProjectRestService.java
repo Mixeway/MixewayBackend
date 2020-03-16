@@ -3,6 +3,7 @@ package io.mixeway.rest.project.service;
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
+import io.mixeway.pojo.PermissionFactory;
 import io.mixeway.rest.project.model.ContactList;
 import io.mixeway.rest.project.model.ProjectVulnTrendChart;
 import io.mixeway.rest.project.model.ProjectVulnTrendChartSerie;
@@ -18,6 +19,7 @@ import springfox.documentation.service.Contact;
 
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
+import java.security.Principal;
 import java.util.*;
 
 @Service
@@ -31,6 +33,7 @@ public class ProjectRestService {
     private final ProjectRiskAnalyzer projectRiskAnalyzer;
     private final CodeProjectRepository codeProjectRepository;
     private final VulnHistoryRepository vulnHistoryRepository;
+    private final PermissionFactory permissionFactory;
     private final InfrastructureVulnRepository infrastructureVulnRepository;
     private final CodeVulnRepository codeVulnRepository;
     private final WebAppVulnRepository webAppVulnRepository;
@@ -49,12 +52,14 @@ public class ProjectRestService {
                         CodeVulnRepository codeVulnRepository,
                         WebAppVulnRepository webAppVulnRepository,
                         SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository,
-                        ScannerRepository scannerRepository){
+                        ScannerRepository scannerRepository,
+                       PermissionFactory permissionFactory){
         this.routingDomainRepository = routingDomainRepository;
         this.proxiesRepository = proxiesRepository;
         this.projectRepository = projectRepository;
         this.interfaceRepository = interfaceRepository;
         this.projectRiskAnalyzer = projectRiskAnalyzer;
+        this.permissionFactory = permissionFactory;
         this.codeProjectRepository = codeProjectRepository;
         this.vulnHistoryRepository = vulnHistoryRepository;
         this.infrastructureVulnRepository = infrastructureVulnRepository;
@@ -73,9 +78,9 @@ public class ProjectRestService {
     }};
 
 
-    public ResponseEntity<RiskCards> showProjectRisk(Long id) {
+    public ResponseEntity<RiskCards> showProjectRisk(Long id, Principal principal) {
         Optional<Project> project = projectRepository.findById(id);
-        if ( project.isPresent()){
+        if ( project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             int webAppRisk = projectRiskAnalyzer.getProjectWebAppRisk(project.get());
             int assetRisk = projectRiskAnalyzer.getProjectInfraRisk(project.get());
             int codeRisk = projectRiskAnalyzer.getProjectCodeRisk(project.get());
@@ -110,7 +115,7 @@ public class ProjectRestService {
 
 
 
-    public ResponseEntity<ProjectVulnTrendChart> showVulnTrendChart(Long id) {
+    public ResponseEntity<ProjectVulnTrendChart> showVulnTrendChart(Long id, Principal principal) {
         Optional<Project> project = projectRepository.findById(id) ;
         LinkedList<Integer> infraVulnTrend = new LinkedList<>();
         LinkedList<Integer> webAppVulnTrend = new LinkedList<>();
@@ -119,7 +124,7 @@ public class ProjectRestService {
         LinkedList<Integer> softwareVulnTrend = new LinkedList<>();
         LinkedList<String> dates = new LinkedList<>();
         List<ProjectVulnTrendChartSerie>series = new ArrayList<>();
-        if (project.isPresent()) {
+        if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())) {
             List<VulnHistory> vulnHistories = vulnHistoryRepository.getLastTwoVulnForProject(project.get().getId()) ;
             for(VulnHistory vulnHistory : vulnHistories){
                 infraVulnTrend.add(vulnHistory.getInfrastructureVulnHistory().intValue());
@@ -168,10 +173,10 @@ public class ProjectRestService {
         }
     }
 
-    public ResponseEntity<HashMap<String,Long>> showSeverityChart(Long id) {
+    public ResponseEntity<HashMap<String,Long>> showSeverityChart(Long id, Principal principal) {
         Optional<Project> project = projectRepository.findById(id);
         HashMap<String,Long> pieData = new HashMap<>();
-        if (project.isPresent()){
+        if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             for (String severity : severityList){
                 pieData.put(severity,
                         (infrastructureVulnRepository.countByIntfInAndSeverity(interfaceRepository.findByAssetIn(new ArrayList<>(project.get().getAssets())),severity)

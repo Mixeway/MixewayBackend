@@ -4,6 +4,7 @@ import io.mixeway.config.Constants;
 import io.mixeway.db.entity.Interface;
 import io.mixeway.db.entity.Project;
 import io.mixeway.db.repository.*;
+import io.mixeway.pojo.PermissionFactory;
 import io.mixeway.pojo.ScanHelper;
 import io.mixeway.rest.project.model.AssetCard;
 import io.mixeway.rest.project.model.AssetModel;
@@ -24,6 +25,7 @@ import io.mixeway.pojo.Status;
 
 import javax.persistence.criteria.Predicate;
 import javax.transaction.Transactional;
+import java.security.Principal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -38,6 +40,7 @@ public class AssetService {
     private final ScanHelper scanHelper;
     private final InfrastructureVulnRepository infrastructureVulnRepository;
     private final NetworkScanService networkScanService;
+    private final PermissionFactory permissionFactory;
     private List<String> logs = new ArrayList<String>(){{
         add(Constants.LOG_SEVERITY);
         add(Constants.INFO_SEVERITY);
@@ -47,10 +50,12 @@ public class AssetService {
     AssetService(ProjectRepository projectRepository, InterfaceRepository interfaceRepository,
                  ProjectRiskAnalyzer projectRiskAnalyzer,
                  RoutingDomainRepository routingDomainRepository, AssetRepository assetRepository,
-                 ScanHelper scanHelper, InfrastructureVulnRepository infrastructureVulnRepository, NetworkScanService networkScanService){
+                 ScanHelper scanHelper, InfrastructureVulnRepository infrastructureVulnRepository, NetworkScanService networkScanService,
+                 PermissionFactory permissionFactory){
         this.projectRepository = projectRepository;
         this.interfaceRepository = interfaceRepository;
         this.projectRiskAnalyzer = projectRiskAnalyzer;
+        this.permissionFactory = permissionFactory;
         this.routingDomainRepository = routingDomainRepository;
         this.assetRepository = assetRepository;
         this.scanHelper = scanHelper;
@@ -58,9 +63,9 @@ public class AssetService {
         this.networkScanService = networkScanService;
     }
 
-    public ResponseEntity<AssetCard> showAssets(Long id) {
+    public ResponseEntity<AssetCard> showAssets(Long id, Principal principal) {
         Optional<Project> project = projectRepository.findById(id);
-        if ( project.isPresent()){
+        if ( project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             AssetCard assetCard = new AssetCard();
             List<AssetModel> assetModels = new ArrayList<>();
             assetCard.setAutoInfraScan(project.get().isAutoInfraScan());
@@ -191,9 +196,9 @@ public class AssetService {
         return new ResponseEntity<>(null,HttpStatus.OK);
     }
 
-    public ResponseEntity<List<InfrastructureVuln>> showInfraVulns(Long id) {
+    public ResponseEntity<List<InfrastructureVuln>> showInfraVulns(Long id, Principal principal) {
         Optional<Project> project = projectRepository.findById(id);
-        if (project.isPresent()){
+        if (project.isPresent() && permissionFactory.canUserAccessProject(principal,project.get())){
             List<Interface> interfaces = interfaceRepository.findByAssetIn(new ArrayList<>(project.get().getAssets()));
             List<InfrastructureVuln> vulnsNotLog = infrastructureVulnRepository.findByIntfInAndSeverityNotIn(interfaces, logs);
             return new ResponseEntity<>(vulnsNotLog,HttpStatus.OK);

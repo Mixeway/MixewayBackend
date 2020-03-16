@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import io.mixeway.rest.project.model.SoftVuln;
 import io.mixeway.rest.project.service.OpenSourceService;
 
+import java.security.Principal;
 import java.util.List;
 
 @Controller
@@ -24,8 +25,8 @@ public class OpenSourceController {
 
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping(value = "/{id}/vulns/soft")
-    public ResponseEntity<List<SoftVuln>> showSoft(@PathVariable("id")Long id) {
-        return openSourceService.showSoft(id);
+    public ResponseEntity<List<SoftVuln>> showSoft(@PathVariable("id")Long id, Principal principal) {
+        return openSourceService.showSoft(id, principal);
     }
 
 }

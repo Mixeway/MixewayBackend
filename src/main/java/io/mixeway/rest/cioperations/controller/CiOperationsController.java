@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import io.mixeway.db.entity.CiOperations;
 
+import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -25,17 +26,17 @@ public class CiOperationsController {
 
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping(value = "/trend")
-    public ResponseEntity<List<OverAllVulnTrendChartData>> getVulnTrendData()  {
-        return ciOperationsService.getVulnTrendData();
+    public ResponseEntity<List<OverAllVulnTrendChartData>> getVulnTrendData(Principal principal)  {
+        return ciOperationsService.getVulnTrendData(principal);
     }
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping(value = "/result")
-    public ResponseEntity<CiResultModel> getResponseData() {
-        return ciOperationsService.getResultData();
+    public ResponseEntity<CiResultModel> getResponseData(Principal principal) {
+        return ciOperationsService.getResultData(principal);
     }
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping(value = "/data")
-    public ResponseEntity<List<CiOperations>> getTableData()  {
-        return ciOperationsService.getTableData();
+    public ResponseEntity<List<CiOperations>> getTableData(Principal principal)  {
+        return ciOperationsService.getTableData(principal);
     }
 }

@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import io.mixeway.db.entity.NodeAudit;
 import io.mixeway.rest.project.service.AuditService;
 
+import java.security.Principal;
 import java.util.List;
 
 @Controller
@@ -24,8 +25,8 @@ public class AuditController {
     }
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping(value = "/{id}/vulns/audit")
-    public ResponseEntity<List<NodeAudit>> showAudit(@PathVariable("id")Long id) {
-        return auditService.showAudit(id);
+    public ResponseEntity<List<NodeAudit>> showAudit(@PathVariable("id")Long id, Principal principal) {
+        return auditService.showAudit(id, principal);
     }
 
 }
