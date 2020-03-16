@@ -41,6 +41,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.vault.core.VaultOperations;
 import org.springframework.vault.support.VaultResponseSupport;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 import com.google.gson.Gson;
 
@@ -374,6 +375,12 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 			}
 		} catch (HttpClientErrorException e){
 			log.error("Client Exception occured - {} - during scan status check for url {}", e.getStatusCode(),ns.getNessus().getApiUrl() + "/scans/" + ns.getScanId());
+			if (ns.getScanId() == 0) {
+				ns.setRunning(false);
+				nessusScanRepository.save(ns);
+			}
+		} catch (HttpServerErrorException e){
+			log.error("Server Exception occured - {} - during scan status check for url {}", e.getStatusCode(),ns.getNessus().getApiUrl() + "/scans/" + ns.getScanId());
 			if (ns.getScanId() == 0) {
 				ns.setRunning(false);
 				nessusScanRepository.save(ns);
