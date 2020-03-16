@@ -55,8 +55,8 @@ public class DashboardController {
 
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping(value = "/projects")
-    public List<Projects> getProjects() {
-        return dashboardService.getProjects();
+    public List<Projects> getProjects(Principal principal) {
+        return dashboardService.getProjects(principal);
     }
 
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
@@ -77,7 +77,7 @@ public class DashboardController {
     public ResponseEntity deleteProject(@PathVariable(value = "projectId") Long projectId, Principal principal) {
         return dashboardService.deleteProject(projectId,principal.getName());
     }
-    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @PostMapping(value = "/search")
     public ResponseEntity<SearchResponse> search(@RequestBody SearchRequest searchRequest, Principal principal) {
         return dashboardService.search(searchRequest);

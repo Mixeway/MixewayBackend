@@ -8,6 +8,7 @@ import io.mixeway.plugins.audit.dependencytrack.apiclient.DependencyTrackApiClie
 import io.mixeway.plugins.audit.dependencytrack.model.Projects;
 import io.mixeway.plugins.codescan.service.CodeScanClient;
 import io.mixeway.pojo.LogUtil;
+import io.mixeway.pojo.PermissionFactory;
 import io.mixeway.pojo.VaultHelper;
 import io.mixeway.rest.project.model.*;
 import io.mixeway.rest.utils.ProjectRiskAnalyzer;
@@ -47,13 +48,14 @@ public class CodeService {
     private final DependencyTrackApiClient dependencyTrackApiClient;
     private final ScannerRepository scannerRepository;
     private final ScannerTypeRepository scanneTypeRepository;
+    private final PermissionFactory permissionFactory;
 
     @Autowired
     CodeService(ProjectRepository projectRepository, CodeProjectRepository codeProjectRepository,
                 ProjectRiskAnalyzer projectRiskAnalyzer, CodeGroupRepository codeGroupRepository,
                 VaultHelper vaultHelper, List<CodeScanClient> codeScanClients,
                 CodeVulnRepository codeVulnRepository, DependencyTrackApiClient dependencyTrackApiClient,
-                ScannerTypeRepository scanneTypeRepository, ScannerRepository scannerRepository) {
+                ScannerTypeRepository scanneTypeRepository, ScannerRepository scannerRepository, PermissionFactory permissionFactory) {
         this.projectRepository = projectRepository;
         this.codeProjectRepository = codeProjectRepository;
         this.scannerRepository = scannerRepository;
@@ -63,12 +65,13 @@ public class CodeService {
         this.vaultHelper = vaultHelper;
         this.codeGroupRepository = codeGroupRepository;
         this.codeVulnRepository = codeVulnRepository;
+        this.permissionFactory = permissionFactory;
         this.codeScanClients = codeScanClients;
     }
 
-    public ResponseEntity<CodeCard> showCodeRepos(Long id) {
+    public ResponseEntity<CodeCard> showCodeRepos(Long id, Principal principal) {
         Optional<Project> project = projectRepository.findById(id);
-        if ( project.isPresent()){
+        if ( project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             CodeCard codeCard = new CodeCard();
             codeCard.setCodeAutoScan(project.get().isAutoCodeScan());
             List<CodeModel> codeModels = new ArrayList<>();
@@ -91,9 +94,9 @@ public class CodeService {
             return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
         }
     }
-    public ResponseEntity<List<CodeGroup>> showCodeGroups(Long id) {
+    public ResponseEntity<List<CodeGroup>> showCodeGroups(Long id, Principal principal) {
         Optional<Project> project = projectRepository.findById(id);
-        if (project.isPresent()){
+        if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             return new ResponseEntity<>(new ArrayList<>(project.get().getCodes()),HttpStatus.OK);
         } else {
             return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
@@ -234,9 +237,9 @@ public class CodeService {
         return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
     }
     @Transactional
-    public ResponseEntity<List<CodeVuln>> showCodeVulns(Long id) {
+    public ResponseEntity<List<CodeVuln>> showCodeVulns(Long id, Principal principal) {
         Optional<Project> project = projectRepository.findById(id);
-        if (project.isPresent()){
+        if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             List<CodeVuln> codeVulns;
             try(Stream<CodeVuln> vulns = codeVulnRepository.findByCodeGroupInAndAnalysisNot(project.get().getCodes(),"Not an Issue")){
                 codeVulns = vulns.collect(Collectors.toList());

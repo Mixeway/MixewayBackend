@@ -1,6 +1,7 @@
 package io.mixeway.db.entity;
 
 import java.io.Serializable;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -246,6 +247,14 @@ public class Project implements Serializable{
 
 	public void setVulnHistories(Set<VulnHistory> vulnHistories) {
 		this.vulnHistories = vulnHistories;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (!(o instanceof Project)) return false;
+		Project p = (Project) o;
+		return Objects.equals(getId(), p.getId());
 	}
 
 }

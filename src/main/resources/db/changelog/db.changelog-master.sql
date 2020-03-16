@@ -852,4 +852,18 @@ update scannertype set authapikey=false,authsecrettoken=false,authaccesstoken=fa
 create table user_project (
     users_id int references users(id),
     project_id int references project(id)
-)
+);
+
+--changeset:siewer:165
+drop table user_project;
+create table user_project (
+    users_id int references users(id) on delete cascade,
+    project_id int references project(id) on delete cascade
+);
+
+--changeset siewer:166
+alter table user_project drop constraint user_project_project_id_fkey, add constraint user_project_project_id_fkey foreign key ("project_id") references project(id) on delete cascade;
+alter table user_project drop constraint user_project_users_id_fkey, add constraint user_project_users_id_fkey foreign key ("users_id") references users(id) on delete cascade;
+
+--changeset siewer:167
+insert into user_project (users_id ,project_id) select u.id, p.id from users u, project p where u.permisions='ROLE_USER';

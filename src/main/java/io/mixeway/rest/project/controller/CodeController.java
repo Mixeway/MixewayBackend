@@ -32,13 +32,13 @@ public class CodeController {
 
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping(value = "/{id}/codes")
-    public ResponseEntity<CodeCard> showCodeRepos(@PathVariable("id")Long id) {
-        return codeService.showCodeRepos(id);
+    public ResponseEntity<CodeCard> showCodeRepos(@PathVariable("id")Long id, Principal principal) {
+        return codeService.showCodeRepos(id, principal);
     }
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping(value = "/{id}/codegroups")
-    public ResponseEntity<List<CodeGroup>> showCodeGroups(@PathVariable("id")Long id) {
-        return codeService.showCodeGroups(id);
+    public ResponseEntity<List<CodeGroup>> showCodeGroups(@PathVariable("id")Long id, Principal principal) {
+        return codeService.showCodeGroups(id, principal);
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @PutMapping(value = "/{id}/add/codegroup")
@@ -77,8 +77,8 @@ public class CodeController {
     }
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping(value = "/{id}/vulns/code")
-    public ResponseEntity<List<CodeVuln>> showCodeVulns(@PathVariable("id")Long id) {
-        return codeService.showCodeVulns(id);
+    public ResponseEntity<List<CodeVuln>> showCodeVulns(@PathVariable("id")Long id, Principal principal) {
+        return codeService.showCodeVulns(id, principal);
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @PatchMapping(value = "/codeproject/{id}")

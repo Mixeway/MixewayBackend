@@ -5,6 +5,7 @@ import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
 import io.mixeway.plugins.webappscan.WebAppScanClient;
 import io.mixeway.pojo.LogUtil;
+import io.mixeway.pojo.PermissionFactory;
 import io.mixeway.rest.project.model.RunScanForWebApps;
 import io.mixeway.rest.project.model.WebAppCard;
 import io.mixeway.rest.project.model.WebAppModel;
@@ -20,6 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import io.mixeway.pojo.Status;
 
+import java.security.Principal;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,17 +40,20 @@ public class WebAppService {
     private final WebAppVulnRepository webAppVulnRepository;
     private final ProjectRiskAnalyzer projectRiskAnalyzer;
     private final List<WebAppScanClient> webAppScanClients;
+    private final PermissionFactory permissionFactory;
 
     @Autowired
     WebAppService(WebAppRepository webAppRepository, ScannerTypeRepository scannerTypeRepository, List<WebAppScanClient> webAppScanClients,
                   ScannerRepository scannerRepository, ProjectRepository projectRepository, WebAppHeaderRepository webAppHeaderRepository,
-                  WebAppScanRepository webAppScanRepository, WebAppVulnRepository webAppVulnRepository, ProjectRiskAnalyzer projectRiskAnalyzer){
+                  WebAppScanRepository webAppScanRepository, WebAppVulnRepository webAppVulnRepository, ProjectRiskAnalyzer projectRiskAnalyzer,
+                  PermissionFactory permissionFactory){
         this.webAppHeaderRepository = webAppHeaderRepository;
         this.webAppRepository = webAppRepository;
         this.scannerTypeRepository = scannerTypeRepository;
         this.scannerRepository = scannerRepository;
         this.projectRepository = projectRepository;
         this.webAppScanRepository = webAppScanRepository;
+        this.permissionFactory = permissionFactory;
         this.webAppVulnRepository = webAppVulnRepository;
         this.webAppScanClients = webAppScanClients;
         this.projectRiskAnalyzer = projectRiskAnalyzer;
@@ -179,18 +184,18 @@ public class WebAppService {
             return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
         }
     }
-    public ResponseEntity<List<WebAppVuln>> showWebAppVulns(Long id) {
+    public ResponseEntity<List<WebAppVuln>> showWebAppVulns(Long id, Principal principal) {
         Optional<Project> project = projectRepository.findById(id);
-        if (project.isPresent()){
+        if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             Set<WebAppVuln> appVulns = webAppVulnRepository.findByWebAppInAndSeverityNot(project.get().getWebapps(),Constants.INFO_SEVERITY);
             return new ResponseEntity<>(new ArrayList<>(appVulns),HttpStatus.OK);
         } else {
             return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
         }
     }
-    public ResponseEntity<WebAppCard> showWebApps(Long id) {
+    public ResponseEntity<WebAppCard> showWebApps(Long id, Principal principal) {
         Optional<Project> project = projectRepository.findById(id);
-        if ( project.isPresent()){
+        if ( project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             WebAppCard webAppCard = new WebAppCard();
             List<WebAppModel> webAppModels = new ArrayList<>();
             webAppCard.setWebAppAutoScan(project.get().isAutoWebAppScan());

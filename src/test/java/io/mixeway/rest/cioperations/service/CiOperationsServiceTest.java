@@ -30,7 +30,7 @@ public class CiOperationsServiceTest {
 
     @Before
     public void setUp(){
-        this.ciOperationsService = new CiOperationsService(ciOperationsRepository);
+        this.ciOperationsService = new CiOperationsService(ciOperationsRepository,null);
     }
 
     @Test

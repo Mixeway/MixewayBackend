@@ -28,13 +28,13 @@ public class WebAppController {
 
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping(value = "/{id}/webapps")
-    public ResponseEntity<WebAppCard> showWebApps(@PathVariable("id")Long id) {
-        return webAppService.showWebApps(id);
+    public ResponseEntity<WebAppCard> showWebApps(@PathVariable("id")Long id, Principal principal) {
+        return webAppService.showWebApps(id, principal);
     }
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping(value = "/{id}/vulns/webapp")
-    public ResponseEntity<List<WebAppVuln>> showWebAppVulns(@PathVariable("id")Long id) {
-        return webAppService.showWebAppVulns(id);
+    public ResponseEntity<List<WebAppVuln>> showWebAppVulns(@PathVariable("id")Long id, Principal principal) {
+        return webAppService.showWebAppVulns(id, principal);
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @PutMapping(value = "/{id}/add/webapp")

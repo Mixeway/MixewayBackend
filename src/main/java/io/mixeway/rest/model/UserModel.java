@@ -10,13 +10,13 @@ public class UserModel {
     Boolean passwordAuth;
     String userPassword;
     String userUsername;
-    List<Project> projects;
+    List<Long> projects;
 
-    public List<Project> getProjects() {
+    public List<Long> getProjects() {
         return projects;
     }
 
-    public void setProjects(List<Project> projects) {
+    public void setProjects(List<Long> projects) {
         this.projects = projects;
     }
 

@@ -1,5 +1,6 @@
 package io.mixeway.rest.admin.controller;
 
+import io.mixeway.db.entity.Project;
 import io.mixeway.rest.model.EditUserModel;
 import io.mixeway.rest.model.UserModel;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +29,11 @@ public class AdminUserRestController {
     @GetMapping(value = "/users")
     public ResponseEntity<List<User>> showUsers() {
         return adminRestService.showUsers();
+    }
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @GetMapping(value = "/projects")
+    public ResponseEntity<List<Project>> showProjects() {
+        return adminRestService.showProjects();
     }
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")

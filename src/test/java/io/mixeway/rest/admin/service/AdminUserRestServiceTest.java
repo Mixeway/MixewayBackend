@@ -43,7 +43,7 @@ public class AdminUserRestServiceTest {
 
     @Before
     public void setUp(){
-        adminUserRestService = new AdminUserRestService(userRepository,bCryptPasswordEncoder);
+        adminUserRestService = new AdminUserRestService(userRepository,bCryptPasswordEncoder,null);
     }
 
     @Test

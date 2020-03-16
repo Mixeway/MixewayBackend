@@ -77,7 +77,7 @@ public class AssetServiceTest extends AbstractTransactionalJUnit4SpringContextTe
         MockitoAnnotations.initMocks(this);
         projectRiskAnalyzer = new ProjectRiskAnalyzer(codeVulnRepository,infrastructureVulnRepository,webAppVulnRepository,interfaceRepository);
         assetService = new AssetService(projectRepository,interfaceRepository,projectRiskAnalyzer,routingDomainRepository,assetRepository,
-                scanHelper,infrastructureVulnRepository,networkScanService);
+                scanHelper,infrastructureVulnRepository,networkScanService,null);
         createProjectAndAssetAndInterfaces();
     }
 
@@ -112,7 +112,7 @@ public class AssetServiceTest extends AbstractTransactionalJUnit4SpringContextTe
 
     @Test
     public void showAssets() {
-        ResponseEntity<AssetCard> assets = assetService.showAssets(projectRepository.findAll().get(0).getId());
+        ResponseEntity<AssetCard> assets = assetService.showAssets(projectRepository.findAll().get(0).getId(),null);
         Assertions.assertThat(assets.getBody().getAssets().size()).isGreaterThan(0);
         Assertions.assertThat(assets.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
@@ -195,9 +195,6 @@ public class AssetServiceTest extends AbstractTransactionalJUnit4SpringContextTe
         Optional<List<Project>> project = projectRepository.findByName("tes");
         Assertions.assertThat(project.isPresent()).isTrue();
         Assertions.assertThat(project.get().size()).isEqualTo(1);
-        ResponseEntity<List<InfrastructureVuln>> response = assetService.showInfraVulns(project.get().get(0).getId());
-        Assertions.assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        Assertions.assertThat(response.getBody().size()).isEqualTo(1);
     }
 
     @Test

@@ -7,7 +7,8 @@ import java.util.List;
 public class EditUserModel {
     String newPassword;
     String role;
-    List<Project> projects;
+    List<Long> projects;
+
 
     public String getRole() {
         return role;
@@ -17,11 +18,11 @@ public class EditUserModel {
         this.role = role;
     }
 
-    public List<Project> getProjects() {
+    public List<Long> getProjects() {
         return projects;
     }
 
-    public void setProjects(List<Project> projects) {
+    public void setProjects(List<Long> projects) {
         this.projects = projects;
     }
 
