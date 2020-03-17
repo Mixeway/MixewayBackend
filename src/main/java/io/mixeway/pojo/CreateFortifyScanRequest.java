@@ -12,6 +12,33 @@ public class CreateFortifyScanRequest {
     private int versionId;
     private Boolean single;
     private String dTrackUuid;
+    private String sscUrl;
+    private String dTrackUrl;
+    private String dTrackToken;
+
+    public String getSscUrl() {
+        return sscUrl;
+    }
+
+    public void setSscUrl(String sscUrl) {
+        this.sscUrl = sscUrl;
+    }
+
+    public String getdTrackUrl() {
+        return dTrackUrl;
+    }
+
+    public void setdTrackUrl(String dTrackUrl) {
+        this.dTrackUrl = dTrackUrl;
+    }
+
+    public String getdTrackToken() {
+        return dTrackToken;
+    }
+
+    public void setdTrackToken(String dTrackToken) {
+        this.dTrackToken = dTrackToken;
+    }
 
     public String getdTrackUuid() {
         return dTrackUuid;

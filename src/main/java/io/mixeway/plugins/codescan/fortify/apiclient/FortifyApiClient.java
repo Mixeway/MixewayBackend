@@ -654,8 +654,13 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 	}
 	@Override
 	public Boolean runScan(CodeGroup cg,CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
-		List<Scanner> fortify = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_FORTIFY_SCA));
-		if (codeGroupRepository.countByRunning(true) ==0 && fortify.size()>0) {
+		List<Scanner> fortify = scannerRepository
+				.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_FORTIFY_SCA));
+		Optional<Scanner>fortifySSC = scannerRepository
+				.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_FORTIFY_SCC)).stream().findFirst();
+		Optional<Scanner> dTrack = scannerRepository
+				.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_DEPENDENCYTRACK)).stream().findFirst();
+		if (codeGroupRepository.countByRunning(true) ==0 && fortify.size()>0 && fortifySSC.isPresent()) {
 			if (!cg.isRunning()) {
 				CreateFortifyScanRequest fortifyScanRequest;
 				String scope;
@@ -666,7 +671,11 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 					fortifyScanRequest = prepareScanRequestForProject(codeProject);
 					scope = codeProject.getName();
 				}
-
+				fortifyScanRequest.setSscUrl(fortifySSC.get().getApiUrl());
+				if (dTrack.isPresent()){
+					fortifyScanRequest.setdTrackUrl(dTrack.get().getApiUrl());
+					fortifyScanRequest.setdTrackToken(vaultHelper.getPassword(dTrack.get().getPassword()));
+				}
 				try {
 					RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(null);
 					HttpHeaders headers = new HttpHeaders();
