@@ -368,6 +368,7 @@ public class CodeService {
                 openSourceConfig.setOpenSourceScannerApiUrl(openSourceScanner.getApiUrl());
                 openSourceConfig.setOpenSourceScannerCredentials(vaultHelper.getPassword(openSourceScanner.getApiKey()));
                 openSourceConfig.setOpenSourceScannerProjectId(sastRequestVerify.getCp().getdTrackUuid());
+                openSourceConfig.setTech(sastRequestVerify.getCp().getTechnique());
                 openSourceConfig.setOpenSourceScannerIntegration(true);
             } else {
                 openSourceConfig.setOpenSourceScannerIntegration(false);

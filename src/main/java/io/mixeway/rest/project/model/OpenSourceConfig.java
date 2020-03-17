@@ -5,6 +5,15 @@ public class OpenSourceConfig {
     String openSourceScannerApiUrl;
     String openSourceScannerProjectId;
     String openSourceScannerCredentials;
+    String tech;
+
+    public String getTech() {
+        return tech;
+    }
+
+    public void setTech(String tech) {
+        this.tech = tech;
+    }
 
     public boolean isOpenSourceScannerIntegration() {
         return openSourceScannerIntegration;
