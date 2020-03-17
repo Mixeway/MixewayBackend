@@ -674,7 +674,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 				fortifyScanRequest.setSscUrl(fortifySSC.get().getApiUrl());
 				if (dTrack.isPresent()){
 					fortifyScanRequest.setdTrackUrl(dTrack.get().getApiUrl());
-					fortifyScanRequest.setdTrackToken(vaultHelper.getPassword(dTrack.get().getPassword()));
+					fortifyScanRequest.setdTrackToken(vaultHelper.getPassword(dTrack.get().getApiKey()));
 				}
 				try {
 					RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(null);
