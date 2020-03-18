@@ -219,4 +219,8 @@ public class CiOperations {
         if (openSourceScan == null)
             openSourceScan =false;
     }
+    @PreUpdate
+    public void preUpdate(){
+        vulnNumber = sastCrit + sastHigh + openSourceCrit + openSourceHigh + imageCrit + imageHigh;
+    }
 }

@@ -14,6 +14,7 @@ import io.mixeway.plugins.codescan.service.CodeScanClient;
 import io.mixeway.pojo.*;
 import io.mixeway.rest.model.ScannerModel;
 import io.mixeway.rest.project.model.SASTProject;
+import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -164,7 +165,8 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 					this.loadVulnerabilities(scanner,codeGroup,responseJson.getJSONObject(Constants.FORTIFY_LINKS)
 							.getJSONObject(Constants.FORTIFY_LINKS_NEXT).getString(Constants.FORTIFY_LINKS_NEXT_HREF),single,codeProject,codeVulns);
 				}
-				updateCiOperationsForDoneSastScan(codeProject);
+				if (StringUtils.isNotBlank(codeProject.getCommitid()))
+					updateCiOperationsForDoneSastScan(codeProject);
 				log.debug("FortifyApiClient- loaded {} vulns for {}", responseJson.getJSONArray(Constants.VULNERABILITIES_LIST).length(), codeGroup.getName());
 			} else {
 				log.error("Fortify Authorization failure");

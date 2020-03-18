@@ -156,6 +156,7 @@ public class CiOperationsService {
         if (operation.isPresent()){
             if ( !codeProject.getRunning() && !codeProject.getInQueue()) {
                 operation.get().setEnded(new Date());
+                operation.get().setResult(ciVulnManageResponse.getResult());
                 ciOperationsRepository.save(operation.get());
             }
         }
