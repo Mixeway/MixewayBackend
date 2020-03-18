@@ -46,7 +46,7 @@ public class CiOperationsController {
     }
 
     @PreAuthorize("hasAuthority('ROLE_API')")
-    @GetMapping(value = "/project/{id}/{groupName}/{projectName}/{commitId}")
+    @GetMapping(value = "/project/{id}/code/init/{groupName}/{projectName}/{commitId}")
     public ResponseEntity<Status> startpipeline(@PathVariable("id") long projectId, @PathVariable("groupName") String groupName,
                                                 @PathVariable("projectName") String codeProjectName,
                                                 @PathVariable("commitId") String commitId)  {
