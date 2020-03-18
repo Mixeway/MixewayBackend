@@ -435,10 +435,14 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 	@Override
 	@Transactional(propagation = Propagation.REQUIRES_NEW)
 	public boolean isScanDone(CodeGroup cg, CodeProject cp) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, ParseException, JSONException {
-		if (cg != null && cp == null && getScanIdForCodeGroup(cg) && verifyCloudScanJob(cg)) {
-			return true;
-		} else if (cg == null && cp != null && getScanIdForCodeProject(cp) && verifyCloudScanJob(cp.getCodeGroup())) {
-			return true;
+		if (StringUtils.isNotBlank(cg.getScanid())){
+			return verifyCloudScanJob(cg);
+		} else {
+			if (cp == null && getScanIdForCodeGroup(cg) && verifyCloudScanJob(cg)) {
+				return true;
+			} else if (cg == null && cp != null && getScanIdForCodeProject(cp) && verifyCloudScanJob(cp.getCodeGroup())) {
+				return true;
+			}
 		}
 		return false;
 	}
@@ -456,7 +460,6 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 			} else if (response.getBody().getScanId() != null && response.getBody().getCommitid()!=null) {
 				cp.getCodeGroup().setScanid(response.getBody().getScanId());
 				cp.setCommitid(response.getBody().getCommitid());
-				cp.setRunning(false);
 				codeGroupRepository.save(cp.getCodeGroup());
 				codeProjectRepository.save(cp);
 				createCiOperation(cp, response.getBody().getCommitid());
@@ -479,7 +482,6 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 				return false;
 			} else if (response.getBody().getScanId() != null) {
 				cg.setScanid(response.getBody().getScanId());
-				cg.setRunning(false);
 				codeGroupRepository.save(cg);
 				log.info("Fortify scan was passed to cloudscan for [scope {}] {} ", cg.getScope(), cg.getName());
 				return true;
