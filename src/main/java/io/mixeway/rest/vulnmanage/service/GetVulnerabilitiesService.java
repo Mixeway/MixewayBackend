@@ -475,8 +475,8 @@ public class GetVulnerabilitiesService {
             } else {
                 ciVulnManageResponse.setResult("Ok");
             }
-            ciVulnManageResponse.setInQueue(cp.get().getInQueue());
-            ciVulnManageResponse.setRunning(cp.get().getRunning());
+            ciVulnManageResponse.setInQueue(cp.get().getInQueue() != null ? cp.get().getInQueue() : false);
+            ciVulnManageResponse.setRunning(cp.get().getRunning() != null ? cp.get().getRunning() : false);
             ciVulnManageResponse.setCommitId(cp.get().getCommitid());
             prepareOperationForRequest(ciVulnManageResponse, cp.get());
             return new ResponseEntity<>(ciVulnManageResponse,HttpStatus.OK);

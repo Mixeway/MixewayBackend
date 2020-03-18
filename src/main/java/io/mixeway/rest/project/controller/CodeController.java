@@ -106,7 +106,7 @@ public class CodeController {
         return codeService.createRemoteProject(id, projectId);
     }
     @PreAuthorize("hasAuthority('ROLE_USER')")
-    @PutMapping(value = "/{projectId}/opensource/{codeGroup}/{codeProject}")
+    @GetMapping(value = "/{projectId}/opensource/{codeGroup}/{codeProject}")
     public ResponseEntity<OpenSourceConfig> getOpenSourceConfig(@PathVariable("projectId")Long id,@PathVariable("codeGroup")String codeGroup,
                                                                 @PathVariable("codeProject")String codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, JSONException, ParseException {
         return codeService.getOpenSourceConfig(id, codeGroup, codeProject);

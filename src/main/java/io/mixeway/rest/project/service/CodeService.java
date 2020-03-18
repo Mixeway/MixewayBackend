@@ -355,7 +355,7 @@ public class CodeService {
 
     public ResponseEntity<OpenSourceConfig> getOpenSourceConfig(Long id, String codeGroup, String codeProject) {
         Optional<Project> project = projectRepository.findById(id);
-        SASTRequestVerify sastRequestVerify = codeAccessVerifier.verifyPermissions(id,codeGroup,codeProject,false);
+        SASTRequestVerify sastRequestVerify = codeAccessVerifier.verifyPermissions(id,codeGroup,codeProject,true);
         if (project.isPresent() && sastRequestVerify.getValid()) {
             //TODO Fix it so it can be flexible ATM works only for dTrack
             Scanner openSourceScanner = scannerRepository
@@ -369,6 +369,7 @@ public class CodeService {
                 openSourceConfig.setOpenSourceScannerCredentials(vaultHelper.getPassword(openSourceScanner.getApiKey()));
                 openSourceConfig.setOpenSourceScannerProjectId(sastRequestVerify.getCp().getdTrackUuid());
                 openSourceConfig.setTech(sastRequestVerify.getCp().getTechnique());
+                openSourceConfig.setScannerType(openSourceScanner.getScannerType().getName());
                 openSourceConfig.setOpenSourceScannerIntegration(true);
             } else {
                 openSourceConfig.setOpenSourceScannerIntegration(false);
