@@ -333,25 +333,22 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 		}
 	}
 	//SSC - status of cloduscan job
-	private boolean verifyCloudScanJob(CodeGroup cg, FortifySingleApp fortifySingleApp) throws ParseException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, IOException {
+	private boolean verifyCloudScanJob(CodeGroup cg) throws ParseException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, IOException {
 		try {
 			io.mixeway.db.entity.Scanner scanner = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_FORTIFY)).get(0);
 			CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
 			String API_JOB_STATE = "/api/v1/cloudjobs";
 			ResponseEntity<CloudJobState> response = codeRequestHelper
 					.getRestTemplate()
-					.exchange(scanner.getApiUrl() + API_JOB_STATE + "/" + (fortifySingleApp == null ? cg.getScanid() : fortifySingleApp.getJobToken()), HttpMethod.GET, codeRequestHelper.getHttpEntity(), CloudJobState.class);
+					.exchange(scanner.getApiUrl() + API_JOB_STATE + "/" + cg.getScanid(), HttpMethod.GET, codeRequestHelper.getHttpEntity(), CloudJobState.class);
 			if (response.getStatusCode() == HttpStatus.OK) {
 				if (Objects.requireNonNull(response.getBody()).getData().getJobState().equals(Constants.FORTIFY_UPLOAD_COMPLETED)) {
-					codeGroupRepository.save(cg);
-					if (fortifySingleApp != null) {
-						fortifySingleApp.setFinished(true);
-						fortifySingleAppRepository.save(fortifySingleApp);
-						CodeProject cp = fortifySingleApp.getCodeProject();
-						cp.setRunning(false);
-						codeProjectRepository.save(cp);
-					}
 					log.info("CloudScan ended for {}", cg.getName());
+					cg.setRunning(false);
+					cg.setRequestid(null);
+					cg.setScanid(null);
+					cg.setScope(null);
+					codeGroupRepository.save(cg);
 					return true;
 				} else if (response.getBody().getData().getJobState().equals(Constants.FORTIFY_SCAN_FOULTED) ||
 						response.getBody().getData().getJobState().equals(Constants.FORTIFY_SCAN_CANCELED) ||
@@ -361,11 +358,6 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 					cg.setScanid(null);
 					cg.setScope(null);
 					codeGroupRepository.save(cg);
-					if (fortifySingleApp != null) {
-						fortifySingleApp.setFinished(true);
-						fortifySingleApp.setDownloaded(true);
-						fortifySingleAppRepository.save(fortifySingleApp);
-					}
 					log.info("CloudScan ended with FAULTED state for {}", cg.getName());
 					return false;
 				}
@@ -442,23 +434,59 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 	}
 	@Override
 	@Transactional(propagation = Propagation.REQUIRES_NEW)
-	public boolean isScanDone(CodeGroup cg) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, ParseException, JSONException {
-		if (cg.isRunning() && cg.getRequestid()!=null && cg.getScanid()==null){
-			getScanId(cg);
-			return false;
-		} else if (cg.isRunning() && cg.getScanid() !=null && cg.getRequestid() != null) {
-			if (cg.getScope().equals(Constants.FORTIFY_SCOPE_ALL)){
-				return verifyCloudScanJob(cg,null);
-			} else {
-				List<FortifySingleApp> apps = fortifySingleAppRepository.findByFinishedAndDownloaded(true,false);
-				for (FortifySingleApp app : apps){
-					return verifyCloudScanJob(app.getCodeGroup(), app);
-				}
-			}
-		} else {
-			log.warn("Setrange thing happend for {} - running: {}, requestId: {}, scanId: {}", cg.getName(),cg.isRunning(),cg.getRequestid(),cg.getScanid());
+	public boolean isScanDone(CodeGroup cg, CodeProject cp) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, ParseException, JSONException {
+		if (cg != null && cp == null && getScanIdForCodeGroup(cg) && verifyCloudScanJob(cg)) {
+			return true;
+		} else if (cg == null && cp != null && getScanIdForCodeProject(cp) && verifyCloudScanJob(cp.getCodeGroup())) {
+			return true;
 		}
 		return false;
+	}
+
+	private boolean getScanIdForCodeProject(CodeProject cp) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+		List<io.mixeway.db.entity.Scanner> fortify = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_FORTIFY_SCA));
+		RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(null);
+		ResponseEntity<FortifyScan> response = restTemplate.exchange(fortify.get(0).getApiUrl()+"/check/"+cp.getRequestId(), HttpMethod.GET, null, FortifyScan.class);
+
+		if (response.getStatusCode().equals(HttpStatus.OK)) {
+			if (Objects.requireNonNull(response.getBody()).getError() != null && response.getBody().getError()) {
+				cp.setRunning(false);
+				codeProjectRepository.save(cp);
+				return false;
+			} else if (response.getBody().getScanId() != null && response.getBody().getCommitid()!=null) {
+				cp.getCodeGroup().setScanid(response.getBody().getScanId());
+				cp.setCommitid(response.getBody().getCommitid());
+				cp.setRunning(false);
+				codeGroupRepository.save(cp.getCodeGroup());
+				codeProjectRepository.save(cp);
+				createCiOperation(cp, response.getBody().getCommitid());
+				log.info("Fortify scan was passed to cloudscan for [scope {}] {} ", cp.getName(), cp.getCodeGroup().getName());
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private boolean getScanIdForCodeGroup(CodeGroup cg) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+		List<io.mixeway.db.entity.Scanner> fortify = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_FORTIFY_SCA));
+		RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(null);
+		ResponseEntity<FortifyScan> response = restTemplate.exchange(fortify.get(0).getApiUrl()+"/check/"+cg.getRequestid(), HttpMethod.GET, null, FortifyScan.class);
+
+		if (response.getStatusCode().equals(HttpStatus.OK)) {
+			if (Objects.requireNonNull(response.getBody()).getError() != null && response.getBody().getError()) {
+				cg.setRunning(false);
+				codeGroupRepository.save(cg);
+				return false;
+			} else if (response.getBody().getScanId() != null) {
+				cg.setScanid(response.getBody().getScanId());
+				cg.setRunning(false);
+				codeGroupRepository.save(cg);
+				log.info("Fortify scan was passed to cloudscan for [scope {}] {} ", cg.getScope(), cg.getName());
+				return true;
+			}
+		}
+		return false;
+
 	}
 
 	@Override
@@ -688,7 +716,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 				.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_FORTIFY_SCC)).stream().findFirst();
 		Optional<Scanner> dTrack = scannerRepository
 				.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_DEPENDENCYTRACK)).stream().findFirst();
-		if (codeGroupRepository.countByRunning(true) ==0 && fortify.size()>0 && fortifySSC.isPresent()) {
+		if (codeGroupRepository.countByRunning(true) ==0 && codeProjectRepository.findByRunning(true).size() ==0 && fortify.size()>0 && fortifySSC.isPresent()) {
 			if (!cg.isRunning()) {
 				CreateFortifyScanRequest fortifyScanRequest;
 				String scope;
@@ -711,14 +739,15 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 					HttpEntity<CreateFortifyScanRequest> entity = new HttpEntity<>(fortifyScanRequest, headers);
 					ResponseEntity<FortifyScan> response = restTemplate.exchange(fortify.get(0).getApiUrl() + "/createscan", HttpMethod.PUT, entity, FortifyScan.class);
 					if (response.getStatusCode().equals(HttpStatus.OK) && Objects.requireNonNull(response.getBody()).getRequestId() != null) {
-						cg.setRequestid(response.getBody().getRequestId());
-						cg.setRunning(true);
-						cg.setScope(scope);
-						codeGroupRepository.saveAndFlush(cg);
 						if (codeProject!=null){
 							codeProject.setRunning(true);
 							codeProject.setRequestId(UUID.randomUUID().toString());
 							codeProjectRepository.saveAndFlush(codeProject);
+						} else {
+							cg.setRequestid(response.getBody().getRequestId());
+							cg.setRunning(true);
+							cg.setScope(scope);
+							codeGroupRepository.saveAndFlush(cg);
 						}
 						log.info("Fortify scan starged for [scope {}] {}",scope, cg.getName());
 						return true;

@@ -103,26 +103,19 @@ public class CodeScheduler {
 	public void getVulns() throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
 		Optional<Scanner> sastScanner = scannerRepository.findByScannerTypeInAndStatus(scannerTypeRepository.getCodeScanners(), true).stream().findFirst();
 		if (sastScanner.isPresent()) {
-			for (FortifySingleApp app : fortifySingleAppRepository.findByFinishedAndDownloaded(true, false)) {
-				List<CodeVuln> codeVulns = codeVulns = deleteVulnsForProject(app.getCodeProject());
+			for (CodeProject codeProject : codeProjectRepository.findByRunning(true)) {
+				List<CodeVuln> codeVulns = codeVulns = deleteVulnsForProject(codeProject);
 				for (CodeScanClient codeScanClient : codeScanClients) {
-					if (codeScanClient.canProcessRequest(sastScanner.get()) && codeScanClient.isScanDone(app.getCodeGroup())) {
-						codeScanClient.loadVulnerabilities(sastScanner.get(), app.getCodeGroup(), null, true, app.getCodeProject(), codeVulns);
-						log.info("Vulerabilities for codescan for {} with scope of {} loaded - single app", app.getCodeGroup().getName(), app.getCodeProject().getName());
-						app.setDownloaded(true);
-						fortifySingleAppRepository.save(app);
-						app.getCodeGroup().setRunning(false);
-						app.getCodeGroup().setRequestid(null);
-						app.getCodeGroup().setScanid(null);
-						app.getCodeGroup().setScope(null);
-						codeGroupRepository.save(app.getCodeGroup());
+					if (codeScanClient.canProcessRequest(sastScanner.get()) && codeScanClient.isScanDone(null, codeProject)) {
+						codeScanClient.loadVulnerabilities(sastScanner.get(), codeProject.getCodeGroup(), null, true, codeProject, codeVulns);
+						log.info("Vulerabilities for codescan for {} with scope of {} loaded - single app", codeProject.getCodeGroup().getName(), codeProject.getName());
 					}
 				}
 			}
 			List<CodeGroup> codeGroups = codeGroupRepository.findByRunning(true);
 			for (CodeGroup codeGroup : codeGroups) {
 				for (CodeScanClient codeScanClient : codeScanClients) {
-					if (codeScanClient.canProcessRequest(sastScanner.get()) && codeScanClient.isScanDone(codeGroup)) {
+					if (codeScanClient.canProcessRequest(sastScanner.get()) && codeScanClient.isScanDone(codeGroup,null) ) {
 						deleteOldVulns(codeGroup);
 						codeScanClient.loadVulnerabilities(sastScanner.get(), codeGroup, null, false, null, null);
 						codeGroup.setRunning(false);

@@ -27,5 +27,6 @@ public interface CodeProjectRepository extends JpaRepository<CodeProject, Long> 
 	List<CodeProject> findByRequestId(String requestId);
 	List<CodeProject> findByCodeGroup(CodeGroup codeGroup);
 	List<CodeProject> findBydTrackUuidNotNull();
+	List<CodeProject> findByRunning(boolean running);
 
 }
