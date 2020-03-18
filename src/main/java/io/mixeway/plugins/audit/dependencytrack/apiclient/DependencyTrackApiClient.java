@@ -9,6 +9,7 @@ import io.mixeway.pojo.SecureRestTemplate;
 import io.mixeway.pojo.SecurityScanner;
 import io.mixeway.pojo.VaultHelper;
 import io.mixeway.rest.model.ScannerModel;
+import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,16 +52,19 @@ public class DependencyTrackApiClient implements SecurityScanner {
     private final StatusRepository statusRepository;
     private final SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository;
     private final CodeProjectRepository codeProjectRepository;
+    private final CiOperationsRepository ciOperationsRepository;
     @Autowired
     public DependencyTrackApiClient(ScannerRepository scannerRepository, ScannerTypeRepository scannerTypeRepository, StatusRepository statusRepository,
                                     SecureRestTemplate secureRestTemplate, VaultHelper vaultHelper, CodeProjectRepository codeProjectRepository,
                                     ProxiesRepository proxiesRepository, RoutingDomainRepository routingDomainRepository,
-                                    SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository, SoftwarePacketRepository softwarePacketRepository){
+                                    SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository, SoftwarePacketRepository softwarePacketRepository,
+                                    CiOperationsRepository ciOperationsRepository){
         this.scannerRepository = scannerRepository;
         this.vaultHelper = vaultHelper;
         this.statusRepository = statusRepository;
         this.codeProjectRepository = codeProjectRepository;
         this.routingDomainRepository = routingDomainRepository;
+        this.ciOperationsRepository = ciOperationsRepository;
         this.secureRestTemplate = secureRestTemplate;
         this.scannerTypeRepository = scannerTypeRepository;
         this.proxiesRepository = proxiesRepository;
@@ -82,6 +86,7 @@ public class DependencyTrackApiClient implements SecurityScanner {
                 });
                 if (response.getStatusCode() == HttpStatus.OK) {
                     createVulns(codeProject, Objects.requireNonNull(response.getBody()));
+                    updateCiOperations(codeProject);
                 } else {
                     log.error("Unable to get Findings from Dependency Track for project {}", codeProject.getdTrackUuid());
                 }
@@ -91,6 +96,18 @@ public class DependencyTrackApiClient implements SecurityScanner {
         }
 
     }
+
+    private void updateCiOperations(CodeProject codeProject) {
+        Optional<CiOperations> operations = ciOperationsRepository.findByCodeProjectAndCommitId(codeProject,codeProject.getCommitid());
+        if (operations.isPresent()){
+            CiOperations operation = operations.get();
+            operation.setOpenSourceScan(true);
+            operation.setOpenSourceCrit(softwarePacketVulnerabilityRepository.getSoftwareVulnsForProjectAndSeverity(codeProject.getId(),Constants.VULN_CRITICALITY_CRITICAL).size());
+            operation.setOpenSourceHigh(softwarePacketVulnerabilityRepository.getSoftwareVulnsForProjectAndSeverity(codeProject.getId(),Constants.VULN_CRITICALITY_HIGH).size());
+            ciOperationsRepository.save(operation);
+        }
+    }
+
     public boolean createProject(CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         List<Scanner> dTrack = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_DEPENDENCYTRACK));
         //Multiple dTrack instances not yet supported

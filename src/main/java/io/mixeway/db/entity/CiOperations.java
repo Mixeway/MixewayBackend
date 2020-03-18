@@ -10,7 +10,6 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import javax.persistence.*;
 import java.util.Date;
-
 @Entity
 @EntityScan
 @Table(name = "cioperations")
@@ -21,8 +20,126 @@ public class CiOperations {
     CodeGroup codeGroup;
     CodeProject codeProject;
     Date inserted;
+    Date ended;
     String result;
     int vulnNumber;
+    int sastCrit;
+    int sastHigh;
+    int openSourceCrit;
+    int openSourceHigh;
+    int imageCrit;
+    int imageHigh;
+    String commitId;
+    String imageId;
+    Boolean sastScan;
+    Boolean openSourceScan;
+    Boolean imageScan;
+
+
+    public Date getEnded() {
+        return ended;
+    }
+
+    public void setEnded(Date ended) {
+        this.ended = ended;
+    }
+
+    @Column(name = "sastcrit")
+    public int getSastCrit() {
+        return sastCrit;
+    }
+
+    public void setSastCrit(int sastCrit) {
+        this.sastCrit = sastCrit;
+    }
+    @Column(name = "sasthigh")
+    public int getSastHigh() {
+        return sastHigh;
+    }
+
+    public void setSastHigh(int sastHigh) {
+        this.sastHigh = sastHigh;
+    }
+
+    @Column(name="opensourcecrit")
+    public int getOpenSourceCrit() {
+        return openSourceCrit;
+    }
+
+    public void setOpenSourceCrit(int openSourceCrit) {
+        this.openSourceCrit = openSourceCrit;
+    }
+    @Column(name = "opensourcehigh")
+    public int getOpenSourceHigh() {
+        return openSourceHigh;
+    }
+
+    public void setOpenSourceHigh(int openSourceHigh) {
+        this.openSourceHigh = openSourceHigh;
+    }
+
+    @Column(name = "imagecrit")
+    public int getImageCrit() {
+        return imageCrit;
+    }
+
+    public void setImageCrit(int imageCrit) {
+        this.imageCrit = imageCrit;
+    }
+
+    @Column(name = "imagehigh")
+    public int getImageHigh() {
+        return imageHigh;
+    }
+
+    public void setImageHigh(int imageHigh) {
+        this.imageHigh = imageHigh;
+    }
+
+    @Column(name = "commitid")
+    public String getCommitId() {
+        return commitId;
+    }
+
+    public void setCommitId(String commitId) {
+        this.commitId = commitId;
+    }
+
+    @Column(name = "imageid")
+    public String getImageId() {
+        return imageId;
+    }
+
+    public void setImageId(String imageId) {
+        this.imageId = imageId;
+    }
+
+    @Column(name = "sastscan")
+    public Boolean getSastScan() {
+        return sastScan;
+    }
+
+    public void setSastScan(Boolean sastScan) {
+        this.sastScan = sastScan;
+    }
+
+    @Column(name = "opensourcescan")
+    public Boolean getOpenSourceScan() {
+        return openSourceScan;
+    }
+
+    public void setOpenSourceScan(Boolean openSourceScan) {
+        this.openSourceScan = openSourceScan;
+    }
+
+    @Column(name = "imagescan")
+    public Boolean getImageScan() {
+        return imageScan;
+    }
+
+    public void setImageScan(Boolean imageScan) {
+        this.imageScan = imageScan;
+    }
 
     @Column(name = "vulnnumber")
     public int getVulnNumber() {
@@ -91,5 +208,15 @@ public class CiOperations {
 
     public void setResult(String result) {
         this.result = result;
+    }
+
+    @PrePersist
+    public void prePersist() {
+        if(sastScan == null) //We set default value in case if the value is not set yet.
+            sastScan = false;
+        if(imageScan == null)
+            imageScan = false;
+        if (openSourceScan == null)
+            openSourceScan =false;
     }
 }

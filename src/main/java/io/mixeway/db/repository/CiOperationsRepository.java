@@ -1,5 +1,6 @@
 package io.mixeway.db.repository;
 
+import io.mixeway.db.entity.CodeProject;
 import io.mixeway.db.entity.Project;
 import io.mixeway.rest.model.OverAllVulnTrendChartData;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -8,6 +9,7 @@ import io.mixeway.db.entity.CiOperations;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface CiOperationsRepository extends JpaRepository<CiOperations,Long> {
     List<CiOperations> findByProjectOrderByInsertedDesc(Project project);
@@ -15,4 +17,5 @@ public interface CiOperationsRepository extends JpaRepository<CiOperations,Long>
     List<OverAllVulnTrendChartData> getCiTrend(@Param("projectids") List<Long> projectIds);
     Long countByResultAndProjectIn(String result, List<Project> projects);
     List<CiOperations> findByProjectInOrderByInsertedDesc(List<Project> projects);
+    Optional<CiOperations> findByCodeProjectAndCommitId(CodeProject codeProject, String commitId);
 }

@@ -867,3 +867,20 @@ alter table user_project drop constraint user_project_users_id_fkey, add constra
 
 --changeset siewer:167
 insert into user_project (users_id ,project_id) select u.id, p.id from users u, project p where u.permisions='ROLE_USER';
+
+
+--changeset siewer:168
+alter table cioperations add column sastcrit int;
+alter table cioperations add column sasthigh int;
+alter table cioperations add column opensourcehigh int;
+alter table cioperations add column opensourcecrit int;
+alter table cioperations add column imagecrit int;
+alter table cioperations add column imagehigh int;
+alter table cioperations add column commitId text;
+alter table cioperations add column imageId text;
+alter table cioperations add column sastscan boolean;
+alter table cioperations add column opensourcescan boolean;
+alter table cioperations add column imagescan boolean;
+
+--changeset siewer:169
+alter table cioperations add column ended timestamp;
