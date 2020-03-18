@@ -240,4 +240,5 @@ public class Constants {
     public static final String AUTH_TYPE_JWT_TOKEN = "jwt";
 	public static final String AUTH_TYPE_APIKEY = "apiKey";
 	public static final String AUTH_TYPE_X509 = "x509";
+    public static final Object PROJECT_KEYWORD = "project";
 }

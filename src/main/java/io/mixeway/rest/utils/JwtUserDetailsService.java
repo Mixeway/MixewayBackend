@@ -1,6 +1,7 @@
 package io.mixeway.rest.utils;
 
 import io.mixeway.db.entity.Project;
+import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
@@ -65,13 +66,13 @@ public class JwtUserDetailsService implements UserDetailsService {
                                 + "," +Constants.ROLE_USER
                                 + "," +Constants.ROLE_EDITOR_RUNNER
                                 + "," +Constants.ROLE_ADMIN ));
-            if (locations.length > 0 && locations[1].equals(Constants.API_URL)) {
+            if (locations.length > 0 && (locations[1].equals(Constants.API_URL) || locations[1].equals("v2"))) {
                 if (locations[2].equals(Constants.KOORDYNATOR_API_URL) || locations[3].equals(Constants.SCANMANAGE_API)) {
                     if (settings.getMasterApiKey() != null && username.equals(settings.getMasterApiKey()))
                         return new User(username, "", AuthorityUtils.commaSeparatedStringToAuthorityList("ROLE_API"));
                     else
                         throw new UsernameNotFoundException("Tried to access vulnerabilities API with " + username);
-                } else {
+                } else if (locations[3].matches("-?\\d+")) {
                     Optional<Project> project = projectRepository.findByIdAndApiKey(Long.valueOf(locations[3]),username);
                     if (project.isPresent() || (settings.getMasterApiKey() != null && username.equals(settings.getMasterApiKey()))) {
                         return new User(username, "", AuthorityUtils.commaSeparatedStringToAuthorityList("ROLE_API"+ "," +Constants.ROLE_USER));
@@ -79,6 +80,14 @@ public class JwtUserDetailsService implements UserDetailsService {
                         throw new UsernameNotFoundException("No permisions");
                     }
 
+                } else {
+                    int loc = Arrays.asList(locations).indexOf(Constants.PROJECT_KEYWORD) + 1;
+                    Optional<Project> project = projectRepository.findByIdAndApiKey(Long.valueOf(locations[loc]),username);
+                    if (project.isPresent() || (settings.getMasterApiKey() != null && username.equals(settings.getMasterApiKey()))) {
+                        return new User(username, "", AuthorityUtils.commaSeparatedStringToAuthorityList("ROLE_API"+ "," +Constants.ROLE_USER));
+                    } else {
+                        throw new UsernameNotFoundException("No permisions");
+                    }
                 }
             }
             throw new UsernameNotFoundException("User not found");

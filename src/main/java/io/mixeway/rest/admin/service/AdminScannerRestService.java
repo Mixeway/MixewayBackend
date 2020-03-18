@@ -73,7 +73,7 @@ public class AdminScannerRestService {
            log.info("{} - Created new scanner of {} with apiurl {}", name, LogUtil.prepare(scannerModel.getScannerType()), LogUtil.prepare(scannerModel.getApiUrl()));
             return new ResponseEntity<>(new Status("not ok"), HttpStatus.CREATED);
         } catch(Exception e){
-            log.error("Cannot add scanner {}",LogUtil.prepare(scannerModel.getApiUrl()));
+            log.error("Cannot add scanner {} ",LogUtil.prepare(scannerModel.getApiUrl()));
             return new ResponseEntity<>(new Status("not ok"), HttpStatus.PRECONDITION_FAILED);
         }
     }
