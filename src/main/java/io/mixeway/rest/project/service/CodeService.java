@@ -6,12 +6,15 @@ import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.*;
 import io.mixeway.plugins.audit.dependencytrack.apiclient.DependencyTrackApiClient;
 import io.mixeway.plugins.audit.dependencytrack.model.Projects;
+import io.mixeway.plugins.audit.mvndependencycheck.model.SASTRequestVerify;
 import io.mixeway.plugins.codescan.service.CodeScanClient;
+import io.mixeway.plugins.utils.CodeAccessVerifier;
 import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.PermissionFactory;
 import io.mixeway.pojo.VaultHelper;
 import io.mixeway.rest.project.model.*;
 import io.mixeway.rest.utils.ProjectRiskAnalyzer;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tomcat.util.bcel.Const;
 import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
@@ -49,19 +52,22 @@ public class CodeService {
     private final ScannerRepository scannerRepository;
     private final ScannerTypeRepository scanneTypeRepository;
     private final PermissionFactory permissionFactory;
+    private final CodeAccessVerifier codeAccessVerifier;
 
     @Autowired
     CodeService(ProjectRepository projectRepository, CodeProjectRepository codeProjectRepository,
                 ProjectRiskAnalyzer projectRiskAnalyzer, CodeGroupRepository codeGroupRepository,
                 VaultHelper vaultHelper, List<CodeScanClient> codeScanClients,
                 CodeVulnRepository codeVulnRepository, DependencyTrackApiClient dependencyTrackApiClient,
-                ScannerTypeRepository scanneTypeRepository, ScannerRepository scannerRepository, PermissionFactory permissionFactory) {
+                ScannerTypeRepository scanneTypeRepository, ScannerRepository scannerRepository, PermissionFactory permissionFactory,
+                CodeAccessVerifier codeAccessVerifier) {
         this.projectRepository = projectRepository;
         this.codeProjectRepository = codeProjectRepository;
         this.scannerRepository = scannerRepository;
         this.scanneTypeRepository = scanneTypeRepository;
         this.dependencyTrackApiClient = dependencyTrackApiClient;
         this.projectRiskAnalyzer = projectRiskAnalyzer;
+        this.codeAccessVerifier = codeAccessVerifier;
         this.vaultHelper = vaultHelper;
         this.codeGroupRepository = codeGroupRepository;
         this.codeVulnRepository = codeVulnRepository;
@@ -343,6 +349,32 @@ public class CodeService {
                     return new ResponseEntity<>(new Status("created"), HttpStatus.CREATED);
                 }
             }
+        }
+        return new ResponseEntity<>(HttpStatus.PRECONDITION_FAILED);
+    }
+
+    public ResponseEntity<OpenSourceConfig> getOpenSourceConfig(Long id, String codeGroup, String codeProject) {
+        Optional<Project> project = projectRepository.findById(id);
+        SASTRequestVerify sastRequestVerify = codeAccessVerifier.verifyPermissions(id,codeGroup,codeProject,true);
+        if (project.isPresent() && sastRequestVerify.getValid()) {
+            //TODO Fix it so it can be flexible ATM works only for dTrack
+            Scanner openSourceScanner = scannerRepository
+                    .findByScannerType(scanneTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_DEPENDENCYTRACK))
+                    .stream()
+                    .findFirst()
+                    .orElse(null);
+            OpenSourceConfig openSourceConfig = new OpenSourceConfig();
+            if (StringUtils.isNotBlank(sastRequestVerify.getCp().getdTrackUuid()) && openSourceScanner != null){
+                openSourceConfig.setOpenSourceScannerApiUrl(openSourceScanner.getApiUrl());
+                openSourceConfig.setOpenSourceScannerCredentials(vaultHelper.getPassword(openSourceScanner.getApiKey()));
+                openSourceConfig.setOpenSourceScannerProjectId(sastRequestVerify.getCp().getdTrackUuid());
+                openSourceConfig.setTech(sastRequestVerify.getCp().getTechnique());
+                openSourceConfig.setScannerType(openSourceScanner.getScannerType().getName());
+                openSourceConfig.setOpenSourceScannerIntegration(true);
+            } else {
+                openSourceConfig.setOpenSourceScannerIntegration(false);
+            }
+            return new ResponseEntity<>(openSourceConfig, HttpStatus.OK);
         }
         return new ResponseEntity<>(HttpStatus.PRECONDITION_FAILED);
     }

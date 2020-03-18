@@ -82,7 +82,7 @@ public class CodeServiceTest {
         codeScanClients.add(fortifyApiClient);
         projectRiskAnalyzer = new ProjectRiskAnalyzer(codeVulnRepository,infrastructureVulnRepository,webAppVulnRepository,interfaceRepository);
         codeService = new CodeService(projectRepository,codeProjectRepository,projectRiskAnalyzer,codeGroupRepository,vaultHelper,codeScanClients,codeVulnRepository,null,
-                null, null,null);
+                null, null,null,null);
         initializeDB();
     }
 
