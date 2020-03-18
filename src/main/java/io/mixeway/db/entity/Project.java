@@ -256,5 +256,13 @@ public class Project implements Serializable{
 		Project p = (Project) o;
 		return Objects.equals(getId(), p.getId());
 	}
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result
+				+ ((name == null) ? 0 : name.hashCode());
+		return result;
+	}
 
 }
