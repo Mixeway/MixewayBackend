@@ -741,7 +741,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 					if (response.getStatusCode().equals(HttpStatus.OK) && Objects.requireNonNull(response.getBody()).getRequestId() != null) {
 						if (codeProject!=null){
 							codeProject.setRunning(true);
-							codeProject.setRequestId(UUID.randomUUID().toString());
+							codeProject.setRequestId(response.getBody().getRequestId());
 							codeProjectRepository.saveAndFlush(codeProject);
 						} else {
 							cg.setRequestid(response.getBody().getRequestId());

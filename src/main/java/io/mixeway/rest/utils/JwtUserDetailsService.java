@@ -73,7 +73,8 @@ public class JwtUserDetailsService implements UserDetailsService {
                     else
                         throw new UsernameNotFoundException("Tried to access vulnerabilities API with " + username);
                 } else if (locations[3].matches("-?\\d+")) {
-                    Optional<Project> project = projectRepository.findByIdAndApiKey(Long.valueOf(locations[3]),username);
+                    Long projectId = Long.valueOf(locations[3]);
+                    Optional<Project> project = projectRepository.findByIdAndApiKey(projectId,username);
                     if (project.isPresent() || (settings.getMasterApiKey() != null && username.equals(settings.getMasterApiKey()))) {
                         return new User(username, "", AuthorityUtils.commaSeparatedStringToAuthorityList("ROLE_API"+ "," +Constants.ROLE_USER));
                     } else {
