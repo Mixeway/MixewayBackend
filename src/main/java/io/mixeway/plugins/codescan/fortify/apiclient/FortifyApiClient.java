@@ -59,7 +59,6 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 	private StatusRepository statusRepository;
 	private SecureRestTemplate secureRestTemplate;
 	private ScannerTypeRepository scannerTypeRepository;
-	private DependencyTrackApiClient dependencyTrackApiClient;
 	private BugTrackerRepository bugTrackerRepository;
 	private List<BugTracking> bugTrackings ;
 	private CiOperationsRepository ciOperationsRepository;
@@ -75,7 +74,6 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 		this.bugTrackerRepository = bugTrackerRepository;
 		this.scannerRepository = scannerRepository;
 		this.codeVulnRepository = codeVulnRepository;
-		this.dependencyTrackApiClient = dependencyTrackApiClient;
 		this.codeProjectRepository = codeProjectRepository;
 		this.bugTrackings = bugTrackings;
 		this.codeGroupRepository = codeGroupRepository;
@@ -174,9 +172,6 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 			if (codeVulns !=null) {
 				log.debug("Contains old vulns, reimporting");
 				reimportAnalysisFromScans(codeProject,codeGroup, codeVulns);
-			}
-			if (codeProject!=null && codeProject.getdTrackUuid()!=null){
-				dependencyTrackApiClient.loadVulnerabilities(codeProject);
 			}
 		} catch (HttpClientErrorException | CertificateException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyManagementException | KeyStoreException | IOException | URISyntaxException | HttpServerErrorException hcee){
 			log.error("FortifySSC HttpClientErrorExceptio was unsuccessfull with code of: {} {} ",hcee.getLocalizedMessage(),hcee.getMessage());
@@ -349,6 +344,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 					cg.setScanid(null);
 					cg.setScope(null);
 					codeGroupRepository.save(cg);
+					updateRunningForCodeProjectsByCodeGroup(cg);
 					return true;
 				} else if (response.getBody().getData().getJobState().equals(Constants.FORTIFY_SCAN_FOULTED) ||
 						response.getBody().getData().getJobState().equals(Constants.FORTIFY_SCAN_CANCELED) ||
@@ -358,6 +354,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 					cg.setScanid(null);
 					cg.setScope(null);
 					codeGroupRepository.save(cg);
+					updateRunningForCodeProjectsByCodeGroup(cg);
 					log.info("CloudScan ended with FAULTED state for {}", cg.getName());
 					return false;
 				}
@@ -368,6 +365,14 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 		}
 		return false;
 	}
+
+	private void updateRunningForCodeProjectsByCodeGroup(CodeGroup cg) {
+		for (CodeProject codeProject : codeProjectRepository.findByCodeGroupAndRunning(cg,true)){
+			codeProject.setRunning(false);
+			codeProjectRepository.save(codeProject);
+		}
+	}
+
 	private CodeRequestHelper prepareRestTemplate(io.mixeway.db.entity.Scanner scanner) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
 		Date fortifyTokenExpirationDate = sdf.parse(scanner.getFortifytokenexpiration()+".123");
 		LocalDateTime fortifyTokenExpiration = LocalDateTime.ofInstant(fortifyTokenExpirationDate.toInstant(), ZoneId.systemDefault());
