@@ -149,7 +149,7 @@ public class CodeScheduler {
 		if (fortify.isPresent() && fortify.get().getStatus()) {
 			try {
 				for (CodeProject cp : codeProjectRepository.findByInQueue(true)) {
-					if (codeGroupRepository.countByRunning(true) == 0 && codeProjectRepository.findByRunning(true).size() == 0) {
+					if (canScanCodeProject(cp)) {
 						for (CodeScanClient codeScanClient : codeScanClients) {
 							if (codeScanClient.canProcessRequest(cp.getCodeGroup())) {
 								log.info("Ready to scan [scope {}] {}, taking it from the queue", cp.getName(), cp.getCodeGroup().getName());
@@ -182,7 +182,17 @@ public class CodeScheduler {
 			}
 		}
 	}
-	
+
+	private boolean canScanCodeProject(CodeProject cp) {
+		if (cp.getRunning())
+			return false;
+		else if (cp.getCodeGroup().getProjects().stream().anyMatch(CodeProject::getRunning))
+			return false;
+		else if (cp.getCodeGroup().isRunning())
+			return false;
+		else return true;
+	}
+
 
 	private List<CodeVuln> deleteOldVulns(CodeGroup group) {
 		List<CodeVuln> tmpVulns = new ArrayList<>();
