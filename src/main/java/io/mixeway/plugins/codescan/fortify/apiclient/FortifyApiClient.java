@@ -784,7 +784,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 	private boolean canRunScan(CodeGroup cg, CodeProject codeProject) {
 		if ( codeProject != null && codeProject.getRunning() )
 			return false;
-		else if (cg.isRunning())
+		else if (cg!= null && cg.isRunning())
 			return false;
 		else return true;
 	}
