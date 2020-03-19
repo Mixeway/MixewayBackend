@@ -487,15 +487,14 @@ public class GetVulnerabilitiesService {
     }
 
     private void prepareOperationForRequest(CIVulnManageResponse ciVulnManageResponse, CodeProject codeProject){
-        CiOperations ciOperations = new CiOperations();
-        ciOperations.setProject(codeProject.getCodeGroup().getProject());
-        ciOperations.setCodeGroup(codeProject.getCodeGroup());
-        ciOperations.setCodeProject(codeProject);
-        ciOperations.setResult(ciVulnManageResponse.getResult());
-        ciOperations.setVulnNumber(ciVulnManageResponse.getVulnManageResponseList().size());
-        if (!codeProject.getRunning() && !codeProject.getInQueue())
-            ciOperations.setEnded(new Date());
-        ciOperationsRepository.save(ciOperations);
+        Optional<CiOperations> ciOperations = ciOperationsRepository.findByCodeProjectAndCommitId(codeProject, codeProject.getCommitid());
+        if (ciOperations.isPresent()) {
+            ciOperations.get().setResult(ciVulnManageResponse.getResult());
+            ciOperations.get().setVulnNumber(ciVulnManageResponse.getVulnManageResponseList().size());
+            if (!codeProject.getRunning() && !codeProject.getInQueue())
+                ciOperations.get().setEnded(new Date());
+            ciOperationsRepository.save(ciOperations.get());
+        }
     }
     private List<VulnManageResponse> createVulnManageResponseForCodeProject(CodeProject cp){
         List<VulnManageResponse> vulnManageResponses = new ArrayList<>();
