@@ -190,4 +190,15 @@ public class CodeProject {
 	public void setWebAppVulns(Set<WebAppVuln> webAppVulns) {
 		this.webAppVulns = webAppVulns;
 	}
+
+	@PreUpdate
+	void preUpdate(){
+		if (running == null)
+			running = false;
+	}
+	@PrePersist
+	void prePersist(){
+		if (running == null)
+			running = false;
+	}
 }
