@@ -108,10 +108,11 @@ public class CodeScheduler {
 					if (codeScanClient.canProcessRequest(sastScanner.get()) && codeScanClient.isScanDone(null, codeProject)) {
 						codeScanClient.loadVulnerabilities(sastScanner.get(), codeProject.getCodeGroup(), null, true, codeProject, codeVulns);
 						log.info("Vulerabilities for codescan for {} with scope of {} loaded - single app", codeProject.getCodeGroup().getName(), codeProject.getName());
+						if (StringUtils.isNotBlank(codeProject.getCommitid()))
+							updateCiOperationsForDoneSastScan(codeProject);
 					}
 				}
-				if (codeProject !=null && StringUtils.isNotBlank(codeProject.getCommitid()))
-					updateCiOperationsForDoneSastScan(codeProject);
+
 			}
 			List<CodeGroup> codeGroups = codeGroupRepository.findByRunning(true);
 			for (CodeGroup codeGroup : codeGroups) {
@@ -148,7 +149,7 @@ public class CodeScheduler {
 		if (fortify.isPresent() && fortify.get().getStatus()) {
 			try {
 				for (CodeProject cp : codeProjectRepository.findByInQueue(true)) {
-					if (codeGroupRepository.countByRunning(true) == 0) {
+					if (codeGroupRepository.countByRunning(true) == 0 && codeProjectRepository.findByRunning(true).size() == 0) {
 						for (CodeScanClient codeScanClient : codeScanClients) {
 							if (codeScanClient.canProcessRequest(cp.getCodeGroup())) {
 								log.info("Ready to scan [scope {}] {}, taking it from the queue", cp.getName(), cp.getCodeGroup().getName());
