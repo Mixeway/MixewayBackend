@@ -341,12 +341,6 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 			if (response.getStatusCode() == HttpStatus.OK) {
 				if (Objects.requireNonNull(response.getBody()).getData().getJobState().equals(Constants.FORTIFY_UPLOAD_COMPLETED)) {
 					log.info("CloudScan ended for {}", cg.getName());
-					cg.setRunning(false);
-					cg.setRequestid(null);
-					cg.setScanid(null);
-					cg.setScope(null);
-					codeGroupRepository.save(cg);
-					updateRunningForCodeProjectsByCodeGroup(cg);
 					return true;
 				} else if (response.getBody().getData().getJobState().equals(Constants.FORTIFY_SCAN_FOULTED) ||
 						response.getBody().getData().getJobState().equals(Constants.FORTIFY_SCAN_CANCELED) ||
@@ -445,7 +439,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 		if ((cg != null && StringUtils.isNotBlank(cg.getScanid())) || (cp !=null && StringUtils.isNotBlank(cp.getCodeGroup().getScanid()))){
 			return verifyCloudScanJob(cg != null? cg : cp.getCodeGroup());
 		} else {
-			if (cp == null && getScanIdForCodeGroup(cg) && verifyCloudScanJob(cg)) {
+			if (cp == null && cg!= null && getScanIdForCodeGroup(cg) && verifyCloudScanJob(cg)) {
 				return true;
 			} else if (cg == null && cp != null && getScanIdForCodeProject(cp) && verifyCloudScanJob(cp.getCodeGroup())) {
 				return true;
@@ -729,7 +723,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 			if (canRunScan(cg,codeProject)) {
 				CreateFortifyScanRequest fortifyScanRequest;
 				String scope;
-				if (codeProject == null) {
+				if (codeProject == null && cg != null) {
 					fortifyScanRequest = prepareScanRequestForGroup(cg);
 					scope = Constants.FORTIFY_SCOPE_ALL;
 				} else {

@@ -110,6 +110,8 @@ public class CodeScheduler {
 						log.info("Vulerabilities for codescan for {} with scope of {} loaded - single app", codeProject.getCodeGroup().getName(), codeProject.getName());
 						if (StringUtils.isNotBlank(codeProject.getCommitid()))
 							updateCiOperationsForDoneSastScan(codeProject);
+						codeProject.setRunning(false);
+						codeProjectRepository.save(codeProject);
 					}
 				}
 
@@ -140,6 +142,18 @@ public class CodeScheduler {
 			ciOperationsRepository.save(operation);
 			log.info("CI Operation updated for {} - {} settings SAST scan to true", codeProject.getCodeGroup().getProject().getName(),codeProject.getName());
 		}
+	}
+	private void endTheScan(CodeGroup cg){
+		cg.setRunning(false);
+		cg.setRequestid(null);
+		cg.setScanid(null);
+		cg.setScope(null);
+		codeGroupRepository.save(cg);
+		for (CodeProject codeProject : codeProjectRepository.findByCodeGroupAndRunning(cg,true)){
+			codeProject.setRunning(false);
+			codeProjectRepository.save(codeProject);
+		}
+
 	}
 
 	@Transactional
