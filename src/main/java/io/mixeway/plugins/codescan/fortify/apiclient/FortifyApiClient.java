@@ -726,7 +726,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 		Optional<Scanner> dTrack = scannerRepository
 				.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_DEPENDENCYTRACK)).stream().findFirst();
 		if (codeGroupRepository.countByRunning(true) ==0 && codeProjectRepository.findByRunning(true).size() ==0 && fortify.size()>0 && fortifySSC.isPresent()) {
-			if (!cg.isRunning()) {
+			if (canRunScan(cg,codeProject)) {
 				CreateFortifyScanRequest fortifyScanRequest;
 				String scope;
 				if (codeProject == null) {
@@ -779,5 +779,13 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 			}
 		}
 		return false;
+	}
+
+	private boolean canRunScan(CodeGroup cg, CodeProject codeProject) {
+		if ( codeProject != null && codeProject.getRunning() )
+			return false;
+		else if (cg.isRunning())
+			return false;
+		else return true;
 	}
 }

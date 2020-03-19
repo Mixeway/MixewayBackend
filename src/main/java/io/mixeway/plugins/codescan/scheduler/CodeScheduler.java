@@ -18,6 +18,7 @@ import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
 import io.mixeway.plugins.codescan.service.CodeScanClient;
+import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,18 +37,18 @@ public class CodeScheduler {
 	private CodeProjectRepository codeProjectRepository;
 	private ScannerRepository scannerRepository;
 	private ScannerTypeRepository scannerTypeRepository;
-	private FortifySingleAppRepository fortifySingleAppRepository;
 	private ProjectRepository projectRepository;
+	private CiOperationsRepository ciOperationsRepository;
 	private List<CodeScanClient> codeScanClients;
 
 	@Autowired
 	CodeScheduler(CodeGroupRepository codeGroupRepository, CodeVulnRepository codeVulnRepository, CodeProjectRepository codeProjectRepository,
-				  ScannerRepository scannerRepository, ScannerTypeRepository scannerTypeRepository, FortifySingleAppRepository fortifySingleAppRepository,
+				  ScannerRepository scannerRepository, ScannerTypeRepository scannerTypeRepository, CiOperationsRepository ciOperationsRepository,
 				  ProjectRepository projectRepository, List<CodeScanClient> codeScanClients){
 		this.codeProjectRepository = codeProjectRepository;
 		this.codeGroupRepository = codeGroupRepository;
 		this.codeVulnRepository = codeVulnRepository;
-		this.fortifySingleAppRepository = fortifySingleAppRepository;
+		this.ciOperationsRepository = ciOperationsRepository;
 		this.projectRepository = projectRepository;
 		this.scannerRepository = scannerRepository;
 		this.codeScanClients = codeScanClients;
@@ -88,11 +89,9 @@ public class CodeScheduler {
 		if ( sastScanner.isPresent() &&  sastScanner.get().getStatus()) {
 			for (Project p : projects){
 				for (CodeGroup cg : p.getCodes()){
-					if (!cg.getRepoPassword().equals("") && cg.getRepoPassword() != null){
-						for(CodeScanClient codeScanClient : codeScanClients){
-							if (codeScanClient.canProcessRequest(sastScanner.get())){
-								codeScanClient.runScan(cg,null);
-							}
+					for(CodeScanClient codeScanClient : codeScanClients){
+						if (codeScanClient.canProcessRequest(sastScanner.get())){
+							codeScanClient.runScan(cg,null);
 						}
 					}
 				}
@@ -111,6 +110,8 @@ public class CodeScheduler {
 						log.info("Vulerabilities for codescan for {} with scope of {} loaded - single app", codeProject.getCodeGroup().getName(), codeProject.getName());
 					}
 				}
+				if (codeProject !=null && StringUtils.isNotBlank(codeProject.getCommitid()))
+					updateCiOperationsForDoneSastScan(codeProject);
 			}
 			List<CodeGroup> codeGroups = codeGroupRepository.findByRunning(true);
 			for (CodeGroup codeGroup : codeGroups) {
@@ -126,6 +127,17 @@ public class CodeScheduler {
 					}
 				}
 			}
+		}
+	}
+	private void updateCiOperationsForDoneSastScan(CodeProject codeProject) {
+		Optional<CiOperations> operations = ciOperationsRepository.findByCodeProjectAndCommitId(codeProject,codeProject.getCommitid());
+		if (operations.isPresent()){
+			CiOperations operation = operations.get();
+			operation.setSastScan(true);
+			operation.setSastCrit(codeVulnRepository.findByCodeProjectAndSeverityAndAnalysis(codeProject, Constants.VULN_CRITICALITY_CRITICAL, Constants.FORTIFY_ANALYSIS_EXPLOITABLE).size());
+			operation.setSastHigh(codeVulnRepository.findByCodeProjectAndSeverityAndAnalysis(codeProject, Constants.VULN_CRITICALITY_HIGH, Constants.FORTIFY_ANALYSIS_EXPLOITABLE).size());
+			ciOperationsRepository.save(operation);
+			log.info("CI Operation updated for {} - {} settings SAST scan to true", codeProject.getCodeGroup().getProject().getName(),codeProject.getName());
 		}
 	}
 

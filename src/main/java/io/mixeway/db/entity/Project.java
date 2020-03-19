@@ -191,7 +191,7 @@ public class Project implements Serializable{
 	public void setScans(Set<NessusScan> scans) {
 		this.scans = scans;
 	}
-	@OneToMany(mappedBy = "project", cascade = CascadeType.ALL, fetch=FetchType.LAZY)
+	@OneToMany(mappedBy = "project", cascade = CascadeType.ALL, fetch=FetchType.EAGER)
 	public Set<CodeGroup> getCodes() {
 		return codes;
 	}

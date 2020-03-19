@@ -37,6 +37,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class DependencyTrackApiClient implements SecurityScanner {
@@ -102,8 +103,12 @@ public class DependencyTrackApiClient implements SecurityScanner {
         if (operations.isPresent()){
             CiOperations operation = operations.get();
             operation.setOpenSourceScan(true);
-            operation.setOpenSourceCrit(softwarePacketVulnerabilityRepository.getSoftwareVulnsForProjectAndSeverity(codeProject.getId(),Constants.VULN_CRITICALITY_CRITICAL).size());
-            operation.setOpenSourceHigh(softwarePacketVulnerabilityRepository.getSoftwareVulnsForProjectAndSeverity(codeProject.getId(),Constants.VULN_CRITICALITY_HIGH).size());
+            int highVulns = (int) softwarePacketVulnerabilityRepository
+                    .getSoftwareVulnsForCodeProject(codeProject.getId()).stream().filter(v -> v.getSeverity().equals(Constants.VULN_CRITICALITY_HIGH)).count();
+            int critVulns = (int) softwarePacketVulnerabilityRepository
+                    .getSoftwareVulnsForCodeProject(codeProject.getId()).stream().filter(v -> v.getSeverity().equals(Constants.VULN_CRITICALITY_CRITICAL)).count();
+            operation.setOpenSourceCrit(critVulns);
+            operation.setOpenSourceHigh(highVulns);
             ciOperationsRepository.save(operation);
         }
     }
