@@ -436,7 +436,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 	@Transactional(propagation = Propagation.REQUIRES_NEW)
 	public boolean isScanDone(CodeGroup cg, CodeProject cp) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, ParseException, JSONException {
 		if ((cg != null && StringUtils.isNotBlank(cg.getScanid())) || (cp !=null && StringUtils.isNotBlank(cp.getCodeGroup().getScanid()))){
-			return verifyCloudScanJob(cg);
+			return verifyCloudScanJob(cg != null? cg : cp.getCodeGroup());
 		} else {
 			if (cp == null && getScanIdForCodeGroup(cg) && verifyCloudScanJob(cg)) {
 				return true;
