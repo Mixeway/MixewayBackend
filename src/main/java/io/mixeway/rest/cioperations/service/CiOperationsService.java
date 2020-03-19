@@ -84,7 +84,7 @@ public class CiOperationsService {
                 Optional<CiOperations> operation = ciOperationsRepository.findByCodeProjectAndCommitId(verifyRequest.getCp(),commitId);
                 if (operation.isPresent()){
                     return new ResponseEntity<>(HttpStatus.OK);
-                } else {
+                } else if (StringUtils.isNotBlank(verifyRequest.getCp().getCommitid())) {
                     CiOperations newOperation = new CiOperations();
                     newOperation.setProject(project.get());
                     newOperation.setCodeGroup(verifyRequest.getCg());

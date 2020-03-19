@@ -700,7 +700,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 
 	private void createCiOperation(CodeProject codeProject, String commitid) {
 		Optional<CiOperations> operation = ciOperationsRepository.findByCodeProjectAndCommitId(codeProject,commitid);
-		if (!operation.isPresent()) {
+		if (!operation.isPresent() && StringUtils.isNotBlank(commitid)) {
 			CiOperations newOperation = new CiOperations();
 			newOperation.setProject(codeProject.getCodeGroup().getProject());
 			newOperation.setCodeGroup(codeProject.getCodeGroup());
