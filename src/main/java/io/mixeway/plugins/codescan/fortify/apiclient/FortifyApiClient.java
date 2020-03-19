@@ -64,6 +64,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 	private CiOperationsRepository ciOperationsRepository;
 	private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 	private SimpleDateFormat sdfForFortify = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+	private String[] blackListedLocation = new String[] {"src","source","vendor","lib" };
 
 	@Autowired
 	FortifyApiClient(VaultHelper vaultHelper, ScannerRepository scannerRepository, CodeVulnRepository codeVulnRepository, List<BugTracking> bugTrackings, DependencyTrackApiClient dependencyTrackApiClient,
@@ -223,6 +224,8 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 			vuln.setInserted(sdf.format(new Date()));
 			if(codeGroup.getHasProjects() && cp == null) {
 				CodeProject codeProject = getProjectFromPath(codeGroup,vulnJson.getString(Constants.VULN_PATH));
+				if (codeProject == null)
+					return;
 				vuln.setCodeProject(codeProject);
 				vuln.setCodeGroup(codeGroup);
 			}else if (codeGroup.getHasProjects() && cp != null){
@@ -315,7 +318,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 		Optional<CodeProject> codeProject = codeProjectRepository.findByCodeGroupAndName(group, projectName);
 		if(codeProject.isPresent())
 			return codeProject.get();
-		else {
+		else if (!Arrays.stream(blackListedLocation).anyMatch(projectName::equals)) {
 			CodeProject codeProjectNew = new CodeProject();
 			codeProjectNew.setCodeGroup(group);
 			codeProjectNew.setSkipAllScan(true);
@@ -323,7 +326,8 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 			codeProjectRepository.save(codeProjectNew);
 			log.info("Creating project {} for group {}", projectName,group.getName());
 			return codeProjectNew;
-		}
+		} else
+			return null;
 	}
 	//SSC - status of cloduscan job
 	private boolean verifyCloudScanJob(CodeGroup cg) throws ParseException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, IOException {
