@@ -493,6 +493,8 @@ public class GetVulnerabilitiesService {
         ciOperations.setCodeProject(codeProject);
         ciOperations.setResult(ciVulnManageResponse.getResult());
         ciOperations.setVulnNumber(ciVulnManageResponse.getVulnManageResponseList().size());
+        if (!codeProject.getRunning() && !codeProject.getInQueue())
+            ciOperations.setEnded(new Date());
         ciOperationsRepository.save(ciOperations);
     }
     private List<VulnManageResponse> createVulnManageResponseForCodeProject(CodeProject cp){
