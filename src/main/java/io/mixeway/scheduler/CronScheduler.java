@@ -120,7 +120,7 @@ public class CronScheduler {
     @Scheduled(initialDelay=0,fixedDelay = 1500000)
     public void getDepTrackVulns() {
         try {
-            for (CodeProject cp : codeProjectRepository.findBydTrackUuidNotNull()){
+            for (CodeProject cp : codeProjectRepository.getCodeProjectsWithOSIntegrationEnabled()){
                 dependencyTrackApiClient.loadVulnerabilities(cp);
             }
             log.info("Successfully synchronized with OpenSource scanner");

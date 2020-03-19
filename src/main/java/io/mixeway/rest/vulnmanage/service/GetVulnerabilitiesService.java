@@ -8,6 +8,7 @@ import io.mixeway.plugins.audit.dependencytrack.apiclient.DependencyTrackApiClie
 import io.mixeway.pojo.*;
 import io.mixeway.rest.project.model.SoftVuln;
 import io.mixeway.rest.vulnmanage.model.Vuln;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -465,7 +466,7 @@ public class GetVulnerabilitiesService {
         Optional<CodeProject> cp = codeProjectRepository.getCodeProjectByNameCodeGroupNameAndProjectId(codeProject,codeGroup,id);
         CIVulnManageResponse ciVulnManageResponse = new CIVulnManageResponse();
         if (cp.isPresent()){
-            if (cp.get().getdTrackUuid() != null && !cp.get().getdTrackUuid().isEmpty()){
+            if (StringUtils.isNotBlank(cp.get().getdTrackUuid())){
                 dependencyTrackApiClient.loadVulnerabilities(cp.get());
             }
             List<VulnManageResponse> vmr = createVulnManageResponseForCodeProject(cp.get());

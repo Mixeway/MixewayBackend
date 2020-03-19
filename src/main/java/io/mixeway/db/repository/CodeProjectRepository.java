@@ -30,4 +30,7 @@ public interface CodeProjectRepository extends JpaRepository<CodeProject, Long> 
 	List<CodeProject> findByRunning(boolean running);
 	List<CodeProject> findByCodeGroupAndRunning(CodeGroup codeGroup, boolean running);
 
+	@Query(value = "Select * from codeproject where dtrackuuid is not null and dtrackuuid != ''", nativeQuery = true)
+	List<CodeProject> getCodeProjectsWithOSIntegrationEnabled();
+
 }

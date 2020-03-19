@@ -163,8 +163,6 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 					this.loadVulnerabilities(scanner,codeGroup,responseJson.getJSONObject(Constants.FORTIFY_LINKS)
 							.getJSONObject(Constants.FORTIFY_LINKS_NEXT).getString(Constants.FORTIFY_LINKS_NEXT_HREF),single,codeProject,codeVulns);
 				}
-				if (codeProject !=null && StringUtils.isNotBlank(codeProject.getCommitid()))
-					updateCiOperationsForDoneSastScan(codeProject);
 				log.debug("FortifyApiClient- loaded {} vulns for {}", responseJson.getJSONArray(Constants.VULNERABILITIES_LIST).length(), codeGroup.getName());
 			} else {
 				log.error("Fortify Authorization failure");
