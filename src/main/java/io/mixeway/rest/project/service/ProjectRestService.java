@@ -38,6 +38,7 @@ public class ProjectRestService {
     private final CodeVulnRepository codeVulnRepository;
     private final WebAppVulnRepository webAppVulnRepository;
     private final SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository;
+    private final SoftwarePacketRepository softwarePacketRepository;
     private final ScannerRepository scannerRepository;
 
     @Autowired
@@ -53,12 +54,14 @@ public class ProjectRestService {
                         WebAppVulnRepository webAppVulnRepository,
                         SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository,
                         ScannerRepository scannerRepository,
-                       PermissionFactory permissionFactory){
+                       PermissionFactory permissionFactory,
+                       SoftwarePacketRepository softwarePacketRepository){
         this.routingDomainRepository = routingDomainRepository;
         this.proxiesRepository = proxiesRepository;
         this.projectRepository = projectRepository;
         this.interfaceRepository = interfaceRepository;
         this.projectRiskAnalyzer = projectRiskAnalyzer;
+        this.softwarePacketRepository = softwarePacketRepository;
         this.permissionFactory = permissionFactory;
         this.codeProjectRepository = codeProjectRepository;
         this.vulnHistoryRepository = vulnHistoryRepository;
@@ -85,6 +88,7 @@ public class ProjectRestService {
             int assetRisk = projectRiskAnalyzer.getProjectInfraRisk(project.get());
             int codeRisk = projectRiskAnalyzer.getProjectCodeRisk(project.get());
             int auditRisk = projectRiskAnalyzer.getProjectAuditRisk(project.get());
+            int openSourceRisk = projectRiskAnalyzer.getProjectOpenSourceRisk(project.get());
             int codeProjects = codeProjectRepository.findByCodeGroupIn(project.get().getCodes()).size();
             RiskCards riskCards = new RiskCards();
             riskCards.setWebAppNumber(project.get().getWebapps().size());
@@ -95,6 +99,8 @@ public class ProjectRestService {
             riskCards.setAssetRisk(assetRisk > 100 ? 100 : assetRisk);
             riskCards.setCodeRepoNumber(codeProjects == 0 ? project.get().getCodes().size() : codeProjects);
             riskCards.setCodeRisk(codeRisk > 100 ? 100 : codeRisk);
+            riskCards.setOpenSourceLibs(softwarePacketRepository.getSoftwarePacketForProject(project.get().getId()).size());
+            riskCards.setOpenSourceRisk(openSourceRisk > 100 ? 100 : openSourceRisk);
             riskCards.setProjectName(project.get().getName());
             riskCards.setProjectDescription(project.get().getDescription());
             return new ResponseEntity<>(riskCards,HttpStatus.OK);

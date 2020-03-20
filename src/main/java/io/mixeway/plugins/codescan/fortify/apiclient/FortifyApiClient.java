@@ -266,9 +266,9 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 			issueDetails.append("Details: ")
 					.append(response.getBody().getIssueDetailModel().getDetail());
 			issueDetails.append("\n");
-			issueDetails.append("CodeSnippet:\n ")
-					.append(getCodeSnippet(scanner, versionid, response.getBody().getIssueDetailModel().getFullFileName(),
-					response.getBody().getIssueDetailModel().getLineNumber()));
+			//issueDetails.append("CodeSnippet:\n ")
+			//		.append(getCodeSnippet(scanner, versionid, response.getBody().getIssueDetailModel().getFullFileName(),
+			//		response.getBody().getIssueDetailModel().getLineNumber()));
 			codeVuln.setDescription(issueDetails.toString());
 			codeVuln.setFilePath(response.getBody().getIssueDetailModel().getFullFileName()+":"+response.getBody().getIssueDetailModel().getLineNumber());
 			if (response.getBody().getIssueDetailModel().getScanStatus().equals(Constants.FORTIFY_ISSUE_STATE_UPDATED)){

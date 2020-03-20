@@ -18,4 +18,6 @@ public interface CiOperationsRepository extends JpaRepository<CiOperations,Long>
     Long countByResultAndProjectIn(String result, List<Project> projects);
     List<CiOperations> findByProjectInOrderByInsertedDesc(List<Project> projects);
     Optional<CiOperations> findByCodeProjectAndCommitId(CodeProject codeProject, String commitId);
+    List<CiOperations> findByProject(Project project);
+    List<CiOperations> findTop20ByProjectOrderByIdDesc(Project project);
 }

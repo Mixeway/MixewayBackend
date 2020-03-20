@@ -44,6 +44,11 @@ public class CiOperationsController {
     public ResponseEntity<List<CiOperations>> getTableData(Principal principal)  {
         return ciOperationsService.getTableData(principal);
     }
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @GetMapping(value = "/data/project/{id}")
+    public ResponseEntity<List<CiOperations>> getTableDataForProject(Principal principal, @PathVariable("id") Long id)  {
+        return ciOperationsService.getTableDataForProject(principal, id);
+    }
 
     @PreAuthorize("hasAuthority('ROLE_API')")
     @GetMapping(value = "/project/{id}/code/init/{groupName}/{projectName}/{commitId}")

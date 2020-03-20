@@ -11,6 +11,24 @@ public class RiskCards {
     int codeRisk;
     int audit;
     int auditRisk;
+    int openSourceLibs;
+    int openSourceRisk;
+
+    public int getOpenSourceLibs() {
+        return openSourceLibs;
+    }
+
+    public void setOpenSourceLibs(int openSourceLibs) {
+        this.openSourceLibs = openSourceLibs;
+    }
+
+    public int getOpenSourceRisk() {
+        return openSourceRisk;
+    }
+
+    public void setOpenSourceRisk(int openSourceRisk) {
+        this.openSourceRisk = openSourceRisk;
+    }
 
     public String getProjectName() {
         return projectName;

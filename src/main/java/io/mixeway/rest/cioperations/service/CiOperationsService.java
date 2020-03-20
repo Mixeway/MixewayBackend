@@ -199,4 +199,12 @@ public class CiOperationsService {
         }
         return vulnManageResponses;
     }
+
+    public ResponseEntity<List<CiOperations>> getTableDataForProject(Principal principal, Long id) {
+        Optional<Project> project = projectRepository.findById(id);
+        if (project.isPresent() && permissionFactory.canUserAccessProject(principal,project.get())){
+            return new ResponseEntity<>(ciOperationsRepository.findTop20ByProjectOrderByIdDesc(project.get()), HttpStatus.OK);
+        } else
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
 }

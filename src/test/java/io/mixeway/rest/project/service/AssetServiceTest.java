@@ -75,7 +75,7 @@ public class AssetServiceTest extends AbstractTransactionalJUnit4SpringContextTe
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
-        projectRiskAnalyzer = new ProjectRiskAnalyzer(codeVulnRepository,infrastructureVulnRepository,webAppVulnRepository,interfaceRepository);
+        projectRiskAnalyzer = new ProjectRiskAnalyzer(codeVulnRepository,infrastructureVulnRepository,webAppVulnRepository,interfaceRepository,null);
         assetService = new AssetService(projectRepository,interfaceRepository,projectRiskAnalyzer,routingDomainRepository,assetRepository,
                 scanHelper,infrastructureVulnRepository,networkScanService,null);
         createProjectAndAssetAndInterfaces();
