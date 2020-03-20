@@ -9,6 +9,7 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -137,8 +138,12 @@ public class CodeScheduler {
 		if (operations.isPresent()){
 			CiOperations operation = operations.get();
 			operation.setSastScan(true);
-			operation.setSastCrit(codeVulnRepository.findByCodeProjectAndSeverityAndAnalysis(codeProject, Constants.VULN_CRITICALITY_CRITICAL, Constants.FORTIFY_ANALYSIS_EXPLOITABLE).size());
-			operation.setSastHigh(codeVulnRepository.findByCodeProjectAndSeverityAndAnalysis(codeProject, Constants.VULN_CRITICALITY_HIGH, Constants.FORTIFY_ANALYSIS_EXPLOITABLE).size());
+			int sastCrit = codeVulnRepository.findByCodeProjectAndSeverityAndAnalysis(codeProject, Constants.VULN_CRITICALITY_CRITICAL, Constants.FORTIFY_ANALYSIS_EXPLOITABLE).size();
+			int sastHigh = codeVulnRepository.findByCodeProjectAndSeverityAndAnalysis(codeProject, Constants.VULN_CRITICALITY_HIGH, Constants.FORTIFY_ANALYSIS_EXPLOITABLE).size();
+			operation.setSastCrit(sastCrit);
+			operation.setSastHigh(sastHigh);
+			operation.setEnded(new Date());
+			operation.setResult((sastCrit + sastHigh) > 5 ? "Not Ok" : "Ok");
 			ciOperationsRepository.save(operation);
 			log.info("CI Operation updated for {} - {} settings SAST scan to true", codeProject.getCodeGroup().getProject().getName(),codeProject.getName());
 		}

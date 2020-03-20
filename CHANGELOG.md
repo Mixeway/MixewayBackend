@@ -1,3 +1,14 @@
+<a name="1.1."></a>
+## 1.1.0 (2020-03-20)
+
+### Info
+
+* Redesigned model for Fortify Plugin (including usage of MixewayFortifyScaRestApi)
+* Redesigned model for managing CI Operations, new fields and statuses
+* New REST API endpoints for interaction with CI/CD tools (CIOperations endpoint)
+* CodeVulns downloaded from Fortify SSC no longer contains description with code snipped due to performance issues
+
+
 <a name="1.0.1"></a>
 ## 1.0.1 (2020-03-11)
 
@@ -6,7 +17,6 @@
 * Edit method of editCodeProject REST API now can process of changing branch
 * WebApp DAST controller now properly sanitize regex for UUID and other strings
 
-<a name="0.9.2"></a>
 
 <a name="1.0.0"></a>
 ## 1.0.0 (2020-02-08)
