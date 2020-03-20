@@ -112,6 +112,11 @@ public class CodeScheduler {
 						if (StringUtils.isNotBlank(codeProject.getCommitid()))
 							updateCiOperationsForDoneSastScan(codeProject);
 						codeProject.setRunning(false);
+						codeProject.getCodeGroup().setRunning(false);
+						codeProject.getCodeGroup().setRequestid(null);
+						codeProject.getCodeGroup().setScanid(null);
+						codeProject.getCodeGroup().setScope(null);
+						codeGroupRepository.save(codeProject.getCodeGroup());
 						codeProjectRepository.save(codeProject);
 					}
 				}
