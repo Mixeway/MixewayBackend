@@ -31,7 +31,7 @@ public class CodeProject {
 	@JsonIgnore private String additionalPath;
 	@JsonIgnore private Boolean inQueue;
 	@JsonIgnore private Set<SoftwarePacket> softwarePackets;
-	@JsonIgnore private String branch;
+	private String branch;
 	@JsonIgnore private String requestId;
 
 	@Column(name="dtrackuuid")

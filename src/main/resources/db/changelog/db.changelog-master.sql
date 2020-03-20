@@ -884,3 +884,8 @@ alter table cioperations add column imagescan boolean;
 
 --changeset siewer:169
 alter table cioperations add column ended timestamp;
+
+--changeset siewer:170
+delete from cioperations;
+alter table nessusscan drop constraint "nessusscan_nessusscantemplate_id_fkey", add constraint "nessusscan_nessusscantemplate_id_fkey" foreign key ("nessusscantemplate_id") references "nessusscantemplate"(id) on delete cascade;
+alter table nessusscantemplate drop constraint "nessusscantemplate_nessus_id_fkey", add constraint "nessusscantemplate_nessus_id_fkey" foreign key ("nessus_id") references "nessus"(id) on delete cascade;
