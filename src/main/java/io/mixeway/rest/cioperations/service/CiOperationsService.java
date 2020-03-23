@@ -76,7 +76,7 @@ public class CiOperationsService {
         return new ResponseEntity<>(ciOperationsRepository.findByProjectInOrderByInsertedDesc(permissionFactory.getProjectForPrincipal(principal)), HttpStatus.OK);
     }
 
-    public ResponseEntity<Status> startPipeline(long projectId, String groupName, String codeProjectName, String commitId) {
+    public ResponseEntity<Status> startPipeline(Long projectId, String groupName, String codeProjectName, String commitId) {
         Optional<Project> project = projectRepository.findById(projectId);
         if (project.isPresent()) {
             SASTRequestVerify verifyRequest = codeAccessVerifier.verifyPermissions(projectId, groupName, codeProjectName, true);
