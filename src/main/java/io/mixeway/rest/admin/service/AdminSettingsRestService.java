@@ -36,7 +36,7 @@ public class AdminSettingsRestService {
     private final ProxiesRepository proxiesRepository;
     private static final Logger log = LoggerFactory.getLogger(AdminSettingsRestService.class);
 
-    @Autowired
+
     public AdminSettingsRestService(SettingsRepository settingsRepository, VaultHelper vaultHelper,
                                     RoutingDomainRepository routingDomainRepository, ProxiesRepository proxiesRepository){
         this.settingsRepository = settingsRepository;

@@ -24,7 +24,6 @@ import java.util.List;
 public class CodeController {
     private final CodeService codeService;
 
-    @Autowired
     CodeController(CodeService codeService){
         this.codeService = codeService;
     }

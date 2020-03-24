@@ -35,8 +35,7 @@ public class ScanManagerController {
     private final ScanManagerService scanManagerService;
     private final GetVulnerabilitiesService getVulnerabilitiesService;
 
-    @Autowired
-    ScanManagerController(ScanManagerService scanManagerService, GetVulnerabilitiesService getVulnerabilitiesService){
+    ScanManagerController(final ScanManagerService scanManagerService, final GetVulnerabilitiesService getVulnerabilitiesService){
         this.scanManagerService = scanManagerService;
         this.getVulnerabilitiesService = getVulnerabilitiesService;
     }

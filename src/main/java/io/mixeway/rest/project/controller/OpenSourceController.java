@@ -18,7 +18,6 @@ import java.util.List;
 public class OpenSourceController {
     private final OpenSourceService openSourceService;
 
-    @Autowired
     OpenSourceController(OpenSourceService openSourceService){
         this.openSourceService = openSourceService;
     }

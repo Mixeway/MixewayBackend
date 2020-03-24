@@ -44,7 +44,7 @@ public class CiOperationsService {
     private final List<CodeScanClient> codeScanClients;
     private final DependencyTrackApiClient dependencyTrackApiClient;
     private final SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository;
-    @Autowired
+
     CiOperationsService(CiOperationsRepository ciOperationsRepository, PermissionFactory permissionFactory,
                         ProjectRepository projectRepository, CodeAccessVerifier codeAccessVerifier,
                         CodeProjectRepository codeProjectRepository, List<CodeScanClient> codeScanClients,

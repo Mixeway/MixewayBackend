@@ -20,7 +20,6 @@ import java.text.ParseException;
 public class IaasApiController {
     private final IaasApiService iaasApiService;
 
-    @Autowired
     IaasApiController(IaasApiService iaasApiService){
         this.iaasApiService = iaasApiService;
     }

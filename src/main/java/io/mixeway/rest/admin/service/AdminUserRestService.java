@@ -30,7 +30,7 @@ public class AdminUserRestService {
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final ProjectRepository projectRepository;
 
-    @Autowired
+
     AdminUserRestService(UserRepository userRepository, BCryptPasswordEncoder bCryptPasswordEncoder,
                          ProjectRepository projectRepository){
         this.userRepository = userRepository;

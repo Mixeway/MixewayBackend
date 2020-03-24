@@ -20,7 +20,6 @@ public class ApiAccessService {
 
     private final ProjectRepository projectRepository;
 
-    @Autowired
     public ApiAccessService(ProjectRepository projectRepository){
         this.projectRepository = projectRepository;
     }

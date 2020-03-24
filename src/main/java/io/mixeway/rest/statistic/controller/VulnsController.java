@@ -15,7 +15,6 @@ import java.util.List;
 @RequestMapping("/v2/api/vulns")
 public class VulnsController {
     VulnsService vulnsService;
-    @Autowired
     VulnsController(VulnsService vulnsService){
         this.vulnsService = vulnsService;
     }

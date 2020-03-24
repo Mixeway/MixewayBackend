@@ -37,7 +37,7 @@ public class AuthService {
     private final SettingsRepository settingsRepository;
     private OpenVasSocketHelper openVasSocketClient = new OpenVasSocketHelper(new URI("wss://localhost:9390"));
 
-    @Autowired
+
     AuthService(BCryptPasswordEncoder bCryptPasswordEncoder, JwtUserDetailsService jwtUserDetailsService,
                 JwtUtils jwtUtils, UserRepository userRepository, SettingsRepository settingsRepository
                 ) throws URISyntaxException {

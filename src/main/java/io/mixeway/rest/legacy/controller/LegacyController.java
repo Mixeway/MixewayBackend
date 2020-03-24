@@ -49,7 +49,7 @@ public class LegacyController {
     private final WebAppScanService webAppScanService;
     private final GetOrCreateProjectService projectService;
     private static Semaphore semaphore = new Semaphore(1);
-    @Autowired
+
     LegacyController(CisK8sBenchmarkService cisK8sBenchmarkService, CisDockerBenchmarkService cisDockerBenchmarkService,
                      CodeAccessVerifier codeAccessVerifier, MvnDependencyCheckUploadService mvnDependencyCheckUploadService,
                      VulnersService vulnersService, CodeScanService codeScanService, List<CodeScanClient> codeScanClients,

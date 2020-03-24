@@ -43,7 +43,6 @@ public class DashboardService {
     private final InfrastructureVulnRepository infrastructureVulnRepository;
     private final PermissionFactory permissionFactory;
 
-    @Autowired
     DashboardService(InfrastructureVulnRepository infrastructureVulnRepository, CodeVulnRepository codeVulnRepository, WebAppVulnRepository webAppVulnRepository,
                      CodeProjectRepository codeProjectRepository, WebAppRepository webAppRepository, InterfaceRepository interfaceRepository,
                      UserRepository userRepository, ProjectRiskAnalyzer projectRiskAnalyzer, ProjectRepository projectRepository, VulnHistoryRepository vulnHistoryRepository,

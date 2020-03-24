@@ -54,7 +54,6 @@ public class CodeService {
     private final PermissionFactory permissionFactory;
     private final CodeAccessVerifier codeAccessVerifier;
 
-    @Autowired
     CodeService(ProjectRepository projectRepository, CodeProjectRepository codeProjectRepository,
                 ProjectRiskAnalyzer projectRiskAnalyzer, CodeGroupRepository codeGroupRepository,
                 VaultHelper vaultHelper, List<CodeScanClient> codeScanClients,

@@ -42,7 +42,6 @@ public class WebAppService {
     private final List<WebAppScanClient> webAppScanClients;
     private final PermissionFactory permissionFactory;
 
-    @Autowired
     WebAppService(WebAppRepository webAppRepository, ScannerTypeRepository scannerTypeRepository, List<WebAppScanClient> webAppScanClients,
                   ScannerRepository scannerRepository, ProjectRepository projectRepository, WebAppHeaderRepository webAppHeaderRepository,
                   WebAppScanRepository webAppScanRepository, WebAppVulnRepository webAppVulnRepository, ProjectRiskAnalyzer projectRiskAnalyzer,

@@ -40,7 +40,7 @@ public class AdminScannerRestService {
     private final RfwApiClient rfwApiClient;
     private final RoutingDomainRepository routingDomainRepository;
     private final List<SecurityScanner> securityScanners;
-    @Autowired
+
     AdminScannerRestService(RoutingDomainRepository routingDomainRepository, List<SecurityScanner> securityScanners,
                             RfwApiClient rfwApiClient, VaultHelper vaultHelper,
                             ProxiesRepository proxiesRepository, ScannerTypeRepository scannerTypeRepository, ScannerRepository scannerRepository){

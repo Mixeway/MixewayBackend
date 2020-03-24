@@ -23,7 +23,6 @@ import java.util.List;
 public class AdminScannerRestController {
     private final AdminScannerRestService adminScannerRestService;
 
-    @Autowired
     AdminScannerRestController(AdminScannerRestService adminScannerRestService){
         this.adminScannerRestService = adminScannerRestService;
     }

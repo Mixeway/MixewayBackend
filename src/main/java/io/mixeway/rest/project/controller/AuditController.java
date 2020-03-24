@@ -19,7 +19,6 @@ public class AuditController {
 
     private final AuditService auditService;
 
-    @Autowired
     AuditController(AuditService auditService){
         this.auditService = auditService;
     }

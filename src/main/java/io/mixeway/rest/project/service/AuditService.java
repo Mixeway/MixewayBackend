@@ -20,7 +20,6 @@ public class AuditService {
     private final ProjectRepository projectRepository;
     private final PermissionFactory permissionFactory;
 
-    @Autowired
     AuditService(ProjectRepository projectRepository, PermissionFactory permissionFactory){
         this.projectRepository = projectRepository;
         this.permissionFactory = permissionFactory;

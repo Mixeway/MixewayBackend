@@ -55,7 +55,6 @@ public class ScanManagerService {
     private final CodeScanService codeScanService;
 
 
-    @Autowired
     public ScanManagerService(AssetRepository assetRepository,InfrastructureVulnRepository infrastructureVulnRepository,
                               InterfaceRepository interfaceRepository,CodeProjectRepository codeProjectRepository,
                               WebAppRepository webAppRepository, WebAppVulnRepository webAppVulnRepository,

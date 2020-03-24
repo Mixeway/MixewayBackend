@@ -21,7 +21,6 @@ import java.util.List;
 public class AssetControler {
     private final AssetService assetService;
 
-    @Autowired
     AssetControler(AssetService assetService){
         this.assetService = assetService;
     }

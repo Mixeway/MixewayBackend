@@ -46,7 +46,6 @@ public class AssetService {
         add(Constants.INFO_SEVERITY);
     }};
 
-    @Autowired
     AssetService(ProjectRepository projectRepository, InterfaceRepository interfaceRepository,
                  ProjectRiskAnalyzer projectRiskAnalyzer,
                  RoutingDomainRepository routingDomainRepository, AssetRepository assetRepository,

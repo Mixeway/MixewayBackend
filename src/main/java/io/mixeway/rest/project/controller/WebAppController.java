@@ -20,7 +20,6 @@ import java.util.List;
 public class WebAppController {
     private final WebAppService webAppService;
 
-    @Autowired
     WebAppController(WebAppService webAppService){
         this.webAppService = webAppService;
     }

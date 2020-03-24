@@ -33,7 +33,7 @@ public class BugTrackerService {
     private final SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository;
     private List<String> types = Arrays.asList("infra", "code", "webapp","opensource");
     private List<String> strategy = Arrays.asList("Manual", "High", "Medium","Low");
-    @Autowired
+
     BugTrackerService(BugTrackerTypeRepository bugTrackerTypeRepository, BugTrackerRepository bugTrackerRepository,
                       VaultHelper vaultHelper, ProjectRepository projectRepository, List<BugTracking> bugTrackings,
                       InfrastructureVulnRepository infrastructureVulnRepository, WebAppVulnRepository webAppVulnRepository,

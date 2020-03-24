@@ -33,7 +33,6 @@ public class IaasApiService {
     private final VaultHelper vaultHelper;
     private final OpenStackApiClient openStackApiClient;
 
-    @Autowired
     IaasApiService(ProjectRepository projectRepository, RoutingDomainRepository routingDomainRepository,
                    IaasApiRepository iaasApiRepository, VaultHelper vaultHelper, OpenStackApiClient openStackApiClient){
         this.projectRepository = projectRepository;

@@ -16,7 +16,6 @@ import java.security.*;
 public class ApiAccessController {
     private final ApiAccessService apiAccessService;
 
-    @Autowired
     ApiAccessController(ApiAccessService apiAccessService){
         this.apiAccessService = apiAccessService;
     }

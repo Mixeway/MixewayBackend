@@ -41,7 +41,6 @@ public class ProjectRestService {
     private final SoftwarePacketRepository softwarePacketRepository;
     private final ScannerRepository scannerRepository;
 
-    @Autowired
     ProjectRestService(RoutingDomainRepository routingDomainRepository,
                         ProxiesRepository proxiesRepository,
                         ProjectRepository projectRepository,
