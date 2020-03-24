@@ -38,7 +38,7 @@ public class MvnDependencyCheckUploadService {
     private final SoftwarePacketRepository softwarePacketRepository;
     private final SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository;
     private final StatusRepository statusRepository;
-    @Autowired
+
     MvnDependencyCheckUploadService(CodeGroupRepository codeGroupRepository, ProjectRepository projectRepository,
                                     CodeProjectRepository codeProjectRepository, SoftwarePacketRepository softwarePacketRepository,
                                     SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository, StatusRepository statusRepository){

@@ -34,7 +34,6 @@ public class CisK8sBenchmarkService {
     private final RequirementRepository requirementRepository;
     private final NodeRepository nodeRepository;
 
-    @Autowired
     CisK8sBenchmarkService(ApiTypeRepository apiTypeRepository, ProjectRepository projectRepository, ApiPermisionRepository apiPermisionRepository,
     ActivityRepository activityRepository, NodeAuditRepository nodeAuditRepository, RequirementRepository requirementRepository,
     NodeRepository nodeRepository){

@@ -46,7 +46,7 @@ public class OpenStackApiClient {
 	private VaultHelper vaultHelper;
 	private SecureRestTemplate secureRestTemplate;
 
-	@Autowired
+
 	OpenStackApiClient(IaasApiRepository iaasApiRepository, VaultHelper vaultHelper, SecureRestTemplate secureRestTemplate){
 		this.vaultHelper = vaultHelper;
 		this.secureRestTemplate = secureRestTemplate;

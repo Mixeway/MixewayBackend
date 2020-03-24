@@ -23,7 +23,7 @@ public class VulnersService {
     private final AssetRepository assetRepository;
     private final SoftwarePacketRepository softwarePacketRepository;
     private final InterfaceRepository interfaceRepository;
-    @Autowired
+
     public VulnersService(AssetRepository assetRepository, SoftwarePacketRepository softwarePacketRepository, InterfaceRepository interfaceRepository){
         this.interfaceRepository = interfaceRepository;
         this.assetRepository = assetRepository;

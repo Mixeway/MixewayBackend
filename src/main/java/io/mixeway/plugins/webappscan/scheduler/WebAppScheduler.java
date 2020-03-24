@@ -35,7 +35,7 @@ public class WebAppScheduler {
 	private WebAppRepository webAppRepository;
 	private ProjectRepository projectRepository;
 	private List<WebAppScanClient> webAppScanClients;
-	@Autowired
+
     WebAppScheduler(WebAppRepository waRepository, ScannerRepository scannerRepository, WebAppScanService webAppService,
                     ScannerTypeRepository scannerTypeRepository, WebAppVulnRepository vulnRepository,
                     WebAppRepository webAppRepository, ProjectRepository projectRepository, List<WebAppScanClient> webAppScanClients){

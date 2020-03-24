@@ -14,6 +14,7 @@ import java.util.List;
 
 import io.mixeway.db.entity.Asset;
 import io.mixeway.db.entity.SoftwarePacket;
+import io.mixeway.db.entity.SoftwarePacketVulnerability;
 import io.mixeway.db.repository.AssetRepository;
 import io.mixeway.db.repository.SoftwarePacketRepository;
 import org.codehaus.jettison.json.JSONException;
@@ -30,13 +31,16 @@ import io.mixeway.plugins.audit.vulners.model.VulnersRequest;
 @Component
 @Transactional
 public class VulnersScheduler {
-	@Autowired
-    AssetRepository assetRepository;
-	@Autowired
-	VulnersApiClient apiClient;
-	@Autowired
-    SoftwarePacketRepository softwarePacketRepository;
+    private final AssetRepository assetRepository;
+	private final VulnersApiClient apiClient;
+    private final SoftwarePacketRepository softwarePacketRepository;
 	private static final Logger log = LoggerFactory.getLogger(VulnersScheduler.class);
+
+	VulnersScheduler(final AssetRepository assetRepository, final VulnersApiClient vulnersApiClient, final SoftwarePacketRepository softwarePacketRepository) {
+		this.softwarePacketRepository = softwarePacketRepository;
+		this.apiClient = vulnersApiClient;
+		this.assetRepository = assetRepository;
+	}
 	
 	//Every 24h
 	//@Scheduled(fixedDelay = 86400000 )

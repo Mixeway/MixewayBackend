@@ -39,7 +39,7 @@ public class WebAppScanService {
     private final CodeGroupRepository codeGroupRepository;
     private final CodeProjectRepository codeProjectRepository;
     private final WebAppCookieRepository webAppCookieRepository;
-    @Autowired
+
     public WebAppScanService(ProjectRepository projectRepository, WebAppRepository waRepository,
                              ScannerRepository scannerRepository, ScannerTypeRepository scannerTypeRepository,
                              CodeGroupRepository codeGroupRepository, CodeProjectRepository codeProjectRepository, WebAppCookieRepository webAppCookieRepository,

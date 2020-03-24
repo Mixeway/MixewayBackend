@@ -54,7 +54,7 @@ public class OpenVasSocketClient implements NetworkScanClient, SecurityScanner {
     private DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
 
-    @Autowired
+
     OpenVasSocketClient(VaultHelper vaultHelper, ScannerRepository scannerRepository,ScannerTypeRepository scannerTypeRepository,
                         NessusScanRepository nessusScanRepository, ScanHelper scanHelper, RoutingDomainRepository routingDomainRepository,
                         InterfaceRepository interfaceRepository, InfrastructureVulnRepository infrastructureVulnRepository,

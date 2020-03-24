@@ -42,7 +42,7 @@ public class CodeScheduler {
 	private CiOperationsRepository ciOperationsRepository;
 	private List<CodeScanClient> codeScanClients;
 
-	@Autowired
+
 	CodeScheduler(CodeGroupRepository codeGroupRepository, CodeVulnRepository codeVulnRepository, CodeProjectRepository codeProjectRepository,
 				  ScannerRepository scannerRepository, ScannerTypeRepository scannerTypeRepository, CiOperationsRepository ciOperationsRepository,
 				  ProjectRepository projectRepository, List<CodeScanClient> codeScanClients){

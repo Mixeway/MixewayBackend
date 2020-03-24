@@ -42,7 +42,7 @@ public class OpenStackApiScheduler {
     private SecurityGroupRuleRepository securityGroupRuleRepository;
     private ActivityRepository activityRepository;
 	private RoutingDomainRepository routingDomainRepository;
-	@Autowired
+
 	OpenStackApiScheduler(IaasApiRepository iaasApiRepository, AssetRepository assetRepository, InterfaceRepository interfaceRepository,
 						  OpenStackApiClient apiClient, SecurityGroupRepository securityGroupRepository,
 						  SecurityGroupRuleRepository securityGroupRuleRepository, ActivityRepository activityRepository, RoutingDomainRepository routingDomainRepository){

@@ -54,7 +54,7 @@ public class DependencyTrackApiClient implements SecurityScanner {
     private final SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository;
     private final CodeProjectRepository codeProjectRepository;
     private final CiOperationsRepository ciOperationsRepository;
-    @Autowired
+
     public DependencyTrackApiClient(ScannerRepository scannerRepository, ScannerTypeRepository scannerTypeRepository, StatusRepository statusRepository,
                                     SecureRestTemplate secureRestTemplate, VaultHelper vaultHelper, CodeProjectRepository codeProjectRepository,
                                     ProxiesRepository proxiesRepository, RoutingDomainRepository routingDomainRepository,

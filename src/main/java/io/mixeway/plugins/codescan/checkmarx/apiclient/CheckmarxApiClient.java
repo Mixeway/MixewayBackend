@@ -58,7 +58,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
     private final ProxiesRepository proxiesRepository;
     private final CodeVulnRepository codeVulnRepository;
     private TokenValidator tokenValidator = new TokenValidator();
-    @Autowired
+
     CheckmarxApiClient(ScannerTypeRepository scannerTypeRepository, ScannerRepository scannerRepository,
                        CodeProjectRepository codeProjectRepository, ProxiesRepository proxiesRepository, CodeVulnRepository codeVulnRepository,
                        VaultHelper vaultHelper, SecureRestTemplate secureRestTemplate, CodeGroupRepository codeGroupRepository){

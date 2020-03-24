@@ -45,7 +45,7 @@ public class NetworkScanScheduler {
 	private final List<NetworkScanClient> networkScanClients;
 	private final NetworkScanService networkScanService;
 	private final ProjectRepository projectRepository;
-	@Autowired
+
 	NetworkScanScheduler(NessusScanRepository nessusScanRepository, NetworkScanService networkScanService,
 						 ScannerTypeRepository scannerTypeRepository, ProjectRepository projectRepository,
 						 WebAppHelper webAppHelper, List<NetworkScanClient> networkScanClients, InterfaceRepository interfaceRepository){

@@ -57,7 +57,7 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 	private final ScannerTypeRepository scannerTypeRepository;
 	private final ProxiesRepository proxiesRepository;
 
-	@Autowired
+
 	AcunetixApiClient(VaultHelper vaultHelper, WebAppRepository webAppRepository, WebAppVulnRepository webAppVulnRepository,
 					  SecureRestTemplate secureRestTemplate, StatusRepository statusRepository, RoutingDomainRepository routingDomainRepository,
 					  ScannerRepository scannerRepository, ScannerTypeRepository scannerTypeRepository, ProxiesRepository proxiesRepository){

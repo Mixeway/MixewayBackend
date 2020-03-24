@@ -36,12 +36,16 @@ import io.mixeway.plugins.audit.vulners.model.VulnersRequest;
 
 @Component
 public class VulnersApiClient {
-	@Autowired
-    AssetRepository assetRepository;
-	@Autowired
-    SoftwarePacketRepository softwarePacketRepository;
-	@Autowired
-    SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository;
+    private final AssetRepository assetRepository;
+    private final SoftwarePacketRepository softwarePacketRepository;
+    private final SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository;
+
+	VulnersApiClient(final AssetRepository assetRepository, final SoftwarePacketRepository softwarePacketRepository,
+					 final SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository){
+		this.assetRepository = assetRepository;
+		this.softwarePacketVulnerabilityRepository = softwarePacketVulnerabilityRepository;
+		this.softwarePacketRepository = softwarePacketRepository;
+	}
 
 
 	private DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");

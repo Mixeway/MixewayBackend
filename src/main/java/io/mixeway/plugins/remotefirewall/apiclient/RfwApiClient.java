@@ -34,7 +34,7 @@ public class RfwApiClient {
     private final static Logger log = LoggerFactory.getLogger(RfwApiClient.class);
     private final SecureRestTemplate secureRestTemplate;
 
-    @Autowired
+
     RfwApiClient (VaultHelper vaultHelper, SecureRestTemplate secureRestTemplate){
         this.vaultHelper = vaultHelper;
         this.secureRestTemplate = secureRestTemplate;

@@ -37,7 +37,6 @@ public class JiraService implements BugTracking {
     private final VaultHelper vaultHelper;
     private final BugTrackerRepository bugTrackerRepository;
 
-    @Autowired
     JiraService(VaultHelper vaultHelper, BugTrackerRepository bugTrackerRepository){
         this.vaultHelper = vaultHelper;
         this.bugTrackerRepository = bugTrackerRepository;

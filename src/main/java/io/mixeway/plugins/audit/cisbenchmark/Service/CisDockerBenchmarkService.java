@@ -39,7 +39,6 @@ public class CisDockerBenchmarkService {
     private static final Logger log = LoggerFactory.getLogger(CisDockerBenchmarkService.class);
     private CisBenchmarkProcesor procesor = new CisBenchmarkProcesor();
 
-    @Autowired
     CisDockerBenchmarkService(ApiTypeRepository apiTypeRepository, ProjectRepository projectRepository, ApiPermisionRepository apiPermisionRepository,
                               ActivityRepository activityRepository, NodeAuditRepository nodeAuditRepository, RequirementRepository requirementRepository,
                               NodeRepository nodeRepository){

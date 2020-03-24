@@ -43,7 +43,7 @@ public class CodeScanService {
     private final VaultHelper vaultHelper;
     private final List<CodeScanClient> codeScanClients;
 
-    @Autowired
+
     CodeScanService(ProjectRepository projectRepository, CodeGroupRepository codeGroupRepository, CodeProjectRepository codeProjectRepository,
                     CodeVulnRepository codeVulnRepository, CodeAccessVerifier codeAccessVerifier, VaultHelper vaultHelper,
                     List<CodeScanClient> codeScanClients){

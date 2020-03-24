@@ -21,7 +21,7 @@ public class CodeAccessVerifier {
     private final CodeProjectRepository codeProjectRepository;
     private final CodeGroupRepository codeGroupRepository;
     private final static Logger log = LoggerFactory.getLogger(CodeAccessVerifier.class);
-    @Autowired
+
     CodeAccessVerifier(ProjectRepository projectRepository, CodeProjectRepository codeProjectRepository, CodeGroupRepository codeGroupRepository){
         this.projectRepository = projectRepository;
         this.codeProjectRepository = codeProjectRepository;

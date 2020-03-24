@@ -67,7 +67,7 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 	private final RoutingDomainRepository routingDomainRepository;
 	private final ProxiesRepository proxiesRepository;
 	private final NetworkScanService networkScanService;
-	@Autowired
+
 	@Lazy
 	NessusApiClient(VaultHelper vaultHelper, ScannerRepository scannerRepository, NessusScanTemplateRepository nessusScanTemplateRepository,
 					AssetRepository assetRepository, InterfaceRepository interfaceRepository, NessusScanRepository nessusScanRepository,

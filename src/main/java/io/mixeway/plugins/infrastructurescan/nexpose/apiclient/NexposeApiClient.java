@@ -41,7 +41,7 @@ public class NexposeApiClient implements NetworkScanClient, SecurityScanner {
     private final ProxiesRepository proxiesRepository;
     private final ScannerTypeRepository scannerTypeRepository;
 
-    @Autowired
+
     NexposeApiClient(VaultHelper vaultHelper, SecureRestTemplate secureRestTemplate, ScannerRepository scannerRepository,
                      ScanHelper scanHelper, NessusScanRepository nessusScanRepository, InterfaceRepository interfaceRepository,
                      AssetRepository assetRepository,InfrastructureVulnRepository infrastructureVulnRepository, ScannerTypeRepository scannerTypeRepository,
