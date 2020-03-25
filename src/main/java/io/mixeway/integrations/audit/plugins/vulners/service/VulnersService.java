@@ -31,7 +31,7 @@ public class VulnersService {
     private static final Logger log = LoggerFactory.getLogger(VulnersService.class);
 
     public ResponseEntity<Status> savePacketDiscovery(Packets packets){
-        log.info("Packet discovery for: {}, {} packets found", LogUtil.prepare(packets.getHostname()), packets.getPackets().size());
+        log.info("Packet discovery for: {}, {} packets found", LogUtil.prepare(packets.getHostname()), LogUtil.prepare(String.valueOf(packets.getPackets().size())));
 
         Optional<Asset> asset = assetRepository.findByName(packets.getHostname());
         if(asset.isPresent()) {

@@ -6,6 +6,7 @@ import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.*;
 import io.mixeway.integrations.opensourcescan.plugins.mvndependencycheck.model.SASTRequestVerify;
 import io.mixeway.integrations.codescan.model.CodeScanRequestModel;
+import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.VaultHelper;
 import io.mixeway.rest.project.model.RunScanForCodeProject;
 import io.mixeway.rest.project.model.SASTProject;
@@ -536,7 +537,7 @@ public class CodeScanService {
                         }
                     }
                 }
-                log.info("{} - Run SAST scan for {} - scope partial", username, project.get().getName());
+                log.info("{} - Run SAST scan for {} - scope partial", LogUtil.prepare(username), LogUtil.prepare(project.get().getName()));
 
                 return new ResponseEntity<>(null, HttpStatus.OK);
             }

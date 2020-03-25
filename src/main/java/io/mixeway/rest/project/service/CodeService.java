@@ -181,7 +181,7 @@ public class CodeService {
     public ResponseEntity<Status> runSingleCodeProjectScan(Long codeProjectId, String username) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         boolean putToQueue = codeScanService.putCodeProjectToQueue(codeProjectId);
         if (putToQueue){
-            log.info("{} - Run SAST scan for {} - scope single", username, LogUtil.prepare(codeProjectId.toString()));
+            log.info("{} - Run SAST scan for {} - scope single", LogUtil.prepare(username), LogUtil.prepare(codeProjectId.toString()));
             return new ResponseEntity<>(null, HttpStatus.OK);
         } else {
             return new ResponseEntity<>(null, HttpStatus.EXPECTATION_FAILED);

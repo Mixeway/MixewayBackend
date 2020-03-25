@@ -8,6 +8,7 @@ import io.mixeway.integrations.webappscan.model.CustomCookie;
 import io.mixeway.integrations.webappscan.model.RequestHeaders;
 import io.mixeway.integrations.webappscan.model.WebAppScanHelper;
 import io.mixeway.integrations.webappscan.model.WebAppScanModel;
+import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.Status;
 import io.mixeway.rest.project.model.RunScanForWebApps;
 import org.slf4j.Logger;
@@ -334,7 +335,7 @@ public class WebAppScanService {
         } catch (Exception e){
             return new ResponseEntity<>(null, HttpStatus.EXPECTATION_FAILED);
         }
-        log.info("{} - Put in queue scan of webapps - scope single", username);
+        log.info("{} - Put in queue scan of webapps - scope single", LogUtil.prepare(username));
         return new ResponseEntity<>(null,HttpStatus.CREATED);
     }
 
@@ -352,7 +353,7 @@ public class WebAppScanService {
                     return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
                 }
             }
-            log.info("{} - Put to queue scan of webapps for project {} - scope partial", username, project.get().getName());
+            log.info("{} - Put to queue scan of webapps for project {} - scope partial", LogUtil.prepare(username), LogUtil.prepare(project.get().getName()));
             return new ResponseEntity<>(null,HttpStatus.CREATED);
         } else {
             return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);

@@ -566,7 +566,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 		fortifySingleApp.setFinished(true);
 		fortifySingleApp.setDownloaded(false);
 		fortifySingleAppRepository.saveAndFlush(fortifySingleApp);
-		log.info("Successfully put job {} from remote regarding {} / {}", LogUtil.prepare(jobId), codeGroup.getName(),codeProject.getName());
+		log.info("Successfully put job {} from remote regarding {} / {}", LogUtil.prepare(jobId), LogUtil.prepare(codeGroup.getName()),LogUtil.prepare(codeProject.getName()));
 	}
 
 	private boolean fortifyCommitProject(Scanner scanner, CodeProject codeProject, int versionId) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {

@@ -109,7 +109,7 @@ public class NetworkScanService {
      * @return HttpStatus.CREATED if scan is started, PREDONDITION_FAILED when exception occured
      */
     public ResponseEntity<Status> createAndRunNetworkScan(NetworkScanRequestModel req) throws Exception {
-        log.info("Got request for scan from koordynator - system {}, asset no: {}", LogUtil.prepare(req.getProjectName()),req.getIpAddresses().size());
+        log.info("Got request for scan from koordynator - system {}, asset no: {}", LogUtil.prepare(req.getProjectName()),  LogUtil.prepare(String.valueOf(req.getIpAddresses().size())));
         Optional<List<Project>> projectFromReq = projectRepository.findByCiid(req.getCiid());
         Project project;
         if (projectFromReq.isPresent()) {

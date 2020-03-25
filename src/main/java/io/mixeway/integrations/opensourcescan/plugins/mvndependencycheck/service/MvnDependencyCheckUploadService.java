@@ -118,7 +118,7 @@ public class MvnDependencyCheckUploadService {
         softwarePacketVulnerabilityRepository.save(spv);
 
         log.info("Saved new vulnerability {} with score {} for CodeProject {} of {}", LogUtil.prepare(spv.getName()),
-                spv.getScore(),LogUtil.prepare(codeProject.getName()),LogUtil.prepare(codeProject.getCodeGroup().getProject().getName()));
+                LogUtil.prepare(String.valueOf(spv.getScore())),LogUtil.prepare(codeProject.getName()),LogUtil.prepare(codeProject.getCodeGroup().getProject().getName()));
 
     }
     private  static File multipartToFile(MultipartFile multipart) throws IllegalStateException, IOException {
