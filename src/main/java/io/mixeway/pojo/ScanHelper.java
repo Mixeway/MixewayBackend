@@ -3,8 +3,7 @@ package io.mixeway.pojo;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.*;
-import io.mixeway.plugins.infrastructurescan.service.NetworkScanClient;
-import io.mixeway.plugins.infrastructurescan.service.NetworkScanService;
+import io.mixeway.integrations.infrastructurescan.service.NetworkScanService;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,8 +12,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import io.mixeway.config.Constants;
 import io.mixeway.rest.project.model.RunScanForAssets;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;

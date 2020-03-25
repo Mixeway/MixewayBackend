@@ -1,6 +1,6 @@
 package io.mixeway.rest.project.controller;
 
-import io.mixeway.plugins.opensourcescan.model.Projects;
+import io.mixeway.integrations.opensourcescan.model.Projects;
 import io.mixeway.rest.project.model.*;
 import org.codehaus.jettison.json.JSONException;
 import org.springframework.http.ResponseEntity;

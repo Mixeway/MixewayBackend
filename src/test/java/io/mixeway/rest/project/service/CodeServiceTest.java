@@ -5,7 +5,7 @@ import io.mixeway.db.entity.CodeProject;
 import io.mixeway.db.entity.CodeVuln;
 import io.mixeway.db.entity.Project;
 import io.mixeway.db.repository.*;
-import io.mixeway.plugins.codescan.service.CodeScanClient;
+import io.mixeway.integrations.codescan.service.CodeScanClient;
 import io.mixeway.pojo.VaultHelper;
 import io.mixeway.rest.project.model.CodeCard;
 import io.mixeway.rest.project.model.CodeGroupPutModel;
@@ -26,10 +26,9 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.vault.core.VaultOperations;
 import io.mixeway.config.Constants;
 import io.mixeway.config.TestConfig;
-import io.mixeway.plugins.codescan.fortify.apiclient.FortifyApiClient;
+import io.mixeway.integrations.codescan.plugin.fortify.apiclient.FortifyApiClient;
 import io.mixeway.pojo.Status;
 
 import javax.persistence.PersistenceContext;
@@ -82,7 +81,7 @@ public class CodeServiceTest {
         codeScanClients.add(fortifyApiClient);
         projectRiskAnalyzer = new ProjectRiskAnalyzer(codeVulnRepository,infrastructureVulnRepository,webAppVulnRepository,interfaceRepository,null);
         codeService = new CodeService(projectRepository,codeProjectRepository,projectRiskAnalyzer,codeGroupRepository,vaultHelper,codeVulnRepository,
-                null,null, null, null);
+                null,null, null);
         initializeDB();
     }
 

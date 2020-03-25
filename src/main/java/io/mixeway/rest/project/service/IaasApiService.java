@@ -6,21 +6,17 @@ import io.mixeway.rest.project.model.IaasApiPutModel;
 import io.mixeway.rest.project.model.IaasModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.vault.core.VaultOperations;
 import io.mixeway.db.entity.IaasApi;
 import io.mixeway.db.repository.IaasApiRepository;
 import io.mixeway.db.repository.ProjectRepository;
 import io.mixeway.db.repository.RoutingDomainRepository;
-import io.mixeway.plugins.servicediscovery.openstack.apiclient.OpenStackApiClient;
+import io.mixeway.integrations.servicediscovery.plugin.openstack.apiclient.OpenStackApiClient;
 import io.mixeway.pojo.Status;
 
 import javax.transaction.Transactional;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 

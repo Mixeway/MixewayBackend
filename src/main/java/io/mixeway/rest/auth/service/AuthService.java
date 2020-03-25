@@ -1,13 +1,12 @@
 package io.mixeway.rest.auth.service;
 
-import io.mixeway.plugins.infrastructurescan.openvas.apiclient.OpenVasSocketHelper;
+import io.mixeway.integrations.infrastructurescan.plugin.openvas.apiclient.OpenVasSocketHelper;
 import io.mixeway.rest.auth.model.StatusEntity;
 import io.mixeway.rest.model.PasswordAuthModel;
 import io.mixeway.rest.utils.JwtUserDetailsService;
 import io.mixeway.rest.utils.JwtUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;

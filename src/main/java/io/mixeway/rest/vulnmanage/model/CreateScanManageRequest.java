@@ -1,9 +1,9 @@
 package io.mixeway.rest.vulnmanage.model;
 
 import io.mixeway.config.Constants;
-import io.mixeway.plugins.codescan.model.CodeScanRequestModel;
-import io.mixeway.plugins.infrastructurescan.model.NetworkScanRequestModel;
-import io.mixeway.plugins.webappscan.model.WebAppScanRequestModel;
+import io.mixeway.integrations.codescan.model.CodeScanRequestModel;
+import io.mixeway.integrations.infrastructurescan.model.NetworkScanRequestModel;
+import io.mixeway.integrations.webappscan.model.WebAppScanRequestModel;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;

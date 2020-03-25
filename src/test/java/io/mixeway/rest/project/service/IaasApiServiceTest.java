@@ -11,12 +11,11 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.vault.core.VaultOperations;
 import io.mixeway.config.TestConfig;
 import io.mixeway.db.repository.IaasApiRepository;
 import io.mixeway.db.repository.ProjectRepository;
 import io.mixeway.db.repository.RoutingDomainRepository;
-import io.mixeway.plugins.servicediscovery.openstack.apiclient.OpenStackApiClient;
+import io.mixeway.integrations.servicediscovery.plugin.openstack.apiclient.OpenStackApiClient;
 
 import javax.persistence.PersistenceContext;
 import javax.persistence.PersistenceContextType;

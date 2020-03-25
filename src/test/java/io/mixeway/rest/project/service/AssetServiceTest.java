@@ -28,7 +28,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.AbstractTransactionalJUnit4SpringContextTests;
 import org.springframework.test.context.junit4.SpringRunner;
 import io.mixeway.config.TestConfig;
-import io.mixeway.plugins.infrastructurescan.service.NetworkScanService;
+import io.mixeway.integrations.infrastructurescan.service.NetworkScanService;
 import io.mixeway.pojo.Status;
 
 import javax.persistence.PersistenceContext;

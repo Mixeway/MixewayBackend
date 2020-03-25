@@ -1,7 +1,6 @@
 package io.mixeway.pojo;
 
 import io.mixeway.config.Constants;
-import io.mixeway.plugins.infrastructurescan.nessus.apiclient.NessusApiClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,7 +9,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.vault.core.VaultOperations;
 import org.springframework.vault.support.VaultResponseSupport;
 
-import javax.annotation.PostConstruct;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
