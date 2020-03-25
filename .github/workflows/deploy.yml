@@ -1,15 +1,13 @@
-name: Test Build & Deploy beta
+name: Deploy to Dockerhub with prod version
 on:
   push:
     branches:
-      - '*'
-      - '!master'
+      - 'master'
   pull_request:
     branches:
-      - '*'
-      - '!master'
+      - 'master'
 jobs:
-  sonarbeta:
+  sonarprod:
     runs-on: ubuntu-16.04
     steps:
       - uses: actions/checkout@v1
@@ -22,7 +20,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-  publishbeta:
+  publishbrod:
     runs-on: ubuntu-16.04
     steps:
       - uses: actions/checkout@v1
@@ -32,4 +30,4 @@ jobs:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.DOCKER_TOKEN }}
           repository: mixeway/backend
-          tags: 1.1.0-beta
+          tags: 1.1.0
