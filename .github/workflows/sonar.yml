@@ -23,8 +23,8 @@ jobs:
   publish:
     runs-on: ubuntu-16.04
     steps:
-      - uses: docker/build-push-action@v1
       - name: docker actions build & deploy
+        uses: docker/build-push-action@v1
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
