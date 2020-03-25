@@ -3,6 +3,7 @@ package io.mixeway.scheduler;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
 import io.mixeway.plugins.opensourcescan.dependencytrack.apiclient.DependencyTrackApiClient;
+import io.mixeway.plugins.opensourcescan.service.OpenSourceScanService;
 import io.mixeway.plugins.remotefirewall.apiclient.RfwApiClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,10 +50,10 @@ public class CronScheduler {
     private final SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository;
     private final RfwApiClient rfwApiClient;
     private final ScanHelper scanHelper;
-    private final DependencyTrackApiClient dependencyTrackApiClient;
+    private final OpenSourceScanService openSourceScanService;
     @Autowired
     public CronScheduler(SettingsRepository settingsRepository, VulnHistoryRepository vulnHistoryRepository,
-            ProjectRepository projectRepository, WebAppVulnRepository webAppVulnRepository, DependencyTrackApiClient dependencyTrackApiClient,
+            ProjectRepository projectRepository, WebAppVulnRepository webAppVulnRepository, OpenSourceScanService openSourceScanService,
             CodeVulnRepository codeVulnRepository,  NodeAuditRepository nodeAuditRepository, InfrastructureVulnRepository infrastructureVulnRepository,
             InterfaceRepository interfaceRepository, NessusScanRepository nessusScanRepository, JavaMailSender sender,
             SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository,RfwApiClient rfwApiClient,
@@ -63,7 +64,6 @@ public class CronScheduler {
         this.vulnHistoryRepository = vulnHistoryRepository;
         this.webAppVulnRepository = webAppVulnRepository;
         this.codeVulnRepository = codeVulnRepository;
-        this.dependencyTrackApiClient = dependencyTrackApiClient;
         this.nodeAuditRepository = nodeAuditRepository;
         this.infrastructureVulnRepository = infrastructureVulnRepository;
         this.nessusScanRepository = nessusScanRepository;
@@ -72,6 +72,7 @@ public class CronScheduler {
         this.rfwApiClient =rfwApiClient;
         this.sender = sender;
         this.scanHelper = scanHelper;
+        this.openSourceScanService = openSourceScanService;
     }
 
     private DOPMailTemplateBuilder templateBuilder = new DOPMailTemplateBuilder();
@@ -116,7 +117,7 @@ public class CronScheduler {
     public void getDepTrackVulns() {
         try {
             for (CodeProject cp : codeProjectRepository.getCodeProjectsWithOSIntegrationEnabled()){
-                dependencyTrackApiClient.loadVulnerabilities(cp);
+                openSourceScanService.loadVulnerabilities(cp);
             }
             log.info("Successfully synchronized with OpenSource scanner");
         } catch (Exception ignored) {

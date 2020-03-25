@@ -1,4 +1,4 @@
-package io.mixeway.plugins.opensourcescan.dependencytrack.model;
+package io.mixeway.plugins.opensourcescan.model;
 
 public class Projects {
     private String name;

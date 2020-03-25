@@ -5,6 +5,7 @@ import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
 import io.mixeway.plugins.opensourcescan.dependencytrack.apiclient.DependencyTrackApiClient;
+import io.mixeway.plugins.opensourcescan.service.OpenSourceScanService;
 import io.mixeway.pojo.*;
 import io.mixeway.rest.project.model.SoftVuln;
 import io.mixeway.rest.vulnmanage.model.Vuln;
@@ -103,7 +104,7 @@ public class GetVulnerabilitiesService {
     @Autowired
     SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository;
     @Autowired
-    DependencyTrackApiClient dependencyTrackApiClient;
+    OpenSourceScanService openSourceScanService;
     @Autowired
     SoftwarePacketVulnerabilityRepository getSoftwarePacketVulnerabilityReposutitory;
 
@@ -467,7 +468,7 @@ public class GetVulnerabilitiesService {
         CIVulnManageResponse ciVulnManageResponse = new CIVulnManageResponse();
         if (cp.isPresent()){
             if (StringUtils.isNotBlank(cp.get().getdTrackUuid())){
-                dependencyTrackApiClient.loadVulnerabilities(cp.get());
+                openSourceScanService.loadVulnerabilities(cp.get());
             }
             List<VulnManageResponse> vmr = createVulnManageResponseForCodeProject(cp.get());
             ciVulnManageResponse.setVulnManageResponseList(vmr);

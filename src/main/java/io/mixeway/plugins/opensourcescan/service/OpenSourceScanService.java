@@ -7,7 +7,7 @@ import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.ProjectRepository;
 import io.mixeway.db.repository.ScannerRepository;
 import io.mixeway.db.repository.ScannerTypeRepository;
-import io.mixeway.plugins.opensourcescan.dependencytrack.apiclient.DependencyTrackApiClient;
+import io.mixeway.plugins.opensourcescan.model.Projects;
 import io.mixeway.plugins.opensourcescan.mvndependencycheck.model.SASTRequestVerify;
 import io.mixeway.plugins.utils.CodeAccessVerifier;
 import io.mixeway.pojo.VaultHelper;
@@ -23,6 +23,8 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -32,17 +34,16 @@ public class OpenSourceScanService {
     private final ScannerRepository scannerRepository;
     private final ScannerTypeRepository scannerTypeRepository;
     private final VaultHelper vaultHelper;
-    //TODO create OpenSourceGeneric client
-    private final DependencyTrackApiClient dependencyTrackApiClient;
+    private final List<OpenSourceScanClient> openSourceScanClients;
 
     OpenSourceScanService(ProjectRepository projectRepository, CodeAccessVerifier codeAccessVerifier, ScannerRepository scannerRepository,
-                          ScannerTypeRepository scannerTypeRepository, VaultHelper vaultHelper, DependencyTrackApiClient dependencyTrackApiClient){
+                          ScannerTypeRepository scannerTypeRepository, VaultHelper vaultHelper, List<OpenSourceScanClient> openSourceScanClients){
         this.projectRepository = projectRepository;
         this.codeAccessVerifier = codeAccessVerifier;
         this.scannerRepository = scannerRepository;
         this.scannerTypeRepository =scannerTypeRepository;
         this.vaultHelper = vaultHelper;
-        this.dependencyTrackApiClient = dependencyTrackApiClient;
+        this.openSourceScanClients = openSourceScanClients;
     }
 
 
@@ -58,7 +59,6 @@ public class OpenSourceScanService {
      * @param codeProject name of CodeProject ot be Checked
      * @return
      */
-
     public ResponseEntity<OpenSourceConfig> getOpenSourceScannerConfiguration(Long id, String codeGroup, String codeProject) {
         Optional<Project> project = projectRepository.findById(id);
         SASTRequestVerify sastRequestVerify = codeAccessVerifier.verifyPermissions(id,codeGroup,codeProject,true);
@@ -85,7 +85,46 @@ public class OpenSourceScanService {
         return new ResponseEntity<>(HttpStatus.PRECONDITION_FAILED);
     }
 
+    /**
+     * Using configured OpenSource Vulnerability Scanner and loading vulnerabilities for given codeproject
+     *
+     * @param codeProjectToVerify CodeProject to load opensource vulnerabilities
+     */
     public void loadVulnerabilities(CodeProject codeProjectToVerify) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
-        dependencyTrackApiClient.loadVulnerabilities(codeProjectToVerify);
+        for (OpenSourceScanClient openSourceScanClient : openSourceScanClients){
+            if (openSourceScanClient.canProcessRequest(codeProjectToVerify)){
+                openSourceScanClient.loadVulnerabilities(codeProjectToVerify);
+                break;
+            }
+        }
     }
+
+    /**
+     * Using configured OpenSource Vulnerability Scanner and geting defined properties
+     *
+     */
+    public List<Projects> getOpenSourceProjectFromScanner() throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+        for (OpenSourceScanClient openSourceScanClient : openSourceScanClients){
+            if (openSourceScanClient.canProcessRequest()){
+                return openSourceScanClient.getProjects();
+            }
+        }
+        return new ArrayList<>();
+    }
+
+    /**
+     * Method is using OpenSource Scanner REST API in order to create Project and save id to codeProject
+     *
+     * @param codeProject which will be used to create informations on OpenSource Scanner instance
+     * @return true if project is created
+     */
+    public boolean createProjectOnOpenSourceScanner(CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+        for (OpenSourceScanClient openSourceScanClient : openSourceScanClients){
+            if (openSourceScanClient.canProcessRequest()){
+                return openSourceScanClient.createProject(codeProject);
+            }
+        }
+        return false;
+    }
+
 }

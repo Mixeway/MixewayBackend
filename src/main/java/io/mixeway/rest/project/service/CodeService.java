@@ -4,7 +4,7 @@ import io.mixeway.config.Constants;
 import io.mixeway.db.entity.Project;
 import io.mixeway.db.repository.*;
 import io.mixeway.plugins.opensourcescan.dependencytrack.apiclient.DependencyTrackApiClient;
-import io.mixeway.plugins.opensourcescan.dependencytrack.model.Projects;
+import io.mixeway.plugins.opensourcescan.model.Projects;
 import io.mixeway.plugins.codescan.service.CodeScanService;
 import io.mixeway.plugins.opensourcescan.service.OpenSourceScanService;
 import io.mixeway.pojo.LogUtil;
@@ -41,19 +41,16 @@ public class CodeService {
     private final CodeGroupRepository codeGroupRepository;
     private final VaultHelper vaultHelper;
     private final CodeVulnRepository codeVulnRepository;
-    private final DependencyTrackApiClient dependencyTrackApiClient;
     private final PermissionFactory permissionFactory;
     private final CodeScanService codeScanService;
     private final OpenSourceScanService openSourceScanService;
 
     CodeService(ProjectRepository projectRepository, CodeProjectRepository codeProjectRepository,
                 ProjectRiskAnalyzer projectRiskAnalyzer, CodeGroupRepository codeGroupRepository,
-                VaultHelper vaultHelper, CodeVulnRepository codeVulnRepository,
-                DependencyTrackApiClient dependencyTrackApiClient, PermissionFactory permissionFactory,
+                VaultHelper vaultHelper, CodeVulnRepository codeVulnRepository, PermissionFactory permissionFactory,
                 CodeScanService  codeScanService, OpenSourceScanService openSourceScanService) {
         this.projectRepository = projectRepository;
         this.codeProjectRepository = codeProjectRepository;
-        this.dependencyTrackApiClient = dependencyTrackApiClient;
         this.projectRiskAnalyzer = projectRiskAnalyzer;
         this.vaultHelper = vaultHelper;
         this.codeGroupRepository = codeGroupRepository;
@@ -266,7 +263,7 @@ public class CodeService {
     public ResponseEntity<Status> createDTrackProject(Long id, String name) {
         Optional<CodeProject> codeProject = codeProjectRepository.findById(id);
         try{
-            if (codeProject.isPresent() && dependencyTrackApiClient.createProject(codeProject.get()) ) {
+            if (codeProject.isPresent() && openSourceScanService.createProjectOnOpenSourceScanner(codeProject.get()) ) {
 
                 log.info("{} Successfully Created dTrack Project {}", name, codeProject.get().getName());
                 return new ResponseEntity<>(HttpStatus.OK);
@@ -279,7 +276,7 @@ public class CodeService {
     }
 
     public ResponseEntity<List<Projects>> getdTracksProjects() throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
-        return new ResponseEntity<>(dependencyTrackApiClient.getProjects(), HttpStatus.OK);
+        return new ResponseEntity<>(openSourceScanService.getOpenSourceProjectFromScanner(), HttpStatus.OK);
     }
 
     public ResponseEntity<List<SASTProject>> getCodeProjects() throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {

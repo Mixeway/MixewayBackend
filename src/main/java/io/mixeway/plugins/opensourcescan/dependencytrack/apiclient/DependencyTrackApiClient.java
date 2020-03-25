@@ -5,6 +5,8 @@ import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.*;
 import io.mixeway.plugins.opensourcescan.dependencytrack.model.*;
+import io.mixeway.plugins.opensourcescan.model.Projects;
+import io.mixeway.plugins.opensourcescan.service.OpenSourceScanClient;
 import io.mixeway.pojo.SecureRestTemplate;
 import io.mixeway.pojo.SecurityScanner;
 import io.mixeway.pojo.VaultHelper;
@@ -34,7 +36,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Service
-public class DependencyTrackApiClient implements SecurityScanner {
+public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScanClient {
     private final static Logger log = LoggerFactory.getLogger(DependencyTrackApiClient.class);
     private DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private final ScannerRepository scannerRepository;
@@ -67,7 +69,20 @@ public class DependencyTrackApiClient implements SecurityScanner {
         this.softwarePacketVulnerabilityRepository = softwarePacketVulnerabilityRepository;
     }
 
+    @Override
+    public boolean canProcessRequest(CodeProject codeProject) {
+        List<Scanner> openSourceScanners = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_DEPENDENCYTRACK));
+        return (openSourceScanners.size() == 1 );
+    }
+
+    @Override
+    public boolean canProcessRequest() {
+        List<Scanner> openSourceScanners = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_DEPENDENCYTRACK));
+        return (openSourceScanners.size() == 1 );
+    }
+
     @Transactional
+    @Override
     public void loadVulnerabilities(CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         List<Scanner> dTrack = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_DEPENDENCYTRACK));
         //Multiple dTrack instances not yet supported
@@ -107,6 +122,7 @@ public class DependencyTrackApiClient implements SecurityScanner {
         }
     }
 
+    @Override
     public boolean createProject(CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         List<Scanner> dTrack = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_DEPENDENCYTRACK));
         //Multiple dTrack instances not yet supported
@@ -133,6 +149,7 @@ public class DependencyTrackApiClient implements SecurityScanner {
 
         return false;
     }
+    @Override
     public List<Projects> getProjects() throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         List<Scanner> dTrack = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_DEPENDENCYTRACK));
         //Multiple dTrack instances not yet supported
