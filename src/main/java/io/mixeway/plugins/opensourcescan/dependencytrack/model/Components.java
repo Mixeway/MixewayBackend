@@ -1,4 +1,4 @@
-package io.mixeway.plugins.audit.dependencytrack.model;
+package io.mixeway.plugins.opensourcescan.dependencytrack.model;
 
 import java.util.List;
 

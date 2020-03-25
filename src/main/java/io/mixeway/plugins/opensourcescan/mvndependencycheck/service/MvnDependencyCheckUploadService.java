@@ -1,4 +1,4 @@
-package io.mixeway.plugins.audit.mvndependencycheck.service;
+package io.mixeway.plugins.opensourcescan.mvndependencycheck.service;
 
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.CodeGroup;
@@ -14,12 +14,10 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import sun.rmi.runtime.Log;
 
 import java.io.File;
 import java.io.IOException;

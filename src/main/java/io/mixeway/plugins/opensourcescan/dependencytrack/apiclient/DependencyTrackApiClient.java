@@ -1,26 +1,21 @@
-package io.mixeway.plugins.audit.dependencytrack.apiclient;
+package io.mixeway.plugins.opensourcescan.dependencytrack.apiclient;
 
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.*;
-import io.mixeway.plugins.audit.dependencytrack.model.*;
+import io.mixeway.plugins.opensourcescan.dependencytrack.model.*;
 import io.mixeway.pojo.SecureRestTemplate;
 import io.mixeway.pojo.SecurityScanner;
 import io.mixeway.pojo.VaultHelper;
 import io.mixeway.rest.model.ScannerModel;
-import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.vault.core.VaultOperations;
-import org.springframework.vault.support.VaultResponseSupport;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
@@ -37,7 +32,6 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class DependencyTrackApiClient implements SecurityScanner {

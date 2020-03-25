@@ -1,4 +1,4 @@
-package io.mixeway.plugins.audit.dependencytrack.model;
+package io.mixeway.plugins.opensourcescan.dependencytrack.model;
 
 import java.sql.Timestamp;
 import java.util.List;

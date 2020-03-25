@@ -1,13 +1,9 @@
 package io.mixeway.scheduler;
 
 import io.mixeway.db.entity.*;
-import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.*;
-import io.mixeway.plugins.audit.dependencytrack.apiclient.DependencyTrackApiClient;
-import io.mixeway.plugins.codescan.checkmarx.apiclient.CheckmarxApiClient;
+import io.mixeway.plugins.opensourcescan.dependencytrack.apiclient.DependencyTrackApiClient;
 import io.mixeway.plugins.remotefirewall.apiclient.RfwApiClient;
-import io.mixeway.rest.model.ScannerModel;
-import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +27,6 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.text.DateFormat;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;

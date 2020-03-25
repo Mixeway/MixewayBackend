@@ -8,10 +8,9 @@ import io.mixeway.db.repository.ProjectRepository;
 import io.mixeway.pojo.LogUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import io.mixeway.db.entity.CodeProject;
-import io.mixeway.plugins.audit.mvndependencycheck.model.SASTRequestVerify;
+import io.mixeway.plugins.opensourcescan.mvndependencycheck.model.SASTRequestVerify;
 
 import java.util.Optional;
 

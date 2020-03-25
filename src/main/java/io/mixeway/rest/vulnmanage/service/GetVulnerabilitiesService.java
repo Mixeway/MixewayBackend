@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
-import io.mixeway.plugins.audit.dependencytrack.apiclient.DependencyTrackApiClient;
+import io.mixeway.plugins.opensourcescan.dependencytrack.apiclient.DependencyTrackApiClient;
 import io.mixeway.pojo.*;
 import io.mixeway.rest.project.model.SoftVuln;
 import io.mixeway.rest.vulnmanage.model.Vuln;

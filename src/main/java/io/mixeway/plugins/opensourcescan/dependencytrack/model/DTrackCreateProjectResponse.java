@@ -1,6 +1,6 @@
-package io.mixeway.plugins.audit.dependencytrack.model;
+package io.mixeway.plugins.opensourcescan.dependencytrack.model;
 
-public class Projects {
+public class DTrackCreateProjectResponse {
     private String name;
     private String uuid;
 

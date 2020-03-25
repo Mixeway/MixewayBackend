@@ -2,29 +2,23 @@ package io.mixeway.rest.project.service;
 
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.Project;
-import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.*;
-import io.mixeway.plugins.audit.dependencytrack.apiclient.DependencyTrackApiClient;
-import io.mixeway.plugins.audit.dependencytrack.model.Projects;
-import io.mixeway.plugins.audit.mvndependencycheck.model.SASTRequestVerify;
-import io.mixeway.plugins.codescan.service.CodeScanClient;
-import io.mixeway.plugins.utils.CodeAccessVerifier;
+import io.mixeway.plugins.opensourcescan.dependencytrack.apiclient.DependencyTrackApiClient;
+import io.mixeway.plugins.opensourcescan.dependencytrack.model.Projects;
+import io.mixeway.plugins.codescan.service.CodeScanService;
+import io.mixeway.plugins.opensourcescan.service.OpenSourceScanService;
 import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.PermissionFactory;
 import io.mixeway.pojo.VaultHelper;
 import io.mixeway.rest.project.model.*;
 import io.mixeway.rest.utils.ProjectRiskAnalyzer;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.tomcat.util.bcel.Const;
 import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.vault.core.VaultOperations;
 import io.mixeway.db.entity.CodeGroup;
 import io.mixeway.db.entity.CodeProject;
 import io.mixeway.db.entity.CodeVuln;
@@ -46,32 +40,27 @@ public class CodeService {
     private final ProjectRiskAnalyzer projectRiskAnalyzer;
     private final CodeGroupRepository codeGroupRepository;
     private final VaultHelper vaultHelper;
-    private final List<CodeScanClient> codeScanClients;
     private final CodeVulnRepository codeVulnRepository;
     private final DependencyTrackApiClient dependencyTrackApiClient;
-    private final ScannerRepository scannerRepository;
-    private final ScannerTypeRepository scanneTypeRepository;
     private final PermissionFactory permissionFactory;
-    private final CodeAccessVerifier codeAccessVerifier;
+    private final CodeScanService codeScanService;
+    private final OpenSourceScanService openSourceScanService;
 
     CodeService(ProjectRepository projectRepository, CodeProjectRepository codeProjectRepository,
                 ProjectRiskAnalyzer projectRiskAnalyzer, CodeGroupRepository codeGroupRepository,
-                VaultHelper vaultHelper, List<CodeScanClient> codeScanClients,
-                CodeVulnRepository codeVulnRepository, DependencyTrackApiClient dependencyTrackApiClient,
-                ScannerTypeRepository scanneTypeRepository, ScannerRepository scannerRepository, PermissionFactory permissionFactory,
-                CodeAccessVerifier codeAccessVerifier) {
+                VaultHelper vaultHelper, CodeVulnRepository codeVulnRepository,
+                DependencyTrackApiClient dependencyTrackApiClient, PermissionFactory permissionFactory,
+                CodeScanService  codeScanService, OpenSourceScanService openSourceScanService) {
         this.projectRepository = projectRepository;
         this.codeProjectRepository = codeProjectRepository;
-        this.scannerRepository = scannerRepository;
-        this.scanneTypeRepository = scanneTypeRepository;
         this.dependencyTrackApiClient = dependencyTrackApiClient;
         this.projectRiskAnalyzer = projectRiskAnalyzer;
-        this.codeAccessVerifier = codeAccessVerifier;
         this.vaultHelper = vaultHelper;
         this.codeGroupRepository = codeGroupRepository;
         this.codeVulnRepository = codeVulnRepository;
         this.permissionFactory = permissionFactory;
-        this.codeScanClients = codeScanClients;
+        this.openSourceScanService = openSourceScanService;
+        this.codeScanService = codeScanService;
     }
 
     public ResponseEntity<CodeCard> showCodeRepos(Long id, Principal principal) {
@@ -174,29 +163,7 @@ public class CodeService {
     }
 
     public ResponseEntity<Status> runSelectedCodeProjects(Long id, List<RunScanForCodeProject> runScanForCodeProjects, String username) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
-        try {
-            Optional<Project> project = projectRepository.findById(id);
-            if (project.isPresent()) {
-                for (RunScanForCodeProject runScun : runScanForCodeProjects) {
-                    Optional<CodeProject> codeProject = codeProjectRepository.findById(runScun.getId());
-                    if (codeProject.isPresent() && codeProject.get().getCodeGroup().getProject() == project.get()) {
-                        for(CodeScanClient codeScanClient : codeScanClients){
-                            if (codeScanClient.canProcessRequest(codeProject.get().getCodeGroup())){
-                                codeScanClient.runScan(codeProject.get().getCodeGroup(), codeProject.get());
-                                break;
-                            }
-                        }
-                    }
-                }
-                log.info("{} - Run SAST scan for {} - scope partial", username, project.get().getName());
-
-                return new ResponseEntity<>(null, HttpStatus.OK);
-            } else {
-                return new ResponseEntity<>(null, HttpStatus.EXPECTATION_FAILED);
-            }
-        } catch (IndexOutOfBoundsException | ParseException | JSONException ioob){
-            return new ResponseEntity<>(null, HttpStatus.EXPECTATION_FAILED);
-        }
+        return codeScanService.codescanrunSelectedCodeProjectsScan(id, runScanForCodeProjects, username);
     }
 
     public ResponseEntity<Status> enableAutoScanForCodeProjects(Long id, String username) {
@@ -216,22 +183,13 @@ public class CodeService {
     }
 
     public ResponseEntity<Status> runSingleCodeProjectScan(Long codeProjectId, String username) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
-        try {
-            Optional<CodeProject> codeProject = codeProjectRepository.findById(codeProjectId);
-            if (codeProject.isPresent() ) {
-                for(CodeScanClient codeScanClient : codeScanClients){
-                    if (codeScanClient.canProcessRequest(codeProject.get().getCodeGroup())){
-                        codeScanClient.runScan(codeProject.get().getCodeGroup(), codeProject.get());
-                        break;
-                    }
-                }
-            }
-            log.info("{} - Run SAST scan for {} - scope single", username, codeProject.orElse(null).getCodeGroup().getProject().getName());
+        boolean putToQueue = codeScanService.putCodeProjectToQueue(codeProjectId);
+        if (putToQueue){
+            log.info("{} - Run SAST scan for {} - scope single", username, LogUtil.prepare(codeProjectId.toString()));
             return new ResponseEntity<>(null, HttpStatus.OK);
-        } catch (IndexOutOfBoundsException | JSONException | ParseException e) {
+        } else {
             return new ResponseEntity<>(null, HttpStatus.EXPECTATION_FAILED);
-        }
-    }
+        } }
 
     @Transactional
     public ResponseEntity<Status> deleteCodeProject(Long codeProjectId, String name) {
@@ -325,58 +283,14 @@ public class CodeService {
     }
 
     public ResponseEntity<List<SASTProject>> getCodeProjects() throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
-        List<Scanner>  scanners = scannerRepository.findByScannerTypeInAndStatus(scanneTypeRepository.getCodeScanners(), true);
-        if (scanners.size() < 2 && scanners.stream().findFirst().isPresent()){
-            for (CodeScanClient csc : codeScanClients){
-                if (csc.canProcessRequest(scanners.stream().findFirst().orElse(null))){
-                    return new ResponseEntity<>(csc.getProjects(scanners.stream().findFirst().orElse(null)), HttpStatus.OK);
-                }
-            }
-        }
-        return new ResponseEntity<>(new ArrayList<>(), HttpStatus.OK);
+       return codeScanService.getProjectFromSASTScanner();
     }
 
     public ResponseEntity<Status> createRemoteProject(Long id, Long projectId) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
-        Optional<Project> project = projectRepository.findById(projectId);
-        Optional<CodeProject> codeProject = codeProjectRepository.findById(id);
-        List<Scanner>  scanners = scannerRepository.findByScannerTypeInAndStatus(scanneTypeRepository.getCodeScanners(), true);
-        if (project.isPresent()
-                && codeProject.isPresent()
-                && project.get().getId().equals(codeProject.get().getCodeGroup().getProject().getId())
-                && scanners.size() < 2
-                && scanners.stream().findFirst().isPresent()){
-            for (CodeScanClient csc : codeScanClients){
-                if (csc.canProcessRequest(scanners.stream().findFirst().orElse(null)) && csc.createProject(scanners.stream().findFirst().orElse(null), codeProject.get())){
-                    return new ResponseEntity<>(new Status("created"), HttpStatus.CREATED);
-                }
-            }
-        }
-        return new ResponseEntity<>(HttpStatus.PRECONDITION_FAILED);
+        return codeScanService.createProjectOnSASTScanner(id, projectId);
     }
 
     public ResponseEntity<OpenSourceConfig> getOpenSourceConfig(Long id, String codeGroup, String codeProject) {
-        Optional<Project> project = projectRepository.findById(id);
-        SASTRequestVerify sastRequestVerify = codeAccessVerifier.verifyPermissions(id,codeGroup,codeProject,true);
-        if (project.isPresent() && sastRequestVerify.getValid()) {
-            //TODO Fix it so it can be flexible ATM works only for dTrack
-            Scanner openSourceScanner = scannerRepository
-                    .findByScannerType(scanneTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_DEPENDENCYTRACK))
-                    .stream()
-                    .findFirst()
-                    .orElse(null);
-            OpenSourceConfig openSourceConfig = new OpenSourceConfig();
-            if (StringUtils.isNotBlank(sastRequestVerify.getCp().getdTrackUuid()) && openSourceScanner != null){
-                openSourceConfig.setOpenSourceScannerApiUrl(openSourceScanner.getApiUrl());
-                openSourceConfig.setOpenSourceScannerCredentials(vaultHelper.getPassword(openSourceScanner.getApiKey()));
-                openSourceConfig.setOpenSourceScannerProjectId(sastRequestVerify.getCp().getdTrackUuid());
-                openSourceConfig.setTech(sastRequestVerify.getCp().getTechnique());
-                openSourceConfig.setScannerType(openSourceScanner.getScannerType().getName());
-                openSourceConfig.setOpenSourceScannerIntegration(true);
-            } else {
-                openSourceConfig.setOpenSourceScannerIntegration(false);
-            }
-            return new ResponseEntity<>(openSourceConfig, HttpStatus.OK);
-        }
-        return new ResponseEntity<>(HttpStatus.PRECONDITION_FAILED);
+        return openSourceScanService.getOpenSourceScannerConfiguration(id, codeGroup, codeProject);
     }
 }

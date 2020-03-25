@@ -1,4 +1,4 @@
-package io.mixeway.plugins.audit.mvndependencycheck.model;
+package io.mixeway.plugins.opensourcescan.mvndependencycheck.model;
 
 import io.mixeway.db.entity.CodeGroup;
 import io.mixeway.db.entity.CodeProject;

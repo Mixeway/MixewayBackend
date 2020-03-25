@@ -4,11 +4,10 @@ import io.mixeway.db.entity.CodeVuln;
 import io.mixeway.domain.service.project.GetOrCreateProjectService;
 import io.mixeway.plugins.audit.cisbenchmark.Service.CisDockerBenchmarkService;
 import io.mixeway.plugins.audit.cisbenchmark.Service.CisK8sBenchmarkService;
-import io.mixeway.plugins.audit.mvndependencycheck.model.SASTRequestVerify;
-import io.mixeway.plugins.audit.mvndependencycheck.service.MvnDependencyCheckUploadService;
+import io.mixeway.plugins.opensourcescan.mvndependencycheck.model.SASTRequestVerify;
+import io.mixeway.plugins.opensourcescan.mvndependencycheck.service.MvnDependencyCheckUploadService;
 import io.mixeway.plugins.audit.vulners.model.Packets;
 import io.mixeway.plugins.audit.vulners.service.VulnersService;
-import io.mixeway.plugins.codescan.service.CodeScanClient;
 import io.mixeway.plugins.codescan.service.CodeScanService;
 import io.mixeway.plugins.infrastructurescan.model.NetworkScanRequestModel;
 import io.mixeway.plugins.infrastructurescan.service.NetworkScanService;
@@ -17,7 +16,6 @@ import io.mixeway.plugins.webappscan.model.WebAppScanRequestModel;
 import io.mixeway.plugins.webappscan.service.WebAppScanService;
 import io.mixeway.pojo.Status;
 import org.codehaus.jettison.json.JSONException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -44,7 +42,6 @@ public class LegacyController {
     private final MvnDependencyCheckUploadService mvnDependencyCheckUploadService;
     private final VulnersService vulnersService;
     private final CodeScanService codeScanService;
-    private final List<CodeScanClient> codeScanClients;
     private final NetworkScanService networkScanService;
     private final WebAppScanService webAppScanService;
     private final GetOrCreateProjectService projectService;
@@ -52,7 +49,7 @@ public class LegacyController {
 
     LegacyController(CisK8sBenchmarkService cisK8sBenchmarkService, CisDockerBenchmarkService cisDockerBenchmarkService,
                      CodeAccessVerifier codeAccessVerifier, MvnDependencyCheckUploadService mvnDependencyCheckUploadService,
-                     VulnersService vulnersService, CodeScanService codeScanService, List<CodeScanClient> codeScanClients,
+                     VulnersService vulnersService, CodeScanService codeScanService,
                      NetworkScanService networkScanService, WebAppScanService webAppScanService, GetOrCreateProjectService projectService){
         this.cisK8sBenchmarkService = cisK8sBenchmarkService;
         this.codeAccessVerifier = codeAccessVerifier;
@@ -60,7 +57,6 @@ public class LegacyController {
         this.cisDockerBenchmarkService = cisDockerBenchmarkService;
         this.vulnersService = vulnersService;
         this.codeScanService = codeScanService;
-        this.codeScanClients = codeScanClients;
         this.networkScanService = networkScanService;
         this.projectService = projectService;
         this.webAppScanService = webAppScanService;
@@ -102,21 +98,7 @@ public class LegacyController {
     public ResponseEntity<Status> createScanForProject(@PathVariable(value = "projectId") Long id,
                                                        @PathVariable(value="groupName") String groupName,
                                                        @PathVariable(value="projectName") String projectName) throws IOException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, JSONException, ParseException {
-        SASTRequestVerify sastRequestVerify = codeAccessVerifier.verifyPermissions(id,groupName,projectName,false);
-        if (sastRequestVerify.getValid()){
-            for(CodeScanClient codeScanClient : codeScanClients){
-                if (codeScanClient.canProcessRequest(sastRequestVerify.getCg())){
-                    if (codeScanClient.runScan(sastRequestVerify.getCg(),sastRequestVerify.getCp())){
-                        return new ResponseEntity<>(new Status("OK"), HttpStatus.CREATED);
-                    } else {
-                        return new ResponseEntity<>(new Status("Queued"), HttpStatus.CREATED);
-                    }
-                }
-            }
-        } else {
-            return new ResponseEntity<>(new Status("Scan for given resource is not yet configured."), HttpStatus.PRECONDITION_FAILED);
-        }
-        return new ResponseEntity<>(new Status("Something went wrong"), HttpStatus.PRECONDITION_FAILED);
+       return codeScanService.createScanForCodeProject(id, groupName, projectName);
     }
     @PreAuthorize("hasAuthority('ROLE_API')")
     @RequestMapping(value = "/api/sast/{projectId}/running/{groupName}/{projectName}/{jobId}", method = RequestMethod.PUT,produces= MediaType.APPLICATION_JSON_VALUE)
@@ -124,18 +106,7 @@ public class LegacyController {
                                                          @PathVariable(value="groupName") String groupName,
                                                          @PathVariable(value="projectName") String projectName,
                                                          @PathVariable(value="jobId") String jobId) throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, JSONException, ParseException {
-        SASTRequestVerify sastRequestVerify = codeAccessVerifier.verifyPermissions(id,groupName,projectName,false);
-        if (sastRequestVerify.getValid()){
-            for(CodeScanClient codeScanClient : codeScanClients){
-                if (codeScanClient.canProcessRequest(sastRequestVerify.getCg())){
-                    codeScanClient.putInformationAboutScanFromRemote(sastRequestVerify.getCp(), sastRequestVerify.getCg(), jobId);
-                    return new ResponseEntity<>(new Status("OK"), HttpStatus.OK);
-                }
-            }
-        } else {
-            return new ResponseEntity<>(new Status("Scan for given resource is not yet configured."), HttpStatus.PRECONDITION_FAILED);
-        }
-        return new ResponseEntity<>(new Status("Something went wrong"), HttpStatus.PRECONDITION_FAILED);
+       return codeScanService.putInformationAboutJob(id, groupName, projectName, jobId);
     }
 
     @PreAuthorize("hasAuthority('ROLE_API')")
