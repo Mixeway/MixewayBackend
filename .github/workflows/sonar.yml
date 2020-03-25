@@ -1,9 +1,11 @@
 jobs:
   on:
     push:
-      - '*'
+      branches:
+        - '*'
     pull_request:
-      - '*'
+      branches:
+        - '*'
   build:
     runs-on: ubuntu-16.04
     steps:
