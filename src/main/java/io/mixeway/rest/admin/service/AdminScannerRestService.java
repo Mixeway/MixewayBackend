@@ -4,7 +4,7 @@ import io.mixeway.db.repository.ProxiesRepository;
 import io.mixeway.db.repository.RoutingDomainRepository;
 import io.mixeway.db.repository.ScannerRepository;
 import io.mixeway.db.repository.ScannerTypeRepository;
-import io.mixeway.plugins.remotefirewall.apiclient.RfwApiClient;
+import io.mixeway.integrations.infrastructurescan.plugin.remotefirewall.apiclient.RfwApiClient;
 import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.SecurityScanner;
 import io.mixeway.pojo.VaultHelper;
@@ -12,12 +12,10 @@ import io.mixeway.rest.model.RfwModel;
 import io.mixeway.rest.model.ScannerModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.vault.core.VaultOperations;
 import io.mixeway.db.entity.ScannerType;
 import io.mixeway.pojo.Status;
 
@@ -40,7 +38,7 @@ public class AdminScannerRestService {
     private final RfwApiClient rfwApiClient;
     private final RoutingDomainRepository routingDomainRepository;
     private final List<SecurityScanner> securityScanners;
-    @Autowired
+
     AdminScannerRestService(RoutingDomainRepository routingDomainRepository, List<SecurityScanner> securityScanners,
                             RfwApiClient rfwApiClient, VaultHelper vaultHelper,
                             ProxiesRepository proxiesRepository, ScannerTypeRepository scannerTypeRepository, ScannerRepository scannerRepository){

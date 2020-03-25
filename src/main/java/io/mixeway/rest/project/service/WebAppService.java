@@ -3,7 +3,7 @@ package io.mixeway.rest.project.service;
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
-import io.mixeway.plugins.webappscan.WebAppScanClient;
+import io.mixeway.integrations.webappscan.service.WebAppScanService;
 import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.PermissionFactory;
 import io.mixeway.rest.project.model.RunScanForWebApps;
@@ -11,10 +11,8 @@ import io.mixeway.rest.project.model.WebAppCard;
 import io.mixeway.rest.project.model.WebAppModel;
 import io.mixeway.rest.project.model.WebAppPutModel;
 import io.mixeway.rest.utils.ProjectRiskAnalyzer;
-import org.postgresql.util.PSQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +20,6 @@ import org.springframework.stereotype.Service;
 import io.mixeway.pojo.Status;
 
 import java.security.Principal;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -39,11 +36,10 @@ public class WebAppService {
     private final WebAppScanRepository webAppScanRepository;
     private final WebAppVulnRepository webAppVulnRepository;
     private final ProjectRiskAnalyzer projectRiskAnalyzer;
-    private final List<WebAppScanClient> webAppScanClients;
+    private final WebAppScanService webAppScanService;
     private final PermissionFactory permissionFactory;
 
-    @Autowired
-    WebAppService(WebAppRepository webAppRepository, ScannerTypeRepository scannerTypeRepository, List<WebAppScanClient> webAppScanClients,
+    WebAppService(WebAppRepository webAppRepository, ScannerTypeRepository scannerTypeRepository, WebAppScanService webAppScanService,
                   ScannerRepository scannerRepository, ProjectRepository projectRepository, WebAppHeaderRepository webAppHeaderRepository,
                   WebAppScanRepository webAppScanRepository, WebAppVulnRepository webAppVulnRepository, ProjectRiskAnalyzer projectRiskAnalyzer,
                   PermissionFactory permissionFactory){
@@ -55,28 +51,14 @@ public class WebAppService {
         this.webAppScanRepository = webAppScanRepository;
         this.permissionFactory = permissionFactory;
         this.webAppVulnRepository = webAppVulnRepository;
-        this.webAppScanClients = webAppScanClients;
+        this.webAppScanService = webAppScanService;
         this.projectRiskAnalyzer = projectRiskAnalyzer;
     }
 
 
 
     public ResponseEntity<Status> runSingleWebApp(Long webAppId, String username) {
-        try {
-            Optional<Scanner> scanner = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_ACUNETIX)).stream().findFirst();
-            Optional<WebApp> webApp = webAppRepository.findById(webAppId);
-            if (webApp.isPresent() && scanner.isPresent() ) {
-                for (WebAppScanClient webAppScanClient : webAppScanClients){
-                    if (webAppScanClient.canProcessRequest(scanner.get())){
-                        webAppScanClient.runScan(webApp.get(),scanner.get());
-                    }
-                }
-            }
-        } catch (Exception e){
-            return new ResponseEntity<>(null, HttpStatus.EXPECTATION_FAILED);
-        }
-        log.info("{} - Started scan of webapps - scope single", username);
-        return new ResponseEntity<>(null,HttpStatus.CREATED);
+        return webAppScanService.putSingleWebAppToQueue(webAppId, username);
     }
 
     public ResponseEntity<Status> deleteWebApp(Long webAppId, String username) {
@@ -109,30 +91,7 @@ public class WebAppService {
     }
 
     public ResponseEntity<Status> runSelectedWebApps(Long id, List<RunScanForWebApps> runScanForWebApps, String username) {
-        Optional<Project> project = projectRepository.findById(id);
-        Optional<Scanner> scanner = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_ACUNETIX)).stream().findFirst();
-
-        if (project.isPresent() && scanner.isPresent()){
-
-            for (RunScanForWebApps selectedApp : runScanForWebApps){
-                try{
-                    Optional<WebApp> webApp = webAppRepository.findById(selectedApp.getWebAppId());
-                    if (webApp.isPresent() && webApp.get().getProject() == project.get()){
-                        for (WebAppScanClient webAppScanClient : webAppScanClients){
-                            if (webAppScanClient.canProcessRequest(scanner.get())){
-                                webAppScanClient.runScan(webApp.get(),scanner.get());
-                            }
-                        }
-                    }
-                } catch (Exception e){
-                    return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
-                }
-            }
-            log.info("{} - Started scan of webapps for project {} - scope partial", username, project.get().getName());
-            return new ResponseEntity<>(null,HttpStatus.CREATED);
-        } else {
-            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
-        }
+        return webAppScanService.putSelectedWebAppsToQueue(id, runScanForWebApps,username);
     }
     public ResponseEntity<Status> saveWebApp(Long id, WebAppPutModel webAppPutMode, String usernamel) {
         Optional<Project> project = projectRepository.findById(id);

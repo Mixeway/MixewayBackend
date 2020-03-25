@@ -1,48 +1,32 @@
 package io.mixeway.pojo;
 
 import io.mixeway.db.entity.*;
-import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.*;
-import io.mixeway.plugins.infrastructurescan.service.NetworkScanClient;
+import io.mixeway.integrations.infrastructurescan.service.NetworkScanService;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-import io.mixeway.config.Constants;
 import io.mixeway.rest.project.model.RunScanForAssets;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
 public class ScanHelper {
-    private static final String NESSUS_TEMPLATE = "Basic Network Scan";
-    private static final int EXECUTE_ONCE = 1;
     private AssetRepository assetRepository;
     private InterfaceRepository interfaceRepository;
-    private ScannerTypeRepository scannerTypeRepository;
-    private ScannerRepository scannerRepository;
-    private NessusScanTemplateRepository nessusTemplateRepository;
     private NessusScanRepository nessusScanRepository;
-    private List<NetworkScanClient> networkScanClients;
 
 
     @Lazy
     @Autowired
-    ScanHelper(AssetRepository assetRepository, InterfaceRepository interfaceRepository, ScannerTypeRepository scannerTypeRepository,
-               ScannerRepository scannerRepository, NessusScanTemplateRepository nessusScanTemplateRepository,
-               List<NetworkScanClient> networkScanClients, NessusScanRepository nessusScanRepository){
+    ScanHelper(AssetRepository assetRepository, InterfaceRepository interfaceRepository, NessusScanRepository nessusScanRepository){
         this.assetRepository = assetRepository;
         this.interfaceRepository = interfaceRepository;
-        this.scannerTypeRepository = scannerTypeRepository;
         this.nessusScanRepository = nessusScanRepository;
-        this.scannerRepository = scannerRepository;
-        this.nessusTemplateRepository = nessusScanTemplateRepository;
-        this.networkScanClients = networkScanClients;
     }
 
     private final static Logger log = LoggerFactory.getLogger(ScanHelper.class);
@@ -99,17 +83,6 @@ public class ScanHelper {
         }
         return interfacesToScan;
     }
-    public void updateInterfaceState(NessusScan nessusScan, boolean state){
-        // SETTING INTERFACE.SCANRUNNING
-        for (String ip : prepareTargetsForScan(nessusScan,false)){
-            Optional<Interface> inter = interfaceRepository.findByAssetInAndPrivateipAndActive(nessusScan.getProject().getAssets(), ip, true);
-            if (inter.isPresent()){
-                Interface i = inter.get();
-                i.setScanRunning(state);
-                interfaceRepository.save(i);
-            }
-        }
-    }
 
     private void updateInterfaceState(NessusScan nessusScan, List<String> interfacesToScan) {
         try {
@@ -133,55 +106,6 @@ public class ScanHelper {
                 interfaces.add(intf.get());
         }
         return interfaces;
-    }
-    //Założenie, że jest tylko jedna domena routingowa w jednym projekcie
-    private Scanner findNessusForInterfaces(Set<Interface> intfs) {
-        List<Scanner> nessuses = new ArrayList<>();
-        List<ScannerType> types = new ArrayList<>();
-        types.add(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_NESSUS));
-        types.add(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_OPENVAS));
-        types.add(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_NEXPOSE));
-        types.add(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_OPENVAS_SOCKET));
-        List<RoutingDomain> uniqueDomainInProjectAssets = intfs.stream().map(Interface::getRoutingDomain).distinct().collect(Collectors.toList());
-        for (RoutingDomain rd : uniqueDomainInProjectAssets) {
-            nessuses.addAll(scannerRepository.findByRoutingDomainAndScannerTypeIn(rd, types));
-        }
-        if (nessuses.size() > 0)
-            return nessuses.stream()
-                .filter(s -> s.getScannerType() == scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_NESSUS))
-                .findFirst().orElseGet(() -> nessuses.get(0));
-        else
-            return null;
-
-    }
-    public boolean runInfraScanForScope(Project project, Set<Interface> intfs)  {
-        try {
-            NessusScan scan;
-            Scanner nessus = this.findNessusForInterfaces(intfs);
-            if (nessus == null)
-                throw new Exception("No suitable network scanner for project "+project.getName()+" got "+intfs.size()+" interfaces to scan");
-            scan = new NessusScan();
-            scan.setIsAutomatic(false);
-            scan.setNessus(nessus);
-            scan.setNessusScanTemplate(nessusTemplateRepository.findByNameAndNessus(NESSUS_TEMPLATE, nessus));
-            scan.setProject(project);
-            scan.setPublicip(nessus.getUsePublic());
-            scan.setRunning(false);
-            scan.setInterfaces(intfs);
-            scan.setScanFrequency(EXECUTE_ONCE);
-            scan.setScheduled(false);
-            nessusScanRepository.save(scan);
-            for (NetworkScanClient networkScanClient : networkScanClients){
-                if (networkScanClient.canProcessRequest(scan)){
-                    networkScanClient.runScanManual(scan);
-                }
-            }
-            updateInterfaceState(scan,true);
-            return true;
-        } catch (Exception e){
-            log.error("Got error during running scan for scope - {} ",e.getLocalizedMessage());
-            return false;
-        }
     }
 
 }

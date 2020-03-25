@@ -1,9 +1,8 @@
 package io.mixeway.rest.project.controller;
 
-import io.mixeway.plugins.audit.dependencytrack.model.Projects;
+import io.mixeway.integrations.opensourcescan.model.Projects;
 import io.mixeway.rest.project.model.*;
 import org.codehaus.jettison.json.JSONException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
@@ -24,7 +23,6 @@ import java.util.List;
 public class CodeController {
     private final CodeService codeService;
 
-    @Autowired
     CodeController(CodeService codeService){
         this.codeService = codeService;
     }

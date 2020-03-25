@@ -21,10 +21,10 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
     private static final Logger log = LoggerFactory.getLogger(JwtRequestFilter.class);
-    private JwtUserDetailsService jwtUserDetailsService;
-    private JwtUtils jwtTokenUtil;
-    @Autowired
-    public JwtRequestFilter(JwtUserDetailsService jwtUserDetailsService, JwtUtils jwtTokenUtil){
+    private final JwtUserDetailsService jwtUserDetailsService;
+    private final JwtUtils jwtTokenUtil;
+
+    public JwtRequestFilter(final JwtUserDetailsService jwtUserDetailsService, final JwtUtils jwtTokenUtil){
         this.jwtTokenUtil = jwtTokenUtil;
         this.jwtUserDetailsService = jwtUserDetailsService;
     }

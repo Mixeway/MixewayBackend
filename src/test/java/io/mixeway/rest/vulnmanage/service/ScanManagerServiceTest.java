@@ -2,13 +2,12 @@ package io.mixeway.rest.vulnmanage.service;
 
 import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
-import io.mixeway.plugins.codescan.service.CodeScanService;
-import io.mixeway.plugins.infrastructurescan.model.NetworkScanRequestModel;
-import io.mixeway.plugins.webappscan.model.WebAppScanModel;
-import io.mixeway.plugins.webappscan.model.WebAppScanRequestModel;
+import io.mixeway.integrations.codescan.service.CodeScanService;
+import io.mixeway.integrations.infrastructurescan.model.NetworkScanRequestModel;
+import io.mixeway.integrations.webappscan.model.WebAppScanModel;
+import io.mixeway.integrations.webappscan.model.WebAppScanRequestModel;
 import io.mixeway.rest.vulnmanage.model.CreateScanManageRequest;
 import org.assertj.core.api.Assertions;
-import org.codehaus.jettison.json.JSONException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -25,8 +24,8 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import io.mixeway.config.Constants;
 import io.mixeway.config.TestConfig;
-import io.mixeway.plugins.infrastructurescan.service.NetworkScanService;
-import io.mixeway.plugins.webappscan.service.WebAppScanService;
+import io.mixeway.integrations.infrastructurescan.service.NetworkScanService;
+import io.mixeway.integrations.webappscan.service.WebAppScanService;
 import io.mixeway.pojo.Status;
 import io.mixeway.rest.vulnmanage.model.Vulnerabilities;
 
@@ -34,16 +33,8 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.PersistenceContextType;
 import javax.transaction.Transactional;
-import javax.xml.bind.JAXBException;
 
-import java.io.IOException;
 import java.net.UnknownHostException;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
-import java.text.ParseException;
 import java.util.*;
 
 import static org.mockito.ArgumentMatchers.any;

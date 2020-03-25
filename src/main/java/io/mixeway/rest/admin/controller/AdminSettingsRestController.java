@@ -21,7 +21,6 @@ import java.security.Principal;
 public class AdminSettingsRestController {
     private final AdminSettingsRestService adminSettingsRestService;
 
-    @Autowired
     public AdminSettingsRestController(AdminSettingsRestService adminSettingsRestService){
         this.adminSettingsRestService = adminSettingsRestService;
     }

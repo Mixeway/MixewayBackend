@@ -1,13 +1,9 @@
 package io.mixeway.scheduler;
 
 import io.mixeway.db.entity.*;
-import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.*;
-import io.mixeway.plugins.audit.dependencytrack.apiclient.DependencyTrackApiClient;
-import io.mixeway.plugins.codescan.checkmarx.apiclient.CheckmarxApiClient;
-import io.mixeway.plugins.remotefirewall.apiclient.RfwApiClient;
-import io.mixeway.rest.model.ScannerModel;
-import org.codehaus.jettison.json.JSONException;
+import io.mixeway.integrations.opensourcescan.service.OpenSourceScanService;
+import io.mixeway.integrations.infrastructurescan.plugin.remotefirewall.apiclient.RfwApiClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +12,7 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import io.mixeway.config.Constants;
-import io.mixeway.plugins.remotefirewall.model.Rule;
+import io.mixeway.integrations.infrastructurescan.plugin.remotefirewall.model.Rule;
 import io.mixeway.pojo.DOPMailTemplateBuilder;
 import io.mixeway.pojo.EmailVulnHelper;
 import io.mixeway.pojo.ScanHelper;
@@ -31,7 +27,6 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.text.DateFormat;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -54,10 +49,10 @@ public class CronScheduler {
     private final SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository;
     private final RfwApiClient rfwApiClient;
     private final ScanHelper scanHelper;
-    private final DependencyTrackApiClient dependencyTrackApiClient;
+    private final OpenSourceScanService openSourceScanService;
     @Autowired
     public CronScheduler(SettingsRepository settingsRepository, VulnHistoryRepository vulnHistoryRepository,
-            ProjectRepository projectRepository, WebAppVulnRepository webAppVulnRepository, DependencyTrackApiClient dependencyTrackApiClient,
+            ProjectRepository projectRepository, WebAppVulnRepository webAppVulnRepository, OpenSourceScanService openSourceScanService,
             CodeVulnRepository codeVulnRepository,  NodeAuditRepository nodeAuditRepository, InfrastructureVulnRepository infrastructureVulnRepository,
             InterfaceRepository interfaceRepository, NessusScanRepository nessusScanRepository, JavaMailSender sender,
             SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository,RfwApiClient rfwApiClient,
@@ -68,7 +63,6 @@ public class CronScheduler {
         this.vulnHistoryRepository = vulnHistoryRepository;
         this.webAppVulnRepository = webAppVulnRepository;
         this.codeVulnRepository = codeVulnRepository;
-        this.dependencyTrackApiClient = dependencyTrackApiClient;
         this.nodeAuditRepository = nodeAuditRepository;
         this.infrastructureVulnRepository = infrastructureVulnRepository;
         this.nessusScanRepository = nessusScanRepository;
@@ -77,6 +71,7 @@ public class CronScheduler {
         this.rfwApiClient =rfwApiClient;
         this.sender = sender;
         this.scanHelper = scanHelper;
+        this.openSourceScanService = openSourceScanService;
     }
 
     private DOPMailTemplateBuilder templateBuilder = new DOPMailTemplateBuilder();
@@ -121,7 +116,7 @@ public class CronScheduler {
     public void getDepTrackVulns() {
         try {
             for (CodeProject cp : codeProjectRepository.getCodeProjectsWithOSIntegrationEnabled()){
-                dependencyTrackApiClient.loadVulnerabilities(cp);
+                openSourceScanService.loadVulnerabilities(cp);
             }
             log.info("Successfully synchronized with OpenSource scanner");
         } catch (Exception ignored) {

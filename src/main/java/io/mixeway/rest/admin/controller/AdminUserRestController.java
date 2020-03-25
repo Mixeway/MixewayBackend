@@ -20,7 +20,6 @@ import java.util.List;
 public class AdminUserRestController {
     private final AdminUserRestService adminRestService;
 
-    @Autowired
     AdminUserRestController(AdminUserRestService adminRestService){
         this.adminRestService = adminRestService;
     }

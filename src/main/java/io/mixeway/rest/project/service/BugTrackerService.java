@@ -6,14 +6,12 @@ import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.VaultHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.vault.core.VaultOperations;
-import io.mixeway.plugins.bugtracker.BugTracking;
+import io.mixeway.integrations.bugtracker.BugTracking;
 import io.mixeway.pojo.Status;
 
 import java.net.URISyntaxException;
@@ -33,7 +31,7 @@ public class BugTrackerService {
     private final SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository;
     private List<String> types = Arrays.asList("infra", "code", "webapp","opensource");
     private List<String> strategy = Arrays.asList("Manual", "High", "Medium","Low");
-    @Autowired
+
     BugTrackerService(BugTrackerTypeRepository bugTrackerTypeRepository, BugTrackerRepository bugTrackerRepository,
                       VaultHelper vaultHelper, ProjectRepository projectRepository, List<BugTracking> bugTrackings,
                       InfrastructureVulnRepository infrastructureVulnRepository, WebAppVulnRepository webAppVulnRepository,

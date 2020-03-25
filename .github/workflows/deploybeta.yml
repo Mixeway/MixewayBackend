@@ -1,0 +1,35 @@
+name: Test Build & Deploy beta
+on:
+  push:
+    branches:
+      - '*'
+      - '!master'
+  pull_request:
+    branches:
+      - '*'
+      - '!master'
+jobs:
+  sonarbeta:
+    runs-on: ubuntu-16.04
+    steps:
+      - uses: actions/checkout@v1
+      - name: Set up JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: '11'
+      - name: Analyze with SonarCloud
+        run: mvn -B verify sonar:sonar -Dsonar.projectKey=Mixeway_MixewayBackend -Dsonar.organization=mixeway -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=$SONAR_TOKEN -DskipTests
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  publishbeta:
+    runs-on: ubuntu-16.04
+    steps:
+      - uses: actions/checkout@v1
+      - name: docker actions build & deploy
+        uses: docker/build-push-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+          repository: mixeway/backend
+          tags: 1.1.0-beta

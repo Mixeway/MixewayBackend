@@ -1,8 +1,7 @@
 package io.mixeway.rest.project.service;
 
 import io.mixeway.config.Constants;
-import io.mixeway.db.entity.Interface;
-import io.mixeway.db.entity.Project;
+import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
 import io.mixeway.pojo.PermissionFactory;
 import io.mixeway.pojo.ScanHelper;
@@ -14,16 +13,12 @@ import io.mixeway.rest.utils.IpAddressUtils;
 import io.mixeway.rest.utils.ProjectRiskAnalyzer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import io.mixeway.db.entity.Asset;
-import io.mixeway.db.entity.InfrastructureVuln;
-import io.mixeway.plugins.infrastructurescan.service.NetworkScanService;
+import io.mixeway.integrations.infrastructurescan.service.NetworkScanService;
 import io.mixeway.pojo.Status;
 
-import javax.persistence.criteria.Predicate;
 import javax.transaction.Transactional;
 import java.security.Principal;
 import java.util.*;
@@ -46,7 +41,6 @@ public class AssetService {
         add(Constants.INFO_SEVERITY);
     }};
 
-    @Autowired
     AssetService(ProjectRepository projectRepository, InterfaceRepository interfaceRepository,
                  ProjectRiskAnalyzer projectRiskAnalyzer,
                  RoutingDomainRepository routingDomainRepository, AssetRepository assetRepository,
@@ -141,11 +135,12 @@ public class AssetService {
             return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
         }
     }
-    public ResponseEntity<Status> runScanForAssets(Long id, List<RunScanForAssets> runScanForAssets, String username) {
+    public ResponseEntity<Status> runScanForAssets(Long id, List<RunScanForAssets> runScanForAssets, String username) throws Exception {
         Optional<Project> project = projectRepository.findById(id);
         if (project.isPresent()){
             Set<Interface> intfs =  scanHelper.prepareInterfacesToScan(runScanForAssets, project.get());
-            if (scanHelper.runInfraScanForScope(project.get(), intfs)) {
+            List<NessusScan> scans = networkScanService.configureAndRunManualScanForScope(project.get(), new ArrayList(intfs));
+            if (scans.stream().allMatch(NessusScan::getRunning)) {
                 log.info("{} - Started scan for project {} - scope partial", username, project.get().getName());
                 return new ResponseEntity<>(null, HttpStatus.CREATED);
             } else {
@@ -155,11 +150,12 @@ public class AssetService {
             return new ResponseEntity<>(null,HttpStatus.NOT_FOUND);
         }
     }
-    public ResponseEntity<Status> runAllAssetScan(Long id, String username) {
+    public ResponseEntity<Status> runAllAssetScan(Long id, String username) throws Exception {
         Optional<Project> project = projectRepository.findById(id);
         if (project.isPresent()){
             List<Interface> intfs =  interfaceRepository.findByAssetIn(new ArrayList<>(project.get().getAssets())).stream().filter(i -> !i.isScanRunning()).collect(Collectors.toList());
-            if (scanHelper.runInfraScanForScope(project.get(),new HashSet<>(intfs))) {
+            List<NessusScan> scans = networkScanService.configureAndRunManualScanForScope(project.get(), new ArrayList(intfs));
+            if (scans.stream().allMatch(NessusScan::getRunning)) {
                 log.info("{} - Started scan for project {} - scope full", username, project.get().getName());
                 return new ResponseEntity<>(null, HttpStatus.CREATED);
             } else {
@@ -169,12 +165,13 @@ public class AssetService {
             return new ResponseEntity<>(null,HttpStatus.NOT_FOUND);
         }
     }
-    public ResponseEntity<Status> runSingleAssetScan( Long assetId, String username) {
+    public ResponseEntity<Status> runSingleAssetScan( Long assetId, String username) throws Exception {
         List<Interface> i = new ArrayList<>();
         Optional<Interface> intf = interfaceRepository.findById(assetId);
         if (intf.isPresent()) {
             i.add(intf.get());
-            if (scanHelper.runInfraScanForScope(intf.get().getAsset().getProject(), new HashSet<>(i))) {
+            List<NessusScan> scans = networkScanService.configureAndRunManualScanForScope(intf.get().getAsset().getProject(), i);
+            if (scans.stream().allMatch(NessusScan::getRunning)) {
                 log.info("{} - Started scan for project {} - scope single", username, intf.get().getAsset().getProject().getName());
                 return new ResponseEntity<>(null, HttpStatus.CREATED);
             } else {

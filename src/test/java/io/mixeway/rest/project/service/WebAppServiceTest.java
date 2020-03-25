@@ -1,7 +1,7 @@
 package io.mixeway.rest.project.service;
 
 import io.mixeway.db.repository.*;
-import io.mixeway.plugins.webappscan.WebAppScanClient;
+import io.mixeway.integrations.webappscan.service.WebAppScanClient;
 import io.mixeway.rest.utils.ProjectRiskAnalyzer;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
@@ -15,7 +15,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import io.mixeway.config.TestConfig;
-import io.mixeway.plugins.webappscan.acunetix.apiclient.AcunetixApiClient;
+import io.mixeway.integrations.webappscan.plugin.acunetix.apiclient.AcunetixApiClient;
 
 import javax.persistence.PersistenceContext;
 import javax.persistence.PersistenceContextType;
@@ -59,7 +59,7 @@ public class WebAppServiceTest {
     public void setUp(){
         webAppScanClients.add(acunetixApiClient);
         projectRiskAnalyzer = new ProjectRiskAnalyzer(codeVulnRepository,infrastructureVulnRepository,webAppVulnRepository,interfaceRepository,null);
-        webAppService = new WebAppService(webAppRepository,scannerTypeRepository,webAppScanClients,scannerRepository,projectRepository,
+        webAppService = new WebAppService(webAppRepository,scannerTypeRepository,null,scannerRepository,projectRepository,
                 webAppHeaderRepository,webAppScanRepository,webAppVulnRepository,projectRiskAnalyzer,null);
 
     }

@@ -17,7 +17,6 @@ public class VulnsService {
     private final InfrastructureVulnRepository infrastructureVulnRepository;
     private final WebAppVulnRepository webAppVulnRepository;
 
-    @Autowired
     VulnsService(CodeVulnRepository codeVulnRepository, InfrastructureVulnRepository infrastructureVulnRepository,
                  WebAppVulnRepository webAppVulnRepository){
         this.codeVulnRepository = codeVulnRepository;

@@ -5,10 +5,10 @@ import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.CodeProjectRepository;
 import io.mixeway.db.repository.ProjectRepository;
 import io.mixeway.db.repository.SoftwarePacketVulnerabilityRepository;
-import io.mixeway.plugins.audit.dependencytrack.apiclient.DependencyTrackApiClient;
-import io.mixeway.plugins.audit.mvndependencycheck.model.SASTRequestVerify;
-import io.mixeway.plugins.codescan.service.CodeScanClient;
-import io.mixeway.plugins.utils.CodeAccessVerifier;
+import io.mixeway.integrations.codescan.service.CodeScanService;
+import io.mixeway.integrations.opensourcescan.plugins.mvndependencycheck.model.SASTRequestVerify;
+import io.mixeway.integrations.opensourcescan.service.OpenSourceScanService;
+import io.mixeway.integrations.utils.CodeAccessVerifier;
 import io.mixeway.pojo.*;
 import io.mixeway.pojo.Status;
 import io.mixeway.rest.cioperations.model.CiResultModel;
@@ -17,7 +17,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -41,22 +40,22 @@ public class CiOperationsService {
     private final ProjectRepository projectRepository;
     private final CodeAccessVerifier codeAccessVerifier;
     private final CodeProjectRepository codeProjectRepository;
-    private final List<CodeScanClient> codeScanClients;
-    private final DependencyTrackApiClient dependencyTrackApiClient;
     private final SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository;
-    @Autowired
+    private final OpenSourceScanService openSourceScanService;
+    private final CodeScanService codeScanService;
+
     CiOperationsService(CiOperationsRepository ciOperationsRepository, PermissionFactory permissionFactory,
                         ProjectRepository projectRepository, CodeAccessVerifier codeAccessVerifier,
-                        CodeProjectRepository codeProjectRepository, List<CodeScanClient> codeScanClients,
-                        DependencyTrackApiClient dependencyTrackApiClient, SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository){
+                        CodeProjectRepository codeProjectRepository, SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository,
+                        OpenSourceScanService openSourceScanService, CodeScanService codeScanService){
         this.ciOperationsRepository = ciOperationsRepository;
         this.permissionFactory = permissionFactory;
         this.softwarePacketVulnerabilityRepository = softwarePacketVulnerabilityRepository;
         this.projectRepository = projectRepository;
         this.codeProjectRepository = codeProjectRepository;
-        this.dependencyTrackApiClient = dependencyTrackApiClient;
+        this.openSourceScanService = openSourceScanService;
+        this.codeScanService = codeScanService;
         this.codeAccessVerifier = codeAccessVerifier;
-        this.codeScanClients = codeScanClients;
     }
 
     public ResponseEntity<List<OverAllVulnTrendChartData>> getVulnTrendData(Principal principal) {
@@ -102,24 +101,7 @@ public class CiOperationsService {
     }
 
     public ResponseEntity<Status> codeScan(Long id, String groupName, String projectName, String commitId) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
-        Optional<Project> project = projectRepository.findById(id);
-        if (project.isPresent()) {
-            SASTRequestVerify sastRequestVerify = codeAccessVerifier.verifyPermissions(id,groupName,projectName,false);
-            if (sastRequestVerify.getValid()){
-                for(CodeScanClient codeScanClient : codeScanClients){
-                    if (codeScanClient.canProcessRequest(sastRequestVerify.getCg())){
-                        if (codeScanClient.runScan(sastRequestVerify.getCg(),sastRequestVerify.getCp())){
-                            return new ResponseEntity<>(HttpStatus.CREATED);
-                        } else {
-                            return new ResponseEntity<>(HttpStatus.CREATED);
-                        }
-                    }
-                }
-            } else {
-                return new ResponseEntity<Status>(new Status("Scan for given resource is not yet configured.",null), HttpStatus.PRECONDITION_FAILED);
-            }
-        }
-        return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
+        return codeScanService.createScanForCodeProject(id,groupName,projectName);
     }
 
     public ResponseEntity<CIVulnManageResponse> codeVerify(String codeGroup, String codeProject, Long id, String commitid) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
@@ -130,7 +112,7 @@ public class CiOperationsService {
                 CodeProject codeProjectToVerify =sastRequestVerify.getCp();
                 CIVulnManageResponse ciVulnManageResponse = new CIVulnManageResponse();
                 if (StringUtils.isNotBlank(codeProjectToVerify.getdTrackUuid())){
-                    dependencyTrackApiClient.loadVulnerabilities(codeProjectToVerify);
+                    openSourceScanService.loadVulnerabilities(codeProjectToVerify);
                 }
                 List<VulnManageResponse> vmr = createVulnManageResponseForCodeProject(codeProjectToVerify);
                 ciVulnManageResponse.setVulnManageResponseList(vmr);

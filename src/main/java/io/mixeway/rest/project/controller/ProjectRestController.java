@@ -22,7 +22,6 @@ import java.util.List;
 public class ProjectRestController {
     private final ProjectRestService projectService;
 
-    @Autowired
     ProjectRestController(ProjectRestService projectRestService){
         this.projectService =projectRestService;
     }

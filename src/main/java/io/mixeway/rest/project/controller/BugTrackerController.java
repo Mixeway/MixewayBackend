@@ -17,7 +17,6 @@ import java.util.List;
 @RequestMapping("/v2/api/show/project")
 public class BugTrackerController {
     private final BugTrackerService bugTrackerService;
-    @Autowired
     BugTrackerController(BugTrackerService bugTrackerService){
         this.bugTrackerService = bugTrackerService;
     }

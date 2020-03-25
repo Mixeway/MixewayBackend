@@ -6,23 +6,21 @@ import io.mixeway.rest.vulnmanage.model.CreateScanManageRequest;
 import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import io.mixeway.config.Constants;
-import io.mixeway.plugins.codescan.model.CodeScanRequestModel;
-import io.mixeway.plugins.codescan.service.CodeScanService;
-import io.mixeway.plugins.infrastructurescan.model.NetworkScanRequestModel;
-import io.mixeway.plugins.infrastructurescan.service.NetworkScanService;
-import io.mixeway.plugins.webappscan.service.WebAppScanService;
-import io.mixeway.plugins.webappscan.model.WebAppScanRequestModel;
+import io.mixeway.integrations.codescan.model.CodeScanRequestModel;
+import io.mixeway.integrations.codescan.service.CodeScanService;
+import io.mixeway.integrations.infrastructurescan.model.NetworkScanRequestModel;
+import io.mixeway.integrations.infrastructurescan.service.NetworkScanService;
+import io.mixeway.integrations.webappscan.service.WebAppScanService;
+import io.mixeway.integrations.webappscan.model.WebAppScanRequestModel;
 import io.mixeway.pojo.InfraScanMetadata;
 import io.mixeway.pojo.Status;
 import io.mixeway.rest.vulnmanage.model.Vuln;
 import io.mixeway.rest.vulnmanage.model.Vulnerabilities;
 
-import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -55,7 +53,6 @@ public class ScanManagerService {
     private final CodeScanService codeScanService;
 
 
-    @Autowired
     public ScanManagerService(AssetRepository assetRepository,InfrastructureVulnRepository infrastructureVulnRepository,
                               InterfaceRepository interfaceRepository,CodeProjectRepository codeProjectRepository,
                               WebAppRepository webAppRepository, WebAppVulnRepository webAppVulnRepository,

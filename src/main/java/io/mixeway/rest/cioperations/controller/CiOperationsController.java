@@ -24,7 +24,6 @@ import java.util.List;
 public class CiOperationsController {
     private final CiOperationsService ciOperationsService;
 
-    @Autowired
     CiOperationsController(CiOperationsService ciOperationsService){
         this.ciOperationsService = ciOperationsService;
     }

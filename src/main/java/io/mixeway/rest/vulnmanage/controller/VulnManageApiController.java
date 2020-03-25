@@ -24,8 +24,7 @@ public class VulnManageApiController {
 
     private final GetVulnerabilitiesService getVulnerabilitiesService;
 
-    @Autowired
-    VulnManageApiController(GetVulnerabilitiesService getVulnerabilitiesService){
+    VulnManageApiController(final GetVulnerabilitiesService getVulnerabilitiesService){
         this.getVulnerabilitiesService = getVulnerabilitiesService;
     }
 
