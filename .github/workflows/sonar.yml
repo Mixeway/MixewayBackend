@@ -7,7 +7,7 @@ on:
    branches:
      - '*'
 jobs:
-  build:
+  test:
     runs-on: ubuntu-16.04
     steps:
       - uses: actions/checkout@v1
@@ -16,7 +16,16 @@ jobs:
         with:
           java-version: '11'
       - name: Analyze with SonarCloud
-          uses: sonarsource/sonarcloud-github-action@master
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: mvn -B verify sonar:sonar -Dsonar.projectKey=Mixeway_MixewayBackend -Dsonar.organization=mixeway -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=$SONAR_TOKEN -DskipTests
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  publish:
+    runs-on: ubuntu-16.04
+    steps:
+      uses: docker/build-push-action@v1
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_TOKEN }}
+        repository: mixeway/backend
+        tags: 1.0.0
