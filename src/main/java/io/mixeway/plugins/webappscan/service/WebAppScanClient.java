@@ -1,4 +1,4 @@
-package io.mixeway.plugins.webappscan;
+package io.mixeway.plugins.webappscan.service;
 
 import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.entity.WebApp;

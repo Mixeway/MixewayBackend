@@ -80,8 +80,6 @@ public class GetVulnerabilitiesService {
     @Autowired
     ScannerTypeRepository scannerTypeRepository;
     @Autowired
-    AcunetixApiClient acunetixApiClient;
-    @Autowired
     InfrastructureVulnRepository infrastractureVulnRepository;
     @Autowired
     WebAppVulnRepository webAppVulnRepository;

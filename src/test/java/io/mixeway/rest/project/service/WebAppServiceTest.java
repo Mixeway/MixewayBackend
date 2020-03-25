@@ -1,7 +1,7 @@
 package io.mixeway.rest.project.service;
 
 import io.mixeway.db.repository.*;
-import io.mixeway.plugins.webappscan.WebAppScanClient;
+import io.mixeway.plugins.webappscan.service.WebAppScanClient;
 import io.mixeway.rest.utils.ProjectRiskAnalyzer;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
