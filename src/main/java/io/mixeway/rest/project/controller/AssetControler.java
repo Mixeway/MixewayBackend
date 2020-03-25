@@ -37,17 +37,17 @@ public class AssetControler {
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @PutMapping(value = "/{id}/asset/runselected")
-    public ResponseEntity<Status> runScanForAssets(@PathVariable("id")Long id, @RequestBody List<RunScanForAssets> runScanForAssets, Principal principal) {
+    public ResponseEntity<Status> runScanForAssets(@PathVariable("id")Long id, @RequestBody List<RunScanForAssets> runScanForAssets, Principal principal) throws Exception {
         return assetService.runScanForAssets(id, runScanForAssets, principal.getName());
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @PutMapping(value = "/{id}/asset/runall")
-    public ResponseEntity<Status> runAllAssetScan(@PathVariable("id")Long id, Principal principal) {
+    public ResponseEntity<Status> runAllAssetScan(@PathVariable("id")Long id, Principal principal) throws Exception {
         return assetService.runAllAssetScan(id, principal.getName());
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @PutMapping(value = "/asset/{assetId}/runsingle")
-    public ResponseEntity<Status> runSingleAssetScan( @PathVariable("assetId") Long assetId, Principal principal) {
+    public ResponseEntity<Status> runSingleAssetScan( @PathVariable("assetId") Long assetId, Principal principal) throws Exception {
         return assetService.runSingleAssetScan(assetId, principal.getName());
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")

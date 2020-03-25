@@ -9,6 +9,8 @@ import io.mixeway.integrations.infrastructurescan.model.NetworkScanRequestModel;
 import io.mixeway.integrations.infrastructurescan.plugin.remotefirewall.apiclient.RfwApiClient;
 import io.mixeway.pojo.*;
 import io.mixeway.pojo.Status;
+import io.mixeway.rest.model.KeyValue;
+import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +40,9 @@ import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import javax.xml.bind.JAXBException;
 
+/**
+ * @author gsiewruk
+ */
 @Service
 @Transactional
 public class NetworkScanService {
@@ -76,6 +81,12 @@ public class NetworkScanService {
         this.scanHelper =scanHelper;
     }
 
+    /**
+     * Method which is checking running NessusScan entities for particular proejct by externalId
+     *
+     * @param ciid externalId for system
+     * @return HttpStatus.OK if scan ended, LOCKED if scan is running, NOT_FOUND if there is no such project
+     */
     public ResponseEntity<Status> checkScanStatusForCiid(String ciid){
         Optional<List<Project>> project = projectRepository.findByCiid(ciid);
         if (project.isPresent()){
@@ -90,6 +101,13 @@ public class NetworkScanService {
             return new ResponseEntity<>(new Status("Project not found"), HttpStatus.NOT_FOUND);
         }
     }
+
+    /**
+     * Method is creating nessusScan entity and run it on configured netowrk scanner.
+     *
+     * @param req NetworkScanRequestModel which contain information about object to be sacn
+     * @return HttpStatus.CREATED if scan is started, PREDONDITION_FAILED when exception occured
+     */
     public ResponseEntity<Status> createAndRunNetworkScan(NetworkScanRequestModel req) throws Exception {
         log.info("Got request for scan from koordynator - system {}, asset no: {}", LogUtil.prepare(req.getProjectName()),req.getIpAddresses().size());
         Optional<List<Project>> projectFromReq = projectRepository.findByCiid(req.getCiid());
@@ -108,31 +126,39 @@ public class NetworkScanService {
             return new ResponseEntity<>(new Status("Request containts IP with running test. Omitting.."),
                     HttpStatus.EXPECTATION_FAILED);
         //CONFIGURE MANUAL SCAN
-        NessusScan ns;
+        List<NessusScan> ns;
         try {
-            ns = configureKoordynatorScan(project, intfs);
+            ns = configureAndRunManualScanForScope(project, intfs);
         } catch (IndexOutOfBoundsException e){
             return new ResponseEntity<>(new Status("One or more hosts does not have Routing domain or no scanner avaliable in given Routing Domain. Omitting.."),
                     HttpStatus.EXPECTATION_FAILED);
         }
         //RUN MANUAL SCAN
-        if (!ns.getRunning()) {
-            for (NetworkScanClient networkScanClient :networkScanClients){
-                if (networkScanClient.canProcessRequest(ns)){
-                    networkScanClient.runScan(ns);
+        for (NessusScan nessusScan : ns){
+            if (!nessusScan.getRunning()) {
+                for (NetworkScanClient networkScanClient :networkScanClients){
+                    if (networkScanClient.canProcessRequest(nessusScan)){
+                        networkScanClient.runScan(nessusScan);
+                    }
                 }
             }
         }
-        ns = nessusScanRepository.findById(ns.getId()).orElse(null);
-        //MAKE SURE ASSET REQUESTID IS SET PROPERLY
-        assert ns != null;
-        updateIntfsStateAndAssetRequestId(intfs, ns.getRequestId());
-        if (ns.getRunning()) {
-            return new ResponseEntity<>(new Status("ok",ns.getRequestId() ), HttpStatus.CREATED);
+        if (ns.stream().allMatch(NessusScan::getRunning)) {
+            return new ResponseEntity<>(new Status("ok",
+                    StringUtils.join(ns.stream().map(NessusScan::getRequestId).collect(Collectors.toSet()), ",")),
+                    HttpStatus.CREATED);
         } else {
             return new ResponseEntity<>(new Status("Problem with running scan..."), HttpStatus.PRECONDITION_FAILED);
         }
     }
+
+
+    /**
+     * Method set state of runnig=true for give Intercace list. Also update Asset with proper requestId.
+     *
+     * @param interfaces interaces to update state
+     * @param requestId requestId to update on asset entity
+     */
     private void updateIntfsStateAndAssetRequestId(List<Interface> interfaces, String requestId){
         Set<Asset> assets = new HashSet<>();
         for (Interface i : interfaces){
@@ -145,31 +171,51 @@ public class NetworkScanService {
             assetRepository.save(asset);
         }
     }
-    private NessusScan configureKoordynatorScan(Project project, List<Interface> intfs) throws Exception {
 
-        io.mixeway.db.entity.Scanner nessus = findNessusForInterfaces(new HashSet<>(intfs));
-        NessusScan scan = new NessusScan();
-        // TODO wsparcie dla nessusowych
-        scan = configureScan(scan, nessus, project,false);
-        scan.setInterfaces(new HashSet<>(intfs));
-        scan.setRequestId(UUID.randomUUID().toString());
-        scan.setScanFrequency(EXECUTE_ONCE);
-        scan.setScheduled(false);
-        for (Interface i: intfs){
-            i.getAsset().setRequestId(scan.getRequestId());
+    /**
+     * Method is creating NessusScan entity properly for given resources. And use Network Scanner API to create and run scan
+     * Ignores Interfaces with running=true
+     *
+     * @param project context
+     * @param intfs List of Interfaces to configure scan
+     * @return NessusScan which is configured and running network scan
+     */
+    public List<NessusScan> configureAndRunManualScanForScope(Project project, List<Interface> intfs) throws Exception {
 
-            assetRepository.save(i.getAsset());
-        }
-        nessusScanRepository.save(scan);
-        for (NetworkScanClient networkScanClient :networkScanClients) {
-            if (networkScanClient.canProcessRequest(scan)) {
-                networkScanClient.runScanManual(scan);
+        List<NessusScan> nessusScans = new ArrayList<>();
+        intfs = intfs.stream().filter(i -> !i.isScanRunning()).collect(Collectors.toList());
+        Map<NetworkScanClient, Set<Interface>> scannerInterfaceMap = findNessusForInterfaces(new HashSet<>(intfs));
+        for (Map.Entry<NetworkScanClient, Set<Interface>> keyValue: scannerInterfaceMap.entrySet()) {
+            NessusScan scan = new NessusScan();
+            scan = configureScan(scan, keyValue.getKey().getScannerFromClient(), project,false);
+            scan.setInterfaces(keyValue.getValue());
+            scan.setRequestId(UUID.randomUUID().toString());
+            scan.setScanFrequency(EXECUTE_ONCE);
+            scan.setScheduled(false);
+            for (Interface i: keyValue.getValue()){
+                i.getAsset().setRequestId(scan.getRequestId());
+                i.setScanRunning(true);
+                interfaceRepository.save(i);
+                assetRepository.save(i.getAsset());
             }
+            nessusScanRepository.save(scan);
+            keyValue.getKey().runScanManual(scan);
+            nessusScans.add(scan);
         }
-        return scan;
+
+        return nessusScans;
     }
 
-    private NessusScan configureScan(NessusScan scan, io.mixeway.db.entity.Scanner nessus, Project project, Boolean auto){
+    /**
+     * Reconfiguration of a scan
+     *
+     * @param scan
+     * @param nessus
+     * @param project
+     * @param auto
+     * @return Configured NessusScan
+     */
+    private NessusScan configureScan(NessusScan scan, Scanner nessus, Project project, Boolean auto){
         scan.setIsAutomatic(auto);
         scan.setNessus(nessus);
         scan.setNessusScanTemplate(nessusScanTemplateRepository.findByNameAndNessus(NESSUS_TEMPLATE, nessus));
@@ -178,21 +224,35 @@ public class NetworkScanService {
         scan.setRunning(false);
         return scan;
     }
-    //Założenie, że jest tylko jedna domena routingowa w jednym projekcie
-    public io.mixeway.db.entity.Scanner findNessusForInterfaces(Set<Interface> intfs) {
-        List<io.mixeway.db.entity.Scanner> nessuses = new ArrayList<>();
-        List<ScannerType> types = new ArrayList<>();
-        types.add(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_NESSUS));
-        types.add(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_OPENVAS));
+
+
+    /**
+     * Method which is finding a proper Scanner for particular Interface. Match is being done for RoutingDomain match.
+     * Assumption is that there is one scanner in one routing domian
+     *
+     * @param intfs
+     * @return
+     */
+    public Map<NetworkScanClient, Set<Interface>> findNessusForInterfaces(Set<Interface> intfs) {
+        Map<NetworkScanClient, Set<Interface>> scannerInterfaceMap = new HashMap<>();
         List<RoutingDomain> uniqueDomainInProjectAssets = intfs.stream().map(Interface::getRoutingDomain).distinct().collect(Collectors.toList());
         for (RoutingDomain rd : uniqueDomainInProjectAssets) {
-            nessuses.addAll(nessusRepository.findByRoutingDomainAndScannerTypeIn(rd, types));
+            for (NetworkScanClient networkScanClient : networkScanClients){
+                if (networkScanClient.canProcessRequest(rd)){
+                    scannerInterfaceMap.put(networkScanClient, intfs.stream().filter(i -> i.getRoutingDomain().getId().equals(rd.getId())).collect(Collectors.toSet()));
+                }
+            }
         }
-        Optional<io.mixeway.db.entity.Scanner> scanner = nessuses.stream()
-                .filter(s -> s.getScannerType() == scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_NESSUS))
-                .findFirst();
-        return scanner.orElseGet(() -> nessuses.get(0));
+        return scannerInterfaceMap;
     }
+
+    /**
+     * Prepare object to be scan from ScanManager module
+     * TODO multiple domains in one model request
+     * @param req properly created NetworkScanRequestModel
+     * @param project context
+     * @return list of interface in request
+     */
     private List<Interface> updateAssetsAndPrepareInterfacesForScan(NetworkScanRequestModel req, Project project) {
         List<Interface> listtoScan = new ArrayList<>();
         for (AssetToCreate atc : req.getIpAddresses()){
@@ -231,6 +291,13 @@ public class NetworkScanService {
         }
         return listtoScan;
     }
+
+    /**
+     * Double check for already running scan on interface
+     *
+     * @param intfs
+     * @return
+     */
     private Boolean verifyInterfacesBeforeScan(List<Interface> intfs) {
         List<NessusScan> manualRunningScans = nessusScanRepository.findByIsAutomaticAndRunning(false, true);
         for (NessusScan ns : manualRunningScans) {
@@ -241,6 +308,11 @@ public class NetworkScanService {
         return false;
     }
 
+    /**
+     * Configure NessuScan and set it to automatic for each routing domain within project
+     *
+     * @param project
+     */
     public void configureAutomaticScanForProject(Project project) {
         //Pobranie asetow i wybranie roznych domen routingowych
         List<Asset> uniqueRoutingDomainsForProject = project.getAssets().stream()
@@ -253,6 +325,12 @@ public class NetworkScanService {
         }
     }
 
+    /**
+     * Create NessuScan for given unique routing domian within given project
+     *
+     * @param routingDomain
+     * @param project
+     */
     private void configureInfrastructureScanForRoutingDomainAndProject(RoutingDomain routingDomain, Project project) {
         final List<ScannerType> scannerTypes = Arrays.asList(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_OPENVAS),
                 scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_NESSUS), scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_NEXPOSE));
@@ -284,6 +362,13 @@ public class NetworkScanService {
         }
 
     }
+
+    /**
+     * Returning List of Intrafces within specified project in specified RoutingDomain
+     * @param routingDomain
+     * @param project
+     * @return
+     */
     private Set<Interface> getInterfacesForProjectAndRoutingDomains(RoutingDomain routingDomain, Project project) {
         return interfaceRepository.findByAssetInAndRoutingDomainAndActive(project.getAssets(), routingDomain, true);
     }
@@ -291,17 +376,30 @@ public class NetworkScanService {
         Set<Object> seen = ConcurrentHashMap.newKeySet();
         return t -> seen.add(keyExtractor.apply(t));
     }
-    private void putRulesOnRfw(NessusScan nessusScan)throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+
+    /**
+     * Put proper RFW rules on defined Remote Firewall
+     * @param nessusScan
+     */
+    public void putRulesOnRfw(NessusScan nessusScan)throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         for (String ipAddress : scanHelper.prepareTargetsForScan(nessusScan,false)){
             rfwApiClient.operateOnRfwRule(nessusScan.getNessus(),ipAddress, HttpMethod.PUT);
         }
     }
+
+    /**
+     * Remove configured rules from RemoteFirewall
+     * @param nessusScan
+     */
     public void deleteRulsFromRfw(NessusScan nessusScan)throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         for (String ipAddress : scanHelper.prepareTargetsForScan(nessusScan,false)){
             rfwApiClient.operateOnRfwRule(nessusScan.getNessus(),ipAddress,HttpMethod.DELETE);
         }
     }
 
+    /**
+     * Method which is cheacking for running nessusscan test and then it download results
+     */
     public void scheduledCheckStatusAndLoadVulns() {
         try {
             List<NessusScan> nsl = nessusScanRepository.findTop10ByRunningOrderByIdAsc(true);
@@ -329,6 +427,9 @@ public class NetworkScanService {
         }
     }
 
+    /**
+     * Method which check for nessusscan.isautomatic and run scan
+     */
     public void scheduledRunScans() {
         log.info("Starting Scheduled task for automatic test");
         List<Project> autoInfraProjectList = projectRepository.findByAutoInfraScan(true);

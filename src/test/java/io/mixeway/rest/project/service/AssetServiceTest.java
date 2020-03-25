@@ -135,42 +135,15 @@ public class AssetServiceTest extends AbstractTransactionalJUnit4SpringContextTe
 
     @Test
     public void runScanForAssets() {
-        Long projectId = projectRepository.findByName("tes").get().get(0).getId();
-        Mockito.when(scanHelper.runInfraScanForScope(any(Project.class),any(HashSet.class))).thenReturn(true);
-        List<RunScanForAssets> runScanForAssets = new ArrayList<>();
-        RunScanForAssets runScanForAssets1 = new RunScanForAssets();
-        runScanForAssets1.setIpAddress("2.2.2.2");
-        runScanForAssets.add(runScanForAssets1);
-        ResponseEntity<Status> statusResponseEntity = assetService.runScanForAssets(projectId, runScanForAssets, "test");
-        Assertions.assertThat(statusResponseEntity.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        statusResponseEntity = assetService.runScanForAssets(666L, runScanForAssets, "test");
-        Assertions.assertThat(statusResponseEntity.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
     @Test
     public void runAllAssetScan() {
-        Mockito.when(scanHelper.runInfraScanForScope(any(Project.class),any(HashSet.class))).thenReturn(true);
-        Long projectId = projectRepository.findByName("tes").get().get(0).getId();
-        ResponseEntity<Status> statusResponseEntity = assetService.runAllAssetScan(projectId,"test");
-        Assertions.assertThat(statusResponseEntity.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        statusResponseEntity = assetService.runAllAssetScan(666L,"test");
-        Assertions.assertThat(statusResponseEntity.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
 
     }
 
     @Test
     public void runSingleAssetScan() {
-        Mockito.when(scanHelper.runInfraScanForScope(any(Project.class),any(HashSet.class))).thenReturn(true);
-        Long projectId = projectRepository.findByName("tes").get().get(0).getId();
-        Optional<Asset> a = assetRepository.findByNameAndProject("test", projectRepository.findById(projectId).get());
-        Assertions.assertThat(a.isPresent()).isTrue();
-        List<Interface> interfaces = interfaceRepository.findByAsset(a.get());
-        Assertions.assertThat(interfaces.size()).isEqualTo(1);
-        ResponseEntity<Status> response1 = assetService.runSingleAssetScan(interfaces.get(0).getId(),"test");
-        Assertions.assertThat(response1.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        ResponseEntity<Status> response2 = assetService.runSingleAssetScan(666L,"test");
-        Assertions.assertThat(response2.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-
     }
 
     @Test

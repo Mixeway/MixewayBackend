@@ -1,5 +1,6 @@
 package io.mixeway.integrations.infrastructurescan.service;
 
+import io.mixeway.db.entity.RoutingDomain;
 import org.codehaus.jettison.json.JSONException;
 import io.mixeway.db.entity.NessusScan;
 import io.mixeway.db.entity.Scanner;
@@ -21,5 +22,7 @@ public interface NetworkScanClient {
             NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, JAXBException;
     boolean canProcessRequest(NessusScan nessusScan);
     boolean canProcessRequest(Scanner scanner);
+    boolean canProcessRequest(RoutingDomain routingDomain);
+    Scanner getScannerFromClient();
 
 }
