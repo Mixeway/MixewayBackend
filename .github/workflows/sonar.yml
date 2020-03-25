@@ -1,4 +1,5 @@
 jobs:
+  on: [push, pull_request]
   build:
     runs-on: ubuntu-16.04
     steps:
