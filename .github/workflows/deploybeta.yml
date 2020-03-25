@@ -2,10 +2,10 @@ name: Deploy to Dockerhub with beta version
 on:
   push:
     branches:
-      - '!master'
+      - !master
   pull_request:
     branches:
-     - '!master'
+     - !master
 jobs:
   testanddeploy:
     runs-on: ubuntu-16.04
