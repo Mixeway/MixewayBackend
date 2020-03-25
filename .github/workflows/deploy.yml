@@ -2,10 +2,10 @@ name: Analyze of Sonarcloud
 on:
   push:
     branches:
-      - '*'
+      - 'master'
   pull_request:
-   branches:
-     - '*'
+    branches:
+      - 'master'
 jobs:
   testanddeploy:
     runs-on: ubuntu-16.04
@@ -30,4 +30,4 @@ jobs:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.DOCKER_TOKEN }}
           repository: mixeway/backend
-          tags: 1.0.0
+          tags: 1.1.0
