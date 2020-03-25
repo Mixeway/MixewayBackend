@@ -7,9 +7,7 @@ import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.*;
 import io.mixeway.plugins.infrastructurescan.model.NetworkScanRequestModel;
 import io.mixeway.plugins.remotefirewall.apiclient.RfwApiClient;
-import io.mixeway.pojo.AssetToCreate;
-import io.mixeway.pojo.LogUtil;
-import io.mixeway.pojo.ScanHelper;
+import io.mixeway.pojo.*;
 import io.mixeway.pojo.Status;
 import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
@@ -18,6 +16,10 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.UnexpectedRollbackException;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.util.HtmlUtils;
 
 import java.io.IOException;
@@ -53,15 +55,17 @@ public class NetworkScanService {
     private final RoutingDomainRepository routingDomainRepository;
     private final List<NetworkScanClient> networkScanClients;
     private final ScanHelper scanHelper;
+    private WebAppHelper webAppHelper;
     private final RfwApiClient rfwApiClient;
 
     public NetworkScanService(ProjectRepository projectRepository, ScannerTypeRepository scannerTypeRepository, ScanHelper scanHelper,
                               List<NetworkScanClient> networkScanClients, NessusScanTemplateRepository nessusScanTemplateRepository, NessusScanRepository nessusScanRepository,
                               ScannerRepository nessusRepository, InterfaceRepository interfaceRepository, AssetRepository assetRepository,
-                              RoutingDomainRepository routingDomainRepository, RfwApiClient rfwApiClient) {
+                              RoutingDomainRepository routingDomainRepository, RfwApiClient rfwApiClient, WebAppHelper webAppHelper) {
         this.projectRepository = projectRepository;
         this.scannerTypeRepository = scannerTypeRepository;
         this.nessusRepository = nessusRepository;
+        this.webAppHelper = webAppHelper;
         this.routingDomainRepository = routingDomainRepository;
         this.nessusScanTemplateRepository = nessusScanTemplateRepository;
         this.interfaceRepository = interfaceRepository;
@@ -295,6 +299,65 @@ public class NetworkScanService {
     public void deleteRulsFromRfw(NessusScan nessusScan)throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         for (String ipAddress : scanHelper.prepareTargetsForScan(nessusScan,false)){
             rfwApiClient.operateOnRfwRule(nessusScan.getNessus(),ipAddress,HttpMethod.DELETE);
+        }
+    }
+
+    public void scheduledCheckStatusAndLoadVulns() {
+        try {
+            List<NessusScan> nsl = nessusScanRepository.findTop10ByRunningOrderByIdAsc(true);
+            for (NessusScan ns : nsl) {
+                if (ns.getNessus().getStatus()) {
+                    for (NetworkScanClient networkScanClient :networkScanClients) {
+                        if (networkScanClient.canProcessRequest(ns) && networkScanClient.isScanDone(ns)) {
+                            networkScanClient.loadVulnerabilities(ns);
+                        }
+                    }
+                    //For nessus create webapp linking
+                    if (ns.getNessus().getScannerType().equals(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_NESSUS))) {
+                        if (ns.getProject().getWebAppAutoDiscover() != null && ns.getProject().getWebAppAutoDiscover())
+                            webAppHelper.discoverWebAppFromInfrastructureVulns(ns.getProject());
+                    }
+
+                }
+            }
+            //Change state of interface which was not loaded for some reason
+            if (nessusScanRepository.findByRunning(true).size() == 0 ){
+                interfaceRepository.updateStateForNotRunningScan();
+            }
+        } catch (UnexpectedRollbackException | JSONException | CertificateException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyManagementException | KeyStoreException | IOException | JAXBException ce ){
+            log.warn("Exception during Network Scan synchro {}", ce.getLocalizedMessage());
+        }
+    }
+
+    public void scheduledRunScans() {
+        log.info("Starting Scheduled task for automatic test");
+        List<Project> autoInfraProjectList = projectRepository.findByAutoInfraScan(true);
+
+        for (Project project : autoInfraProjectList){
+            List<NessusScan> nessusScan = nessusScanRepository.findByProjectAndIsAutomatic(project,true);
+            for (NessusScan ns : nessusScan) {
+                try {
+                    if (ns.getNessus().getStatus()) {
+                        for (NetworkScanClient networkScanClient :networkScanClients) {
+                            if (networkScanClient.canProcessRequest(ns) ) {
+                                networkScanClient.runScan(ns);
+                                log.info("{} Starting automatic scan for {}",ns.getNessus().getScannerType().getName(), ns.getProject().getName());
+                            }
+                        }
+                    }
+                } catch (ResourceAccessException | NullPointerException | HttpServerErrorException | JAXBException | HttpClientErrorException e) {
+                    log.error("Exception - {} came up during scan for {}",e.getLocalizedMessage(), ns.getProject().getName());
+                } catch (Exception e) {
+                    log.error(e.getLocalizedMessage());
+                }
+            }
+        }
+    }
+    public void runNetworkScan(NessusScan nessusScan) throws Exception {
+        for (NetworkScanClient networkScanClient : networkScanClients){
+            if (networkScanClient.canProcessRequest(nessusScan)){
+                networkScanClient.runScanManual(nessusScan);
+            }
         }
     }
 }

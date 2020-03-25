@@ -4,6 +4,7 @@ import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.*;
 import io.mixeway.plugins.infrastructurescan.service.NetworkScanClient;
+import io.mixeway.plugins.infrastructurescan.service.NetworkScanService;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,21 +29,21 @@ public class ScanHelper {
     private ScannerRepository scannerRepository;
     private NessusScanTemplateRepository nessusTemplateRepository;
     private NessusScanRepository nessusScanRepository;
-    private List<NetworkScanClient> networkScanClients;
+    private NetworkScanService networkScanService;
 
 
     @Lazy
     @Autowired
     ScanHelper(AssetRepository assetRepository, InterfaceRepository interfaceRepository, ScannerTypeRepository scannerTypeRepository,
                ScannerRepository scannerRepository, NessusScanTemplateRepository nessusScanTemplateRepository,
-               List<NetworkScanClient> networkScanClients, NessusScanRepository nessusScanRepository){
+               NetworkScanService networkScanService, NessusScanRepository nessusScanRepository){
         this.assetRepository = assetRepository;
         this.interfaceRepository = interfaceRepository;
         this.scannerTypeRepository = scannerTypeRepository;
         this.nessusScanRepository = nessusScanRepository;
         this.scannerRepository = scannerRepository;
         this.nessusTemplateRepository = nessusScanTemplateRepository;
-        this.networkScanClients = networkScanClients;
+        this.networkScanService = networkScanService;
     }
 
     private final static Logger log = LoggerFactory.getLogger(ScanHelper.class);
@@ -171,11 +172,7 @@ public class ScanHelper {
             scan.setScanFrequency(EXECUTE_ONCE);
             scan.setScheduled(false);
             nessusScanRepository.save(scan);
-            for (NetworkScanClient networkScanClient : networkScanClients){
-                if (networkScanClient.canProcessRequest(scan)){
-                    networkScanClient.runScanManual(scan);
-                }
-            }
+            networkScanService.runNetworkScan(scan);
             updateInterfaceState(scan,true);
             return true;
         } catch (Exception e){
