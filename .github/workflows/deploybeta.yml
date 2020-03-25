@@ -1,4 +1,4 @@
-name: Deploy to Dockerhub with beta version
+name: Analyze of Sonarcloud
 on:
   push:
     branches:
