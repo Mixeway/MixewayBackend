@@ -20,10 +20,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  publish:
+    runs-on: ubuntu-16.04
+    steps:
       - name: docker actions build & deploy
-          uses: docker/build-push-action@v1
-          with:
-            username: ${{ secrets.DOCKER_USER }}
-            password: ${{ secrets.DOCKER_TOKEN }}
-            repository: mixeway/backend
-            tags: 1.0.0
+        uses: docker/build-push-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+          repository: mixeway/backend
+          tags: 1.0.0
