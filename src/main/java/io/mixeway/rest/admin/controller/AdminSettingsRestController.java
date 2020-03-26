@@ -2,6 +2,7 @@ package io.mixeway.rest.admin.controller;
 
 import io.mixeway.rest.admin.model.CronSettings;
 import io.mixeway.rest.admin.model.SmtpSettingsModel;
+import io.mixeway.rest.admin.model.WebAppScanStrategyModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -13,6 +14,7 @@ import io.mixeway.pojo.Status;
 import io.mixeway.rest.admin.model.AuthSettingsModel;
 import io.mixeway.rest.admin.service.AdminSettingsRestService;
 
+import javax.validation.Valid;
 import java.security.Principal;
 
 @RestController()
@@ -90,6 +92,11 @@ public class AdminSettingsRestController {
     @PatchMapping(value = "/settings/trendcron")
     public ResponseEntity<Status> changeTrendCron( Principal principal,@RequestBody CronSettings cronSettings)  {
         return adminSettingsRestService.changeTrendCron(principal.getName(), cronSettings);
+    }
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PatchMapping(value = "/settings/webappscanstrategy")
+    public ResponseEntity<Status> changeWebAppStrategy( Principal principal,@RequestBody @Valid WebAppScanStrategyModel webAppScanStrategyModel)  {
+        return adminSettingsRestService.changeWebAppStrategy(principal.getName(), webAppScanStrategyModel);
     }
 
 }

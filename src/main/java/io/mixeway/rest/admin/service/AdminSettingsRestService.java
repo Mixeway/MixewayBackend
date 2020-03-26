@@ -1,9 +1,12 @@
 package io.mixeway.rest.admin.service;
 
+import io.mixeway.db.entity.*;
+import io.mixeway.db.repository.*;
 import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.VaultHelper;
 import io.mixeway.rest.admin.model.CronSettings;
 import io.mixeway.rest.admin.model.SmtpSettingsModel;
+import io.mixeway.rest.admin.model.WebAppScanStrategyModel;
 import org.quartz.CronExpression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,13 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.vault.core.VaultOperations;
-import io.mixeway.db.entity.Proxies;
-import io.mixeway.db.entity.RoutingDomain;
-import io.mixeway.db.entity.Settings;
-import io.mixeway.db.repository.ProxiesRepository;
-import io.mixeway.db.repository.RoutingDomainRepository;
-import io.mixeway.db.repository.SettingsRepository;
 import io.mixeway.pojo.Status;
 import io.mixeway.rest.admin.model.AuthSettingsModel;
 import sun.rmi.runtime.Log;
@@ -34,14 +32,19 @@ public class AdminSettingsRestService {
     private final VaultHelper vaultHelper;
     private final RoutingDomainRepository routingDomainRepository;
     private final ProxiesRepository proxiesRepository;
+    private final WebAppScanStrategyRepository webAppScanStrategyRepository;
+    private final ScannerTypeRepository scannerTypeRepository;
     private static final Logger log = LoggerFactory.getLogger(AdminSettingsRestService.class);
 
 
-    public AdminSettingsRestService(SettingsRepository settingsRepository, VaultHelper vaultHelper,
-                                    RoutingDomainRepository routingDomainRepository, ProxiesRepository proxiesRepository){
+    public AdminSettingsRestService(SettingsRepository settingsRepository, VaultHelper vaultHelper, WebAppScanStrategyRepository webAppScanStrategyRepository,
+                                    RoutingDomainRepository routingDomainRepository, ProxiesRepository proxiesRepository,
+                                    ScannerTypeRepository scannerTypeRepository){
         this.settingsRepository = settingsRepository;
         this.vaultHelper = vaultHelper;
+        this.scannerTypeRepository = scannerTypeRepository;
         this.proxiesRepository = proxiesRepository;
+        this.webAppScanStrategyRepository = webAppScanStrategyRepository;
         this.routingDomainRepository = routingDomainRepository;
     }
 
@@ -236,5 +239,31 @@ public class AdminSettingsRestService {
             return new ResponseEntity<>(new Status(e.getLocalizedMessage()), HttpStatus.EXPECTATION_FAILED);
         }
         return new ResponseEntity<>( HttpStatus.EXPECTATION_FAILED);
+    }
+
+    @Transactional
+    public ResponseEntity<Status> changeWebAppStrategy(String name, WebAppScanStrategyModel webAppScanStrategyModel) {
+        WebAppScanStrategy webAppScanStrategy = webAppScanStrategyRepository.findAll().stream().findFirst().orElse(null);
+        if (webAppScanStrategy != null){
+            if (webAppScanStrategyModel.getApiStrategy() != null){
+                ScannerType apiStrategy = scannerTypeRepository.findByNameIgnoreCase(webAppScanStrategyModel.getApiStrategy());
+                webAppScanStrategy.setApiStrategy(apiStrategy);
+            } else {
+                webAppScanStrategy.setApiStrategy(null);
+            }
+            if (webAppScanStrategyModel.getSchedulerStrategy() != null){
+                ScannerType scheduledStrategy = scannerTypeRepository.findByNameIgnoreCase(webAppScanStrategyModel.getSchedulerStrategy());
+                webAppScanStrategy.setScheduledStrategy(scheduledStrategy);
+            } else {
+                webAppScanStrategy.setScheduledStrategy(null);
+            }
+            if (webAppScanStrategyModel.getGuiStrategy() != null){
+                ScannerType guiStrategy = scannerTypeRepository.findByNameIgnoreCase(webAppScanStrategyModel.getGuiStrategy());
+                webAppScanStrategy.setGuiStrategy(guiStrategy);
+            } else {
+                webAppScanStrategy.setGuiStrategy(null);
+            }
+        }
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 }

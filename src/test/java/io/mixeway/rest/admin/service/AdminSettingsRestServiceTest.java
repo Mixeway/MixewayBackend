@@ -57,7 +57,7 @@ public class AdminSettingsRestServiceTest {
     @Before
     public void setUp(){
         MockitoAnnotations.initMocks(this);
-        adminSettingsRestService = new AdminSettingsRestService(settingsRepository,vaultHelper,routingDomainRepository,proxiesRepository);
+        adminSettingsRestService = new AdminSettingsRestService(settingsRepository,vaultHelper,null,routingDomainRepository,proxiesRepository,null);
     }
 
 
