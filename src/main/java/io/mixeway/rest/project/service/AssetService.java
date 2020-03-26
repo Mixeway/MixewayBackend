@@ -171,7 +171,7 @@ public class AssetService {
         if (intf.isPresent()) {
             i.add(intf.get());
             List<NessusScan> scans = networkScanService.configureAndRunManualScanForScope(intf.get().getAsset().getProject(), i);
-            if (scans.stream().allMatch(NessusScan::getRunning)) {
+            if (scans.size() >0 && scans.stream().allMatch(NessusScan::getRunning)) {
                 log.info("{} - Started scan for project {} - scope single", username, intf.get().getAsset().getProject().getName());
                 return new ResponseEntity<>(null, HttpStatus.CREATED);
             } else {

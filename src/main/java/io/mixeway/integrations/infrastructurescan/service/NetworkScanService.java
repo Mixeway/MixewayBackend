@@ -186,6 +186,8 @@ public class NetworkScanService {
         intfs = intfs.stream().filter(i -> !i.isScanRunning()).collect(Collectors.toList());
         Map<NetworkScanClient, Set<Interface>> scannerInterfaceMap = findNessusForInterfaces(new HashSet<>(intfs));
         for (Map.Entry<NetworkScanClient, Set<Interface>> keyValue: scannerInterfaceMap.entrySet()) {
+            log.info("Got Request for Network scan. Routing domain {} scanner {}, interfaces {}", keyValue.getKey().getScannerFromClient().getRoutingDomain().getName(),
+                    keyValue.getKey().getScannerFromClient().getApiUrl(), StringUtils.join(keyValue.getValue().stream().map(Interface::getPrivateip).collect(Collectors.toSet()), ","));
             NessusScan scan = new NessusScan();
             scan = configureScan(scan, keyValue.getKey().getScannerFromClient(), project,false);
             scan.setInterfaces(keyValue.getValue());
