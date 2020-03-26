@@ -23,6 +23,6 @@ public interface ScannerRepository extends JpaRepository<Scanner, Long> {
 	Optional<Scanner> getById(@Param("id") Long id);
 	@Query("select distinct s.scannerType from Scanner s where s.status=true")
 	List<ScannerType> getDistinctScannerTypes();
-
+	List<Scanner> findByScannerTypeAndRoutingDomain(ScannerType scannerType, RoutingDomain routingDomain);
     List<Scanner> findByScannerTypeInAndStatus(List<ScannerType> scannerTypes, Boolean status);
 }

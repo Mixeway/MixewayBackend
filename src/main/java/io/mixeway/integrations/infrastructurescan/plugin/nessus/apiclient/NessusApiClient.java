@@ -114,8 +114,8 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 
 	@Override
 	public boolean canProcessRequest(RoutingDomain routingDomain) {
-		List<Scanner> scanner = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_NESSUS));
-		return scanner.size() == 1 && scanner.get(0).getRoutingDomain().getId().equals(routingDomain.getId());
+		List<Scanner> scanner = scannerRepository.findByScannerTypeAndRoutingDomain(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_NESSUS), routingDomain);
+		return scanner.size() > 0;
 	}
 
 	@Override
