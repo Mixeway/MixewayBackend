@@ -342,6 +342,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 					log.info("CloudScan ended for {}", cg.getName());
 					return true;
 				} else if (response.getBody().getData().getJobState().equals(Constants.FORTIFY_SCAN_FOULTED) ||
+						response.getBody().getData().getJobState().equals(Constants.FORTIFY_SCAN_FAILED) ||
 						response.getBody().getData().getJobState().equals(Constants.FORTIFY_SCAN_CANCELED) ||
 						response.getBody().getData().getJobState().equals(Constants.FORTIFY_UPLOAD_FAILED)) {
 					cg.setRunning(false);

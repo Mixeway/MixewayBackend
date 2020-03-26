@@ -201,7 +201,6 @@ public class NetworkScanService {
             nessusScanRepository.save(scan);
             keyValue.getKey().runScanManual(scan);
             nessusScans.add(scan);
-            keyValue.getKey().runScan(scan);
         }
 
         return nessusScans;
