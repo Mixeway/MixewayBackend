@@ -245,6 +245,7 @@ public class NetworkScanService {
                 }
             }
         }
+        log.info("Have to configure {} scanners",scannerInterfaceMap.size());
         return scannerInterfaceMap;
     }
 
