@@ -11,6 +11,7 @@ import io.mixeway.integrations.webappscan.model.WebAppScanModel;
 import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.Status;
 import io.mixeway.rest.project.model.RunScanForWebApps;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,12 +44,13 @@ public class WebAppScanService {
     private final WebAppCookieRepository webAppCookieRepository;
     private final List<WebAppScanClient> webAppScanClients;
     private final WebAppVulnRepository webAppVulnRepository;
+    private final RoutingDomainRepository routingDomainRepository;
 
     public WebAppScanService(ProjectRepository projectRepository, WebAppRepository waRepository, WebAppVulnRepository webAppVulnRepository,
                              ScannerRepository scannerRepository, ScannerTypeRepository scannerTypeRepository,
                              CodeGroupRepository codeGroupRepository, CodeProjectRepository codeProjectRepository, WebAppCookieRepository webAppCookieRepository,
                              WebAppHeaderRepository webAppHeaderRepository, List<WebAppScanClient> webAppScanClients,
-                             WebAppScanStrategyRepository webAppScanStrategyRepository) {
+                             WebAppScanStrategyRepository webAppScanStrategyRepository, RoutingDomainRepository routingDomainRepository) {
         this.projectRepository = projectRepository;
         this.waRepository = waRepository;
         this.scannerRepository = scannerRepository;
@@ -60,6 +62,7 @@ public class WebAppScanService {
         this.webAppScanClients = webAppScanClients;
         this.webAppVulnRepository = webAppVulnRepository;
         this.webAppScanStrategyRepository = webAppScanStrategyRepository;
+        this.routingDomainRepository = routingDomainRepository;
     }
 
     private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -127,6 +130,8 @@ public class WebAppScanService {
         webApp = setCodeProjectLink(webApp, project, webAppScanModel);
         webApp.setRunning(false);
         webApp.setOrigin(origin);
+        if (StringUtils.isNotBlank(webAppScanModel.getRoutingDomain()))
+            webApp.setRoutingDomain(routingDomainRepository.findByName(webAppScanModel.getRoutingDomain()));
         webApp.setInQueue(true);
         webApp.setRequestId(UUID.randomUUID().toString());
         webApp.setInserted(sdf.format(new Date()));

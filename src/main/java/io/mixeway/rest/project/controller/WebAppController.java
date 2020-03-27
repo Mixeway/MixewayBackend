@@ -12,6 +12,7 @@ import io.mixeway.db.entity.WebAppVuln;
 import io.mixeway.pojo.Status;
 import io.mixeway.rest.project.service.WebAppService;
 
+import javax.validation.Valid;
 import java.security.Principal;
 import java.util.List;
 
@@ -37,7 +38,7 @@ public class WebAppController {
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @PutMapping(value = "/{id}/add/webapp")
-    public ResponseEntity<Status> saveWebApp(@PathVariable("id")Long id, @RequestBody WebAppPutModel webAppPutModel, Principal principal) {
+    public ResponseEntity<Status> saveWebApp(@PathVariable("id")Long id, @RequestBody @Valid WebAppPutModel webAppPutModel, Principal principal) {
         return webAppService.saveWebApp(id, webAppPutModel, principal.getName());
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")

@@ -38,11 +38,12 @@ public class WebAppService {
     private final ProjectRiskAnalyzer projectRiskAnalyzer;
     private final WebAppScanService webAppScanService;
     private final PermissionFactory permissionFactory;
+    private final RoutingDomainRepository routingDomainRepository;
 
     WebAppService(WebAppRepository webAppRepository, ScannerTypeRepository scannerTypeRepository, WebAppScanService webAppScanService,
                   ScannerRepository scannerRepository, ProjectRepository projectRepository, WebAppHeaderRepository webAppHeaderRepository,
                   WebAppScanRepository webAppScanRepository, WebAppVulnRepository webAppVulnRepository, ProjectRiskAnalyzer projectRiskAnalyzer,
-                  PermissionFactory permissionFactory){
+                  PermissionFactory permissionFactory, RoutingDomainRepository routingDomainRepository){
         this.webAppHeaderRepository = webAppHeaderRepository;
         this.webAppRepository = webAppRepository;
         this.scannerTypeRepository = scannerTypeRepository;
@@ -53,6 +54,7 @@ public class WebAppService {
         this.webAppVulnRepository = webAppVulnRepository;
         this.webAppScanService = webAppScanService;
         this.projectRiskAnalyzer = projectRiskAnalyzer;
+        this.routingDomainRepository = routingDomainRepository;
     }
 
 
@@ -99,6 +101,7 @@ public class WebAppService {
                 WebApp webApp = new WebApp();
                 webApp.setUrl(webAppPutMode.getWebAppUrl());
                 webApp.setRunning(false);
+                webApp.setRoutingDomain(routingDomainRepository.getOne(webAppPutMode.getRoutingDomainForAsset()));
                 webApp.setOrigin(Constants.STRATEGY_GUI);
                 webApp.setPublicscan(webAppPutMode.isScanPublic());
                 webApp.setProject(projectRepository.getOne(id));
