@@ -321,6 +321,11 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 	}
 
 	@Override
+	public boolean canProcessInitRequest(Scanner scanner) {
+		return scanner.getScannerType().getName().equals(Constants.SCANNER_TYPE_ACUNETIX);
+	}
+
+	@Override
 	public boolean canProcessRequest(ScannerType scannerType) {
 		return scannerType.getName().equals(Constants.SCANNER_TYPE_ACUNETIX);
 	}
@@ -332,9 +337,7 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 		Proxies proxy = null;
 		if (scannerModel.getProxy() != 0)
 			proxy = proxiesRepository.getOne(scannerModel.getProxy());
-		if(scannerModel.getRoutingDomain() == 0)
-			throw new Exception("Null Domain");
-		else
+		if(scannerModel.getRoutingDomain() != 0)
 			acunetix.setRoutingDomain(routingDomainRepository.getOne(scannerModel.getRoutingDomain()));
 		acunetix.setProxies(proxy);
 		acunetix.setApiUrl(scannerModel.getApiUrl());

@@ -50,7 +50,7 @@ public class WebApp {
 		this.origin = origin;
 	}
 
-	@ManyToOne(fetch = FetchType.LAZY)
+	@ManyToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "routingdomain_id")
 	public RoutingDomain getRoutingDomain() {
 		return routingDomain;

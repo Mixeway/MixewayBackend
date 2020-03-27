@@ -108,7 +108,12 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 	}
 
 	@Override
-	public boolean canProcessRequest(io.mixeway.db.entity.Scanner scanner) {
+	public boolean canProcessRequest(Scanner scanner) {
+		return scanner.getScannerType().getName().equals(Constants.SCANNER_TYPE_NESSUS) && scanner.getStatus();
+	}
+
+	@Override
+	public boolean canProcessInitRequest(Scanner scanner) {
 		return scanner.getScannerType().getName().equals(Constants.SCANNER_TYPE_NESSUS);
 	}
 

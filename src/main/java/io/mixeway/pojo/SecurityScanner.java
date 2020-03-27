@@ -17,6 +17,7 @@ import java.text.ParseException;
 public interface SecurityScanner {
     boolean initialize(Scanner scanner) throws JSONException, ParseException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, JAXBException, Exception;
     boolean canProcessRequest(Scanner scanner);
+    boolean canProcessInitRequest(Scanner scanner);
     boolean canProcessRequest(ScannerType scannerType);
     void saveScanner(ScannerModel scannerModel) throws Exception;
 }

@@ -81,8 +81,7 @@ public class WebAppScanService {
         synchronized (this) {
             String requestId = null;
             Optional<Project> project = projectRepository.findById(id);
-            Optional<Scanner> scanner = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_ACUNETIX)).stream().findFirst();
-            if (project.isPresent() && scanner.isPresent()) {
+            if (project.isPresent()) {
                 for (WebAppScanModel webAppScanModel : webAppScanModelList) {
                     try {
                         String urlToLookFor = WebAppScanHelper.normalizeUrl(webAppScanModel.getUrl());
@@ -269,11 +268,12 @@ public class WebAppScanService {
      *
      * @throws Exception
      */
+    @Transactional
     public void scheduledCheckAndDownloadResults() throws Exception {
         List<WebApp> apps = waRepository.findByRunning(true);
         for (WebApp app : apps) {
+            Scanner scanner = getScannerForWebApp(app);
             try {
-                Scanner scanner = getScannerForWebApp(app);
                 if (scanner != null ) {
                     for (WebAppScanClient webAppScanClient : webAppScanClients) {
                         if (webAppScanClient.canProcessRequest(scanner) && webAppScanClient.isScanDone(scanner, app)) {
@@ -292,7 +292,8 @@ public class WebAppScanService {
             } catch (HttpClientErrorException e) {
                 if (e.getRawStatusCode() == 404) {
                     deactivateWebApp(app);
-                    log.warn("WebApp deleted manualy from acunetix - {} {}", e.getRawStatusCode(), app.getUrl());
+                    scanner.setRunningScans(scanner.getRunningScans()-1);
+                    log.warn("WebApp deleted manualy from scanner - {} {}", e.getRawStatusCode(), app.getUrl());
                 } else
                     log.warn("HttpClientException with code {} for webapp {}", e.getRawStatusCode(), app.getUrl());
             }
@@ -344,13 +345,16 @@ public class WebAppScanService {
     public ResponseEntity<Status> putSingleWebAppToQueue(Long webAppId, String username) {
         try {
             Optional<WebApp> webApp = waRepository.findById(webAppId);
-            webApp.ifPresent(app -> app.setInQueue(true));
-            waRepository.save(webApp.get());
+            if (webApp.isPresent() && getScannerForWebApp(webApp.get()) != null) {
+                webApp.ifPresent(app -> app.setInQueue(true));
+                waRepository.save(webApp.get());
+                log.info("{} - Put in queue scan of webapps - scope single", LogUtil.prepare(username));
+                return new ResponseEntity<>(null,HttpStatus.CREATED);
+            }
         } catch (Exception e){
             return new ResponseEntity<>(null, HttpStatus.EXPECTATION_FAILED);
         }
-        log.info("{} - Put in queue scan of webapps - scope single", LogUtil.prepare(username));
-        return new ResponseEntity<>(null,HttpStatus.CREATED);
+        return new ResponseEntity<>(new Status("No Scanner for given resource"), HttpStatus.EXPECTATION_FAILED);
     }
 
     public ResponseEntity<Status> putSelectedWebAppsToQueue(Long id, List<RunScanForWebApps> runScanForWebApps, String username) {
@@ -359,19 +363,19 @@ public class WebAppScanService {
             for (RunScanForWebApps selectedApp : runScanForWebApps){
                 try{
                     Optional<WebApp> webApp = waRepository.findById(selectedApp.getWebAppId());
-                    if (webApp.isPresent() && webApp.get().getProject() == project.get()){
+                    if (webApp.isPresent() && webApp.get().getProject() == project.get() && getScannerForWebApp(webApp.get())!=null){
                         webApp.get().setInQueue(true);
                         waRepository.save(webApp.get());
+                        log.info("{} - Put to queue scan of webapps for project {} - scope partial", LogUtil.prepare(username), LogUtil.prepare(project.get().getName()));
+                        return new ResponseEntity<>(null,HttpStatus.CREATED);
                     }
                 } catch (Exception e){
                     return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
                 }
             }
-            log.info("{} - Put to queue scan of webapps for project {} - scope partial", LogUtil.prepare(username), LogUtil.prepare(project.get().getName()));
-            return new ResponseEntity<>(null,HttpStatus.CREATED);
-        } else {
-            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+
         }
+        return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
     }
 
     private Scanner getScannerForWebApp(WebApp webApp){

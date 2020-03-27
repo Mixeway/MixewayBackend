@@ -97,7 +97,7 @@ public class AdminScannerRestService {
         try {
             if (scanner.isPresent()) {
                 for (SecurityScanner securityScanner : securityScanners){
-                    if (securityScanner.canProcessRequest(scanner.get())){
+                    if (securityScanner.canProcessInitRequest(scanner.get())){
                         securityScanner.initialize(scanner.get());
                     }
                 }

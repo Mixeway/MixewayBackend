@@ -251,6 +251,11 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
 
     @Override
     public boolean canProcessRequest(Scanner scanner) {
+        return scanner.getScannerType().getName().equals(Constants.SCANNER_TYPE_DEPENDENCYTRACK) && scanner.getStatus();
+    }
+
+    @Override
+    public boolean canProcessInitRequest(Scanner scanner) {
         return scanner.getScannerType().getName().equals(Constants.SCANNER_TYPE_DEPENDENCYTRACK);
     }
 

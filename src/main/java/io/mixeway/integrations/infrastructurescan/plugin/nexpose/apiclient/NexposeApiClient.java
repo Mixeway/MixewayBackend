@@ -276,7 +276,12 @@ public class NexposeApiClient implements NetworkScanClient, SecurityScanner {
         return nessusScan.getNessus().getScannerType().getName().equals(Constants.SCANNER_TYPE_NEXPOSE);
     }
     @Override
-    public boolean canProcessRequest(io.mixeway.db.entity.Scanner scanner) {
+    public boolean canProcessRequest(Scanner scanner) {
+        return scanner.getScannerType().getName().equals(Constants.SCANNER_TYPE_NEXPOSE) && scanner.getStatus();
+    }
+
+    @Override
+    public boolean canProcessInitRequest(Scanner scanner) {
         return scanner.getScannerType().getName().equals(Constants.SCANNER_TYPE_NEXPOSE);
     }
 

@@ -74,21 +74,22 @@ public class WebAppService {
     }
     public ResponseEntity<Status> runAllScanForWebApp(Long id, String username) {
         Optional<Project> project = projectRepository.findById(id);
-        Optional<Scanner> scanner = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_ACUNETIX)).stream().findFirst();
-        if (project.isPresent() && scanner.isPresent()){
+        boolean error = false;
+        if (project.isPresent() ){
             try {
                 for (WebApp webApp : project.get().getWebapps()) {
-                    webApp.setInQueue(true);
-                    webAppRepository.save(webApp);
+                    if (!webAppScanService.putSingleWebAppToQueue(webApp.getId(), username).getStatusCode().equals(HttpStatus.CREATED))
+                        error = true;
                 }
             } catch (Exception e) {
                 return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
             }
-            log.info("{} - Started scan of webapps for project {} - scope full", username, project.get().getName());
-            return new ResponseEntity<>(null,HttpStatus.CREATED);
-        } else {
-            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+            if (!error) {
+                log.info("{} - Started scan of webapps for project {} - scope full", username, project.get().getName());
+                return new ResponseEntity<>(null, HttpStatus.CREATED);
+            }
         }
+        return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
     }
 
     public ResponseEntity<Status> runSelectedWebApps(Long id, List<RunScanForWebApps> runScanForWebApps, String username) {
@@ -167,6 +168,7 @@ public class WebAppService {
                 webAppModel.setWebAppId(wa.getId());
                 webAppModel.setRunning(wa.getRunning());
                 webAppModel.setUrl(wa.getUrl());
+                webAppModel.setInQueue(wa.getInQueue());
                 int risk = projectRiskAnalyzer.getWebAppRisk(wa);
                 webAppModel.setRisk(Math.min(risk, 100));
                 webAppModels.add(webAppModel);

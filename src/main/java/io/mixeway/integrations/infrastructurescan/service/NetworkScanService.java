@@ -422,7 +422,7 @@ public class NetworkScanService {
             if (nessusScanRepository.findByRunning(true).size() == 0 ){
                 interfaceRepository.updateStateForNotRunningScan();
             }
-        } catch (UnexpectedRollbackException | JSONException | CertificateException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyManagementException | KeyStoreException | IOException | JAXBException ce ){
+        } catch (UnexpectedRollbackException | JSONException | CertificateException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyManagementException | KeyStoreException | IOException | JAXBException | ResourceAccessException ce ){
             log.warn("Exception during Network Scan synchro {}", ce.getLocalizedMessage());
         }
     }
