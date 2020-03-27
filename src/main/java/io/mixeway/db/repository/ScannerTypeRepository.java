@@ -13,4 +13,5 @@ public interface ScannerTypeRepository extends JpaRepository<ScannerType, Long>{
 
     @Query("Select st from ScannerType st where st.name in ('Checkmarx','Fortify SSC')")
     List<ScannerType> getCodeScanners();
+    List<ScannerType> findByCategory(String category);
 }

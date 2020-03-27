@@ -54,6 +54,16 @@ public class Scanner {
 	@JsonIgnore private String template;
 	@JsonIgnore private Integer engineId;
 	@JsonIgnore private String rfwScannerIp;
+	private int runningScans;
+
+	@Column(name = "runningscans")
+	public int getRunningScans() {
+		return runningScans;
+	}
+
+	public void setRunningScans(int runningScans) {
+		this.runningScans = runningScans;
+	}
 
 	public String getTeam() {
 		return team;

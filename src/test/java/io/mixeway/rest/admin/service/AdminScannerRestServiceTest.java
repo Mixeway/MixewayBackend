@@ -84,8 +84,8 @@ public class AdminScannerRestServiceTest {
         securityScanners.add(fortifyApiClient);
         securityScanners.add(nessusApiClient);
         networkScanClients.add(nessusApiClient);
-        adminScannerRestService = new AdminScannerRestService(routingDomainRepository,securityScanners,rfwApiClient,
-                vaultHelper,proxiesRepository,scannerTypeRepository, scannerRepository);
+        adminScannerRestService = new AdminScannerRestService(securityScanners,rfwApiClient,
+                vaultHelper,scannerTypeRepository, scannerRepository,null);
         
         Scanner scanner = new Scanner();
         scanner.setScannerType(scannerTypeRepository.findByNameIgnoreCase("nessus"));

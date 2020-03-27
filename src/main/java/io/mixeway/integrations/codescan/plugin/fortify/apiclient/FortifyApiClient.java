@@ -499,8 +499,13 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 	}
 
 	@Override
-	public boolean canProcessRequest(io.mixeway.db.entity.Scanner scanner) {
-		return scanner.getScannerType().getName().equals(Constants.SCANNER_TYPE_FORTIFY_SCA) || scanner.getScannerType().getName().equals(Constants.SCANNER_TYPE_FORTIFY);
+	public boolean canProcessRequest(Scanner scanner) {
+		return (scanner.getScannerType().getName().equals(Constants.SCANNER_TYPE_FORTIFY_SCA) || scanner.getScannerType().getName().equals(Constants.SCANNER_TYPE_FORTIFY)) && scanner.getStatus();
+	}
+
+	@Override
+	public boolean canProcessInitRequest(Scanner scanner) {
+		return (scanner.getScannerType().getName().equals(Constants.SCANNER_TYPE_FORTIFY_SCA) || scanner.getScannerType().getName().equals(Constants.SCANNER_TYPE_FORTIFY));
 	}
 
 	@Override

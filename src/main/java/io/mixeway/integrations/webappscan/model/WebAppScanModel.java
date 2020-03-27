@@ -14,6 +14,15 @@ public class WebAppScanModel {
 	private String codeGroup;
 	@JsonProperty("codeProject")
 	private String codeProject;
+	private String routingDomain;
+
+	public String getRoutingDomain() {
+		return routingDomain;
+	}
+
+	public void setRoutingDomain(String routingDomain) {
+		this.routingDomain = routingDomain;
+	}
 
 	public WebAppScanModel(){}
 

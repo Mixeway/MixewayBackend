@@ -4,6 +4,7 @@ import io.mixeway.db.repository.ProxiesRepository;
 import io.mixeway.db.repository.RoutingDomainRepository;
 import io.mixeway.db.repository.ScannerRepository;
 import io.mixeway.db.repository.ScannerTypeRepository;
+import io.mixeway.domain.service.scanner.VerifyWebAppScannerService;
 import io.mixeway.integrations.infrastructurescan.plugin.remotefirewall.apiclient.RfwApiClient;
 import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.SecurityScanner;
@@ -33,22 +34,21 @@ public class AdminScannerRestService {
     private static final Logger log = LoggerFactory.getLogger(AdminScannerRestService.class);
     private final ScannerRepository scannerRepository;
     private final ScannerTypeRepository scannerTypeRepository;
-    private final ProxiesRepository proxiesRepository;
     private final VaultHelper vaultHelper;
     private final RfwApiClient rfwApiClient;
-    private final RoutingDomainRepository routingDomainRepository;
     private final List<SecurityScanner> securityScanners;
+    private final VerifyWebAppScannerService verifyWebAppScannerService;
 
-    AdminScannerRestService(RoutingDomainRepository routingDomainRepository, List<SecurityScanner> securityScanners,
+    AdminScannerRestService(List<SecurityScanner> securityScanners,
                             RfwApiClient rfwApiClient, VaultHelper vaultHelper,
-                            ProxiesRepository proxiesRepository, ScannerTypeRepository scannerTypeRepository, ScannerRepository scannerRepository){
-        this.routingDomainRepository = routingDomainRepository;
+                            ScannerTypeRepository scannerTypeRepository,
+                            ScannerRepository scannerRepository, VerifyWebAppScannerService verifyWebAppScannerService){
         this.rfwApiClient = rfwApiClient;
         this.vaultHelper = vaultHelper;
-        this.proxiesRepository = proxiesRepository;
         this.securityScanners = securityScanners;
         this.scannerRepository = scannerRepository;
         this.scannerTypeRepository = scannerTypeRepository;
+        this.verifyWebAppScannerService = verifyWebAppScannerService;
     }
 
     public ResponseEntity<List<io.mixeway.db.entity.Scanner>> showScanners() {
@@ -63,13 +63,18 @@ public class AdminScannerRestService {
         try {
 
             ScannerType scannerType = scannerTypeRepository.findByNameIgnoreCase(scannerModel.getScannerType());
-            for (SecurityScanner securityScanner : securityScanners){
-                if (securityScanner.canProcessRequest(scannerType)){
-                    securityScanner.saveScanner(scannerModel);
+            if (verifyWebAppScannerService.canWebAppScannerBeAdded(scannerType)) {
+                for (SecurityScanner securityScanner : securityScanners) {
+                    if (securityScanner.canProcessRequest(scannerType)) {
+                        securityScanner.saveScanner(scannerModel);
+                    }
                 }
+                log.info("{} - Created new scanner of {} with apiurl {}", name, LogUtil.prepare(scannerModel.getScannerType()), LogUtil.prepare(scannerModel.getApiUrl()));
+                return new ResponseEntity<>(new Status("not ok"), HttpStatus.CREATED);
+            } else {
+                log.info("There is WebApp Scan Policy set for {} cannot add scanner.", LogUtil.prepare(scannerModel.getApiUrl()));
+                return new ResponseEntity<>(new Status("not ok"), HttpStatus.CONFLICT);
             }
-           log.info("{} - Created new scanner of {} with apiurl {}", name, LogUtil.prepare(scannerModel.getScannerType()), LogUtil.prepare(scannerModel.getApiUrl()));
-            return new ResponseEntity<>(new Status("not ok"), HttpStatus.CREATED);
         } catch(Exception e){
             log.error("Cannot add scanner {} ",LogUtil.prepare(scannerModel.getApiUrl()));
             return new ResponseEntity<>(new Status("not ok"), HttpStatus.PRECONDITION_FAILED);
@@ -92,7 +97,7 @@ public class AdminScannerRestService {
         try {
             if (scanner.isPresent()) {
                 for (SecurityScanner securityScanner : securityScanners){
-                    if (securityScanner.canProcessRequest(scanner.get())){
+                    if (securityScanner.canProcessInitRequest(scanner.get())){
                         securityScanner.initialize(scanner.get());
                     }
                 }

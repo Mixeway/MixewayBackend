@@ -1,9 +1,13 @@
 package io.mixeway.rest.admin.service;
 
+import io.mixeway.db.entity.*;
+import io.mixeway.db.repository.*;
+import io.mixeway.domain.service.scanner.VerifyWebAppScannerService;
 import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.VaultHelper;
 import io.mixeway.rest.admin.model.CronSettings;
 import io.mixeway.rest.admin.model.SmtpSettingsModel;
+import io.mixeway.rest.admin.model.WebAppScanStrategyModel;
 import org.quartz.CronExpression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,13 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.vault.core.VaultOperations;
-import io.mixeway.db.entity.Proxies;
-import io.mixeway.db.entity.RoutingDomain;
-import io.mixeway.db.entity.Settings;
-import io.mixeway.db.repository.ProxiesRepository;
-import io.mixeway.db.repository.RoutingDomainRepository;
-import io.mixeway.db.repository.SettingsRepository;
 import io.mixeway.pojo.Status;
 import io.mixeway.rest.admin.model.AuthSettingsModel;
 import sun.rmi.runtime.Log;
@@ -28,21 +27,31 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * @author gsiewruk
+ */
 @Service
 public class AdminSettingsRestService {
     private final SettingsRepository settingsRepository;
     private final VaultHelper vaultHelper;
     private final RoutingDomainRepository routingDomainRepository;
     private final ProxiesRepository proxiesRepository;
+    private final WebAppScanStrategyRepository webAppScanStrategyRepository;
+    private final ScannerTypeRepository scannerTypeRepository;
+    private final VerifyWebAppScannerService verifyWebAppScannerService;
     private static final Logger log = LoggerFactory.getLogger(AdminSettingsRestService.class);
 
 
-    public AdminSettingsRestService(SettingsRepository settingsRepository, VaultHelper vaultHelper,
-                                    RoutingDomainRepository routingDomainRepository, ProxiesRepository proxiesRepository){
+    public AdminSettingsRestService(SettingsRepository settingsRepository, VaultHelper vaultHelper, WebAppScanStrategyRepository webAppScanStrategyRepository,
+                                    RoutingDomainRepository routingDomainRepository, ProxiesRepository proxiesRepository,
+                                    ScannerTypeRepository scannerTypeRepository, VerifyWebAppScannerService verifyWebAppScannerService){
         this.settingsRepository = settingsRepository;
         this.vaultHelper = vaultHelper;
+        this.scannerTypeRepository = scannerTypeRepository;
         this.proxiesRepository = proxiesRepository;
+        this.webAppScanStrategyRepository = webAppScanStrategyRepository;
         this.routingDomainRepository = routingDomainRepository;
+        this.verifyWebAppScannerService = verifyWebAppScannerService;
     }
 
     public ResponseEntity<Settings> getSettings() {
@@ -236,5 +245,49 @@ public class AdminSettingsRestService {
             return new ResponseEntity<>(new Status(e.getLocalizedMessage()), HttpStatus.EXPECTATION_FAILED);
         }
         return new ResponseEntity<>( HttpStatus.EXPECTATION_FAILED);
+    }
+
+    @Transactional
+    public ResponseEntity<Status> changeWebAppStrategy(String name, WebAppScanStrategyModel webAppScanStrategyModel) {
+        WebAppScanStrategy webAppScanStrategy = webAppScanStrategyRepository.findAll().stream().findFirst().orElse(null);
+        boolean error = false;
+        if (webAppScanStrategy != null){
+            if (webAppScanStrategyModel.getApiStrategy() != null){
+                ScannerType apiStrategy = scannerTypeRepository.findByNameIgnoreCase(webAppScanStrategyModel.getApiStrategy());
+                if (verifyWebAppScannerService.canSetPolicyForGivenScanner(apiStrategy))
+                    webAppScanStrategy.setApiStrategy(apiStrategy);
+                else
+                    error=true;
+            } else {
+                webAppScanStrategy.setApiStrategy(null);
+            }
+            if (webAppScanStrategyModel.getScheduledStrategy() != null){
+                ScannerType scheduledStrategy = scannerTypeRepository.findByNameIgnoreCase(webAppScanStrategyModel.getScheduledStrategy());
+                if (verifyWebAppScannerService.canSetPolicyForGivenScanner(scheduledStrategy))
+                    webAppScanStrategy.setScheduledStrategy(scheduledStrategy);
+                else
+                    error=true;
+            } else {
+                webAppScanStrategy.setScheduledStrategy(null);
+            }
+            if (webAppScanStrategyModel.getGuiStrategy() != null){
+                ScannerType guiStrategy = scannerTypeRepository.findByNameIgnoreCase(webAppScanStrategyModel.getGuiStrategy());
+                if (verifyWebAppScannerService.canSetPolicyForGivenScanner(guiStrategy))
+                    webAppScanStrategy.setGuiStrategy(guiStrategy);
+                else
+                    error=true;
+            } else {
+                webAppScanStrategy.setGuiStrategy(null);
+            }
+        }
+        if (error)
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
+        else
+            return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    public ResponseEntity<WebAppScanStrategy> getWebAppStrategies(String name) {
+        WebAppScanStrategy webAppScanStrategy = webAppScanStrategyRepository.findAll().stream().findFirst().orElse(null);
+        return new ResponseEntity<>(webAppScanStrategy, HttpStatus.OK);
     }
 }

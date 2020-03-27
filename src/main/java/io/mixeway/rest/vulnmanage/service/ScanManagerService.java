@@ -100,11 +100,12 @@ public class ScanManagerService {
                     project.setCiid(webAppScanRequest.getCiid().get());
                     project = projectRepository.save(project);
                 }
-                return acunetixService.processScanWebAppRequest(project.getId(), webAppScanRequest.getWebApp());
+                return acunetixService.processScanWebAppRequest(project.getId(), webAppScanRequest.getWebApp(), Constants.STRATEGY_GUI);
             } else {
                 return new ResponseEntity<>(new Status("Request contains no information about project. projectName and ciid are required."), HttpStatus.BAD_REQUEST);
             }
         } catch (Exception ex){
+            ex.printStackTrace();
             return new ResponseEntity<>(new Status("Request contains no information about project. projectName and ciid are required."), HttpStatus.BAD_REQUEST);
         }
     }

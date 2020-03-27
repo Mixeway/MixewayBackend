@@ -107,6 +107,11 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
 
     @Override
     public boolean canProcessRequest(Scanner scanner) {
+        return scanner.getScannerType().getName().equals(Constants.SCANNER_TYPE_CHECKMARX) && scanner.getStatus();
+}
+
+    @Override
+    public boolean canProcessInitRequest(Scanner scanner) {
         return scanner.getScannerType().getName().equals(Constants.SCANNER_TYPE_CHECKMARX);
     }
 

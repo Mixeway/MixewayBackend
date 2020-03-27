@@ -39,6 +39,26 @@ public class WebApp {
 	@JsonIgnore private CodeProject codeProject;
 	@JsonIgnore private Boolean autoStart;
 	@JsonIgnore private String requestId;
+	private RoutingDomain routingDomain;
+	private String origin;
+
+	public String getOrigin() {
+		return origin;
+	}
+
+	public void setOrigin(String origin) {
+		this.origin = origin;
+	}
+
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "routingdomain_id")
+	public RoutingDomain getRoutingDomain() {
+		return routingDomain;
+	}
+
+	public void setRoutingDomain(RoutingDomain routingDomain) {
+		this.routingDomain = routingDomain;
+	}
 
 	@Column(name="requestid")
 	public String getRequestId() {

@@ -340,6 +340,11 @@ public class OpenVasSocketClient implements NetworkScanClient, SecurityScanner {
     }
     @Override
     public boolean canProcessRequest(Scanner scanner) {
+        return scanner.getScannerType().getName().equals(Constants.SCANNER_TYPE_OPENVAS_SOCKET) && scanner.getStatus();
+    }
+
+    @Override
+    public boolean canProcessInitRequest(Scanner scanner) {
         return scanner.getScannerType().getName().equals(Constants.SCANNER_TYPE_OPENVAS_SOCKET);
     }
 

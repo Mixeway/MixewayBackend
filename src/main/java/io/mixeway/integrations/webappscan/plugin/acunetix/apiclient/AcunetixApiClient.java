@@ -65,7 +65,6 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 		this.statusRepository = statusRepository;
 		this.proxiesRepository = proxiesRepository;
 		this.scannerTypeRepository = scannerTypeRepository;
-
 	}
 
 	private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -81,10 +80,7 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 	@Override
 	@org.springframework.transaction.annotation.Transactional(propagation = Propagation.REQUIRES_NEW)
 	public void configureWebApp(WebApp webApp, io.mixeway.db.entity.Scanner scanner) throws Exception   {
-		//try {
-			Long count = webAppRepository.getCountOfRunningScans(true);
-			Boolean isDuplicatedUrl = checkDuplicateRunning(webApp);
-			if (count <= Constants.ACUNETIX_TARGET_LIMIT && !webApp.getRunning() && isDuplicatedUrl) {
+			if ( !webApp.getRunning()) {
 				this.createTarget(scanner, webApp);
 				if (webApp.getLoginSequence() != null) {
 					this.createLoginSequenceUrl(scanner, webApp);
@@ -98,31 +94,8 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 				if (webApp.getPublicscan())
 					this.createProxyForWebApp(scanner, webApp);
 				this.runScan(webApp,scanner);
-			} else if (isDuplicatedUrl && (count > Constants.ACUNETIX_TARGET_LIMIT) && !webApp.getRunning()) {
-				log.debug("Acunetix limit is nearly done - {}. Putting webapp to queue.", count);
-				webApp.setInQueue(true);
-				webAppRepository.save(webApp);
 			} else
 				log.debug("WebApp rest api scan omitting.. {}", webApp.getUrl());
-		//}
-	}
-	private Boolean checkDuplicateRunning(WebApp webApp) {
-		List<WebApp> runningWebApps = webAppRepository.findByRunning(true);
-		
-			
-		for (WebApp runningWebApp : runningWebApps) {
-			try {
-				String webAppUrl = webApp.getUrl().substring(0, webApp.getUrl().lastIndexOf("?"));
-				String runningWebAppUrl =  runningWebApp.getUrl().substring(0, runningWebApp.getUrl().lastIndexOf("?"));
-				if (runningWebAppUrl.equals(webAppUrl)) {
-					log.info("Found duplicate URL {} omitting..", runningWebAppUrl);
-					return false;
-				}
-			}catch (IndexOutOfBoundsException ignored) {
-			}
-		}
-		
-		return true;
 	}
 	//TODO Object mapping
 	@Override
@@ -343,7 +316,12 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 	}
 
 	@Override
-	public boolean canProcessRequest(io.mixeway.db.entity.Scanner scanner) {
+	public boolean canProcessRequest(Scanner scanner) {
+		return scanner.getScannerType().getName().equals(Constants.SCANNER_TYPE_ACUNETIX) && scanner.getStatus();
+	}
+
+	@Override
+	public boolean canProcessInitRequest(Scanner scanner) {
 		return scanner.getScannerType().getName().equals(Constants.SCANNER_TYPE_ACUNETIX);
 	}
 
@@ -359,9 +337,7 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 		Proxies proxy = null;
 		if (scannerModel.getProxy() != 0)
 			proxy = proxiesRepository.getOne(scannerModel.getProxy());
-		if(scannerModel.getRoutingDomain() == 0)
-			throw new Exception("Null Domain");
-		else
+		if(scannerModel.getRoutingDomain() != 0)
 			acunetix.setRoutingDomain(routingDomainRepository.getOne(scannerModel.getRoutingDomain()));
 		acunetix.setProxies(proxy);
 		acunetix.setApiUrl(scannerModel.getApiUrl());
