@@ -241,7 +241,9 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 			ResponseEntity<String> response = restTemplate.exchange(scanner.getApiUrl() + "/api/v1/targets/"+webApp.getTargetId(), HttpMethod.GET, entity, String.class);
 			if (response.getStatusCode() == HttpStatus.OK) {
 				JSONObject responseJson = new JSONObject(Objects.requireNonNull(response.getBody()));
-				if ((responseJson.getString(Constants.ACUNETIX_TARGET_SCAN_STATUS)!=null) &&((responseJson.getString(Constants.ACUNETIX_TARGET_SCAN_STATUS).equals(Constants.ACUNETIX_TARGET_SCAN_STATUS_COMPLETED)) || (responseJson.getString(Constants.ACUNETIX_TARGET_SCAN_STATUS).equals(Constants.ACUNETIX_TARGET_SCAN_STATUS_FAILED)))) {
+				if ((responseJson.getString(Constants.ACUNETIX_TARGET_SCAN_STATUS)!=null) && ((responseJson.getString(Constants.ACUNETIX_TARGET_SCAN_STATUS).equals(Constants.ACUNETIX_TARGET_SCAN_STATUS_COMPLETED)) ||
+						responseJson.getString(Constants.ACUNETIX_TARGET_SCAN_STATUS).equals(Constants.ACUNETIX_TARGET_SCAN_STATUS_FAILED) ||
+								responseJson.getString(Constants.ACUNETIX_TARGET_SCAN_STATUS).equals(Constants.ACUNETIX_TARGET_SCAN_STATUS_ABORTED))) {
 					webApp.setRunning(false);
 					webApp.setLastExecuted(sdf.format(new Date()));
 					webApp.setScanId(responseJson.getString(Constants.ACUNETIX_TARGET_SCAN_ID));
