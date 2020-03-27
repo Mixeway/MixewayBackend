@@ -1,5 +1,6 @@
 package io.mixeway.rest.legacy.controller;
 
+import io.mixeway.config.Constants;
 import io.mixeway.db.entity.CodeVuln;
 import io.mixeway.domain.service.project.GetOrCreateProjectService;
 import io.mixeway.integrations.audit.plugins.cisbenchmark.Service.CisDockerBenchmarkService;
@@ -133,7 +134,7 @@ public class LegacyController {
     public ResponseEntity<Status> getWebApp(@PathVariable(value = "projectId") Long id, @RequestBody WebAppScanRequestModel req) throws InterruptedException {
         semaphore.acquire();
         try {
-            return webAppScanService.processScanWebAppRequest(id, req.getWebApp());
+            return webAppScanService.processScanWebAppRequest(id, req.getWebApp(), Constants.STRATEGY_API);
         } finally {
             semaphore.release();
         }
@@ -144,7 +145,7 @@ public class LegacyController {
     public ResponseEntity<Status> createWebAppScanFromKoordynator(@RequestBody WebAppScanRequestModel req) {
         String ciid = req.getCiid().orElse("");
         String projectName = req.getProjectName().orElse("");
-        return webAppScanService.processScanWebAppRequest(projectService.getProjectId(ciid, projectName), req.getWebApp());
+        return webAppScanService.processScanWebAppRequest(projectService.getProjectId(ciid, projectName), req.getWebApp(), Constants.STRATEGY_GUI);
     }
 
 

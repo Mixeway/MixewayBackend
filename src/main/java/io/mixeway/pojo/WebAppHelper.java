@@ -1,5 +1,6 @@
 package io.mixeway.pojo;
 
+import io.mixeway.config.Constants;
 import io.mixeway.db.entity.Interface;
 import io.mixeway.db.entity.Project;
 import io.mixeway.db.repository.InterfaceRepository;
@@ -57,6 +58,7 @@ public class WebAppHelper {
             try {
                 if (!webApp.isPresent()) {
                     WebApp webAppToCreate = new WebApp();
+                    webAppToCreate.setOrigin(Constants.STRATEGY_SCHEDULER);
                     webAppToCreate.setProject(project);
                     webAppToCreate.setUrl(url);
                     webAppToCreate.setRunning(false);

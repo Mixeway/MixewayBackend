@@ -74,7 +74,6 @@ public class WebAppService {
         Optional<Project> project = projectRepository.findById(id);
         Optional<Scanner> scanner = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_ACUNETIX)).stream().findFirst();
         if (project.isPresent() && scanner.isPresent()){
-            //AddTarget
             try {
                 for (WebApp webApp : project.get().getWebapps()) {
                     webApp.setInQueue(true);
@@ -100,6 +99,7 @@ public class WebAppService {
                 WebApp webApp = new WebApp();
                 webApp.setUrl(webAppPutMode.getWebAppUrl());
                 webApp.setRunning(false);
+                webApp.setOrigin(Constants.STRATEGY_GUI);
                 webApp.setPublicscan(webAppPutMode.isScanPublic());
                 webApp.setProject(projectRepository.getOne(id));
                 webAppRepository.save(webApp);

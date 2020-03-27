@@ -2,6 +2,7 @@ package io.mixeway.rest.admin.service;
 
 import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
+import io.mixeway.domain.service.scanner.VerifyWebAppScannerService;
 import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.VaultHelper;
 import io.mixeway.rest.admin.model.CronSettings;
@@ -26,6 +27,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * @author gsiewruk
+ */
 @Service
 public class AdminSettingsRestService {
     private final SettingsRepository settingsRepository;
@@ -34,18 +38,20 @@ public class AdminSettingsRestService {
     private final ProxiesRepository proxiesRepository;
     private final WebAppScanStrategyRepository webAppScanStrategyRepository;
     private final ScannerTypeRepository scannerTypeRepository;
+    private final VerifyWebAppScannerService verifyWebAppScannerService;
     private static final Logger log = LoggerFactory.getLogger(AdminSettingsRestService.class);
 
 
     public AdminSettingsRestService(SettingsRepository settingsRepository, VaultHelper vaultHelper, WebAppScanStrategyRepository webAppScanStrategyRepository,
                                     RoutingDomainRepository routingDomainRepository, ProxiesRepository proxiesRepository,
-                                    ScannerTypeRepository scannerTypeRepository){
+                                    ScannerTypeRepository scannerTypeRepository, VerifyWebAppScannerService verifyWebAppScannerService){
         this.settingsRepository = settingsRepository;
         this.vaultHelper = vaultHelper;
         this.scannerTypeRepository = scannerTypeRepository;
         this.proxiesRepository = proxiesRepository;
         this.webAppScanStrategyRepository = webAppScanStrategyRepository;
         this.routingDomainRepository = routingDomainRepository;
+        this.verifyWebAppScannerService = verifyWebAppScannerService;
     }
 
     public ResponseEntity<Settings> getSettings() {
@@ -244,26 +250,44 @@ public class AdminSettingsRestService {
     @Transactional
     public ResponseEntity<Status> changeWebAppStrategy(String name, WebAppScanStrategyModel webAppScanStrategyModel) {
         WebAppScanStrategy webAppScanStrategy = webAppScanStrategyRepository.findAll().stream().findFirst().orElse(null);
+        boolean error = false;
         if (webAppScanStrategy != null){
             if (webAppScanStrategyModel.getApiStrategy() != null){
                 ScannerType apiStrategy = scannerTypeRepository.findByNameIgnoreCase(webAppScanStrategyModel.getApiStrategy());
-                webAppScanStrategy.setApiStrategy(apiStrategy);
+                if (verifyWebAppScannerService.canSetPolicyForGivenScanner(apiStrategy))
+                    webAppScanStrategy.setApiStrategy(apiStrategy);
+                else
+                    error=true;
             } else {
                 webAppScanStrategy.setApiStrategy(null);
             }
-            if (webAppScanStrategyModel.getSchedulerStrategy() != null){
-                ScannerType scheduledStrategy = scannerTypeRepository.findByNameIgnoreCase(webAppScanStrategyModel.getSchedulerStrategy());
-                webAppScanStrategy.setScheduledStrategy(scheduledStrategy);
+            if (webAppScanStrategyModel.getScheduledStrategy() != null){
+                ScannerType scheduledStrategy = scannerTypeRepository.findByNameIgnoreCase(webAppScanStrategyModel.getScheduledStrategy());
+                if (verifyWebAppScannerService.canSetPolicyForGivenScanner(scheduledStrategy))
+                    webAppScanStrategy.setScheduledStrategy(scheduledStrategy);
+                else
+                    error=true;
             } else {
                 webAppScanStrategy.setScheduledStrategy(null);
             }
             if (webAppScanStrategyModel.getGuiStrategy() != null){
                 ScannerType guiStrategy = scannerTypeRepository.findByNameIgnoreCase(webAppScanStrategyModel.getGuiStrategy());
-                webAppScanStrategy.setGuiStrategy(guiStrategy);
+                if (verifyWebAppScannerService.canSetPolicyForGivenScanner(guiStrategy))
+                    webAppScanStrategy.setGuiStrategy(guiStrategy);
+                else
+                    error=true;
             } else {
                 webAppScanStrategy.setGuiStrategy(null);
             }
         }
-        return new ResponseEntity<>(HttpStatus.OK);
+        if (error)
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
+        else
+            return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    public ResponseEntity<WebAppScanStrategy> getWebAppStrategies(String name) {
+        WebAppScanStrategy webAppScanStrategy = webAppScanStrategyRepository.findAll().stream().findFirst().orElse(null);
+        return new ResponseEntity<>(webAppScanStrategy, HttpStatus.OK);
     }
 }

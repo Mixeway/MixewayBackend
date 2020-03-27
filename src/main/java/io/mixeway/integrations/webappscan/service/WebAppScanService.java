@@ -13,6 +13,7 @@ import io.mixeway.pojo.Status;
 import io.mixeway.rest.project.model.RunScanForWebApps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,6 +35,7 @@ public class WebAppScanService {
     private final ProjectRepository projectRepository;
     private final WebAppRepository waRepository;
     private final WebAppHeaderRepository webAppHeaderRepository;
+    private final WebAppScanStrategyRepository webAppScanStrategyRepository;
     private final ScannerRepository scannerRepository;
     private final ScannerTypeRepository scannerTypeRepository;
     private final CodeGroupRepository codeGroupRepository;
@@ -45,7 +47,8 @@ public class WebAppScanService {
     public WebAppScanService(ProjectRepository projectRepository, WebAppRepository waRepository, WebAppVulnRepository webAppVulnRepository,
                              ScannerRepository scannerRepository, ScannerTypeRepository scannerTypeRepository,
                              CodeGroupRepository codeGroupRepository, CodeProjectRepository codeProjectRepository, WebAppCookieRepository webAppCookieRepository,
-                             WebAppHeaderRepository webAppHeaderRepository, List<WebAppScanClient> webAppScanClients) {
+                             WebAppHeaderRepository webAppHeaderRepository, List<WebAppScanClient> webAppScanClients,
+                             WebAppScanStrategyRepository webAppScanStrategyRepository) {
         this.projectRepository = projectRepository;
         this.waRepository = waRepository;
         this.scannerRepository = scannerRepository;
@@ -56,6 +59,7 @@ public class WebAppScanService {
         this.webAppHeaderRepository = webAppHeaderRepository;
         this.webAppScanClients = webAppScanClients;
         this.webAppVulnRepository = webAppVulnRepository;
+        this.webAppScanStrategyRepository = webAppScanStrategyRepository;
     }
 
     private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -70,7 +74,7 @@ public class WebAppScanService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public ResponseEntity<Status> processScanWebAppRequest(Long id, List<WebAppScanModel> webAppScanModelList) {
+    public ResponseEntity<Status> processScanWebAppRequest(Long id, List<WebAppScanModel> webAppScanModelList, String origin) {
         synchronized (this) {
             String requestId = null;
             Optional<Project> project = projectRepository.findById(id);
@@ -87,7 +91,7 @@ public class WebAppScanService {
                             if (webAppsByRegex.size() > 0) {
                                 requestId = updateAndPutWebAppToQueue(getProperWebAppForUpdate(webAppsByRegex), webAppScanModel);
                             } else {
-                                requestId = createAndPutWebAppToQueue(webAppScanModel, project.get());
+                                requestId = createAndPutWebAppToQueue(webAppScanModel, project.get(), origin);
                             }
                         }
                     } catch (NonUniqueResultException | IncorrectResultSizeDataAccessException | ParseException ex) {
@@ -117,11 +121,12 @@ public class WebAppScanService {
         }
     }
 
-    private String createAndPutWebAppToQueue(WebAppScanModel webAppScanModel, Project project) {
+    private String createAndPutWebAppToQueue(WebAppScanModel webAppScanModel, Project project, String origin) {
         WebApp webApp = new WebApp();
         webApp.setProject(project);
         webApp = setCodeProjectLink(webApp, project, webAppScanModel);
         webApp.setRunning(false);
+        webApp.setOrigin(origin);
         webApp.setInQueue(true);
         webApp.setRequestId(UUID.randomUUID().toString());
         webApp.setInserted(sdf.format(new Date()));
@@ -253,34 +258,38 @@ public class WebAppScanService {
         waRepository.save(webApp);
     }
 
+    /**
+     * Finding WebApp with Runninng= true and check if scan is ended
+     * then it decrease number of running scan for particular scanner
+     *
+     * @throws Exception
+     */
     public void scheduledCheckAndDownloadResults() throws Exception {
         List<WebApp> apps = waRepository.findByRunning(true);
-        ScannerType scannerType = scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_ACUNETIX);
-        Optional<io.mixeway.db.entity.Scanner> scanner = scannerRepository.findByScannerType(scannerType).stream().findFirst();
-        if (scanner.isPresent() && scanner.get().getStatus()) {
-            for (WebApp app : apps) {
-                try {
+        for (WebApp app : apps) {
+            try {
+                Scanner scanner = getScannerForWebApp(app);
+                if (scanner != null ) {
                     for (WebAppScanClient webAppScanClient : webAppScanClients) {
-                        if (webAppScanClient.canProcessRequest(scanner.get()) && webAppScanClient.isScanDone(scanner.get(), app)) {
+                        if (webAppScanClient.canProcessRequest(scanner) && webAppScanClient.isScanDone(scanner, app)) {
                             List<WebAppVuln> tmpVulns = new ArrayList<>();
                             if (app.getVulns().size() > 0) {
                                 tmpVulns = webAppVulnRepository.findByWebApp(app);
                                 webAppVulnRepository.deleteByWebApp(app);
                                 app = waRepository.getOne(app.getId());
                             }
-                            webAppScanClient.loadVulnerabilities(scanner.get(), app, null, tmpVulns);
+                            webAppScanClient.loadVulnerabilities(scanner,app, null, tmpVulns);
+                            scanner.setRunningScans(scanner.getRunningScans()-1);
                             break;
                         }
                     }
-                } catch (HttpClientErrorException e) {
-                    if (e.getRawStatusCode() == 404) {
-                        deactivateWebApp(app);
-                        log.warn("WebApp deleted manualy from acunetix - {} {}", e.getRawStatusCode(), app.getUrl());
-                    } else
-                        log.warn("HttpClientException with code {} for webapp {}", e.getRawStatusCode(), app.getUrl());
-                } catch (ResourceAccessException rae) {
-                    log.error("Scanner {} is not avaliable", scanner.get().getApiUrl());
                 }
+            } catch (HttpClientErrorException e) {
+                if (e.getRawStatusCode() == 404) {
+                    deactivateWebApp(app);
+                    log.warn("WebApp deleted manualy from acunetix - {} {}", e.getRawStatusCode(), app.getUrl());
+                } else
+                    log.warn("HttpClientException with code {} for webapp {}", e.getRawStatusCode(), app.getUrl());
             }
         }
     }
@@ -290,39 +299,39 @@ public class WebAppScanService {
         waRepository.save(app);
     }
 
+    /**
+     * Method which takes WebApps with inQueue = true
+     * Check if Scanner for particular App is limit free and then run the scan for this app.
+     * If Limit is exceeded webapp is left inqueue
+     *
+     * @throws Exception
+     */
+    @Transactional
     public void scheduledRunWebAppScanFromQueue() throws Exception {
-        Long count = waRepository.getCountOfRunningScans(true);
-        Optional<Scanner> scanner = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_ACUNETIX)).stream().findFirst();
-        int limit;
-        List<WebApp> appsToScan = new ArrayList<>();
-        if (count <= Constants.ACUNETIX_TARGET_LIMIT && scanner.isPresent() && scanner.get().getStatus()) {
-            limit = (int) (Constants.ACUNETIX_TARGET_LIMIT - count);
-            if (limit > 0) {
-                appsToScan = waRepository.getXInQueue(true, limit);
-            }
-            for (WebApp webApp : appsToScan) {
+        List<WebApp> webApps = waRepository.findByInQueue(true);
+        for (WebApp webApp : webApps){
+            Scanner scanner = getScannerForWebApp(webApp);
+            if (scanner.getRunningScans() < Constants.WEBAPP_SCAN_LIMIT){
                 webApp.setInQueue(false);
-                waRepository.save(webApp);
                 for (WebAppScanClient webAppScanClient : webAppScanClients){
-                    if (webAppScanClient.canProcessRequest(scanner.get())){
-                        webAppScanClient.runScan(webApp,scanner.get());
+                    if (webAppScanClient.canProcessRequest(scanner)){
+                        webAppScanClient.runScan(webApp,scanner);
+                        scanner.setRunningScans(scanner.getRunningScans()+1);
                         break;
                     }
                 }
                 log.debug("Starget scan for {} taken from queue", webApp.getUrl());
+
             }
         }
     }
 
+    @Transactional
     public void scheduledRunWebAppScan() {
-        Optional<Scanner> scanner = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_ACUNETIX)).stream().findFirst();
-        if (scanner.isPresent() && scanner.get().getStatus()) {
-            List<Project> projects = projectRepository.findByAutoWebAppScan(true);
-            for (Project p : projects) {
-                for (WebApp webApp : p.getWebapps()) {
-                    webApp.setInQueue(true);
-                    waRepository.save(webApp);
-                }
+        List<Project> projects = projectRepository.findByAutoWebAppScan(true);
+        for (Project p : projects) {
+            for (WebApp webApp : p.getWebapps()) {
+                webApp.setInQueue(true);
             }
         }
     }
@@ -358,5 +367,23 @@ public class WebAppScanService {
         } else {
             return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
         }
+    }
+
+    private Scanner getScannerForWebApp(WebApp webApp){
+        WebAppScanStrategy webAppScanStrategy = webAppScanStrategyRepository.findAll().stream().findFirst().orElse(null);
+        Scanner scanner = null;
+        if (webAppScanStrategy != null ){
+            if (webAppScanStrategy.getApiStrategy() != null && webApp.getOrigin().equals(Constants.STRATEGY_API)){
+                scanner = scannerRepository.findByScannerType(webAppScanStrategy.getApiStrategy()).stream().findFirst().orElse(null);
+            }
+            else if (webAppScanStrategy.getGuiStrategy() != null && webApp.getOrigin().equals(Constants.STRATEGY_GUI)){
+                scanner = scannerRepository.findByScannerType(webAppScanStrategy.getGuiStrategy()).stream().findFirst().orElse(null);
+            } else if (webAppScanStrategy.getScheduledStrategy() != null && webApp.getOrigin().equals(Constants.STRATEGY_SCHEDULER)){
+                scanner = scannerRepository.findByScannerType(webAppScanStrategy.getScheduledStrategy()).stream().findFirst().orElse(null);
+            } else {
+                scanner = scannerRepository.findByScannerTypeInAndRoutingDomain(scannerTypeRepository.findByCategory(Constants.SCANER_CATEGORY_WEBAPP), webApp.getRoutingDomain());
+            }
+        }
+        return scanner;
     }
 }

@@ -10,6 +10,8 @@ import javax.persistence.Table;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.util.Objects;
+
 @Entity
 @EntityScan
 @Table(name = "scannertype")
@@ -23,6 +25,16 @@ public class ScannerType {
 	private boolean authpassword;
 	private boolean authcloudctrltoken;
 	private boolean authapikey;
+	private String category;
+
+	public String getCategory() {
+		return category;
+	}
+
+	public void setCategory(String category) {
+		this.category = category;
+	}
+
 	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
 	public Long getId() {
@@ -84,5 +96,18 @@ public class ScannerType {
 
 	public void setAuthapikey(boolean authapikey) {
 		this.authapikey = authapikey;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (!(o instanceof ScannerType)) return false;
+		ScannerType scannerType = (ScannerType) o;
+		return Objects.equals(getId(), scannerType.getId());
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(getId());
 	}
 }

@@ -1,5 +1,6 @@
 package io.mixeway.rest.admin.controller;
 
+import io.mixeway.db.entity.WebAppScanStrategy;
 import io.mixeway.rest.admin.model.CronSettings;
 import io.mixeway.rest.admin.model.SmtpSettingsModel;
 import io.mixeway.rest.admin.model.WebAppScanStrategyModel;
@@ -97,6 +98,11 @@ public class AdminSettingsRestController {
     @PatchMapping(value = "/settings/webappscanstrategy")
     public ResponseEntity<Status> changeWebAppStrategy( Principal principal,@RequestBody @Valid WebAppScanStrategyModel webAppScanStrategyModel)  {
         return adminSettingsRestService.changeWebAppStrategy(principal.getName(), webAppScanStrategyModel);
+    }
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @GetMapping(value = "/settings/webappscanstrategy")
+    public ResponseEntity<WebAppScanStrategy> getWebAppStrategies(Principal principal)  {
+        return adminSettingsRestService.getWebAppStrategies(principal.getName());
     }
 
 }

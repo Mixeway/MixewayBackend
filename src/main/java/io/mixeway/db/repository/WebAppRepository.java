@@ -40,4 +40,5 @@ public interface WebAppRepository extends JpaRepository<WebApp, Long> {
 	@Transactional
 	int deleteWebApsById(@Param("ids") List<Long> ids);
 	Optional<WebApp> findByUrl(String url);
+	List<WebApp> findByInQueue(boolean inQueue);
 }

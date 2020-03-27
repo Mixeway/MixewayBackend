@@ -5,11 +5,11 @@ import java.util.List;
 
 public class WebAppScanStrategyModel {
     //TODO make it flexible
-    @Pattern(regexp = "\\bAcunetix|\\bBurpEE$", flags = Pattern.Flag.UNICODE_CASE)
+    @Pattern(regexp = "^$|\\bAcunetix|\\bBurpEE$", flags = Pattern.Flag.UNICODE_CASE)
     String apiStrategy;
-    @Pattern(regexp = "\\bAcunetix|\\bBurpEE$", flags = Pattern.Flag.UNICODE_CASE)
-    String schedulerStrategy;
-    @Pattern(regexp = "\\bAcunetix|\\bBurpEE$", flags = Pattern.Flag.UNICODE_CASE)
+    @Pattern(regexp = "^$|\\bAcunetix|\\bBurpEE$", flags = Pattern.Flag.UNICODE_CASE)
+    String scheduledStrategy;
+    @Pattern(regexp = "^$|\\bAcunetix|\\bBurpEE$", flags = Pattern.Flag.UNICODE_CASE)
     String guiStrategy;
 
 
@@ -21,12 +21,12 @@ public class WebAppScanStrategyModel {
         this.apiStrategy = apiStrategy;
     }
 
-    public String getSchedulerStrategy() {
-        return schedulerStrategy;
+    public String getScheduledStrategy() {
+        return scheduledStrategy;
     }
 
-    public void setSchedulerStrategy(String schedulerStrategy) {
-        this.schedulerStrategy = schedulerStrategy;
+    public void setScheduledStrategy(String scheduledStrategy) {
+        this.scheduledStrategy = scheduledStrategy;
     }
 
     public String getGuiStrategy() {

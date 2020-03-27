@@ -85,7 +85,7 @@ public class Constants {
 	public static final String ACUNETIX_VULN_RECOMMENDATION = "recommendation";
 	public static final String ACUNETIX_VULN_ID = "vuln_id";
 	public static final String ACUNETIX_SEVERITY = "severity";
-	public static final int ACUNETIX_TARGET_LIMIT = 15;
+	public static final int WEBAPP_SCAN_LIMIT = 15;
 	public static final String ACUNETIX_PAGINATION = "pagination";
 	public static final String ACUNETIX_NETX_CURSOR = "next_cursor";
 	public static final String ACUNETIX_IMPACT = "impact";
@@ -242,4 +242,15 @@ public class Constants {
 	public static final String AUTH_TYPE_APIKEY = "apiKey";
 	public static final String AUTH_TYPE_X509 = "x509";
     public static final Object PROJECT_KEYWORD = "project";
+    public static final String ORIGIN_API = "API";
+    public static final String ORIGIN_GUI = "GUI";
+    public static final String ORIGIN_SCHEDULER = "SCHEDULER";
+    public static final String STRATEGY_GUI = "GUI";
+    public static final String STRATEGY_API = "API";
+	public static final String STRATEGY_SCHEDULER = "SCHEDULER";
+	public static final String SCANER_CATEGORY_WEBAPP = "WEBAPP";
+	public static final String SCANER_CATEGORY_NETWORK = "NETWORK";
+	public static final String SCANER_CATEGORY_CODE = "CODE";
+	public static final String SCANER_CATEGORY_OPENSOURCE = "OPENSOURCE";
+
 }

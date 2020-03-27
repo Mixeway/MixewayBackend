@@ -171,7 +171,7 @@ public class ScanManagerServiceTest {
     @Test
     public void createScanManageRequest() throws Exception {
         Mockito.when(networkScanService.createAndRunNetworkScan(any(NetworkScanRequestModel.class))).thenReturn(new ResponseEntity<>(new Status("OK","1"), HttpStatus.CREATED));
-        Mockito.when(acunetixService.processScanWebAppRequest(any(Long.class), anyList())).thenReturn(new ResponseEntity<>(new Status("ok","1"), HttpStatus.CREATED));
+        Mockito.when(acunetixService.processScanWebAppRequest(any(Long.class), anyList(),null)).thenReturn(new ResponseEntity<>(new Status("ok","1"), HttpStatus.CREATED));
         CreateScanManageRequest createScanManageRequest = new CreateScanManageRequest();
         createScanManageRequest.setTestType(Constants.REQUEST_SCAN_WEBAPP);
         WebAppScanRequestModel webAppScanRequestModel = new WebAppScanRequestModel();

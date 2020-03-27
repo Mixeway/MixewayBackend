@@ -898,3 +898,24 @@ create table webappscanstrategy (
     guiscans_id int references scannertype(id)
 );
 insert into webappscanstrategy (apiscans_id, scheduledscans_id, guiscans_id) values (null, null, null);
+
+--changeset siewer:172
+alter table scannertype add column category text ;
+update scannertype set category='NETWORK' where name='OpenVAS Socket';
+update scannertype set category='NETWORK' where name='OpenVAS';
+update scannertype set category='NETWORK' where name='Nexpose';
+update scannertype set category='CODE' where name='Fortify SSC';
+update scannertype set category='CODE' where name='Fortify SCA Rest API';
+update scannertype set category='WEBAPP' where name='Acunetix';
+update scannertype set category='NETWORK' where name='Nessus';
+update scannertype set category='OPENSOURCE' where name='OWASP Dependency Track';
+
+--changeset siewer:173
+alter table webapp add column routingdomain_id int references routingdomain(id);
+
+--changeset siewer:174
+alter table webapp add column origin text;
+
+--changeset siewer:175
+alter table nessus add column runningscans int;
+update nessus set runningscans = 0;
