@@ -105,6 +105,7 @@ public class ScanManagerService {
                 return new ResponseEntity<>(new Status("Request contains no information about project. projectName and ciid are required."), HttpStatus.BAD_REQUEST);
             }
         } catch (Exception ex){
+            ex.printStackTrace();
             return new ResponseEntity<>(new Status("Request contains no information about project. projectName and ciid are required."), HttpStatus.BAD_REQUEST);
         }
     }

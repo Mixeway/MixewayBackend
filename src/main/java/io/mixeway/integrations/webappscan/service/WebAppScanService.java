@@ -316,7 +316,7 @@ public class WebAppScanService {
         List<WebApp> webApps = waRepository.findByInQueue(true);
         for (WebApp webApp : webApps){
             Scanner scanner = getScannerForWebApp(webApp);
-            if (scanner.getRunningScans() < Constants.WEBAPP_SCAN_LIMIT){
+            if (scanner != null && scanner.getRunningScans() < Constants.WEBAPP_SCAN_LIMIT){
                 webApp.setInQueue(false);
                 for (WebAppScanClient webAppScanClient : webAppScanClients){
                     if (webAppScanClient.canProcessRequest(scanner)){

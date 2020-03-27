@@ -60,7 +60,7 @@ public class WebAppServiceTest {
         webAppScanClients.add(acunetixApiClient);
         projectRiskAnalyzer = new ProjectRiskAnalyzer(codeVulnRepository,infrastructureVulnRepository,webAppVulnRepository,interfaceRepository,null);
         webAppService = new WebAppService(webAppRepository,scannerTypeRepository,null,scannerRepository,projectRepository,
-                webAppHeaderRepository,webAppScanRepository,webAppVulnRepository,projectRiskAnalyzer,null);
+                webAppHeaderRepository,webAppScanRepository,webAppVulnRepository,projectRiskAnalyzer,null,null);
 
     }
 
