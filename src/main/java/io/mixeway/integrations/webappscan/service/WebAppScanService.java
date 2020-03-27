@@ -337,7 +337,7 @@ public class WebAppScanService {
         List<Project> projects = projectRepository.findByAutoWebAppScan(true);
         for (Project p : projects) {
             for (WebApp webApp : p.getWebapps()) {
-                webApp.setInQueue(true);
+                this.putSingleWebAppToQueue(webApp.getId(),Constants.STRATEGY_SCHEDULER);
             }
         }
     }
