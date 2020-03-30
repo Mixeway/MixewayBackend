@@ -55,7 +55,6 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 	private final InterfaceRepository interfaceRepository;
 	private final NessusScanRepository nessusScanRepository;
 	private final InfrastructureVulnRepository infrastructureVulnRepository;
-	private final RfwApiClient rfwApiClient;
 	private final ScanHelper scanHelper;
 	private final SecureRestTemplate secureRestTemplate;
 	private final ServiceRepository serviceRepository;
@@ -68,7 +67,7 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 	@Lazy
 	NessusApiClient(VaultHelper vaultHelper, ScannerRepository scannerRepository, NessusScanTemplateRepository nessusScanTemplateRepository,
 					AssetRepository assetRepository, InterfaceRepository interfaceRepository, NessusScanRepository nessusScanRepository,
-					InfrastructureVulnRepository infrastructureVulnRepository, RfwApiClient rfwApiClient, ScanHelper scanHelper, NetworkScanService networkScanService,
+					InfrastructureVulnRepository infrastructureVulnRepository, ScanHelper scanHelper, NetworkScanService networkScanService,
 					SecureRestTemplate secureRestTemplate, ServiceRepository serviceRepository, StatusRepository statusRepository,
 					ScannerTypeRepository scannerTypeRepository, RoutingDomainRepository routingDomainRepository, ProxiesRepository proxiesRepository){
 		this.vaultHelper = vaultHelper;
@@ -79,7 +78,6 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 		this.nessusScanTemplateRepository = nessusScanTemplateRepository;
 		this.infrastructureVulnRepository = infrastructureVulnRepository;
 		this.networkScanService = networkScanService;
-		this.rfwApiClient = rfwApiClient;
 		this.scanHelper = scanHelper;
 		this.secureRestTemplate = secureRestTemplate;
 		this.serviceRepository = serviceRepository;
@@ -280,7 +278,6 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 			RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(nessusScan.getNessus());
 			HttpEntity<String> entity = new HttpEntity<>(prepareAuthHeaderForNessus(nessusScan.getNessus()));
 			if (nessusScan.getNessus().getRfwUrl() != null) {
-				this.putRulesOnRfw(nessusScan);
 				log.info("RFW for scan {} is configured - accept traffic", nessusScan.getProject().getName());
 			}
 
@@ -292,16 +289,6 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 		} catch (HttpClientErrorException e){
 			log.error("Error during Scan Launching for {} - {} - {}", nessusScan.getProject().getName(), e.getStatusCode(),nessusScan.getNessus().getApiUrl() + "/scans/" + nessusScan.getScanId() + "/launch");
 			throw new Exception("Error during Scan Launching");
-		}
-	}
-	private void putRulesOnRfw(NessusScan nessusScan)throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
-		for (String ipAddress : scanHelper.prepareTargetsForScan(nessusScan,false)){
-			rfwApiClient.operateOnRfwRule(nessusScan.getNessus(),ipAddress,HttpMethod.PUT);
-		}
-	}
-	public void deleteRulsFromRfw(NessusScan nessusScan)throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
-		for (String ipAddress : scanHelper.prepareTargetsForScan(nessusScan,false)){
-			rfwApiClient.operateOnRfwRule(nessusScan.getNessus(),ipAddress,HttpMethod.DELETE);
 		}
 	}
 

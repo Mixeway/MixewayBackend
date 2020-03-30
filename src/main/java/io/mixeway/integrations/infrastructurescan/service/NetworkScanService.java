@@ -133,11 +133,13 @@ public class NetworkScanService {
             return new ResponseEntity<>(new Status("One or more hosts does not have Routing domain or no scanner avaliable in given Routing Domain. Omitting.."),
                     HttpStatus.EXPECTATION_FAILED);
         }
+
         //RUN MANUAL SCAN
         for (NessusScan nessusScan : ns){
             if (!nessusScan.getRunning()) {
                 for (NetworkScanClient networkScanClient :networkScanClients){
                     if (networkScanClient.canProcessRequest(nessusScan)){
+                        putRulesOnRfw(nessusScan);
                         networkScanClient.runScan(nessusScan);
                     }
                 }
@@ -199,6 +201,7 @@ public class NetworkScanService {
                 assetRepository.save(i.getAsset());
             }
             nessusScanRepository.save(scan);
+            putRulesOnRfw(scan);
             keyValue.getKey().runScan(scan);
             nessusScans.add(scan);
         }
@@ -382,8 +385,10 @@ public class NetworkScanService {
      * @param nessusScan
      */
     public void putRulesOnRfw(NessusScan nessusScan)throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
-        for (String ipAddress : scanHelper.prepareTargetsForScan(nessusScan,false)){
-            rfwApiClient.operateOnRfwRule(nessusScan.getNessus(),ipAddress, HttpMethod.PUT);
+        if (StringUtils.isNotBlank(nessusScan.getNessus().getRfwUrl())) {
+            for (String ipAddress : scanHelper.prepareTargetsForScan(nessusScan, false)) {
+                rfwApiClient.operateOnRfwRule(nessusScan.getNessus(), ipAddress, HttpMethod.PUT);
+            }
         }
     }
 
@@ -397,6 +402,8 @@ public class NetworkScanService {
         }
     }
 
+
+
     /**
      * Method which is cheacking for running nessusscan test and then it download results
      */
@@ -408,6 +415,7 @@ public class NetworkScanService {
                     for (NetworkScanClient networkScanClient :networkScanClients) {
                         if (networkScanClient.canProcessRequest(ns) && networkScanClient.isScanDone(ns)) {
                             networkScanClient.loadVulnerabilities(ns);
+                            deleteRulsFromRfw(ns);
                         }
                     }
                     //For nessus create webapp linking
@@ -441,6 +449,7 @@ public class NetworkScanService {
                     if (ns.getNessus().getStatus()) {
                         for (NetworkScanClient networkScanClient :networkScanClients) {
                             if (networkScanClient.canProcessRequest(ns) ) {
+                                putRulesOnRfw(ns);
                                 networkScanClient.runScan(ns);
                                 log.info("{} Starting automatic scan for {}",ns.getNessus().getScannerType().getName(), ns.getProject().getName());
                             }
