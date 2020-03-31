@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import io.mixeway.db.entity.Project;
+import io.mixeway.db.entity.RoutingDomain;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -18,6 +19,7 @@ public interface AssetRepository extends JpaRepository<Asset,Long> {
 	List<Asset> findByProject(Project project);
 	List<Asset> findByProjectIdAndOrigin(Long id, String origin);
 	List<Asset> findByProjectAndActive(Project project, Boolean active);
+	List<Asset> findByProjectAndRoutingDomain(Project project, RoutingDomain routingDomain);
 	Long countByProject(Project project);
 	Optional<Asset> findByName(String name);
 	List<Asset> findByActive(Boolean active);
