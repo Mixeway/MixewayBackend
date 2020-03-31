@@ -392,7 +392,6 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 
 	public void setHostsForInterfaces(String body,NessusScan ns) throws JSONException {
 		JSONObject response = new JSONObject(body);
-		log.info("Settings hosts for interfaces array {}", response.getJSONArray(Constants.NESSUS_HOSTS).length());
 		JSONArray hosts = response.getJSONArray(Constants.NESSUS_HOSTS);
 		for (int i = 0; i < hosts.length(); i++) {
 			JSONObject host = hosts.getJSONObject(i);
@@ -451,7 +450,6 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 	public void loadVulnerabilities(NessusScan ns) throws JSONException, CertificateException, UnrecoverableKeyException,
 			NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
 		List<Interface> intfs = interfaceRepository.getInterfaceForAssetsWithHostIdSet(assetRepository.findByProjectAndRoutingDomain(ns.getProject(),ns.getNessus().getRoutingDomain()));
-		log.info("Starting to load vulnerbilities for {} in {}", ns.getProject().getName(), ns.getNessus().getRoutingDomain().getName());
 		for (Interface i : intfs) {
 			this.loadVulnForInterface(ns, i);
 		}
@@ -467,7 +465,6 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 	@Transactional(propagation = Propagation.REQUIRES_NEW)
 	public void loadVulnForInterface(NessusScan ns, Interface i) throws JSONException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
 		try {
-			log.info("Starting to load vulnerbilities for interface {} in {}", i.getPrivateip(),ns.getProject().getName());
 			i.getVulns().clear();
 			List<InfrastructureVuln> tmpOldVulns = infrastructureVulnRepository.findByIntf(i);
 			infrastructureVulnRepository.deleteByIntf(i);
