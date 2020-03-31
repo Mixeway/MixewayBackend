@@ -189,7 +189,11 @@ public class NetworkScanService {
         Map<NetworkScanClient, Set<Interface>> scannerInterfaceMap = findNessusForInterfaces(new HashSet<>(intfs));
         for (Map.Entry<NetworkScanClient, Set<Interface>> keyValue: scannerInterfaceMap.entrySet()) {
             NessusScan scan = new NessusScan();
-            scan = configureScan(scan, keyValue.getKey().getScannerFromClient(), project,false);
+            scan = configureScan(scan,
+                    keyValue.getKey().getScannerFromClient(
+                            Objects.requireNonNull(keyValue.getValue().stream().findFirst().orElse(null)).getRoutingDomain()),
+                    project,
+                    false);
             scan.setInterfaces(keyValue.getValue());
             scan.setRequestId(UUID.randomUUID().toString());
             scan.setScanFrequency(EXECUTE_ONCE);
@@ -387,7 +391,6 @@ public class NetworkScanService {
     public void putRulesOnRfw(NessusScan nessusScan)throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         if (StringUtils.isNotBlank(nessusScan.getNessus().getRfwUrl())) {
             List<String> ipAddresses = scanHelper.prepareTargetsForScan(nessusScan, false);
-            log.info("Putting rules for {} targets scanner url is {}", ipAddresses.size(), nessusScan.getNessus().getApiUrl());
             for (String ipAddress : ipAddresses) {
                 rfwApiClient.operateOnRfwRule(nessusScan.getNessus(), ipAddress, HttpMethod.PUT);
             }
@@ -401,7 +404,6 @@ public class NetworkScanService {
     public void deleteRulsFromRfw(NessusScan nessusScan)throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         if (StringUtils.isNotBlank(nessusScan.getNessus().getRfwUrl())) {
             List<String> ipAddresses = scanHelper.prepareTargetsForScan(nessusScan, false);
-            log.info("Deleting rules for {} targets scanner url is {}", ipAddresses.size(), nessusScan.getNessus().getApiUrl());
             for (String ipAddress : ipAddresses) {
                 rfwApiClient.operateOnRfwRule(nessusScan.getNessus(), ipAddress, HttpMethod.DELETE);
             }

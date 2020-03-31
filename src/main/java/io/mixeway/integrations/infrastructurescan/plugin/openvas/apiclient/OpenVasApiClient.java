@@ -537,8 +537,8 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 	}
 
 	@Override
-	public Scanner getScannerFromClient() {
-		List<Scanner> scanner = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_OPENVAS));
+	public Scanner getScannerFromClient(RoutingDomain routingDomain) {
+		List<Scanner> scanner = scannerRepository.findByScannerTypeAndRoutingDomain(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_OPENVAS), routingDomain);
 		return scanner.stream().findFirst().orElse(null);
 	}
 

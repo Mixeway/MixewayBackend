@@ -23,6 +23,6 @@ public interface NetworkScanClient {
     boolean canProcessRequest(NessusScan nessusScan);
     boolean canProcessRequest(Scanner scanner);
     boolean canProcessRequest(RoutingDomain routingDomain);
-    Scanner getScannerFromClient();
+    Scanner getScannerFromClient(RoutingDomain routingDomain);
 
 }
