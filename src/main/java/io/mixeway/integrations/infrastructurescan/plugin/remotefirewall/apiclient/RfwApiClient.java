@@ -41,6 +41,7 @@ public class RfwApiClient {
             ResponseEntity<String> response = restTemplate.exchange(scanner.getRfwUrl() + "/accept/forward/any/" + scanner.getRfwScannerIp() + "/any/" + ipAddress, operation, prepareAuthHeader(scanner), String.class);
             if (response.getStatusCode() != HttpStatus.OK)
                 log.warn("RFW rule for {} was not set - error occured", ipAddress);
+
         } catch (HttpClientErrorException e){
             log.warn("Got Http exception while calling RFW with operation {} and ip {} message is {}", operation.toString(),ipAddress,e.getLocalizedMessage());
         }

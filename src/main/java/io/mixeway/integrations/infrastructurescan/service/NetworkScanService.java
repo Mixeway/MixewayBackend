@@ -394,6 +394,7 @@ public class NetworkScanService {
             for (String ipAddress : ipAddresses) {
                 rfwApiClient.operateOnRfwRule(nessusScan.getNessus(), ipAddress, HttpMethod.PUT);
             }
+            log.info("Putting rules on RFW for {} on {}", nessusScan.getProject().getName(), nessusScan.getNessus().getApiUrl());
         }
     }
 
@@ -407,6 +408,7 @@ public class NetworkScanService {
             for (String ipAddress : ipAddresses) {
                 rfwApiClient.operateOnRfwRule(nessusScan.getNessus(), ipAddress, HttpMethod.DELETE);
             }
+            log.info("Deleting rules from RFW for {} on {}", nessusScan.getProject().getName(), nessusScan.getNessus().getApiUrl());
         }
     }
 

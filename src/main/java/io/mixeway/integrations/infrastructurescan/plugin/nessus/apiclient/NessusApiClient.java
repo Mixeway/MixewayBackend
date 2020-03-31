@@ -277,9 +277,6 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 		try {
 			RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(nessusScan.getNessus());
 			HttpEntity<String> entity = new HttpEntity<>(prepareAuthHeaderForNessus(nessusScan.getNessus()));
-			if (nessusScan.getNessus().getRfwUrl() != null) {
-				log.info("RFW for scan {} is configured - accept traffic", nessusScan.getProject().getName());
-			}
 
 			ResponseEntity<String> response = restTemplate.exchange(nessusScan.getNessus().getApiUrl() + "/scans/" + nessusScan.getScanId() + "/launch", HttpMethod.POST, entity, String.class);
 			if (response.getStatusCode() == HttpStatus.OK) {
@@ -458,10 +455,6 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 		}
 		ns.setRunning(false);
 		nessusScanRepository.saveAndFlush(ns);
-		if (ns.getNessus().getRfwUrl() != null) {
-			networkScanService.deleteRulsFromRfw(ns);
-			log.info("RFW for scan {} is cleared - dropped traffic", ns.getProject().getName());
-		}
 		log.info("Nessus - successfully loaded vulnerabilities for {}",ns.getProject().getName());
 		if (!ns.getIsAutomatic()){
 			this.deleteScan(ns);
