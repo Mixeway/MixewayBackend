@@ -919,3 +919,6 @@ alter table webapp add column origin text;
 --changeset siewer:175
 alter table nessus add column runningscans int;
 update nessus set runningscans = 0;
+
+--changeset siewer:176
+insert into scannertype (name,authcloudctrltoken, authpassword, authusername, authaccesstoken, authsecrettoken, authapikey) values ('Burp Enterprise Edition', false,false, false,false,false,true);

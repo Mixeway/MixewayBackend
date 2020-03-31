@@ -254,4 +254,5 @@ public class Constants {
 	public static final String SCANER_CATEGORY_OPENSOURCE = "OPENSOURCE";
 
     public static final String ACUNETIX_TARGET_SCAN_STATUS_ABORTED = "aborted";
+    public static final String SCANNER_TYPE_BURP = "Burp Enterprise Edition";
 }
