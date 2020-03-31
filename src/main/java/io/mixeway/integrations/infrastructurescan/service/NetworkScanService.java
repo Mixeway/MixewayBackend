@@ -386,7 +386,9 @@ public class NetworkScanService {
      */
     public void putRulesOnRfw(NessusScan nessusScan)throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         if (StringUtils.isNotBlank(nessusScan.getNessus().getRfwUrl())) {
-            for (String ipAddress : scanHelper.prepareTargetsForScan(nessusScan, false)) {
+            List<String> ipAddresses = scanHelper.prepareTargetsForScan(nessusScan, false);
+            log.info("Putting rules for {} targets scanner url is {}", ipAddresses.size(), nessusScan.getNessus().getApiUrl());
+            for (String ipAddress : ipAddresses) {
                 rfwApiClient.operateOnRfwRule(nessusScan.getNessus(), ipAddress, HttpMethod.PUT);
             }
         }
@@ -397,8 +399,12 @@ public class NetworkScanService {
      * @param nessusScan
      */
     public void deleteRulsFromRfw(NessusScan nessusScan)throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
-        for (String ipAddress : scanHelper.prepareTargetsForScan(nessusScan,false)){
-            rfwApiClient.operateOnRfwRule(nessusScan.getNessus(),ipAddress,HttpMethod.DELETE);
+        if (StringUtils.isNotBlank(nessusScan.getNessus().getRfwUrl())) {
+            List<String> ipAddresses = scanHelper.prepareTargetsForScan(nessusScan, false);
+            log.info("Deleting rules for {} targets scanner url is {}", ipAddresses.size(), nessusScan.getNessus().getApiUrl());
+            for (String ipAddress : ipAddresses) {
+                rfwApiClient.operateOnRfwRule(nessusScan.getNessus(), ipAddress, HttpMethod.DELETE);
+            }
         }
     }
 
