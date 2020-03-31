@@ -389,9 +389,10 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 	}
 
 
-	private void setHostsForInterfaces(String body,NessusScan ns) throws JSONException {
+	@Transactional(propagation = Propagation.REQUIRES_NEW)
+	public void setHostsForInterfaces(String body,NessusScan ns) throws JSONException {
 		JSONObject response = new JSONObject(body);
-		
+		log.info("Settings hosts for interfaces array {}", response.getJSONArray(Constants.NESSUS_HOSTS).length());
 		JSONArray hosts = response.getJSONArray(Constants.NESSUS_HOSTS);
 		for (int i = 0; i < hosts.length(); i++) {
 			JSONObject host = hosts.getJSONObject(i);
