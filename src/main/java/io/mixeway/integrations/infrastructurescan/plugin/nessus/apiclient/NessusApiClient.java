@@ -349,6 +349,7 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 	}
 
 	//TODO: String to objectModel maping
+	@Transactional(propagation = Propagation.REQUIRES_NEW)
 	public boolean isScanDone(NessusScan ns) throws JSONException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, IOException, KeyStoreException, KeyManagementException {
 		try {
 			RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(ns.getNessus());
@@ -389,7 +390,6 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 	}
 
 
-	@Transactional(propagation = Propagation.REQUIRES_NEW)
 	public void setHostsForInterfaces(String body,NessusScan ns) throws JSONException {
 		JSONObject response = new JSONObject(body);
 		log.info("Settings hosts for interfaces array {}", response.getJSONArray(Constants.NESSUS_HOSTS).length());
@@ -448,7 +448,6 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 
 
 	@Override
-	@Transactional(propagation = Propagation.REQUIRES_NEW)
 	public void loadVulnerabilities(NessusScan ns) throws JSONException, CertificateException, UnrecoverableKeyException,
 			NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
 		List<Interface> intfs = interfaceRepository.getInterfaceForAssetsWithHostIdSet(new ArrayList<>(ns.getProject().getAssets()));
@@ -465,7 +464,8 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 		//scanHelper.updateInterfaceState(ns,false);
 	}
 
-	private void loadVulnForInterface(NessusScan ns, Interface i) throws JSONException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+	@Transactional(propagation = Propagation.REQUIRES_NEW)
+	public void loadVulnForInterface(NessusScan ns, Interface i) throws JSONException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
 		try {
 			log.info("Starting to load vulnerbilities for interface {} in {}", i.getPrivateip(),ns.getProject().getName());
 			i.getVulns().clear();
