@@ -922,3 +922,9 @@ update nessus set runningscans = 0;
 
 --changeset siewer:176
 insert into scannertype (name,authcloudctrltoken, authpassword, authusername, authaccesstoken, authsecrettoken, authapikey) values ('Burp Enterprise Edition', false,false, false,false,false,true);
+
+--changeset siewer:177
+alter table scannertype add column scanlimit int;
+update scannertype set scanlimit=0;
+update scannertype set scanlimit=25 where name='Acunetix';
+update scannertype set scanlimit=5 where name='Burp Enterprise Edition';

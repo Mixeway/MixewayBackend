@@ -431,7 +431,7 @@ public class NetworkScanService {
                     //For nessus create webapp linking
                     if (ns.getNessus().getScannerType().equals(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_NESSUS))) {
                         if (ns.getProject().getWebAppAutoDiscover() != null && ns.getProject().getWebAppAutoDiscover())
-                            webAppHelper.discoverWebAppFromInfrastructureVulns(ns.getProject());
+                            webAppHelper.discoverWebAppFromInfrastructureVulns(ns.getProject(), ns);
                     }
 
                 }
