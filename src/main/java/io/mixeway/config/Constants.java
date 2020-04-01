@@ -255,4 +255,8 @@ public class Constants {
 
     public static final String ACUNETIX_TARGET_SCAN_STATUS_ABORTED = "aborted";
     public static final String SCANNER_TYPE_BURP = "Burp Enterprise Edition";
+    public static final String BURP_SCAN_RUNNING = "RUNNING";
+	public static final String BURP_SCAN_QUEUED = "QUEUED";
+	public static final String BURP_CONFIG_CRAWL = "Crawl strategy - fastest";
+	public static final String BURP_CONFIG_AUDIT = "Audit checks - medium active";
 }

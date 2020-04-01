@@ -2,6 +2,8 @@ package io.mixeway.db.entity;
 
 import javax.persistence.*;
 
+import io.mixeway.integrations.webappscan.plugin.burpee.model.Issue;
+import io.mixeway.integrations.webappscan.plugin.burpee.model.IssueDetail;
 import io.mixeway.pojo.Vulnerability;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.OnDelete;
@@ -10,6 +12,10 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @Entity
 @EntityScan
@@ -31,7 +37,18 @@ public class WebAppVuln implements Vulnerability {
 	private Status status;
 	private String ticketId;
 
-	@Column(name="ticketid")
+	public WebAppVuln(){};
+
+    public WebAppVuln(WebApp webapp, Issue issue, Map.Entry issuePath, List<IssueDetail> issueDetails) {
+    	this.webApp = webapp;
+    	this.description = Objects.requireNonNull(issueDetails.stream().filter(issueDetail -> issueDetail.getIssueTypeId().equals(issue.getTypeIndex())).findFirst().orElse(null)).getDescription();
+    	this.recommendation = Objects.requireNonNull(issueDetails.stream().filter(issueDetail -> issueDetail.getIssueTypeId().equals(issue.getTypeIndex())).findFirst().orElse(null)).getRemediation();
+    	this.name = Objects.requireNonNull(issueDetails.stream().filter(issueDetail -> issueDetail.getIssueTypeId().equals(issue.getTypeIndex())).findFirst().orElse(null)).getName();
+   		this.location = issuePath.getKey().toString();
+   		this.severity = issue.getSeverity();
+    }
+
+    @Column(name="ticketid")
 	public String getTicketId() {
 		return ticketId;
 	}

@@ -10,6 +10,15 @@ import java.util.List;
 public class SiteIssues {
     @JsonProperty("aggregated_issue_type_summaries")
     List<Issue> issueList;
+    long timestamp;
+
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
+    }
 
     public List<Issue> getIssueList() {
         return issueList;
