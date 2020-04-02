@@ -434,7 +434,6 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 			return null;
 	}
 	@Override
-	@Transactional(propagation = Propagation.REQUIRES_NEW)
 	public boolean isScanDone(CodeGroup cg, CodeProject cp) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, ParseException, JSONException {
 		if ((cg != null && StringUtils.isNotBlank(cg.getScanid())) || (cp !=null && StringUtils.isNotBlank(cp.getCodeGroup().getScanid()))){
 			return verifyCloudScanJob(cg != null? cg : cp.getCodeGroup());
@@ -448,7 +447,6 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 		return false;
 	}
 
-	@Transactional(propagation = Propagation.REQUIRES_NEW)
 	public boolean getScanIdForCodeProject(CodeProject cp) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
 		List<io.mixeway.db.entity.Scanner> fortify = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_FORTIFY_SCA));
 		RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(null);
