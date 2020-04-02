@@ -9,13 +9,13 @@ import java.util.List;
  */
 public class ScanSummaries {
     @JsonProperty("rows")
-    List<Scan> scanList;
+    List<Scan> rows;
 
-    public List<Scan> getScanList() {
-        return scanList;
+    public List<Scan> getRows() {
+        return rows;
     }
 
-    public void setScanList(List<Scan> scanList) {
-        this.scanList = scanList;
+    public void setRows(List<Scan> rows) {
+        this.rows = rows;
     }
 }

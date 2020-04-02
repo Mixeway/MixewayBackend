@@ -81,6 +81,7 @@ public class BurpEEApiClient implements SecurityScanner, WebAppScanClient {
     public void runScan(WebApp webApp, Scanner scanner) throws Exception {
         try {
             ScanRequest scanRequest = new ScanRequest(webApp, scanner);
+            //log.info
             RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(scanner);
             HttpEntity<ScanRequest> entity = new HttpEntity<>(scanRequest);
             ResponseEntity<String> response = restTemplate.exchange(scanner.getApiUrl() + "/api/" + vaultHelper.getPassword(scanner.getApiKey()) + "/v0.1/scan",
@@ -110,7 +111,7 @@ public class BurpEEApiClient implements SecurityScanner, WebAppScanClient {
             ResponseEntity<GetSites> response = restTemplate.exchange(scanner.getApiUrl() + "/api-internal/sites/",
                     HttpMethod.GET, entity, GetSites.class);
             if (response.getStatusCode().equals(HttpStatus.OK)) {
-                webApp.setScanId(Objects.requireNonNull(response.getBody()).getSiteList().stream().filter(site -> site.getName().equals(webApp.getUrl())).findFirst().orElse(null).getId());
+                webApp.setScanId(Objects.requireNonNull(response.getBody()).getTrees().stream().filter(site -> site.getName().equals(webApp.getUrl())).findFirst().orElse(null).getId());
             }
         } catch (HttpClientErrorException e){
             log.error("Cannot get ID of site of {} - {}", webApp.getUrl(),e.getStatusCode());
@@ -144,7 +145,7 @@ public class BurpEEApiClient implements SecurityScanner, WebAppScanClient {
                     HttpMethod.GET, entity, ScanSummaries.class);
             if (response.getStatusCode().equals(HttpStatus.OK)) {
                 Predicate<Scan> scanRunning = scan -> scan.getStatus().equals(Constants.BURP_SCAN_RUNNING) || scan.getStatus().equals(Constants.BURP_SCAN_QUEUED);
-                return response.getBody().getScanList().stream().noneMatch(scanRunning);
+                return response.getBody().getRows().stream().noneMatch(scanRunning);
             }
         } catch (HttpClientErrorException e){
             log.error("Cannot check status of scan for {} - {}", webApp.getUrl(),e.getStatusCode());
@@ -183,8 +184,8 @@ public class BurpEEApiClient implements SecurityScanner, WebAppScanClient {
             ResponseEntity<SiteIssues> response = restTemplate.exchange(scanner.getApiUrl() + "/api-internal/issues/node/"+webApp.getScanId(),
                     HttpMethod.GET, entity, SiteIssues.class);
             if (response.getStatusCode().equals(HttpStatus.OK)) {
-                for (Issue issue : Objects.requireNonNull(response.getBody()).getIssueList()){
-                    Map<String, String> issuePaths = this.findPathOfVulnerability(scanner,webApp,response.getBody().getTimestamp(),issue.getTypeIndex());
+                for (Issue issue : Objects.requireNonNull(response.getBody()).getAggregated_issue_type_summaries()){
+                    Map<String, String> issuePaths = this.findPathOfVulnerability(scanner,webApp,response.getBody().getTimestamp(),issue.getType_index());
                     for (Map.Entry issuePath : issuePaths.entrySet()){
                         assert issueDetails != null;
                         WebAppVuln vuln = new WebAppVuln(webApp,issue, issuePath, issueDetails);
@@ -221,7 +222,7 @@ public class BurpEEApiClient implements SecurityScanner, WebAppScanClient {
             ResponseEntity<GetIssueDetails> response = restTemplate.exchange(scanner.getApiUrl() + "/api-internal/issue_definitions",
                     HttpMethod.GET, entity, GetIssueDetails.class);
             if (response.getStatusCode().equals(HttpStatus.OK)) {
-                return Objects.requireNonNull(response.getBody()).getIssueDetails();
+                return Objects.requireNonNull(response.getBody()).getDefinitions();
             }
         } catch (HttpClientErrorException e){
             log.error("Cannot get issue details for {}", scanner.getApiUrl());
@@ -247,7 +248,7 @@ public class BurpEEApiClient implements SecurityScanner, WebAppScanClient {
                     "/?timestamp="+timestamp+"&start=0&count=200",
                     HttpMethod.GET, entity, AggregatedIssueSummary.class);
             if (response.getStatusCode().equals(HttpStatus.OK)) {
-                for (IssueSummary issueSummary : response.getBody().getIssueSummaries()){
+                for (IssueSummary issueSummary : response.getBody().getAggregated_issue_summaries()){
                     issueDetails.put(issueSummary.getOrigin()+issueSummary.getConfidence(),issueSummary.getConfidence());
                 }
             }
@@ -265,7 +266,6 @@ public class BurpEEApiClient implements SecurityScanner, WebAppScanClient {
      * @return info about result of a operation
      */
     @Override
-    @Transactional
     public boolean initialize(Scanner scanner) throws JSONException, ParseException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, JAXBException, Exception {
         try {
             RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(scanner);
@@ -273,13 +273,13 @@ public class BurpEEApiClient implements SecurityScanner, WebAppScanClient {
             ResponseEntity<ScanConfiguration> response = restTemplate.exchange(scanner.getApiUrl() + "/api-internal/scan-configurations",
                     HttpMethod.GET, entity, ScanConfiguration.class);
             if (response.getStatusCode().equals(HttpStatus.OK)) {
-                for (Configuration configuration : response.getBody().getConfigurationList()){
+                for (Configuration configuration : response.getBody().getScan_configurations()){
                     if (configuration.getName().equals(Constants.BURP_CONFIG_CRAWL) || configuration.getName().equals(Constants.BURP_CONFIG_AUDIT)) {
                         NessusScanTemplate nst = new NessusScanTemplate(configuration.getName(), configuration.getId(), scanner);
                         nessusScanTemplateRepository.save(nst);
                     }
-                    scanner.setStatus(true);
                 }
+                scanner.setStatus(true);
                 return true;
             }
         } catch (HttpClientErrorException e){

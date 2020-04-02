@@ -102,6 +102,7 @@ public class WebAppService {
                 WebApp webApp = new WebApp();
                 webApp.setUrl(webAppPutMode.getWebAppUrl());
                 webApp.setRunning(false);
+                webApp.setInQueue(false);
                 webApp.setRoutingDomain(routingDomainRepository.getOne(webAppPutMode.getRoutingDomainForAsset()));
                 webApp.setOrigin(Constants.STRATEGY_GUI);
                 webApp.setPublicscan(webAppPutMode.isScanPublic());

@@ -8,9 +8,15 @@ import org.codehaus.jackson.annotate.JsonProperty;
 public class Scan {
     String ref;
     String status;
-    @JsonProperty("start_time")
-    String startTime;
+    String start_time;
 
+    public String getStart_time() {
+        return start_time;
+    }
+
+    public void setStart_time(String start_time) {
+        this.start_time = start_time;
+    }
 
     public String getRef() {
         return ref;
@@ -28,11 +34,4 @@ public class Scan {
         this.status = status;
     }
 
-    public String getStartTime() {
-        return startTime;
-    }
-
-    public void setStartTime(String startTime) {
-        this.startTime = startTime;
-    }
 }

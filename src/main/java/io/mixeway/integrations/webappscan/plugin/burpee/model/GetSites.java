@@ -8,14 +8,13 @@ import java.util.List;
  * @author gsiewruk
  */
 public class GetSites {
-    @JsonProperty("trees")
-    List<Site> siteList;
+    List<Site> trees;
 
-    public List<Site> getSiteList() {
-        return siteList;
+    public List<Site> getTrees() {
+        return trees;
     }
 
-    public void setSiteList(List<Site> siteList) {
-        this.siteList = siteList;
+    public void setTrees(List<Site> trees) {
+        this.trees = trees;
     }
 }

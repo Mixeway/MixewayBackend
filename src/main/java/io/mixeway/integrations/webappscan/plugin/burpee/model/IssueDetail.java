@@ -6,18 +6,17 @@ import org.codehaus.jackson.annotate.JsonProperty;
  * @author gsiewruk
  */
 public class IssueDetail {
-    @JsonProperty("issue_type_id")
-    String issueTypeId;
+    String issue_type_id;
     String name;
     String description;
     String remediation;
 
-    public String getIssueTypeId() {
-        return issueTypeId;
+    public String getIssue_type_id() {
+        return issue_type_id;
     }
 
-    public void setIssueTypeId(String issueTypeId) {
-        this.issueTypeId = issueTypeId;
+    public void setIssue_type_id(String issue_type_id) {
+        this.issue_type_id = issue_type_id;
     }
 
     public String getName() {

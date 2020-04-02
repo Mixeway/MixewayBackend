@@ -8,14 +8,13 @@ import java.util.List;
  * @author gsiewruk
  */
 public class AggregatedIssueSummary {
-    @JsonProperty("aggregated_issue_summaries")
-    List<IssueSummary> issueSummaries;
+    List<IssueSummary> aggregated_issue_summaries;
 
-    public List<IssueSummary> getIssueSummaries() {
-        return issueSummaries;
+    public List<IssueSummary> getAggregated_issue_summaries() {
+        return aggregated_issue_summaries;
     }
 
-    public void setIssueSummaries(List<IssueSummary> issueSummaries) {
-        this.issueSummaries = issueSummaries;
+    public void setAggregated_issue_summaries(List<IssueSummary> aggregated_issue_summaries) {
+        this.aggregated_issue_summaries = aggregated_issue_summaries;
     }
 }

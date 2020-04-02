@@ -6,17 +6,16 @@ import org.codehaus.jackson.annotate.JsonProperty;
  * @author gsiewruk
  */
 public class Issue {
-    @JsonProperty("type_index")
-    String typeIndex;
+    String type_index;
     String confidence;
     String severity;
 
-    public String getTypeIndex() {
-        return typeIndex;
+    public String getType_index() {
+        return type_index;
     }
 
-    public void setTypeIndex(String typeIndex) {
-        this.typeIndex = typeIndex;
+    public void setType_index(String type_index) {
+        this.type_index = type_index;
     }
 
     public String getConfidence() {

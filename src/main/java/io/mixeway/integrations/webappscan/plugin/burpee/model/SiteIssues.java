@@ -9,7 +9,7 @@ import java.util.List;
  */
 public class SiteIssues {
     @JsonProperty("aggregated_issue_type_summaries")
-    List<Issue> issueList;
+    List<Issue> aggregated_issue_type_summaries;
     long timestamp;
 
     public long getTimestamp() {
@@ -20,11 +20,11 @@ public class SiteIssues {
         this.timestamp = timestamp;
     }
 
-    public List<Issue> getIssueList() {
-        return issueList;
+    public List<Issue> getAggregated_issue_type_summaries() {
+        return aggregated_issue_type_summaries;
     }
 
-    public void setIssueList(List<Issue> issueList) {
-        this.issueList = issueList;
+    public void setAggregated_issue_type_summaries(List<Issue> aggregated_issue_type_summaries) {
+        this.aggregated_issue_type_summaries = aggregated_issue_type_summaries;
     }
 }

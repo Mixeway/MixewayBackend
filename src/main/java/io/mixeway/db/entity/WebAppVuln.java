@@ -41,9 +41,9 @@ public class WebAppVuln implements Vulnerability {
 
     public WebAppVuln(WebApp webapp, Issue issue, Map.Entry issuePath, List<IssueDetail> issueDetails) {
     	this.webApp = webapp;
-    	this.description = Objects.requireNonNull(issueDetails.stream().filter(issueDetail -> issueDetail.getIssueTypeId().equals(issue.getTypeIndex())).findFirst().orElse(null)).getDescription();
-    	this.recommendation = Objects.requireNonNull(issueDetails.stream().filter(issueDetail -> issueDetail.getIssueTypeId().equals(issue.getTypeIndex())).findFirst().orElse(null)).getRemediation();
-    	this.name = Objects.requireNonNull(issueDetails.stream().filter(issueDetail -> issueDetail.getIssueTypeId().equals(issue.getTypeIndex())).findFirst().orElse(null)).getName();
+    	this.description = Objects.requireNonNull(issueDetails.stream().filter(issueDetail -> issueDetail.getIssue_type_id().equals(issue.getType_index())).findFirst().orElse(null)).getDescription();
+    	this.recommendation = Objects.requireNonNull(issueDetails.stream().filter(issueDetail -> issueDetail.getIssue_type_id().equals(issue.getType_index())).findFirst().orElse(null)).getRemediation();
+    	this.name = Objects.requireNonNull(issueDetails.stream().filter(issueDetail -> issueDetail.getIssue_type_id().equals(issue.getType_index())).findFirst().orElse(null)).getName();
    		this.location = issuePath.getKey().toString();
    		this.severity = issue.getSeverity();
     }

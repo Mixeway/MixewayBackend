@@ -16,7 +16,7 @@ public class ScanRequest {
     List<String> urls;
     String name;
     @JsonProperty("scan_configurations_ids")
-    List<String> configurationList;
+    List<String> scan_configurations_ids;
 
     ScanRequest() {}
 
@@ -30,7 +30,7 @@ public class ScanRequest {
     public ScanRequest(WebApp webApp, Scanner scanner){
         this.urls = Collections.singletonList(webApp.getUrl());
         this.name = webApp.getUrl();
-        this.configurationList = scanner
+        this.scan_configurations_ids = scanner
                 .getNessusScanTemplates()
                 .stream()
                 .map(NessusScanTemplate::getUuid)
@@ -54,11 +54,11 @@ public class ScanRequest {
         this.name = name;
     }
 
-    public List<String> getConfigurationList() {
-        return configurationList;
+    public List<String> getScan_configurations_ids() {
+        return scan_configurations_ids;
     }
 
-    public void setConfigurationList(List<String> configurationList) {
-        this.configurationList = configurationList;
+    public void setScan_configurations_ids(List<String> scan_configurations_ids) {
+        this.scan_configurations_ids = scan_configurations_ids;
     }
 }

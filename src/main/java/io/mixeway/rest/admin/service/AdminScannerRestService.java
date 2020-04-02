@@ -92,6 +92,7 @@ public class AdminScannerRestService {
         }
     }
 
+    @Transactional
     public ResponseEntity<Status> testScanner(Long id) {
         Optional<io.mixeway.db.entity.Scanner> scanner = scannerRepository.getById(id);
         try {

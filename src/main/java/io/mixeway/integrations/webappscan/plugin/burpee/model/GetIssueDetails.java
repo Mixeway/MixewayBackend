@@ -8,14 +8,13 @@ import java.util.List;
  * @author gsiewruk
  */
 public class GetIssueDetails {
-    @JsonProperty("definitions")
-    List<IssueDetail> issueDetails;
+    List<IssueDetail> definitions;
 
-    public List<IssueDetail> getIssueDetails() {
-        return issueDetails;
+    public List<IssueDetail> getDefinitions() {
+        return definitions;
     }
 
-    public void setIssueDetails(List<IssueDetail> issueDetails) {
-        this.issueDetails = issueDetails;
+    public void setDefinitions(List<IssueDetail> definitions) {
+        this.definitions = definitions;
     }
 }

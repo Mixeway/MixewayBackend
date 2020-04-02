@@ -390,6 +390,7 @@ public class WebAppScanService {
             } else if (webAppScanStrategy.getScheduledStrategy() != null && webApp.getOrigin().equals(Constants.STRATEGY_SCHEDULER)){
                 scanner = scannerRepository.findByScannerType(webAppScanStrategy.getScheduledStrategy()).stream().findFirst().orElse(null);
             } else {
+                List<ScannerType> scannerTypes = scannerTypeRepository.findByCategory(Constants.SCANER_CATEGORY_WEBAPP);
                 scanner = scannerRepository.findByScannerTypeInAndRoutingDomain(scannerTypeRepository.findByCategory(Constants.SCANER_CATEGORY_WEBAPP), webApp.getRoutingDomain());
             }
         }
