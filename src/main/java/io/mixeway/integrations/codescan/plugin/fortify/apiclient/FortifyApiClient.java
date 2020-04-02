@@ -449,7 +449,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 	}
 
 	@Transactional(propagation = Propagation.REQUIRES_NEW)
-	private boolean getScanIdForCodeProject(CodeProject cp) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+	public boolean getScanIdForCodeProject(CodeProject cp) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
 		List<io.mixeway.db.entity.Scanner> fortify = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_FORTIFY_SCA));
 		RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(null);
 		ResponseEntity<FortifyScan> response = restTemplate.exchange(fortify.get(0).getApiUrl()+"/check/"+cp.getRequestId(), HttpMethod.GET, null, FortifyScan.class);
