@@ -459,12 +459,13 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 				codeProjectRepository.save(cp);
 				return false;
 			} else if (response.getBody().getScanId() != null && response.getBody().getCommitid()!=null) {
-				cp.getCodeGroup().setScanid(response.getBody().getScanId());
+				CodeGroup codeGroup = cp.getCodeGroup();
+				codeGroup.setScanid(response.getBody().getScanId());
 				cp.setCommitid(response.getBody().getCommitid());
-				codeGroupRepository.save(cp.getCodeGroup());
+				codeGroupRepository.save(codeGroup);
 				codeProjectRepository.save(cp);
 				createCiOperation(cp, response.getBody().getCommitid());
-				log.info("Fortify scan was passed to cloudscan for [scope {}] {} ", cp.getName(), cp.getCodeGroup().getName());
+				log.info("Fortify scan was passed to cloudscan for [scope {}] {} scan id {} ", cp.getName(), cp.getCodeGroup().getName(),response.getBody().getScanId());
 				return true;
 			}
 		}
