@@ -57,7 +57,13 @@ public class NessusScanTemplate {
 	public void setNessus(Scanner nessus) {
 		this.nessus = nessus;
 	}
-	
+
+	public NessusScanTemplate(){}
+	public NessusScanTemplate(String name, String uuid, Scanner scanner){
+		this.name = name;
+		this.uuid = uuid;
+		this.nessus = scanner;
+	}
 	
 
 }

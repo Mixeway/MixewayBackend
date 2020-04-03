@@ -2,6 +2,8 @@ package io.mixeway.db.entity;
 
 import javax.persistence.*;
 
+import io.mixeway.integrations.webappscan.plugin.burpee.model.Issue;
+import io.mixeway.integrations.webappscan.plugin.burpee.model.IssueDetail;
 import io.mixeway.pojo.Vulnerability;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.OnDelete;
@@ -10,6 +12,10 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @Entity
 @EntityScan
@@ -31,7 +37,23 @@ public class WebAppVuln implements Vulnerability {
 	private Status status;
 	private String ticketId;
 
-	@Column(name="ticketid")
+	public WebAppVuln(){};
+
+	/**
+	 * Used for burp loadVulnerabilities
+	 *
+	 * @param webApp which contains vuln
+	 * @param issue get from burp REST API
+	 */
+    public WebAppVuln(WebApp webApp, Issue issue){
+    	this.webApp = webApp;
+    	this.description = issue.getDescription();
+    	this.name = issue.getName();
+    	this.severity = issue.getSeverity();
+    	this.location = issue.getOrigin()+issue.getPath();
+	}
+
+    @Column(name="ticketid")
 	public String getTicketId() {
 		return ticketId;
 	}

@@ -102,6 +102,7 @@ public class WebAppService {
                 WebApp webApp = new WebApp();
                 webApp.setUrl(webAppPutMode.getWebAppUrl());
                 webApp.setRunning(false);
+                webApp.setInQueue(false);
                 webApp.setRoutingDomain(routingDomainRepository.getOne(webAppPutMode.getRoutingDomainForAsset()));
                 webApp.setOrigin(Constants.STRATEGY_GUI);
                 webApp.setPublicscan(webAppPutMode.isScanPublic());
@@ -166,6 +167,7 @@ public class WebAppService {
                 WebAppModel webAppModel = new WebAppModel();
                 webAppModel.setPublicScan(wa.getPublicscan()!=null ? wa.getPublicscan() : false);
                 webAppModel.setWebAppId(wa.getId());
+                webAppModel.setRoutingDomain(wa.getRoutingDomain());
                 webAppModel.setRunning(wa.getRunning());
                 webAppModel.setUrl(wa.getUrl());
                 webAppModel.setInQueue(wa.getInQueue());

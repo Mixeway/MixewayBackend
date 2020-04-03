@@ -919,3 +919,19 @@ alter table webapp add column origin text;
 --changeset siewer:175
 alter table nessus add column runningscans int;
 update nessus set runningscans = 0;
+
+--changeset siewer:176
+insert into scannertype (name,authcloudctrltoken, authpassword, authusername, authaccesstoken, authsecrettoken, authapikey) values ('Burp Enterprise Edition', false,false, false,false,false,true);
+
+--changeset siewer:177
+alter table scannertype add column scanlimit int;
+update scannertype set scanlimit=0;
+update scannertype set scanlimit=25 where name='Acunetix';
+update scannertype set scanlimit=5 where name='Burp Enterprise Edition';
+
+--changeset siewer:178
+update webapp set inqueue=false where inqueue is null;
+
+--changeset siewer:179
+update scannertype set category='WEBAPP' where name='Burp Enterprise Edition';
+update scannertype set category='CODE' where name='Checkmarx';

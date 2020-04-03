@@ -227,4 +227,10 @@ public class WebApp {
 	public void setLastscan(String lastscan) {
 		this.lastscan = lastscan;
 	}
+
+	@PrePersist
+	public void webAppPrePersist(){
+		if (inQueue == null)
+				inQueue = false;
+	}
 }
