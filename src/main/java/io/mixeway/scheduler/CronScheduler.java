@@ -19,7 +19,6 @@ import io.mixeway.pojo.EmailVulnHelper;
 import io.mixeway.pojo.ScanHelper;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.jws.WebParam;
 import javax.mail.internet.MimeMessage;
 import java.io.IOException;
 import java.security.KeyManagementException;
