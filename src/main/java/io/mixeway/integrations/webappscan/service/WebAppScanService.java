@@ -67,6 +67,12 @@ public class WebAppScanService {
 
     private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
+    /**
+     * Check if url contains parameters and strip them from it
+     *
+     * @param url to compare
+     * @return stripped url
+     */
     private String getUrltoCompare(String url) {
         String urlToSend = url.split("\\?")[0];
         if (url.contains("?"))
@@ -76,6 +82,17 @@ public class WebAppScanService {
 
     }
 
+    /**
+     * Method which is processing webapp from REST API to create or update and put in queue.
+     * It verify if there are number of patterns in URL to detect possible duplicates. For example urls which are different from each other
+     * only by UUID. If there is no duplicate webapp is created. If duplicate is detected all headers and cookies are updated.
+     * in the end application is put into scan queue.
+     *
+     * @param id of a project to link with webapp
+     * @param webAppScanModelList model of app to create/update and scan
+     * @param origin place which execute method. Necessary for Scan Strategy.
+     * @return entity with status CREATED when scan is created, NOT_FOUND when there is no project and PRECONDITION_FAILED when duplicate detected
+     */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public ResponseEntity<Status> processScanWebAppRequest(Long id, List<WebAppScanModel> webAppScanModelList, String origin) {
         synchronized (this) {
@@ -109,6 +126,7 @@ public class WebAppScanService {
         }
     }
 
+
     private WebApp getProperWebAppForUpdate(List<WebApp> webAppsByRegex) {
         if (webAppsByRegex.size() > 1) {
             WebApp webApp = webAppsByRegex.get(0);
@@ -123,6 +141,14 @@ public class WebAppScanService {
         }
     }
 
+    /**
+     * Create webapp by given model and put it into the scan queue.
+     *
+     * @param webAppScanModel model of app to create/update and scan
+     * @param project to link with webapp
+     * @param origin origin of request. Required for Scan Strategy
+     * @return requestiD in form of UUID
+     */
     private String createAndPutWebAppToQueue(WebAppScanModel webAppScanModel, Project project, String origin) {
         WebApp webApp = new WebApp();
         webApp.setProject(project);
@@ -144,6 +170,13 @@ public class WebAppScanService {
         return webApp.getRequestId();
     }
 
+    /**
+     * Update webapp by given model and put it into the scan queue.
+     *
+     * @param webAppScanModel model of app to create/update and scan
+     * @param webApp to update
+     * @return requestiD in form of UUID
+     */
     private String updateAndPutWebAppToQueue(WebApp webApp, WebAppScanModel webAppScanModel) throws ParseException {
         webApp.setUrl(webAppScanModel.getUrl());
         webApp.setInQueue(canPutWebAppToQueueDueToLastExecuted(webApp));
@@ -155,6 +188,12 @@ public class WebAppScanService {
         return webApp.getRequestId();
     }
 
+    /**
+     * Method which verify if webapp should be put into the queue. If there was 8 hours between last scan exeution and current request scan is not put into queue.
+     *
+     * @param webApp to check
+     * @return information if there was a scan executed within last 8 hours
+     */
     private boolean canPutWebAppToQueueDueToLastExecuted(WebApp webApp) throws ParseException {
         if (webApp.getRunning()) {
             return false;
@@ -167,6 +206,13 @@ public class WebAppScanService {
         }
     }
 
+    /**
+     * Method which update WebAppHeaders and WebAppCoookie for existing webapp
+     *
+     * @param headers from request to update
+     * @param cookies from request to update
+     * @param webApp to update params
+     */
     synchronized private void updateHeadersAndCookies(List<RequestHeaders> headers, List<CustomCookie> cookies, WebApp webApp) {
         if (headers != null) {
             removeHeadersForWebApp(webApp);
@@ -184,6 +230,13 @@ public class WebAppScanService {
         }
     }
 
+    /**
+     * Method which creates headers and cookies for new webapp
+     *
+     * @param headers from request
+     * @param cookies from request
+     * @param webApp to link with headers and cookies
+     */
     synchronized private void createHeaderAndCookies(List<RequestHeaders> headers, List<CustomCookie> cookies, WebApp webApp) {
         if (headers != null) {
             for (RequestHeaders header : headers) {
@@ -197,18 +250,43 @@ public class WebAppScanService {
         }
     }
 
+    /**
+     * Method which use regex function of SQL to check for duplicates of given URL
+     *
+     * @param url to check for duplicates
+     * @param id of system to check
+     * @return list of webapplication which match regex
+     */
     private List<WebApp> checkRegexes(String url, Long id) {
         return waRepository.getWebAppByRegexAsList(url + "$", id);
     }
 
+    /**
+     * Removes cookies from webapp
+     *
+     * @param webApp to get cookies
+     */
     private void removeCookiesForWebApp(WebApp webApp) {
         webAppCookieRepository.deleteCookiesForWebApp(webApp.getId());
     }
 
+    /**
+     * Remove headers from webapp
+     *
+     * @param webApp to get headers
+     */
     private void removeHeadersForWebApp(WebApp webApp) {
         webAppHeaderRepository.deleteHeaderForWebApp(webApp.getId());
     }
 
+    /**
+     * Method which creates link between webapp and codeproject
+     *
+     * @param webApp to link
+     * @param project to verify
+     * @param sd model of application
+     * @return webapplication with link
+     */
     private WebApp setCodeProjectLink(WebApp webApp, Project project, WebAppScanModel sd) {
         if (sd.getCodeGroup() != null) {
             Optional<CodeGroup> codeGroup = codeGroupRepository.findByProjectAndName(project, sd.getCodeGroup());
@@ -227,6 +305,7 @@ public class WebAppScanService {
         }
         return webApp;
     }
+
 
     private void createWebAppHeader(String headerName, String headerValue, WebApp webApp) {
         WebAppHeader waHeaderNew = new WebAppHeader();
