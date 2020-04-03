@@ -331,7 +331,6 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 	//SSC - status of cloduscan job
 	private boolean verifyCloudScanJob(CodeGroup cg) throws ParseException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, IOException {
 		try {
-			log.info("verify cloudscanjob for {} with id {}", cg.getName(), cg.getScanid());
 			io.mixeway.db.entity.Scanner scanner = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_FORTIFY)).get(0);
 			CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
 			String API_JOB_STATE = "/api/v1/cloudjobs";
@@ -473,7 +472,6 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 	@Transactional(propagation = Propagation.REQUIRES_NEW)
 	void updateScanIdForCodeGrorup(CodeGroup codeGroup, String scanId) {
 		codeGroupRepository.runUpdateScanGroupToSetScanId(codeGroup.getId(), scanId);
-		log.info("Set {} scan id to {}", codeGroup.getName(), codeGroup.getScanid());
 	}
 	private boolean getScanIdForCodeGroup(CodeGroup cg) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
 		List<io.mixeway.db.entity.Scanner> fortify = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_FORTIFY_SCA));
