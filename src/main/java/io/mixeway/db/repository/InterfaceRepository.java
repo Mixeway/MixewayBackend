@@ -50,4 +50,5 @@ public interface InterfaceRepository extends JpaRepository<Interface, Long>{
 	@Modifying
 	@Query(value = "update interface set scanrunning=false where scanrunning=true", nativeQuery = true)
     void updateStateForNotRunningScan();
+	List<Interface> findByActive(Boolean active);
 }

@@ -33,6 +33,15 @@ public class CodeProject {
 	@JsonIgnore private Set<SoftwarePacket> softwarePackets;
 	private String branch;
 	@JsonIgnore private String requestId;
+	private int risk;
+
+	public int getRisk() {
+		return risk;
+	}
+
+	public void setRisk(int risk) {
+		this.risk = risk;
+	}
 
 	@Column(name="dtrackuuid")
 	public String getdTrackUuid() {
