@@ -35,14 +35,13 @@ public class WebAppService {
     private final WebAppHeaderRepository webAppHeaderRepository;
     private final WebAppScanRepository webAppScanRepository;
     private final WebAppVulnRepository webAppVulnRepository;
-    private final ProjectRiskAnalyzer projectRiskAnalyzer;
     private final WebAppScanService webAppScanService;
     private final PermissionFactory permissionFactory;
     private final RoutingDomainRepository routingDomainRepository;
 
     WebAppService(WebAppRepository webAppRepository, ScannerTypeRepository scannerTypeRepository, WebAppScanService webAppScanService,
                   ScannerRepository scannerRepository, ProjectRepository projectRepository, WebAppHeaderRepository webAppHeaderRepository,
-                  WebAppScanRepository webAppScanRepository, WebAppVulnRepository webAppVulnRepository, ProjectRiskAnalyzer projectRiskAnalyzer,
+                  WebAppScanRepository webAppScanRepository, WebAppVulnRepository webAppVulnRepository,
                   PermissionFactory permissionFactory, RoutingDomainRepository routingDomainRepository){
         this.webAppHeaderRepository = webAppHeaderRepository;
         this.webAppRepository = webAppRepository;
@@ -53,7 +52,6 @@ public class WebAppService {
         this.permissionFactory = permissionFactory;
         this.webAppVulnRepository = webAppVulnRepository;
         this.webAppScanService = webAppScanService;
-        this.projectRiskAnalyzer = projectRiskAnalyzer;
         this.routingDomainRepository = routingDomainRepository;
     }
 
@@ -171,8 +169,7 @@ public class WebAppService {
                 webAppModel.setRunning(wa.getRunning());
                 webAppModel.setUrl(wa.getUrl());
                 webAppModel.setInQueue(wa.getInQueue());
-                int risk = projectRiskAnalyzer.getWebAppRisk(wa);
-                webAppModel.setRisk(Math.min(risk, 100));
+                webAppModel.setRisk(wa.getRisk());
                 webAppModels.add(webAppModel);
             }
             webAppCard.setWebAppModels(webAppModels);

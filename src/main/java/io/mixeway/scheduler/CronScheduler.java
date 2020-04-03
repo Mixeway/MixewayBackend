@@ -139,7 +139,8 @@ public class CronScheduler {
             int risk = projectRiskAnalyzer.getProjectAuditRisk(p) +
                     projectRiskAnalyzer.getProjectInfraRisk(p) +
                     projectRiskAnalyzer.getProjectCodeRisk(p) +
-                    projectRiskAnalyzer.getProjectWebAppRisk(p);
+                    projectRiskAnalyzer.getProjectWebAppRisk(p) +
+                    projectRiskAnalyzer.getProjectOpenSourceRisk(p);
             p.setRisk(Math.min(risk, 100));
         }
         log.info("Updater risks for projects");
@@ -151,7 +152,7 @@ public class CronScheduler {
             int risk = projectRiskAnalyzer.getInterfaceRisk(i);
             i.setRisk(Math.min(risk, 100));
         }
-        log.info("Updater risks for interfaces");
+        log.info("Updated risks for interfaces");
     }
     @Scheduled(fixedDelay = 11100000)
     @Transactional
@@ -159,15 +160,15 @@ public class CronScheduler {
         for(WebApp webApp : webAppRepository.findAll()){
             webApp.setRisk(Math.min(projectRiskAnalyzer.getWebAppRisk(webApp), 100));
         }
-        log.info("Updater risks for webapps");
+        log.info("Updated risks for webapps");
     }
     @Scheduled(fixedDelay = 10800000)
     @Transactional
     public void setRiskForCodeProject() {
         for (CodeProject codeProject: codeProjectRepository.findAll()){
-            codeProject.setRisk(Math.min(projectRiskAnalyzer.getCodeProjectRisk(codeProject), 100));
+            codeProject.setRisk(Math.min(projectRiskAnalyzer.getCodeProjectRisk(codeProject) + projectRiskAnalyzer.getCodeProjectOpenSourceRisk(codeProject), 100));
         }
-        log.info("Updater risks for codeprojects");
+        log.info("Updated risks for codeprojects");
     }
 
     //every 3 minutes

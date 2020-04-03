@@ -64,6 +64,12 @@ public class ProjectRiskAnalyzer {
         return codeVulnRepository.countRiskForCodeProject(cp.getId(),CODE_CRITIC_WAGE,CODE_HIGH_WAGE,Constants.FORTIFY_ANALYSIS_EXPLOITABLE);
     }
 
+    public int getCodeProjectOpenSourceRisk(CodeProject codeProject){
+        int result = 0;
+        result += softwarePacketVulnerabilityRepository.getSoftwareVulnsForCodeProjectAndSeverity(codeProject.getId(), Constants.VULN_CRITICALITY_CRITICAL).size() * OS_CRIT_WAGE;
+        result += softwarePacketVulnerabilityRepository.getSoftwareVulnsForCodeProjectAndSeverity(codeProject.getId(), Constants.VULN_CRITICALITY_HIGH).size() * OS_HIGH_WAGE;
+        return result;
+    }
     public int getProjectOpenSourceRisk(Project project) {
         int result = 0;
         result += softwarePacketVulnerabilityRepository.getSoftwareVulnsForProjectAndSeverity(project.getId(), Constants.VULN_CRITICALITY_CRITICAL).size() * OS_CRIT_WAGE;
