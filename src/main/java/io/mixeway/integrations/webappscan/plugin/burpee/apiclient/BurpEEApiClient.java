@@ -83,20 +83,6 @@ public class BurpEEApiClient implements SecurityScanner, WebAppScanClient {
     public void runScan(WebApp webApp, Scanner scanner) throws Exception {
         try {
             ScanRequest scanRequest = new ScanRequest(webApp, scanner);
-            ObjectMapper Obj = new ObjectMapper();
-
-            try {
-
-                // get Oraganisation object as a json string
-                String jsonStr = Obj.writeValueAsString(scanRequest);
-
-                // Displaying JSON String
-                System.out.println(jsonStr);
-            }
-
-            catch (IOException e) {
-                e.printStackTrace();
-            }
             RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(scanner);
             HttpEntity<ScanRequest> entity = new HttpEntity<>(scanRequest);
             ResponseEntity<String> response = restTemplate.exchange(scanner.getApiUrl() + "/api/"+vaultHelper.getPassword(scanner.getApiKey()) + "/v0.1/scan",

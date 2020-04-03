@@ -326,7 +326,9 @@ public class WebAppScanService {
                     }
                 }
                 log.debug("Starget scan for {} taken from queue", webApp.getUrl());
-
+            } else if (scanner == null) {
+                webApp.setInQueue(false);
+                log.info("Cannot find proper scanner to scan {} removeing from queue", webApp.getUrl());
             }
         }
     }
