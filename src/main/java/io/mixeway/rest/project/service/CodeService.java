@@ -36,7 +36,6 @@ public class CodeService {
     private static final Logger log = LoggerFactory.getLogger(CodeService.class);
     private final ProjectRepository projectRepository;
     private final CodeProjectRepository codeProjectRepository;
-    private final ProjectRiskAnalyzer projectRiskAnalyzer;
     private final CodeGroupRepository codeGroupRepository;
     private final VaultHelper vaultHelper;
     private final CodeVulnRepository codeVulnRepository;
@@ -44,13 +43,11 @@ public class CodeService {
     private final CodeScanService codeScanService;
     private final OpenSourceScanService openSourceScanService;
 
-    CodeService(ProjectRepository projectRepository, CodeProjectRepository codeProjectRepository,
-                ProjectRiskAnalyzer projectRiskAnalyzer, CodeGroupRepository codeGroupRepository,
+    CodeService(ProjectRepository projectRepository, CodeProjectRepository codeProjectRepository, CodeGroupRepository codeGroupRepository,
                 VaultHelper vaultHelper, CodeVulnRepository codeVulnRepository, PermissionFactory permissionFactory,
                 CodeScanService  codeScanService, OpenSourceScanService openSourceScanService) {
         this.projectRepository = projectRepository;
         this.codeProjectRepository = codeProjectRepository;
-        this.projectRiskAnalyzer = projectRiskAnalyzer;
         this.vaultHelper = vaultHelper;
         this.codeGroupRepository = codeGroupRepository;
         this.codeVulnRepository = codeVulnRepository;
@@ -74,8 +71,7 @@ public class CodeService {
                 codeModel.setId(cp.getId());
                 codeModel.setdTrackUuid(cp.getdTrackUuid());
                 codeModel.setRunning(cp.getCodeGroup().isRunning());
-                int risk = projectRiskAnalyzer.getCodeProjectRisk(cp);
-                codeModel.setRisk(Math.min(risk, 100));
+                codeModel.setRisk(cp.getRisk());
                 codeModels.add(codeModel);
             }
             codeCard.setCodeModels(codeModels);

@@ -48,6 +48,15 @@ public class Project implements Serializable{
 	@JsonIgnore private boolean autoInfraScan;
 	@JsonIgnore private String apiKey;
 	@JsonIgnore private Set<VulnHistory> vulnHistories;
+	private int risk;
+
+	public int getRisk() {
+		return risk;
+	}
+
+	public void setRisk(int risk) {
+		this.risk = risk;
+	}
 
 	@ManyToMany(mappedBy = "projects")
 	public Set<User> getUsers() {

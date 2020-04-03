@@ -227,7 +227,15 @@ public class WebApp {
 	public void setLastscan(String lastscan) {
 		this.lastscan = lastscan;
 	}
+	private int risk;
 
+	public int getRisk() {
+		return risk;
+	}
+
+	public void setRisk(int risk) {
+		this.risk = risk;
+	}
 	@PrePersist
 	public void webAppPrePersist(){
 		if (inQueue == null)

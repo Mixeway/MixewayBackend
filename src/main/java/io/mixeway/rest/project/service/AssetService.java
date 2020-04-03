@@ -29,7 +29,6 @@ public class AssetService {
     private static final Logger log = LoggerFactory.getLogger(AssetService.class);
     private final ProjectRepository projectRepository;
     private final InterfaceRepository interfaceRepository;
-    private final ProjectRiskAnalyzer projectRiskAnalyzer;
     private final RoutingDomainRepository routingDomainRepository;
     private final AssetRepository assetRepository;
     private final ScanHelper scanHelper;
@@ -42,13 +41,11 @@ public class AssetService {
     }};
 
     AssetService(ProjectRepository projectRepository, InterfaceRepository interfaceRepository,
-                 ProjectRiskAnalyzer projectRiskAnalyzer,
                  RoutingDomainRepository routingDomainRepository, AssetRepository assetRepository,
                  ScanHelper scanHelper, InfrastructureVulnRepository infrastructureVulnRepository, NetworkScanService networkScanService,
                  PermissionFactory permissionFactory){
         this.projectRepository = projectRepository;
         this.interfaceRepository = interfaceRepository;
-        this.projectRiskAnalyzer = projectRiskAnalyzer;
         this.permissionFactory = permissionFactory;
         this.routingDomainRepository = routingDomainRepository;
         this.assetRepository = assetRepository;
@@ -71,8 +68,7 @@ public class AssetService {
                     am.setIpAddress(i.getPrivateip());
                     am.setRoutingDomain(i.getRoutingDomain() != null ? i.getRoutingDomain().getName() : i.getAsset().getRoutingDomain().getName());
                     am.setRunning(i.isScanRunning());
-                    int risk = projectRiskAnalyzer.getInterfaceRisk(i);
-                    am.setRisk(Math.min(risk, 100));
+                    am.setRisk(i.getRisk());
                     assetModels.add(am);
                 } catch (NullPointerException e) {
                     log.warn("Nullpointer on show assets of {} and interface {}", project.get().getName(), i.getAsset().getName());

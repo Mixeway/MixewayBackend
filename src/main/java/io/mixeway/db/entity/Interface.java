@@ -36,6 +36,15 @@ public class Interface {
 	@JsonIgnore private String pool;
 	@JsonIgnore private Boolean autoCreated;
 	@JsonIgnore private boolean scanRunning;
+	private int risk;
+
+	public int getRisk() {
+		return risk;
+	}
+
+	public void setRisk(int risk) {
+		this.risk = risk;
+	}
 
 	@Column(name="scanrunning")
 	public boolean isScanRunning() {

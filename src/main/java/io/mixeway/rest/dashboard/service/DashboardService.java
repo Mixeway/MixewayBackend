@@ -30,10 +30,8 @@ import org.slf4j.LoggerFactory;
 @Service
 public class DashboardService {
     private final CreateProjectService createProjectService;
-    private final FindProjectService findProjectService;
     private final VulnHistoryRepository vulnHistoryRepository;
     private final ProjectRepository projectRepository;
-    private final ProjectRiskAnalyzer projectRiskAnalyzer;
     private final UserRepository userRepository;
     private final InterfaceRepository interfaceRepository;
     private final WebAppRepository webAppRepository;
@@ -45,12 +43,10 @@ public class DashboardService {
 
     DashboardService(InfrastructureVulnRepository infrastructureVulnRepository, CodeVulnRepository codeVulnRepository, WebAppVulnRepository webAppVulnRepository,
                      CodeProjectRepository codeProjectRepository, WebAppRepository webAppRepository, InterfaceRepository interfaceRepository,
-                     UserRepository userRepository, ProjectRiskAnalyzer projectRiskAnalyzer, ProjectRepository projectRepository, VulnHistoryRepository vulnHistoryRepository,
-                     FindProjectService findProjectService, CreateProjectService createProjectService,PermissionFactory permissionFactory){
+                     UserRepository userRepository, ProjectRepository projectRepository, VulnHistoryRepository vulnHistoryRepository,
+                     CreateProjectService createProjectService,PermissionFactory permissionFactory){
         this.createProjectService = createProjectService;
-        this.findProjectService = findProjectService;
         this.userRepository = userRepository;
-        this.projectRiskAnalyzer = projectRiskAnalyzer;
         this.permissionFactory = permissionFactory;
         this.projectRepository = projectRepository;
         this.vulnHistoryRepository = vulnHistoryRepository;
@@ -74,16 +70,12 @@ public class DashboardService {
     public List<Projects> getProjects(Principal principal) {
         List<Projects> projects = new ArrayList<>();
         for (Project p : permissionFactory.getProjectForPrincipal(principal)){
-            int risk = projectRiskAnalyzer.getProjectAuditRisk(p) +
-                    projectRiskAnalyzer.getProjectInfraRisk(p) +
-                    projectRiskAnalyzer.getProjectCodeRisk(p) +
-                    projectRiskAnalyzer.getProjectWebAppRisk(p);
             Projects projects1 = new Projects();
             projects1.setId(p.getId());
             projects1.setCiid(p.getCiid());
             projects1.setName(p.getName());
             projects1.setDescription(p.getDescription());
-            projects1.setRisk(risk > 100 ? 100:risk);
+            projects1.setRisk(p.getRisk());
             projects.add(projects1);
         }
         return projects;
