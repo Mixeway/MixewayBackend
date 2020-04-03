@@ -1,6 +1,5 @@
 package io.mixeway.integrations.webappscan.plugin.burpee.apiclient;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
@@ -8,7 +7,6 @@ import io.mixeway.db.repository.*;
 import io.mixeway.integrations.webappscan.plugin.acunetix.apiclient.AcunetixApiClient;
 import io.mixeway.integrations.webappscan.plugin.burpee.model.*;
 import io.mixeway.integrations.webappscan.service.WebAppScanClient;
-import io.mixeway.pojo.ApiClientException;
 import io.mixeway.pojo.SecureRestTemplate;
 import io.mixeway.pojo.SecurityScanner;
 import io.mixeway.pojo.VaultHelper;

@@ -1,4 +1,4 @@
-name: Deploy to Dockerhub with prod version
+name: Deploy prod version
 on:
   push:
     branches:

@@ -1,6 +1,6 @@
 <a href="/Mixeway/MixewayBackend/blob/master/CHANGELOG.md"><img src="https://camo.githubusercontent.com/452f81a1e660cf8f9a47db9405ce06a0f216221b/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f2d6368616e67656c6f672d626c75652e737667" alt="https://img.shields.io/badge/-changelog-blue.svg" data-canonical-src="https://img.shields.io/badge/-changelog-blue.svg" style="max-width:100%;"></a>
 <a href="hub.docker.comd"><img src="https://img.shields.io/docker/pulls/mixeway/backend?logo=Mixeway&style=plastic" alt="https://img.shields.io/badge/-changelog-blue.svg" data-canonical-src="https://img.shields.io/badge/-changelog-blue.svg" style="max-width:100%;"></a>
-[![Build Status](https://travis-ci.org/Mixeway/MixewayBackend.svg?branch=master)](https://travis-ci.org/Mixeway/MixewayBackend)
+![](https://github.com/Mixeway/MixewayBackend/workflows/Deploy%20prod%20version/badge.svg?branch=master)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Mixeway_MixewayBackend&metric=alert_status)](https://sonarcloud.io/dashboard?id=Mixeway_MixewayBackend)
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=Mixeway_MixewayBackend&metric=security_rating)](https://sonarcloud.io/dashboard?id=Mixeway_MixewayBackend)
 
