@@ -205,8 +205,11 @@ public class CodeGroup {
 
 	@PreUpdate
 	void preUpdate(){
-		System.out.println("CodeGroup "+name+" scanId "+(scanid!=null? scanid:"empty"));
+		System.out.println("Update CodeGroup "+name+" scanId "+(scanid!=null? scanid:"empty"));
 	}
-	
+	@PrePersist
+	void prePersist(){
+		System.out.println("Persist CodeGroup "+name+" scanId "+(scanid!=null? scanid:"empty"));
+	}
 
 }
