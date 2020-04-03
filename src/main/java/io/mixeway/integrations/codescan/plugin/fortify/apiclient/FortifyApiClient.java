@@ -471,7 +471,6 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 
 	@Transactional(propagation = Propagation.REQUIRES_NEW)
 	void updateScanIdForCodeGrorup(CodeGroup codeGroup, String scanId) {
-		log.info("Starting to setup cloud scan");
 		codeGroup.setScanid(scanId);
 		codeGroupRepository.save(codeGroup);
 		log.info("Set {} scan id to {}", codeGroup.getName(), codeGroup.getScanid());

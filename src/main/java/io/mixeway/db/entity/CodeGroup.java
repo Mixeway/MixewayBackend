@@ -2,18 +2,7 @@ package io.mixeway.db.entity;
 
 import java.util.Set;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EntityListeners;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
@@ -213,7 +202,11 @@ public class CodeGroup {
 	public void setHasProjects(Boolean hasProjects) {
 		this.hasProjects = hasProjects;
 	}
-	
+
+	@PreUpdate
+	void preUpdate(){
+		System.out.println("CodeGroup "+name+" scanId "+(scanid!=null? scanid:"empty"));
+	}
 	
 
 }
