@@ -167,6 +167,7 @@ public class WebAppService {
                 WebAppModel webAppModel = new WebAppModel();
                 webAppModel.setPublicScan(wa.getPublicscan()!=null ? wa.getPublicscan() : false);
                 webAppModel.setWebAppId(wa.getId());
+                webAppModel.setRoutingDomain(wa.getRoutingDomain());
                 webAppModel.setRunning(wa.getRunning());
                 webAppModel.setUrl(wa.getUrl());
                 webAppModel.setInQueue(wa.getInQueue());

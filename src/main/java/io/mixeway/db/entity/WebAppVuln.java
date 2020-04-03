@@ -39,14 +39,19 @@ public class WebAppVuln implements Vulnerability {
 
 	public WebAppVuln(){};
 
-    public WebAppVuln(WebApp webapp, Issue issue, Map.Entry issuePath, List<IssueDetail> issueDetails) {
-    	this.webApp = webapp;
-    	this.description = Objects.requireNonNull(issueDetails.stream().filter(issueDetail -> issueDetail.getIssue_type_id().equals(issue.getType_index())).findFirst().orElse(null)).getDescription();
-    	this.recommendation = Objects.requireNonNull(issueDetails.stream().filter(issueDetail -> issueDetail.getIssue_type_id().equals(issue.getType_index())).findFirst().orElse(null)).getRemediation();
-    	this.name = Objects.requireNonNull(issueDetails.stream().filter(issueDetail -> issueDetail.getIssue_type_id().equals(issue.getType_index())).findFirst().orElse(null)).getName();
-   		this.location = issuePath.getKey().toString();
-   		this.severity = issue.getSeverity();
-    }
+	/**
+	 * Used for burp loadVulnerabilities
+	 *
+	 * @param webApp which contains vuln
+	 * @param issue get from burp REST API
+	 */
+    public WebAppVuln(WebApp webApp, Issue issue){
+    	this.webApp = webApp;
+    	this.description = issue.getDescription();
+    	this.name = issue.getName();
+    	this.severity = issue.getSeverity();
+    	this.location = issue.getOrigin()+issue.getPath();
+	}
 
     @Column(name="ticketid")
 	public String getTicketId() {

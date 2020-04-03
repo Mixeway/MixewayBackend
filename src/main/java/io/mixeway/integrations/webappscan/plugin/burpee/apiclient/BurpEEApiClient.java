@@ -1,5 +1,6 @@
 package io.mixeway.integrations.webappscan.plugin.burpee.apiclient;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
@@ -30,6 +31,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.function.Predicate;
 
@@ -49,7 +51,7 @@ public class BurpEEApiClient implements SecurityScanner, WebAppScanClient {
     private final WebAppVulnRepository webAppVulnRepository;
     private final StatusRepository statusRepository;
     private final WebAppRepository webAppRepository;
-
+    private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     public BurpEEApiClient(ScannerTypeRepository scannerTypeRepository, ProxiesRepository proxiesRepository,
                            RoutingDomainRepository routingDomainRepository, ScannerRepository scannerRepository,
@@ -81,40 +83,33 @@ public class BurpEEApiClient implements SecurityScanner, WebAppScanClient {
     public void runScan(WebApp webApp, Scanner scanner) throws Exception {
         try {
             ScanRequest scanRequest = new ScanRequest(webApp, scanner);
-            //log.info
+            ObjectMapper Obj = new ObjectMapper();
+
+            try {
+
+                // get Oraganisation object as a json string
+                String jsonStr = Obj.writeValueAsString(scanRequest);
+
+                // Displaying JSON String
+                System.out.println(jsonStr);
+            }
+
+            catch (IOException e) {
+                e.printStackTrace();
+            }
             RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(scanner);
             HttpEntity<ScanRequest> entity = new HttpEntity<>(scanRequest);
-            ResponseEntity<String> response = restTemplate.exchange(scanner.getApiUrl() + "/api/" + vaultHelper.getPassword(scanner.getApiKey()) + "/v0.1/scan",
-                    HttpMethod.GET, entity, String.class);
+            ResponseEntity<String> response = restTemplate.exchange(scanner.getApiUrl() + "/api/"+vaultHelper.getPassword(scanner.getApiKey()) + "/v0.1/scan",
+                    HttpMethod.POST, entity, String.class);
             if (response.getStatusCode().equals(HttpStatus.CREATED)) {
                 if (StringUtils.isBlank(webApp.getScanId())) {
-                    getScanIdForWebApp(webApp, scanner);
+                    webApp.setScanId(response.getHeaders().getLocation().toString());
                 }
                 webApp.setRunning(true);
+                log.info("Web Application scan for {} started on {} ({}) scanId <{}>", webApp.getUrl(),scanner.getScannerType().getName(),scanner.getApiUrl(),webApp.getScanId());
             }
         } catch (HttpClientErrorException e){
             log.error("Cannot run scan for {} - {}", webApp.getUrl(), e.getStatusCode());
-        }
-    }
-
-    /**
-     * Getting list of sites on Burp EE, and then filter through it and filter for site with name of a webapp.url
-     * then save scanId for later use.
-     *
-     * @param webApp subject
-     * @param scanner on which requests will be executed
-     */
-    private void getScanIdForWebApp(WebApp webApp, Scanner scanner) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
-        try {
-            RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(scanner);
-            HttpEntity<String> entity = new HttpEntity<>(prepareAuthHeader(scanner));
-            ResponseEntity<GetSites> response = restTemplate.exchange(scanner.getApiUrl() + "/api-internal/sites/",
-                    HttpMethod.GET, entity, GetSites.class);
-            if (response.getStatusCode().equals(HttpStatus.OK)) {
-                webApp.setScanId(Objects.requireNonNull(response.getBody()).getTrees().stream().filter(site -> site.getName().equals(webApp.getUrl())).findFirst().orElse(null).getId());
-            }
-        } catch (HttpClientErrorException e){
-            log.error("Cannot get ID of site of {} - {}", webApp.getUrl(),e.getStatusCode());
         }
     }
 
@@ -140,13 +135,11 @@ public class BurpEEApiClient implements SecurityScanner, WebAppScanClient {
     public Boolean isScanDone(Scanner scanner, WebApp webApp) throws Exception {
         try {
             RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(scanner);
-            HttpEntity<String> entity = new HttpEntity<>(prepareAuthHeader(scanner));
-            ResponseEntity<ScanSummaries> response = restTemplate.exchange(scanner.getApiUrl() + "/api-internal/sites/" + webApp.getScanId() + "/scan_summaries",
-                    HttpMethod.GET, entity, ScanSummaries.class);
-            if (response.getStatusCode().equals(HttpStatus.OK)) {
-                Predicate<Scan> scanRunning = scan -> scan.getStatus().equals(Constants.BURP_SCAN_RUNNING) || scan.getStatus().equals(Constants.BURP_SCAN_QUEUED);
-                return response.getBody().getRows().stream().noneMatch(scanRunning);
-            }
+            ResponseEntity<ScanResults> response = restTemplate.exchange(scanner.getApiUrl() + "/api/"+ vaultHelper.getPassword(scanner.getApiKey()) + "/v0.1/scan/"+ webApp.getScanId(),
+                    HttpMethod.GET, null, ScanResults.class);
+            return (response.getStatusCode().equals(HttpStatus.OK) &&
+                    (Objects.requireNonNull(response.getBody()).getScan_status().equals(Constants.BURP_STATUS_FAILED)
+                            || response.getBody().getScan_status().equals(Constants.BURP_STATUS_SUCCEEDED)));
         } catch (HttpClientErrorException e){
             log.error("Cannot check status of scan for {} - {}", webApp.getUrl(),e.getStatusCode());
         }
@@ -178,26 +171,21 @@ public class BurpEEApiClient implements SecurityScanner, WebAppScanClient {
     @Override
     public Boolean loadVulnerabilities(Scanner scanner, WebApp webApp, String paginator, List<WebAppVuln> oldVulns) throws Exception {
         try {
-            List<IssueDetail> issueDetails = this.getIssueDetailsFromBurp(scanner);
             RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(scanner);
-            HttpEntity<String> entity = new HttpEntity<>(prepareAuthHeader(scanner));
-            ResponseEntity<SiteIssues> response = restTemplate.exchange(scanner.getApiUrl() + "/api-internal/issues/node/"+webApp.getScanId(),
-                    HttpMethod.GET, entity, SiteIssues.class);
+            ResponseEntity<ScanResults> response = restTemplate.exchange(scanner.getApiUrl() + "/api/"+ vaultHelper.getPassword(scanner.getApiKey()) + "/v0.1/scan/"+ webApp.getScanId(),
+                    HttpMethod.GET, null, ScanResults.class);
             if (response.getStatusCode().equals(HttpStatus.OK)) {
-                for (Issue issue : Objects.requireNonNull(response.getBody()).getAggregated_issue_type_summaries()){
-                    Map<String, String> issuePaths = this.findPathOfVulnerability(scanner,webApp,response.getBody().getTimestamp(),issue.getType_index());
-                    for (Map.Entry issuePath : issuePaths.entrySet()){
-                        assert issueDetails != null;
-                        WebAppVuln vuln = new WebAppVuln(webApp,issue, issuePath, issueDetails);
-                        Optional<WebAppVuln> webAppVulnOptional = oldVulns.stream().filter(webAppVuln -> webAppVuln.getSeverity().equals(vuln.getSeverity()) &&
-                                webAppVuln.getLocation().equals(vuln.getLocation()) && webAppVuln.getName().equals(vuln.getName())).findFirst();
-                        if (webAppVulnOptional.isPresent())
-                            vuln.setStatus(statusRepository.findByName(Constants.STATUS_EXISTING));
-                        else
-                            vuln.setStatus(statusRepository.findByName(Constants.STATUS_NEW));
-                        webAppVulnRepository.save(vuln);
-                    }
+                for (IssueEvents issue : Objects.requireNonNull(response.getBody()).getIssue_events()) {
+                    WebAppVuln vuln = new WebAppVuln(webApp, issue.getIssue());
+                    Optional<WebAppVuln> webAppVulnOptional = oldVulns.stream().filter(webAppVuln -> webAppVuln.getSeverity().equals(vuln.getSeverity()) &&
+                            webAppVuln.getLocation().equals(vuln.getLocation()) && webAppVuln.getName().equals(vuln.getName())).findFirst();
+                    if (webAppVulnOptional.isPresent())
+                        vuln.setStatus(statusRepository.findByName(Constants.STATUS_EXISTING));
+                    else
+                        vuln.setStatus(statusRepository.findByName(Constants.STATUS_NEW));
+                    webAppVulnRepository.save(vuln);
                 }
+                webApp.setLastExecuted(sdf.format(new Date()));
                 webApp.setRunning(false);
                 webAppRepository.save(webApp);
                 log.info("Successfully loaded vulnerabilities for {}", webApp.getUrl());
@@ -209,54 +197,6 @@ public class BurpEEApiClient implements SecurityScanner, WebAppScanClient {
         return false;
     }
 
-    /**
-     * Method which get issueDetails from Burp API. this is reusable list that create connection with scan results and issue in order to
-     * create description for WebAppVuln.
-     * @param scanner on which details will be loaded
-     * @return list of details
-     */
-    private List<IssueDetail> getIssueDetailsFromBurp(Scanner scanner) throws ApiClientException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
-        try {
-            RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(scanner);
-            HttpEntity<String> entity = new HttpEntity<>(prepareAuthHeader(scanner));
-            ResponseEntity<GetIssueDetails> response = restTemplate.exchange(scanner.getApiUrl() + "/api-internal/issue_definitions",
-                    HttpMethod.GET, entity, GetIssueDetails.class);
-            if (response.getStatusCode().equals(HttpStatus.OK)) {
-                return Objects.requireNonNull(response.getBody()).getDefinitions();
-            }
-        } catch (HttpClientErrorException e){
-            log.error("Cannot get issue details for {}", scanner.getApiUrl());
-        }
-        return null;
-    }
-
-    /**
-     * Method which calls Burp to get specific information about vulnerability of given typeIndexId for webapp
-     *
-     * @param scanner on which REST APi will be called
-     * @param webApp webapp to get vuln for
-     * @param timestamp timestamp of a scan get from SiteIssue object
-     * @param typeIndex of vulnerability to get details
-     * @return Map of path vulnerabilities with confidance score
-     */
-    private Map<String,String> findPathOfVulnerability(Scanner scanner, WebApp webApp, long timestamp, String typeIndex){
-        Map<String,String> issueDetails = new HashMap<>();
-        try {
-            RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(scanner);
-            HttpEntity<String> entity = new HttpEntity<>(prepareAuthHeader(scanner));
-            ResponseEntity<AggregatedIssueSummary> response = restTemplate.exchange(scanner.getApiUrl() + "/api-internal/issues/type-index/"+typeIndex+"/root/"+webApp.getScanId()+
-                    "/?timestamp="+timestamp+"&start=0&count=200",
-                    HttpMethod.GET, entity, AggregatedIssueSummary.class);
-            if (response.getStatusCode().equals(HttpStatus.OK)) {
-                for (IssueSummary issueSummary : response.getBody().getAggregated_issue_summaries()){
-                    issueDetails.put(issueSummary.getOrigin()+issueSummary.getConfidence(),issueSummary.getConfidence());
-                }
-            }
-        } catch (HttpClientErrorException | KeyManagementException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException | CertificateException | IOException e){
-            log.error("Cannot get issue details for {}", scanner.getApiUrl());
-        }
-        return issueDetails;
-    }
 
     /**
      * Method is calling Burp API to get scan configuration and then it saves it. If scan configuration is not accessible

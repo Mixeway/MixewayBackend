@@ -1,12 +1,23 @@
 package io.mixeway.rest.project.model;
 
+import io.mixeway.db.entity.RoutingDomain;
+
 public class WebAppModel {
     Long webAppId;
     String url;
     boolean publicScan;
+    RoutingDomain routingDomain;
     int risk;
     boolean running;
     boolean inQueue;
+
+    public RoutingDomain getRoutingDomain() {
+        return routingDomain;
+    }
+
+    public void setRoutingDomain(RoutingDomain routingDomain) {
+        this.routingDomain = routingDomain;
+    }
 
     public boolean isInQueue() {
         return inQueue;

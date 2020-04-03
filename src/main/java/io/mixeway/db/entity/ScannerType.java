@@ -1,11 +1,6 @@
 package io.mixeway.db.entity;
 
-import javax.persistence.Entity;
-import javax.persistence.EntityListeners;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -26,6 +21,16 @@ public class ScannerType {
 	private boolean authcloudctrltoken;
 	private boolean authapikey;
 	private String category;
+	private int scanLimit;
+
+	@Column(name="scanlimit")
+	public int getScanLimit() {
+		return scanLimit;
+	}
+
+	public void setScanLimit(int scanLimit) {
+		this.scanLimit = scanLimit;
+	}
 
 	public String getCategory() {
 		return category;

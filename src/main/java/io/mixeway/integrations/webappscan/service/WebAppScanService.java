@@ -310,14 +310,13 @@ public class WebAppScanService {
      * Check if Scanner for particular App is limit free and then run the scan for this app.
      * If Limit is exceeded webapp is left inqueue
      *
-     * @throws Exception
      */
     @Transactional
     public void scheduledRunWebAppScanFromQueue() throws Exception {
         List<WebApp> webApps = waRepository.findByInQueue(true);
         for (WebApp webApp : webApps){
             Scanner scanner = getScannerForWebApp(webApp);
-            if (scanner != null && scanner.getRunningScans() < Constants.WEBAPP_SCAN_LIMIT){
+            if (scanner != null && scanner.getRunningScans() < scanner.getScannerType().getScanLimit()){
                 webApp.setInQueue(false);
                 for (WebAppScanClient webAppScanClient : webAppScanClients){
                     if (webAppScanClient.canProcessRequest(scanner)){

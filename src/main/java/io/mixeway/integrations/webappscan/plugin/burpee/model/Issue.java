@@ -6,16 +6,43 @@ import org.codehaus.jackson.annotate.JsonProperty;
  * @author gsiewruk
  */
 public class Issue {
-    String type_index;
-    String confidence;
+    String name;
+    String origin;
+    String path;
     String severity;
+    String confidence;
+    String description;
 
-    public String getType_index() {
-        return type_index;
+    public String getName() {
+        return name;
     }
 
-    public void setType_index(String type_index) {
-        this.type_index = type_index;
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getOrigin() {
+        return origin;
+    }
+
+    public void setOrigin(String origin) {
+        this.origin = origin;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
+    }
+
+    public String getSeverity() {
+        return severity;
+    }
+
+    public void setSeverity(String severity) {
+        this.severity = severity;
     }
 
     public String getConfidence() {
@@ -26,11 +53,11 @@ public class Issue {
         this.confidence = confidence;
     }
 
-    public String getSeverity() {
-        return severity;
+    public String getDescription() {
+        return description;
     }
 
-    public void setSeverity(String severity) {
-        this.severity = severity;
+    public void setDescription(String description) {
+        this.description = description;
     }
 }

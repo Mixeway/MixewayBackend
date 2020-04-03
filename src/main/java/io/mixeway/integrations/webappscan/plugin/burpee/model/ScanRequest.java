@@ -1,22 +1,25 @@
 package io.mixeway.integrations.webappscan.plugin.burpee.model;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.mixeway.db.entity.NessusScanTemplate;
 import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.entity.WebApp;
 import org.codehaus.jackson.annotate.JsonProperty;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
  * @author gsiewruk
  */
+
 public class ScanRequest {
     List<String> urls;
     String name;
-    @JsonProperty("scan_configurations_ids")
-    List<String> scan_configurations_ids;
+    List<ScanConfig> scan_configurations;
 
     ScanRequest() {}
 
@@ -30,13 +33,16 @@ public class ScanRequest {
     public ScanRequest(WebApp webApp, Scanner scanner){
         this.urls = Collections.singletonList(webApp.getUrl());
         this.name = webApp.getUrl();
-        this.scan_configurations_ids = scanner
-                .getNessusScanTemplates()
-                .stream()
-                .map(NessusScanTemplate::getUuid)
-                .distinct()
-                .collect(Collectors.toList());
+        this.scan_configurations = prepareConfigs(scanner.getNessusScanTemplates());
     }
+    List<ScanConfig> prepareConfigs(Set<NessusScanTemplate> nessusScanTemplateSet){
+        List<ScanConfig> scanConfigs = new ArrayList<>();
+        for (NessusScanTemplate nessusScanTemplate : nessusScanTemplateSet){
+            scanConfigs.add(new ScanConfig(nessusScanTemplate));
+        }
+        return scanConfigs;
+    }
+
 
     public List<String> getUrls() {
         return urls;
@@ -54,11 +60,11 @@ public class ScanRequest {
         this.name = name;
     }
 
-    public List<String> getScan_configurations_ids() {
-        return scan_configurations_ids;
+    public List<ScanConfig> getScan_configurations() {
+        return scan_configurations;
     }
 
-    public void setScan_configurations_ids(List<String> scan_configurations_ids) {
-        this.scan_configurations_ids = scan_configurations_ids;
+    public void setScan_configurations(List<ScanConfig> scan_configurations) {
+        this.scan_configurations = scan_configurations;
     }
 }
