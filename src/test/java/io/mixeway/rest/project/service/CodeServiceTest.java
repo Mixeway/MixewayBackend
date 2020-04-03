@@ -79,8 +79,7 @@ public class CodeServiceTest {
     public void setUp(){
         MockitoAnnotations.initMocks(this);
         codeScanClients.add(fortifyApiClient);
-        projectRiskAnalyzer = new ProjectRiskAnalyzer(codeVulnRepository,infrastructureVulnRepository,webAppVulnRepository,interfaceRepository,null);
-        codeService = new CodeService(projectRepository,codeProjectRepository,projectRiskAnalyzer,codeGroupRepository,vaultHelper,codeVulnRepository,
+        codeService = new CodeService(projectRepository,codeProjectRepository,codeGroupRepository,vaultHelper,codeVulnRepository,
                 null,null, null);
         initializeDB();
     }

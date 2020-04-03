@@ -6,6 +6,7 @@ import io.mixeway.rest.dashboard.service.DashboardService;
 import io.mixeway.rest.model.OverAllVulnTrendChartData;
 import io.mixeway.rest.model.Projects;
 import io.mixeway.rest.model.SourceDetectionChartData;
+import io.mixeway.rest.utils.ProjectRiskAnalyzer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;

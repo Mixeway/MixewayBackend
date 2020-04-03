@@ -935,3 +935,13 @@ update webapp set inqueue=false where inqueue is null;
 --changeset siewer:179
 update scannertype set category='WEBAPP' where name='Burp Enterprise Edition';
 update scannertype set category='CODE' where name='Checkmarx';
+
+--changeset siewer:180
+alter table project add column risk int;
+alter table interface add column risk int;
+alter table webapp add column risk int;
+alter table codeproject add column risk int;
+update project set risk=0;
+update interface set risk=0;
+update webapp set risk=0;
+update codeproject set risk=0;

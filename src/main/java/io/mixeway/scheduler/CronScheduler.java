@@ -4,6 +4,7 @@ import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
 import io.mixeway.integrations.opensourcescan.service.OpenSourceScanService;
 import io.mixeway.integrations.infrastructurescan.plugin.remotefirewall.apiclient.RfwApiClient;
+import io.mixeway.rest.utils.ProjectRiskAnalyzer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,7 @@ import io.mixeway.pojo.EmailVulnHelper;
 import io.mixeway.pojo.ScanHelper;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.jws.WebParam;
 import javax.mail.internet.MimeMessage;
 import java.io.IOException;
 import java.security.KeyManagementException;
@@ -50,15 +52,20 @@ public class CronScheduler {
     private final RfwApiClient rfwApiClient;
     private final ScanHelper scanHelper;
     private final OpenSourceScanService openSourceScanService;
+    private final ProjectRiskAnalyzer projectRiskAnalyzer;
+    private final WebAppRepository webAppRepository;
+
     @Autowired
     public CronScheduler(SettingsRepository settingsRepository, VulnHistoryRepository vulnHistoryRepository,
             ProjectRepository projectRepository, WebAppVulnRepository webAppVulnRepository, OpenSourceScanService openSourceScanService,
             CodeVulnRepository codeVulnRepository,  NodeAuditRepository nodeAuditRepository, InfrastructureVulnRepository infrastructureVulnRepository,
             InterfaceRepository interfaceRepository, NessusScanRepository nessusScanRepository, JavaMailSender sender,
             SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository,RfwApiClient rfwApiClient,
-            ScanHelper scanHelper, CodeProjectRepository codeProjectRepository) {
+            ScanHelper scanHelper, CodeProjectRepository codeProjectRepository, ProjectRiskAnalyzer projectRiskAnalyzer,
+                         WebAppRepository webAppRepository) {
         this.settingsRepository = settingsRepository;
         this.codeProjectRepository = codeProjectRepository;
+        this.webAppRepository = webAppRepository;
         this.projectRepository = projectRepository;
         this.vulnHistoryRepository = vulnHistoryRepository;
         this.webAppVulnRepository = webAppVulnRepository;
@@ -72,6 +79,7 @@ public class CronScheduler {
         this.sender = sender;
         this.scanHelper = scanHelper;
         this.openSourceScanService = openSourceScanService;
+        this.projectRiskAnalyzer = projectRiskAnalyzer;
     }
 
     private DOPMailTemplateBuilder templateBuilder = new DOPMailTemplateBuilder();
@@ -122,6 +130,45 @@ public class CronScheduler {
         } catch (Exception ignored) {
         }
 
+    }
+
+    @Scheduled(fixedDelay = 10800000)
+    @Transactional
+    public void setRiskForProject() {
+        for (Project p : projectRepository.findAll()){
+            int risk = projectRiskAnalyzer.getProjectAuditRisk(p) +
+                    projectRiskAnalyzer.getProjectInfraRisk(p) +
+                    projectRiskAnalyzer.getProjectCodeRisk(p) +
+                    projectRiskAnalyzer.getProjectWebAppRisk(p) +
+                    projectRiskAnalyzer.getProjectOpenSourceRisk(p);
+            p.setRisk(Math.min(risk, 100));
+        }
+        log.info("Updater risks for projects");
+    }
+    @Scheduled(fixedDelay = 9800000)
+    @Transactional
+    public void setRiskForAssets() {
+        for (Interface i : interfaceRepository.findByActive(true)){
+            int risk = projectRiskAnalyzer.getInterfaceRisk(i);
+            i.setRisk(Math.min(risk, 100));
+        }
+        log.info("Updated risks for interfaces");
+    }
+    @Scheduled(fixedDelay = 11100000)
+    @Transactional
+    public void setRiskForWebApps() {
+        for(WebApp webApp : webAppRepository.findAll()){
+            webApp.setRisk(Math.min(projectRiskAnalyzer.getWebAppRisk(webApp), 100));
+        }
+        log.info("Updated risks for webapps");
+    }
+    @Scheduled(fixedDelay = 10800000)
+    @Transactional
+    public void setRiskForCodeProject() {
+        for (CodeProject codeProject: codeProjectRepository.findAll()){
+            codeProject.setRisk(Math.min(projectRiskAnalyzer.getCodeProjectRisk(codeProject) + projectRiskAnalyzer.getCodeProjectOpenSourceRisk(codeProject), 100));
+        }
+        log.info("Updated risks for codeprojects");
     }
 
     //every 3 minutes
