@@ -203,13 +203,4 @@ public class CodeGroup {
 		this.hasProjects = hasProjects;
 	}
 
-	@PreUpdate
-	void preUpdate(){
-		System.out.println("Update CodeGroup "+name+" scanId "+(scanid!=null? scanid:"empty"));
-	}
-	@PrePersist
-	void prePersist(){
-		System.out.println("Persist CodeGroup "+name+" scanId "+(scanid!=null? scanid:"empty"));
-	}
-
 }
