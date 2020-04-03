@@ -460,8 +460,8 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 			} else if (response.getBody().getScanId() != null && response.getBody().getCommitid()!=null) {
 				cp.setCommitid(response.getBody().getCommitid());
 				codeProjectRepository.save(cp);
-				updateScanIdForCodeGrorup(cp.getCodeGroup(), response.getBody().getScanId());
 				createCiOperation(cp, response.getBody().getCommitid());
+				updateScanIdForCodeGrorup(cp.getCodeGroup(), response.getBody().getScanId());
 				log.info("Fortify scan was passed to cloudscan for [scope {}] {}", cp.getName(), cp.getCodeGroup().getName());
 				return true;
 			}
@@ -470,13 +470,12 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 	}
 
 	@Transactional(propagation = Propagation.REQUIRES_NEW)
-	private void updateScanIdForCodeGrorup(CodeGroup codeGroup, String scanId) {
+	void updateScanIdForCodeGrorup(CodeGroup codeGroup, String scanId) {
+		log.info("Starting to setup cloud scan");
 		codeGroup.setScanid(scanId);
 		codeGroupRepository.save(codeGroup);
-		log.info("Set {} scan id to {}",codeGroup.getName(), codeGroup.getScanid());
-
+		log.info("Set {} scan id to {}", codeGroup.getName(), codeGroup.getScanid());
 	}
-
 	private boolean getScanIdForCodeGroup(CodeGroup cg) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
 		List<io.mixeway.db.entity.Scanner> fortify = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_FORTIFY_SCA));
 		RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(null);
