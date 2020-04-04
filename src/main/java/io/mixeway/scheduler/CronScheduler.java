@@ -131,7 +131,7 @@ public class CronScheduler {
 
     }
 
-    @Scheduled(fixedDelay = 10800000)
+    @Scheduled(cron="0 3 * * *" )
     @Transactional
     public void setRiskForProject() {
         for (Project p : projectRepository.findAll()){
@@ -144,7 +144,7 @@ public class CronScheduler {
         }
         log.info("Updater risks for projects");
     }
-    @Scheduled(fixedDelay = 9800000)
+    @Scheduled(cron="5 3 * * *" )
     @Transactional
     public void setRiskForAssets() {
         for (Interface i : interfaceRepository.findByActive(true)){
@@ -153,7 +153,7 @@ public class CronScheduler {
         }
         log.info("Updated risks for interfaces");
     }
-    @Scheduled(fixedDelay = 11100000)
+    @Scheduled(cron="10 3 * * *" )
     @Transactional
     public void setRiskForWebApps() {
         for(WebApp webApp : webAppRepository.findAll()){
@@ -161,7 +161,7 @@ public class CronScheduler {
         }
         log.info("Updated risks for webapps");
     }
-    @Scheduled(fixedDelay = 10800000)
+    @Scheduled(cron="15 3 * * *" )
     @Transactional
     public void setRiskForCodeProject() {
         for (CodeProject codeProject: codeProjectRepository.findAll()){

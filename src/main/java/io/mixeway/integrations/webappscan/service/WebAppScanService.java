@@ -11,6 +11,7 @@ import io.mixeway.integrations.webappscan.model.WebAppScanModel;
 import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.Status;
 import io.mixeway.rest.project.model.RunScanForWebApps;
+import io.mixeway.rest.utils.ProjectRiskAnalyzer;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,13 +46,16 @@ public class WebAppScanService {
     private final List<WebAppScanClient> webAppScanClients;
     private final WebAppVulnRepository webAppVulnRepository;
     private final RoutingDomainRepository routingDomainRepository;
+    private final ProjectRiskAnalyzer projectRiskAnalyzer;
 
     public WebAppScanService(ProjectRepository projectRepository, WebAppRepository waRepository, WebAppVulnRepository webAppVulnRepository,
                              ScannerRepository scannerRepository, ScannerTypeRepository scannerTypeRepository,
                              CodeGroupRepository codeGroupRepository, CodeProjectRepository codeProjectRepository, WebAppCookieRepository webAppCookieRepository,
                              WebAppHeaderRepository webAppHeaderRepository, List<WebAppScanClient> webAppScanClients,
-                             WebAppScanStrategyRepository webAppScanStrategyRepository, RoutingDomainRepository routingDomainRepository) {
+                             WebAppScanStrategyRepository webAppScanStrategyRepository, RoutingDomainRepository routingDomainRepository,
+                             ProjectRiskAnalyzer projectRiskAnalyzer) {
         this.projectRepository = projectRepository;
+        this.projectRiskAnalyzer = projectRiskAnalyzer;
         this.waRepository = waRepository;
         this.scannerRepository = scannerRepository;
         this.scannerTypeRepository = scannerTypeRepository;
@@ -364,6 +368,7 @@ public class WebAppScanService {
                             }
                             webAppScanClient.loadVulnerabilities(scanner,app, null, tmpVulns);
                             scanner.setRunningScans(scanner.getRunningScans()-1);
+                            app.setRisk(projectRiskAnalyzer.getWebAppRisk(app));
                             break;
                         }
                     }

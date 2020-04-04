@@ -10,6 +10,7 @@ import io.mixeway.integrations.infrastructurescan.plugin.remotefirewall.apiclien
 import io.mixeway.pojo.*;
 import io.mixeway.pojo.Status;
 import io.mixeway.rest.model.KeyValue;
+import io.mixeway.rest.utils.ProjectRiskAnalyzer;
 import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
@@ -19,6 +20,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.UnexpectedRollbackException;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
@@ -37,7 +40,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import javax.transaction.Transactional;
 import javax.xml.bind.JAXBException;
 
 /**
@@ -62,12 +64,16 @@ public class NetworkScanService {
     private final ScanHelper scanHelper;
     private WebAppHelper webAppHelper;
     private final RfwApiClient rfwApiClient;
+    private final ProjectRiskAnalyzer projectRiskAnalyzer;
+
 
     public NetworkScanService(ProjectRepository projectRepository, ScannerTypeRepository scannerTypeRepository, ScanHelper scanHelper,
                               List<NetworkScanClient> networkScanClients, NessusScanTemplateRepository nessusScanTemplateRepository, NessusScanRepository nessusScanRepository,
                               ScannerRepository nessusRepository, InterfaceRepository interfaceRepository, AssetRepository assetRepository,
-                              RoutingDomainRepository routingDomainRepository, RfwApiClient rfwApiClient, WebAppHelper webAppHelper) {
+                              RoutingDomainRepository routingDomainRepository, RfwApiClient rfwApiClient, WebAppHelper webAppHelper,
+                              ProjectRiskAnalyzer projectRiskAnalyzer) {
         this.projectRepository = projectRepository;
+        this.projectRiskAnalyzer = projectRiskAnalyzer;
         this.scannerTypeRepository = scannerTypeRepository;
         this.nessusRepository = nessusRepository;
         this.webAppHelper = webAppHelper;
@@ -426,6 +432,7 @@ public class NetworkScanService {
                         if (networkScanClient.canProcessRequest(ns) && networkScanClient.isScanDone(ns)) {
                             networkScanClient.loadVulnerabilities(ns);
                             deleteRulsFromRfw(ns);
+                            updateRiskForInterfaces(ns);
                         }
                     }
                     //For nessus create webapp linking
@@ -442,6 +449,15 @@ public class NetworkScanService {
             }
         } catch (UnexpectedRollbackException | JSONException | CertificateException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyManagementException | KeyStoreException | IOException | JAXBException | ResourceAccessException ce ){
             log.warn("Exception during Network Scan synchro {}", ce.getLocalizedMessage());
+        }
+    }
+
+    @Transactional
+    void updateRiskForInterfaces(NessusScan ns) {
+        List<String> ipAddresses = scanHelper.prepareTargetsForScan(ns, false);
+        for (String ipAddress : ipAddresses) {
+            Optional<Interface> interfaceOptional = interfaceRepository.findByPrivateipAndActiveAndAssetIn(ipAddress, true, new ArrayList<>(ns.getProject().getAssets())).stream().findFirst();
+            interfaceOptional.ifPresent(anInterface -> anInterface.setRisk(projectRiskAnalyzer.getInterfaceRisk(anInterface)));
         }
     }
 

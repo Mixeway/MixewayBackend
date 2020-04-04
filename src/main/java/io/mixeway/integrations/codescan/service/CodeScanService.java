@@ -10,6 +10,7 @@ import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.VaultHelper;
 import io.mixeway.rest.project.model.RunScanForCodeProject;
 import io.mixeway.rest.project.model.SASTProject;
+import io.mixeway.rest.utils.ProjectRiskAnalyzer;
 import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
@@ -47,12 +48,13 @@ public class CodeScanService {
     private final ScannerRepository scannerRepository;
     private final ScannerTypeRepository scannerTypeRepository;
     private final CiOperationsRepository ciOperationsRepository;
+    private final ProjectRiskAnalyzer projectRiskAnalyzer;
 
 
     CodeScanService(ProjectRepository projectRepository, CodeGroupRepository codeGroupRepository, CodeProjectRepository codeProjectRepository,
                     CodeVulnRepository codeVulnRepository, CodeAccessVerifier codeAccessVerifier, VaultHelper vaultHelper,
                     List<CodeScanClient> codeScanClients, ScannerRepository scannerRepository, ScannerTypeRepository scannerTypeRepository,
-                    CiOperationsRepository ciOperationsRepository){
+                    CiOperationsRepository ciOperationsRepository, ProjectRiskAnalyzer projectRiskAnalyzer){
         this.projectRepository = projectRepository;
         this.codeGroupRepository = codeGroupRepository;
         this.codeProjectRepository = codeProjectRepository;
@@ -63,6 +65,7 @@ public class CodeScanService {
         this.ciOperationsRepository = ciOperationsRepository;
         this.scannerRepository = scannerRepository;
         this.scannerTypeRepository = scannerTypeRepository;
+        this.projectRiskAnalyzer = projectRiskAnalyzer;
     }
 
     //PREPARE SCAN
@@ -328,6 +331,7 @@ public class CodeScanService {
                         codeProject.getCodeGroup().setRequestid(null);
                         codeProject.getCodeGroup().setScanid(null);
                         codeProject.getCodeGroup().setScope(null);
+                        codeProject.setRisk(projectRiskAnalyzer.getCodeProjectRisk(codeProject) + projectRiskAnalyzer.getCodeProjectOpenSourceRisk(codeProject));
                         codeGroupRepository.save(codeProject.getCodeGroup());
                         codeProjectRepository.save(codeProject);
                     }
