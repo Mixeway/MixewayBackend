@@ -12,6 +12,7 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -49,7 +50,7 @@ public class WebAppVuln implements Vulnerability {
     	this.webApp = webApp;
     	this.description = issue.getDescription();
     	this.name = issue.getName();
-    	this.severity = issue.getSeverity();
+    	this.severity = StringUtils.capitalize(issue.getSeverity());
     	this.location = issue.getOrigin()+issue.getPath();
 	}
 
