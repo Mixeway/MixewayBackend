@@ -54,5 +54,4 @@ WebAppVulnRepository extends JpaRepository<WebAppVuln, Long>{
 			"webappvuln where webapp_id =:webapp_id", nativeQuery = true)
 	int countRiskForWebApp(@Param("webapp_id")Long webapp_id,@Param("critWage") int critWage, @Param("highWage") int highWage,@Param("mediumWage") int mediumWage);
 
-
 }

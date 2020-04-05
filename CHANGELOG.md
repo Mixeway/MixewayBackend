@@ -1,3 +1,19 @@
+<a name="1.2.1"></a>
+## 1.2.1 (2020-04-05)
+
+### Info
+
+* Endpoints for drawing OpenSource Vulnerabilities statistic within whole database context
+
+<a name="1.2.0"></a>
+## 1.2.0 (2020-04-02)
+
+### Info
+
+* Burp Enterprise Edition plugin
+* WebApp Scan limits
+* Offline risk calculation so loading of dashboard wont be lasting so much time
+
 <a name="1.1."></a>
 ## 1.1.0 (2020-03-20)
 

@@ -32,4 +32,4 @@ jobs:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.DOCKER_TOKEN }}
           repository: mixeway/backend
-          tags: 1.1.0-beta
+          tags: 1.2.0-beta
