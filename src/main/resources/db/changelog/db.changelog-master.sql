@@ -945,3 +945,7 @@ update project set risk=0;
 update interface set risk=0;
 update webapp set risk=0;
 update codeproject set risk=0;
+
+--changeset siewer:181
+alter table webapp add column username text;
+alter table webapp add column password text;

@@ -49,4 +49,15 @@ public class VulnsController {
     public ResponseEntity<List<BarChartProjection2>> getWebAppsTop() {
         return vulnsService.getWebAppsTop();
     }
+    @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
+    @GetMapping(value = "/opensource")
+    public ResponseEntity<List<BarChartProjection2>> getOpenSourceVulns() {
+        return vulnsService.getOpenSourceVulns();
+    }
+    @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
+    @GetMapping(value = "/opensourceforcode")
+    public ResponseEntity<List<BarChartProjection2>> getOpenSourceVulnsForCodeProject() {
+        return vulnsService.getOpenSourceVulnsForCodeProject();
+    }
+
 }

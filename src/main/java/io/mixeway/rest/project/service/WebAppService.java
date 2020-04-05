@@ -2,10 +2,12 @@ package io.mixeway.rest.project.service;
 
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
+import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.*;
 import io.mixeway.integrations.webappscan.service.WebAppScanService;
 import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.PermissionFactory;
+import io.mixeway.pojo.VaultHelper;
 import io.mixeway.rest.project.model.RunScanForWebApps;
 import io.mixeway.rest.project.model.WebAppCard;
 import io.mixeway.rest.project.model.WebAppModel;
@@ -20,10 +22,7 @@ import org.springframework.stereotype.Service;
 import io.mixeway.pojo.Status;
 
 import java.security.Principal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @Service
 public class WebAppService {
@@ -38,16 +37,19 @@ public class WebAppService {
     private final WebAppScanService webAppScanService;
     private final PermissionFactory permissionFactory;
     private final RoutingDomainRepository routingDomainRepository;
+    private final VaultHelper vaultHelper;
 
     WebAppService(WebAppRepository webAppRepository, ScannerTypeRepository scannerTypeRepository, WebAppScanService webAppScanService,
                   ScannerRepository scannerRepository, ProjectRepository projectRepository, WebAppHeaderRepository webAppHeaderRepository,
                   WebAppScanRepository webAppScanRepository, WebAppVulnRepository webAppVulnRepository,
-                  PermissionFactory permissionFactory, RoutingDomainRepository routingDomainRepository){
+                  PermissionFactory permissionFactory, RoutingDomainRepository routingDomainRepository,
+                  VaultHelper vaultHelper){
         this.webAppHeaderRepository = webAppHeaderRepository;
         this.webAppRepository = webAppRepository;
         this.scannerTypeRepository = scannerTypeRepository;
         this.scannerRepository = scannerRepository;
         this.projectRepository = projectRepository;
+        this.vaultHelper =vaultHelper;
         this.webAppScanRepository = webAppScanRepository;
         this.permissionFactory = permissionFactory;
         this.webAppVulnRepository = webAppVulnRepository;
@@ -105,6 +107,15 @@ public class WebAppService {
                 webApp.setOrigin(Constants.STRATEGY_GUI);
                 webApp.setPublicscan(webAppPutMode.isScanPublic());
                 webApp.setProject(projectRepository.getOne(id));
+                if (webAppPutMode.isPasswordAuthSet()){
+                    webApp.setUsername(webAppPutMode.getWebAppUsername());
+                    String uuidToken = UUID.randomUUID().toString();
+                    if (vaultHelper.savePassword(webAppPutMode.getWebAppPassword(), uuidToken)){
+                        webApp.setPassword(uuidToken);
+                    } else {
+                        webApp.setPassword(webAppPutMode.getWebAppPassword());
+                    }
+                }
                 webAppRepository.save(webApp);
                 for (String header : webAppPutMode.getWebAppHeaders().split(",")) {
                     String[] headerValues = header.split(":");

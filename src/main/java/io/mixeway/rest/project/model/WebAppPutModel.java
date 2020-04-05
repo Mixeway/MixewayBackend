@@ -1,5 +1,7 @@
 package io.mixeway.rest.project.model;
 
+import org.apache.commons.lang3.StringUtils;
+
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
@@ -7,6 +9,8 @@ public class WebAppPutModel {
     private String webAppUrl;
     private String webAppHeaders;
     private boolean scanPublic;
+    private String webAppUsername;
+    private String webAppPassword;
     @NotNull
     @Min(1) private Long routingDomainForAsset;
 
@@ -16,6 +20,25 @@ public class WebAppPutModel {
 
     public void setRoutingDomainForAsset(Long routingDomainForAsset) {
         this.routingDomainForAsset = routingDomainForAsset;
+    }
+
+    public String getWebAppUsername() {
+        return webAppUsername;
+    }
+    public boolean isPasswordAuthSet(){
+        return StringUtils.isNotBlank(webAppPassword) && StringUtils.isNotBlank(webAppUsername);
+    }
+
+    public void setWebAppUsername(String webAppUsername) {
+        this.webAppUsername = webAppUsername;
+    }
+
+    public String getWebAppPassword() {
+        return webAppPassword;
+    }
+
+    public void setWebAppPassword(String webAppPassword) {
+        this.webAppPassword = webAppPassword;
     }
 
     public boolean isScanPublic() {
