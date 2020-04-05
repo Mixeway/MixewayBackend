@@ -59,7 +59,7 @@ public class WebAppServiceTest {
     public void setUp(){
         webAppScanClients.add(acunetixApiClient);
         webAppService = new WebAppService(webAppRepository,scannerTypeRepository,null,scannerRepository,projectRepository,
-                webAppHeaderRepository,webAppScanRepository,webAppVulnRepository,null,null);
+                webAppHeaderRepository,webAppScanRepository,webAppVulnRepository,null,null,null);
 
     }
 

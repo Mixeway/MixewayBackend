@@ -80,7 +80,7 @@ public class BurpEEApiClient implements SecurityScanner, WebAppScanClient {
     @Transactional
     public void runScan(WebApp webApp, Scanner scanner) throws Exception {
         try {
-            ScanRequest scanRequest = new ScanRequest(webApp, scanner);
+            ScanRequest scanRequest = new ScanRequest(webApp, scanner, vaultHelper);
             RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(scanner);
             HttpEntity<ScanRequest> entity = new HttpEntity<>(scanRequest);
             ResponseEntity<String> response = restTemplate.exchange(scanner.getApiUrl() + "/api/"+vaultHelper.getPassword(scanner.getApiKey()) + "/v0.1/scan",

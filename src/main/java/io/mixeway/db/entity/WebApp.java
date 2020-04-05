@@ -4,6 +4,7 @@ import java.util.Set;
 
 import javax.persistence.*;
 
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
@@ -41,6 +42,24 @@ public class WebApp {
 	@JsonIgnore private String requestId;
 	private RoutingDomain routingDomain;
 	private String origin;
+	@JsonIgnore String username;
+	@JsonIgnore String password;
+
+	public String getUsername() {
+		return username;
+	}
+
+	public void setUsername(String username) {
+		this.username = username;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
 
 	public String getOrigin() {
 		return origin;
@@ -241,4 +260,6 @@ public class WebApp {
 		if (inQueue == null)
 				inQueue = false;
 	}
+
+
 }
