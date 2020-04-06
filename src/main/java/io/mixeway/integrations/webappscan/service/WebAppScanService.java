@@ -368,7 +368,7 @@ public class WebAppScanService {
                                 app = waRepository.getOne(app.getId());
                             }
                             webAppScanClient.loadVulnerabilities(scanner,app, null, tmpVulns);
-                            scanner.setRunningScans(waRepository.findByRunning(true).size());
+                            scanner.setRunningScans(scanner.getRunningScans() - 1);
                             scannerRepository.save(scanner);
                             app.setRisk(projectRiskAnalyzer.getWebAppRisk(app));
                             break;
