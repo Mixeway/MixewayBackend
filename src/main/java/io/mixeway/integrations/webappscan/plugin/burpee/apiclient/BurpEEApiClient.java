@@ -31,7 +31,6 @@ import java.security.cert.CertificateException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.function.Predicate;
 
 /**
  * @author gsiewruk
@@ -86,9 +85,7 @@ public class BurpEEApiClient implements SecurityScanner, WebAppScanClient {
             ResponseEntity<String> response = restTemplate.exchange(scanner.getApiUrl() + "/api/"+vaultHelper.getPassword(scanner.getApiKey()) + "/v0.1/scan",
                     HttpMethod.POST, entity, String.class);
             if (response.getStatusCode().equals(HttpStatus.CREATED)) {
-                if (StringUtils.isBlank(webApp.getScanId())) {
-                    webApp.setScanId(response.getHeaders().getLocation().toString());
-                }
+                webApp.setScanId(Objects.requireNonNull(response.getHeaders().getLocation()).toString());
                 webApp.setRunning(true);
                 log.info("Web Application scan for {} started on {} ({}) scanId <{}>", webApp.getUrl(),scanner.getScannerType().getName(),scanner.getApiUrl(),webApp.getScanId());
             }
@@ -190,14 +187,14 @@ public class BurpEEApiClient implements SecurityScanner, WebAppScanClient {
      * @return info about result of a operation
      */
     @Override
-    public boolean initialize(Scanner scanner) throws JSONException, ParseException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, JAXBException, Exception {
+    public boolean initialize(Scanner scanner) throws Exception {
         try {
             RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(scanner);
             HttpEntity<String> entity = new HttpEntity<>(prepareAuthHeader(scanner));
             ResponseEntity<ScanConfiguration> response = restTemplate.exchange(scanner.getApiUrl() + "/api-internal/scan-configurations",
                     HttpMethod.GET, entity, ScanConfiguration.class);
             if (response.getStatusCode().equals(HttpStatus.OK)) {
-                for (Configuration configuration : response.getBody().getScan_configurations()){
+                for (Configuration configuration : Objects.requireNonNull(response.getBody()).getScan_configurations()){
                     if (configuration.getName().equals(Constants.BURP_CONFIG_CRAWL) || configuration.getName().equals(Constants.BURP_CONFIG_AUDIT)) {
                         NessusScanTemplate nst = new NessusScanTemplate(configuration.getName(), configuration.getId(), scanner);
                         nessusScanTemplateRepository.save(nst);
