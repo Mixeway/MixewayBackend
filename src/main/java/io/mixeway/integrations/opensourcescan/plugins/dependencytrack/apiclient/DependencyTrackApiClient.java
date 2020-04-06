@@ -202,8 +202,12 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
                         vulnerability.setInserted(dateFormat.format(new Date()));
                         vulnerability.setProject(codeProject.getCodeGroup().getProject());
                         vulnerability.setScore(createScore(dTrackVuln.getSeverity()));
-                        vulnerability.setStatus(statusRepository.findByName(Constants.STATUS_EXISTING));
+                        vulnerability.setStatus(statusRepository.findByName(Constants.STATUS_NEW));
                         softwarePacketVulnerabilityRepository.saveAndFlush(vulnerability);
+                    } else {
+                        softwarePacketVulnerability.get().setInserted(dateFormat.format(new Date()));
+                        softwarePacketVulnerability.get().setStatus(statusRepository.findByName(Constants.STATUS_EXISTING));
+                        softwarePacketVulnerabilityRepository.saveAndFlush(softwarePacketVulnerability.get());
                     }
                 }
             }
