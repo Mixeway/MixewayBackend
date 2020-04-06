@@ -70,16 +70,6 @@ public class SecureRestTemplate {
                     .setSSLContext(sslContext)
                     .build();
         }
-        // to do usuniecia
-        TrustStrategy acceptingTrustStrategy = (X509Certificate[] chain, String authType) -> true;
-
-        SSLContextBuilder sslcontext = new SSLContextBuilder();
-        sslcontext.loadTrustMaterial(null, acceptingTrustStrategy);
-        httpClient = HttpClients.custom()
-                .setSSLContext(sslcontext.build())
-                .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE)
-                .build();
-        //do usuniecia end
 
         ClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
 
