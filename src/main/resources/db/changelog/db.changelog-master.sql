@@ -952,3 +952,6 @@ alter table webapp add column password text;
 
 --changeset siewer:182
 alter table codeproject_softwarepacket drop constraint "codeproject_softwarepacket_codeproject_id_fkey", add constraint "codeproject_softwarepacket_codeproject_id_fkey" foreign key ("codeproject_id") references "codeproject"(id) on delete cascade;
+
+--changeset siewer:183
+alter table cioperations drop constraint "cioperations_codeproject_id_fkey", add constraint "cioperations_codeproject_id_fkey" foreign key ("codeproject_id") references codeproject("id") on delete cascade;
