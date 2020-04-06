@@ -4,7 +4,6 @@ import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.*;
-import io.mixeway.integrations.webappscan.plugin.acunetix.apiclient.AcunetixApiClient;
 import io.mixeway.integrations.webappscan.plugin.burpee.model.*;
 import io.mixeway.integrations.webappscan.service.WebAppScanClient;
 import io.mixeway.pojo.SecureRestTemplate;
@@ -12,7 +11,6 @@ import io.mixeway.pojo.SecurityScanner;
 import io.mixeway.pojo.VaultHelper;
 import io.mixeway.rest.model.ScannerModel;
 import org.apache.commons.lang3.StringUtils;
-import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
@@ -22,14 +20,6 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
-import javax.xml.bind.JAXBException;
-import java.io.IOException;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -38,7 +28,7 @@ import java.util.*;
  */
 @Component
 public class BurpEEApiClient implements SecurityScanner, WebAppScanClient {
-    private final static Logger log = LoggerFactory.getLogger(AcunetixApiClient.class);
+    private final static Logger log = LoggerFactory.getLogger(BurpEEApiClient.class);
     private final ScannerTypeRepository scannerTypeRepository;
     private final ProxiesRepository proxiesRepository;
     private final RoutingDomainRepository routingDomainRepository;
