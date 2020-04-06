@@ -19,6 +19,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 import javax.xml.bind.JAXBException;
@@ -91,6 +92,8 @@ public class BurpEEApiClient implements SecurityScanner, WebAppScanClient {
             }
         } catch (HttpClientErrorException e){
             log.error("Cannot run scan for {} - {}", webApp.getUrl(), e.getStatusCode());
+        } catch (ResourceAccessException rao) {
+            log.error("Resource access exception for {} - {}", webApp.getUrl(), rao.getLocalizedMessage());
         }
     }
 

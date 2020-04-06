@@ -105,8 +105,9 @@ public class WebAppScanService {
             if (project.isPresent()) {
                 for (WebAppScanModel webAppScanModel : webAppScanModelList) {
                     try {
-                        String urlToLookFor = WebAppScanHelper.normalizeUrl(webAppScanModel.getUrl());
-                        Optional<WebApp> webAppOptional = waRepository.getWebAppWithSimiliarUrlForProject(getUrltoCompare(webAppScanModel.getUrl()), project.get().getId());
+                        String webAppUrl = webAppScanModel.getUrl().split("\\?")[0];
+                        String urlToLookFor = WebAppScanHelper.normalizeUrl(webAppUrl);
+                        Optional<WebApp> webAppOptional = waRepository.getWebAppWithSimiliarUrlForProject(webAppUrl, project.get().getId());
                         if (webAppOptional.isPresent()) {
                             requestId = updateAndPutWebAppToQueue(webAppOptional.get(), webAppScanModel);
                         } else {

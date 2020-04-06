@@ -5,6 +5,8 @@ public class WebAppScanHelper {
     private final static String CHAR_32_PATTERN = "[/|+|?|&][a-zA-Z0-9]{32}";
     private final static String CHAR_24_PATTERN = "[/|+|?|&][a-zA-Z0-9]{24}";
     private final static String FOUR_DIGIT_PATTERN = "[/|+|?|&][0-9]{4}";
+    private final static String THREE_DIGIT_PATTERN = "[/|+|?|&][0-9]{3}";
+    private final static String TWO_DIGIT_PATTERN = "[/|+|?|&][0-9]{2}";
     private final static String TEN_DIGIT_PATTERN = "[/|+|?|&][0-9]{10}";
     private final static String TWELVE_DIGIT_PATTERN = "[/|+|?|&][0-9]{12}";
     private final static String SIM_NUMBER_PATTERN = "[/|+|?|&]894803[0-9]{13}";
@@ -27,6 +29,8 @@ public class WebAppScanHelper {
         urlToLookFor=urlToLookFor.replaceAll(MSISDN_SHORT_PATTERN,MSISDN_SHORT_PATTERN);
         urlToLookFor=urlToLookFor.replaceAll(SEVEN_DIGIT_PATTERN,SEVEN_DIGIT_PATTERN);
         urlToLookFor=urlToLookFor.replaceAll(FOUR_DIGIT_PATTERN,FOUR_DIGIT_PATTERN);
+        urlToLookFor=urlToLookFor.replaceAll(THREE_DIGIT_PATTERN,THREE_DIGIT_PATTERN);
+        urlToLookFor=urlToLookFor.replaceAll(TWO_DIGIT_PATTERN,TWO_DIGIT_PATTERN);
         urlToLookFor= urlToLookFor.replace("?","\\?");
         urlToLookFor= urlToLookFor.replace("=","\\=");
         urlToLookFor = urlToLookFor.replaceAll("\\+","\\\\+");
