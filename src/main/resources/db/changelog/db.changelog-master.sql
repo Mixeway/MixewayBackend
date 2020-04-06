@@ -955,3 +955,6 @@ alter table codeproject_softwarepacket drop constraint "codeproject_softwarepack
 
 --changeset siewer:183
 alter table cioperations drop constraint "cioperations_codeproject_id_fkey", add constraint "cioperations_codeproject_id_fkey" foreign key ("codeproject_id") references codeproject("id") on delete cascade;
+
+--changeset siewer:184
+alter table fortifysingleapp drop constraint "fortifysingleapp_codeproject_id_fkey", add constraint "fortifysingleapp_codeproject_id_fkey" foreign key ("codeproject_id") references codeproject("id") on delete cascade;
