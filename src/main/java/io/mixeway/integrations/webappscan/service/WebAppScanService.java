@@ -368,7 +368,8 @@ public class WebAppScanService {
                                 app = waRepository.getOne(app.getId());
                             }
                             webAppScanClient.loadVulnerabilities(scanner,app, null, tmpVulns);
-                            scanner.setRunningScans(scanner.getRunningScans()-1);
+                            scanner.setRunningScans(waRepository.findByRunning(true).size());
+                            scannerRepository.save(scanner);
                             app.setRisk(projectRiskAnalyzer.getWebAppRisk(app));
                             break;
                         }
@@ -420,6 +421,7 @@ public class WebAppScanService {
 
     @Transactional
     public void scheduledRunWebAppScan() {
+        log.info("Starting scheduled scan for webapps");
         List<Project> projects = projectRepository.findByAutoWebAppScan(true);
         for (Project p : projects) {
             for (WebApp webApp : p.getWebapps()) {
