@@ -17,6 +17,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
@@ -84,6 +85,9 @@ public class BurpEEApiClient implements SecurityScanner, WebAppScanClient {
             log.error("Cannot run scan for {} - {}", webApp.getUrl(), e.getStatusCode());
         } catch (ResourceAccessException rao) {
             log.error("Resource access exception for {} - {}", webApp.getUrl(), rao.getLocalizedMessage());
+        } catch (HttpServerErrorException e) {
+            webApp.setInQueue(false);
+            log.error ("Cannot run scan for {} - server error {} ", webApp.getUrl(),e.getStatusCode());
         }
     }
 
@@ -114,8 +118,13 @@ public class BurpEEApiClient implements SecurityScanner, WebAppScanClient {
             return (response.getStatusCode().equals(HttpStatus.OK) &&
                     (Objects.requireNonNull(response.getBody()).getScan_status().equals(Constants.BURP_STATUS_FAILED)
                             || response.getBody().getScan_status().equals(Constants.BURP_STATUS_SUCCEEDED)));
+
         } catch (HttpClientErrorException e){
-            log.error("Cannot check status of scan for {} - {}", webApp.getUrl(),e.getStatusCode());
+            log.error("Cannot check if scan is done for {} - {}", webApp.getUrl(), e.getStatusCode());
+        } catch (ResourceAccessException rao) {
+            log.error("Resource access exception for {} - {}", webApp.getUrl(), rao.getLocalizedMessage());
+        } catch (HttpServerErrorException e) {
+            log.error ("Cannot check if scan is done for {} - server error {} ", webApp.getUrl(),e.getStatusCode());
         }
         return false;
     }
@@ -166,7 +175,11 @@ public class BurpEEApiClient implements SecurityScanner, WebAppScanClient {
                 return true;
             }
         } catch (HttpClientErrorException e){
-            log.error("Cannot get issue details for {}", scanner.getApiUrl());
+            log.error("Cannot get issues for {} - {}", webApp.getUrl(), e.getStatusCode());
+        } catch (ResourceAccessException rao) {
+            log.error("Resource access exception for {} - {}", webApp.getUrl(), rao.getLocalizedMessage());
+        } catch (HttpServerErrorException e) {
+            log.error ("Cannot get issues for {} - server error {} ", webApp.getUrl(),e.getStatusCode());
         }
         return false;
     }
