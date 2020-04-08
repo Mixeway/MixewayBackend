@@ -31,6 +31,9 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * @author gsiewruk
+ */
 @Service
 public class WebAppScanService {
     private static final Logger log = LoggerFactory.getLogger(WebAppScanService.class);
@@ -105,18 +108,17 @@ public class WebAppScanService {
             if (project.isPresent()) {
                 for (WebAppScanModel webAppScanModel : webAppScanModelList) {
                     try {
-                        String webAppUrl = webAppScanModel.getUrl().split("\\?")[0];
-                        String urlToLookFor = WebAppScanHelper.normalizeUrl(webAppUrl);
-                        Optional<WebApp> webAppOptional = waRepository.getWebAppWithSimiliarUrlForProject(webAppUrl, project.get().getId());
-                        if (webAppOptional.isPresent()) {
-                            requestId = updateAndPutWebAppToQueue(webAppOptional.get(), webAppScanModel);
+                        String urlToCompareSimiliar = getUrltoCompare(webAppScanModel.getUrl());
+                        String urlToCompareWithRegexx = WebAppScanHelper.normalizeUrl(webAppScanModel.getUrl());
+                        List<WebApp> webAppOptional = waRepository.getWebAppBySimiliarUrlOrRegexUrl(urlToCompareSimiliar, urlToCompareWithRegexx, project.get().getId());
+                        if (webAppOptional.size() == 1){
+                            requestId = updateAndPutWebAppToQueue(webAppOptional.stream().findFirst().get(), webAppScanModel);
+                        } else if ( webAppOptional.size() == 0){
+                            requestId = createAndPutWebAppToQueue(webAppScanModel, project.get(), origin);
                         } else {
-                            List<WebApp> webAppsByRegex = checkRegexes(urlToLookFor, project.get().getId());
-                            if (webAppsByRegex.size() > 0) {
-                                requestId = updateAndPutWebAppToQueue(getProperWebAppForUpdate(webAppsByRegex), webAppScanModel);
-                            } else {
-                                requestId = createAndPutWebAppToQueue(webAppScanModel, project.get(), origin);
-                            }
+                            log.warn("There is something really wrong With WebAppScan API: URL from request= {}, urlForSimiliarCheck= {}, urlForRegexChecl= {}", webAppScanModel.getUrl(),
+                                    urlToCompareSimiliar, urlToCompareWithRegexx);
+                            return new ResponseEntity<>(HttpStatus.PRECONDITION_FAILED);
                         }
                     } catch (NonUniqueResultException | IncorrectResultSizeDataAccessException | ParseException ex) {
                         waRepository.flush();

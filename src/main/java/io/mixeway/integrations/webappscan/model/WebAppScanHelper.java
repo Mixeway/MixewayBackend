@@ -14,6 +14,7 @@ public class WebAppScanHelper {
     private final static String SEVEN_DIGIT_PATTERN = "[/|+|?|&][0-9]{7}";
     private final static String REFERAL_PATTERN = "[/|+|?|&][A-Z0-9]{10}";
     private final static String MSISDN_LONG_PATTERN = "[/|+|?|&][0-9]{11}";
+    private final static String AT_LEAST_ONEDIGIT = "(?=.*\\d)[a-zA-Z\\d]{24}";
 
 
     public static String normalizeUrl(String url) {
