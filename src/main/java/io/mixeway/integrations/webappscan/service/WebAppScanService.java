@@ -109,7 +109,7 @@ public class WebAppScanService {
                 for (WebAppScanModel webAppScanModel : webAppScanModelList) {
                     try {
                         String urlToCompareSimiliar = getUrltoCompare(webAppScanModel.getUrl());
-                        String urlToCompareWithRegexx = WebAppScanHelper.normalizeUrl(webAppScanModel.getUrl());
+                        String urlToCompareWithRegexx = WebAppScanHelper.normalizeUrl(webAppScanModel.getUrl()) + "$";
                         List<WebApp> webAppOptional = waRepository.getWebAppBySimiliarUrlOrRegexUrl(urlToCompareSimiliar, urlToCompareWithRegexx, project.get().getId());
                         if (webAppOptional.size() == 1){
                             requestId = updateAndPutWebAppToQueue(webAppOptional.stream().findFirst().get(), webAppScanModel);
