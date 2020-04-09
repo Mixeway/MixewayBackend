@@ -14,7 +14,7 @@ public class WebAppScanHelper {
     private final static String SEVEN_DIGIT_PATTERN = "[/|+|?|&][0-9]{7}";
     private final static String REFERAL_PATTERN = "[/|+|?|&][A-Z0-9]{10}";
     private final static String MSISDN_LONG_PATTERN = "[/|+|?|&][0-9]{11}";
-    private final static String AT_LEAST_ONEDIGIT = "(?=.*\\d)[a-zA-Z\\d]{24}";
+    private final static String AT_LEAST_ONEDIGIT = "(?=.*\\d)[a-zA-Z\\d]{18,24}";
 
 
     public static String normalizeUrl(String url) {
@@ -22,6 +22,7 @@ public class WebAppScanHelper {
         String urlToLookFor=url.replaceAll(UUID_PATTERN,UUID_PATTERN);
         urlToLookFor=urlToLookFor.replaceAll(CHAR_32_PATTERN,CHAR_32_PATTERN);
         urlToLookFor=urlToLookFor.replaceAll(CHAR_24_PATTERN,CHAR_24_PATTERN);
+        urlToLookFor=urlToLookFor.replaceAll(AT_LEAST_ONEDIGIT,AT_LEAST_ONEDIGIT);
         urlToLookFor=urlToLookFor.replaceAll(SIM_NUMBER_PATTERN,SIM_NUMBER_PATTERN);
         urlToLookFor=urlToLookFor.replaceAll(TWELVE_DIGIT_PATTERN,TWELVE_DIGIT_PATTERN);
         urlToLookFor=urlToLookFor.replaceAll(MSISDN_LONG_PATTERN,MSISDN_LONG_PATTERN);
