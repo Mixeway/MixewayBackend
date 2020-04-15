@@ -25,6 +25,17 @@ public class InfrastructureVuln implements Vulnerability {
 	private String inserted;
 	private Status status;
 	private String ticketId;
+	private int grade;
+
+	@Override
+	public int getGrade() {
+		return grade;
+	}
+
+	@Override
+	public void setGrade(int grade) {
+		this.grade = grade;
+	}
 
 	@Column(name="ticketid")
 	@Override

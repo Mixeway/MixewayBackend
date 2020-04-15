@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.mixeway.db.entity.RoutingDomain;
 
 public class Vuln {
+	private Long id;
 	private String vulnerabilityName;
 	private String type;
 	private String severity;
@@ -22,8 +23,25 @@ public class Vuln {
 	private String packetName;
 	private String dateCreated;
 	private String ciid;
+	private int grade;
 	@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 	private String routingDomainName;
+
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public int getGrade() {
+		return grade;
+	}
+
+	public void setGrade(int grade) {
+		this.grade = grade;
+	}
 
 	public String getRoutingDomainName() {
 		return routingDomainName;

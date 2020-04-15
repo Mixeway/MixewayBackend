@@ -958,3 +958,15 @@ alter table cioperations drop constraint "cioperations_codeproject_id_fkey", add
 
 --changeset siewer:184
 alter table fortifysingleapp drop constraint "fortifysingleapp_codeproject_id_fkey", add constraint "fortifysingleapp_codeproject_id_fkey" foreign key ("codeproject_id") references codeproject("id") on delete cascade;
+
+--changeset siewer:185
+alter table infrastructurevuln add column grade int;
+alter table softwarepacketvulnerability add column grade int;
+alter table webappvuln add column grade int;
+alter table codevuln add column grade int;
+
+--changeset siewer:186
+update infrastructurevuln set grade =-1;
+update softwarepacketvulnerability set grade =-1;
+update codevuln set grade =-1;
+update webappvuln set grade =-1;

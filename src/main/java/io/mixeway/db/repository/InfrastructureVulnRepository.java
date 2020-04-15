@@ -1,6 +1,7 @@
 package io.mixeway.db.repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import io.mixeway.db.entity.Interface;
@@ -78,5 +79,6 @@ public interface InfrastructureVulnRepository extends JpaRepository<Infrastructu
 	@Query(value = "select ((count(*) filter (where threat='Critical') * :critWage) + (count(*) filter (where threat='High') * :highWage) + (count(*) filter (where threat='Medium') * :mediumWage)) from " +
 			"infrastructurevuln where interface_id =:interface_id", nativeQuery = true)
 	int countRiskForInterface(@Param("interface_id")Long interface_id,@Param("critWage") int critWage, @Param("highWage") int highWage,@Param("mediumWage") int mediumWage);
-
+	@Query(value = "select * from infrastructurevuln where id = :id", nativeQuery = true)
+	Optional<InfrastructureVuln> getById(@Param("id") Long id);
 }

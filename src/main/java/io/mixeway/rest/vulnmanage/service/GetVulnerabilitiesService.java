@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import io.mixeway.integrations.infrastructurescan.plugin.nessus.apiclient.NessusApiClient;
 import io.mixeway.integrations.infrastructurescan.plugin.openvas.apiclient.OpenVasApiClient;
 import io.mixeway.rest.vulnmanage.model.Vulnerabilities;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
@@ -134,6 +135,7 @@ public class GetVulnerabilitiesService {
         for (SoftwarePacketVulnerability spv : softVuln) {
             for (Asset a : spv.getSoftwarepacket().getAssets()) {
                 Vuln v = new Vuln();
+                v.setId(spv.getId());
                 v.setType(Constants.API_SCANNER_PACKAGE);
                 v.setVulnerabilityName(spv.getName());
                 v.setSeverity(setSeverity(spv.getScore()));
@@ -144,6 +146,20 @@ public class GetVulnerabilitiesService {
                 v.setDateCreated(spv.getInserted());
                 Optional<Interface> interfaceToAdd = a.getInterfaces().stream().findFirst();
                 interfaceToAdd.ifPresent(anInterface -> v.setIpAddress(anInterface.getPrivateip()));
+                v.setPacketName(spv.getSoftwarepacket().getName());
+                tmpVulns.add(v);
+            }
+            for (CodeProject cp : spv.getSoftwarepacket().getCodeProjects()) {
+                Vuln v = new Vuln();
+                v.setId(spv.getId());
+                v.setType(Constants.API_SCANNER_PACKAGE);
+                v.setVulnerabilityName(spv.getName());
+                v.setSeverity(setSeverity(spv.getScore()));
+                v.setDescription(spv.getFix()+ " " + spv.getDescription());
+                v.setProject(cp.getName());
+                if (cp.getCodeGroup().getProject().getCiid() != null && !cp.getCodeGroup().getProject().getCiid().isEmpty())
+                    v.setCiid(cp.getCodeGroup().getProject().getCiid());
+                v.setDateCreated(spv.getInserted());
                 v.setPacketName(spv.getSoftwarepacket().getName());
                 tmpVulns.add(v);
             }
@@ -205,6 +221,8 @@ public class GetVulnerabilitiesService {
         }
         for (CodeVuln cv : codeVulns) {
             Vuln v = new Vuln();
+            v.setGrade(cv.getGrade());
+            v.setId(cv.getId());
             v.setVulnerabilityName(cv.getName());
             v.setSeverity(cv.getSeverity());
             //TODO: zrobienie opisu dla fortify
@@ -244,6 +262,8 @@ public class GetVulnerabilitiesService {
         }
         for (WebAppVuln wav : webAppVulns) {
             Vuln v = new Vuln();
+            v.setGrade(wav.getGrade());
+            v.setId(wav.getId());
             v.setVulnerabilityName(wav.getName());
             v.setSeverity(wav.getSeverity());
             v.setDescription(wav.getDescription()+"\n\n"+wav.getRecommendation());
@@ -317,6 +337,8 @@ public class GetVulnerabilitiesService {
         }
         for (InfrastructureVuln iv : infraVulns) {
             Vuln v = new Vuln();
+            v.setId(iv.getId());
+            v.setGrade(iv.getGrade());
             v.setVulnerabilityName(iv.getName());
             v.setSeverity(iv.getSeverity());
             v.setDescription(iv.getDescription());
@@ -351,6 +373,8 @@ public class GetVulnerabilitiesService {
                     .findByIntfInAndSeverityNot(interfaceRepository.findByAssetIn(assetsWithRequestId),"Log");
         for (InfrastructureVuln iv : infraVulns) {
             Vuln v = new Vuln();
+            v.setGrade(iv.getGrade());
+            v.setId(iv.getId());
             v.setVulnerabilityName(iv.getName());
             v.setSeverity(iv.getSeverity());
             v.setDescription(iv.getDescription());
@@ -397,7 +421,7 @@ public class GetVulnerabilitiesService {
                 case Constants.API_SCANNER_OPENSOURCE:
                     vulns = setOpenSourceResults(vulns, project);
                     break;
-                default:
+                case Constants.API_SCANNER_PACKAGE:
                     vulns = setPackageVulns(vulns, project);
                     break;
             }
@@ -416,6 +440,8 @@ public class GetVulnerabilitiesService {
                 try (Stream<SoftwarePacketVulnerability> softwarePacketVulnerabilities = softwarePacketVulnerabilityRepository.getSoftwareVulnsForCodeProjectWithStream(cp.getId());) {
                     for (SoftwarePacketVulnerability spv : softwarePacketVulnerabilities.collect(Collectors.toList())){
                         Vuln v = new Vuln();
+                        v.setGrade(spv.getGrade());
+                        v.setId(spv.getId());
                         v.setSeverity(spv.getSeverity());
                         v.setDateCreated(spv.getInserted());
                         v.setVulnerabilityName(spv.getName());
@@ -450,7 +476,7 @@ public class GetVulnerabilitiesService {
                 case Constants.API_SCANNER_AUDIT:
                     vulns = setAuditResults(vulns, null);
                     break;
-                default:
+                case Constants.API_SCANNER_PACKAGE:
                     vulns = setPackageVulns(vulns, null);
                     break;
             }
@@ -582,5 +608,35 @@ public class GetVulnerabilitiesService {
         } catch (NullPointerException ex){
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public ResponseEntity setGradeForVulnerabiility(String type, Long id, int grade) {
+        if (scannerTypes.contains(type)) {
+            switch (type) {
+                case Constants.API_SCANNER_OPENVAS:
+                    Optional<InfrastructureVuln> iv = infrastractureVulnRepository.getById(id);
+                    if (iv.isPresent()){
+                        iv.get().setGrade(grade);
+                        infrastractureVulnRepository.saveAndFlush(iv.get());
+                    }
+                    break;
+                case Constants.API_SCANNER_WEBAPP:
+                    Optional<WebAppVuln> vuln = webAppVulnRepository.findById(id);
+                    vuln.ifPresent(webAppVuln -> webAppVuln.setGrade(grade));
+                    break;
+                case Constants.API_SCANNER_CODE:
+                    Optional<CodeVuln> cv = codeVulnRepository.findById(id);
+                    cv.ifPresent(codeVuln -> codeVuln.setGrade(grade));
+                    break;
+                case Constants.API_SCANNER_PACKAGE:
+                    Optional<SoftwarePacketVulnerability> spv = softwarePacketVulnerabilityRepository.findById(id);
+                    spv.ifPresent(softwarePacketVulnerability -> softwarePacketVulnerability.setGrade(grade));
+                    break;
+
+            }
+            return new ResponseEntity(HttpStatus.OK);
+        } else
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Proper scanner type is: networkScanner,webApplicationScanner,codeScanner, audit,packageScan");
     }
 }

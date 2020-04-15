@@ -47,7 +47,7 @@ public class JwtUserDetailsService implements UserDetailsService {
 
     private List<GrantedAuthority> getAuthoritiesForUser(String role){
         if (role.equals(Constants.ROLE_ADMIN))
-            return AuthorityUtils.commaSeparatedStringToAuthorityList(Constants.ROLE_USER + "," + Constants.ROLE_EDITOR_RUNNER + "," + Constants.ROLE_ADMIN);
+            return AuthorityUtils.commaSeparatedStringToAuthorityList(Constants.ROLE_USER + "," + Constants.ROLE_EDITOR_RUNNER + "," + Constants.ROLE_ADMIN+ "," + Constants.ROLE_API);
         else if (role.equals(Constants.ROLE_EDITOR_RUNNER))
             return AuthorityUtils.commaSeparatedStringToAuthorityList(Constants.ROLE_USER + "," + Constants.ROLE_EDITOR_RUNNER);
         else

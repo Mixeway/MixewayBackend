@@ -37,6 +37,17 @@ public class WebAppVuln implements Vulnerability {
 	private String severity;
 	private Status status;
 	private String ticketId;
+	private int grade;
+
+	@Override
+	public int getGrade() {
+		return grade;
+	}
+
+	@Override
+	public void setGrade(int grade) {
+		this.grade = grade;
+	}
 
 	public WebAppVuln(){};
 

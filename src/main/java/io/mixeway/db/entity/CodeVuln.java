@@ -28,6 +28,7 @@ public class CodeVuln implements Vulnerability {
 	private Status status;
 	private String ticketId;
 	private Long externalId;
+	private int grade;
 
 	@Column(name="externalid")
 	public Long getExternalId() {
@@ -115,6 +116,17 @@ public class CodeVuln implements Vulnerability {
 	public void setSeverity(String severity) {
 		this.severity = severity;
 	}
+
+	@Override
+	public int getGrade() {
+		return this.grade;
+	}
+
+	@Override
+	public void setGrade(int grade) {
+		this.grade = grade;
+	}
+
 	public String getAnalysis() {
 		return analysis;
 	}

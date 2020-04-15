@@ -44,9 +44,22 @@ public class VulnManageApiController {
     @GetMapping(value = "/api/koordynator/vulnerabilities/{scannerType}",produces = "application/json")
     @Transactional(readOnly = true)
     public ResponseEntity<String> getVulnerabilitiesByType(@PathVariable(value = "scannerType") String type) throws UnknownHostException {
-
         return getVulnerabilitiesService.getVulnerabilitiesByType(type);
     }
+
+    @PreAuthorize("hasAuthority('ROLE_API')")
+    @GetMapping(value = "/v2/api/vulnerabilities/{scannerType}",produces = "application/json")
+    @Transactional(readOnly = true)
+    public ResponseEntity<String> getVulnerabilitiesByTypev2(@PathVariable(value = "scannerType") String type) throws UnknownHostException {
+        return getVulnerabilitiesService.getVulnerabilitiesByType(type);
+    }
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PatchMapping(value = "/v2/api/vulnerabilities/{scannerType}/{vulnId}/{grade}",produces = "application/json")
+    @Transactional(readOnly = true)
+    public ResponseEntity<String> setGradeForVulnerabiility(@PathVariable(value = "scannerType") String type, @PathVariable("vulnId") Long id,@PathVariable("grade") int grade) throws UnknownHostException {
+        return getVulnerabilitiesService.setGradeForVulnerabiility(type, id,grade);
+    }
+
     @CrossOrigin(origins="*")
     @PreAuthorize("hasAuthority('ROLE_API')")
     @GetMapping(value = "/api/vulns/{projectId}/{scannerType}",produces = "application/json")

@@ -30,12 +30,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.google.gson.Gson;
+
+import javax.annotation.Resource;
 import javax.transaction.Transactional;
 
 
@@ -189,11 +192,16 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 	}
 
 	private ResponseEntity<String> patchTarget(io.mixeway.db.entity.Scanner scanner, WebApp webApp, String jsonStringToUpdateTarget) throws Exception {
-		RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(null);
-		HttpHeaders headers = prepareAuthHeader(scanner);
-		headers.set("Content-Type", "application/json");
-		HttpEntity<String> entity = new HttpEntity<>(jsonStringToUpdateTarget,headers);
-		return restTemplate.exchange(scanner.getApiUrl() + "/api/v1/targets/"+webApp.getTargetId()+"/configuration", HttpMethod.PATCH, entity, String.class);
+		try {
+			RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(null);
+			HttpHeaders headers = prepareAuthHeader(scanner);
+			headers.set("Content-Type", "application/json");
+			HttpEntity<String> entity = new HttpEntity<>(jsonStringToUpdateTarget, headers);
+			return restTemplate.exchange(scanner.getApiUrl() + "/api/v1/targets/" + webApp.getTargetId() + "/configuration", HttpMethod.PATCH, entity, String.class);
+		} catch (ResourceAccessException e) {
+			log.error("Unable to Patch target for scanner - resource not avaliable {}", scanner.getApiUrl());
+		}
+		return null;
 	}
 
 	@Override
@@ -229,7 +237,8 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 			log.error("Response from acunetix /api/v1/scans {} for url {}", ex.getStatusCode(),webApp.getUrl());
 		} catch (DataIntegrityViolationException dve){
 			log.error("EXception occured during runScan");
-
+		} catch (ResourceAccessException e){
+			log.error("Resource not avaliable {}", scanner.getApiUrl());
 		}
 	}
 	@Override
@@ -410,6 +419,8 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 				throw new Exception("Scanner Not initialized");
 		} catch (HttpClientErrorException ex){
 			log.error("Response from acunetix /api/v1/targets/{}/configuration {} for url {}",webApp.getTargetId(), ex.getStatusCode(),webApp.getUrl());
+		} catch (ResourceAccessException ex){
+			log.error("Host of scanner is not avaliable {}",scanner.getApiUrl());
 		}
 	}
 	private void createCookiesorTarget(io.mixeway.db.entity.Scanner scanner, WebApp webApp) throws Exception {
@@ -444,7 +455,7 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 		try {
 			if (scanner.getStatus()) {
 				ResponseEntity<String> response = patchTarget(scanner, webApp, createJsonStringForProxySet(scanner));
-				if (response.getStatusCode() == HttpStatus.NO_CONTENT) {
+				if (response != null && response.getStatusCode() == HttpStatus.NO_CONTENT) {
 					webApp.setReadyToScan(true);
 				}
 			} else

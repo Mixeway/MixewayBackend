@@ -262,4 +262,5 @@ public class Constants {
     public static final String BURP_NAMED_CONFIGURATION = "NamedConfiguration";
 	public static final String BURP_STATUS_FAILED = "failed";
 	public static final String BURP_STATUS_SUCCEEDED = "succeeded";
+    public static final String ROLE_API = "ROLE_API";
 }
