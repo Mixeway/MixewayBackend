@@ -970,3 +970,7 @@ update infrastructurevuln set grade =-1;
 update softwarepacketvulnerability set grade =-1;
 update codevuln set grade =-1;
 update webappvuln set grade =-1;
+
+--changeset siewer:187
+alter table webapp add column priority int;
+update webapp set priority=0;

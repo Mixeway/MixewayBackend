@@ -44,6 +44,15 @@ public class WebApp {
 	private String origin;
 	@JsonIgnore String username;
 	@JsonIgnore String password;
+	private int priority;
+
+	public int getPriority() {
+		return priority;
+	}
+
+	public void setPriority(int priority) {
+		this.priority = priority;
+	}
 
 	public String getUsername() {
 		return username;

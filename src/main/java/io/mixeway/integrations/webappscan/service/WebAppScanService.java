@@ -10,12 +10,12 @@ import io.mixeway.integrations.webappscan.model.WebAppScanHelper;
 import io.mixeway.integrations.webappscan.model.WebAppScanModel;
 import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.Status;
+import io.mixeway.pojo.VaultHelper;
 import io.mixeway.rest.project.model.RunScanForWebApps;
 import io.mixeway.rest.utils.ProjectRiskAnalyzer;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +23,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.ResourceAccessException;
 
 import javax.persistence.NonUniqueResultException;
 import java.text.ParseException;
@@ -50,15 +49,17 @@ public class WebAppScanService {
     private final WebAppVulnRepository webAppVulnRepository;
     private final RoutingDomainRepository routingDomainRepository;
     private final ProjectRiskAnalyzer projectRiskAnalyzer;
+    private final VaultHelper vaultHelper;
 
     public WebAppScanService(ProjectRepository projectRepository, WebAppRepository waRepository, WebAppVulnRepository webAppVulnRepository,
                              ScannerRepository scannerRepository, ScannerTypeRepository scannerTypeRepository,
                              CodeGroupRepository codeGroupRepository, CodeProjectRepository codeProjectRepository, WebAppCookieRepository webAppCookieRepository,
                              WebAppHeaderRepository webAppHeaderRepository, List<WebAppScanClient> webAppScanClients,
                              WebAppScanStrategyRepository webAppScanStrategyRepository, RoutingDomainRepository routingDomainRepository,
-                             ProjectRiskAnalyzer projectRiskAnalyzer) {
+                             ProjectRiskAnalyzer projectRiskAnalyzer, VaultHelper vaultHelper) {
         this.projectRepository = projectRepository;
         this.projectRiskAnalyzer = projectRiskAnalyzer;
+        this.vaultHelper = vaultHelper;
         this.waRepository = waRepository;
         this.scannerRepository = scannerRepository;
         this.scannerTypeRepository = scannerTypeRepository;
@@ -169,6 +170,13 @@ public class WebAppScanService {
         webApp.setInserted(sdf.format(new Date()));
         webApp.setPublicscan(webAppScanModel.getIsPublic());
         webApp.setUrl(webAppScanModel.getUrl());
+        webApp.setUsername(webAppScanModel.getUsername());
+        String uuidToken = UUID.randomUUID().toString();
+        if (vaultHelper.savePassword(webAppScanModel.getPassword(), uuidToken)){
+            webApp.setPassword(uuidToken);
+        } else {
+            webApp.setPassword(webAppScanModel.getPassword());
+        }
         webApp = waRepository.save(webApp);
         waRepository.flush();
         this.createHeaderAndCookies(webAppScanModel.getHeaders(), webAppScanModel.getCookies(), webApp);
@@ -421,13 +429,19 @@ public class WebAppScanService {
         }
     }
 
+    /**
+     * Gets all projects with set AutoWebAppScan to true and then put every webapp linked with particular project
+     * with priority=0 into queue
+     */
     @Transactional
-    public void scheduledRunWebAppScan() {
+    public void scheduledRunWebAppScan(int priority) {
         log.info("Starting scheduled scan for webapps");
         List<Project> projects = projectRepository.findByAutoWebAppScan(true);
         for (Project p : projects) {
             for (WebApp webApp : p.getWebapps()) {
-                this.putSingleWebAppToQueue(webApp.getId(),Constants.STRATEGY_SCHEDULER);
+                if (webApp.getPriority() == priority) {
+                    this.putSingleWebAppToQueue(webApp.getId(), Constants.STRATEGY_SCHEDULER);
+                }
             }
         }
     }

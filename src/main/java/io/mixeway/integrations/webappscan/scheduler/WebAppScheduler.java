@@ -27,9 +27,20 @@ public class WebAppScheduler {
 		webAppScanService.scheduledRunWebAppScanFromQueue();
 	}
 
+	/**
+	 * Run WebApp Scheduled scan at defined rate
+	 */
 	@Scheduled(cron="#{@getWebAppCronExpresion}" )
 	public void startAutomaticWebAppScans(){
-		webAppScanService.scheduledRunWebAppScan();
+		webAppScanService.scheduledRunWebAppScan(0);
+	}
+
+	/**
+	 * Run priority queue every wednesday 23:30
+	 */
+	@Scheduled(cron="0 25 23 ? * WED" )
+	public void startPriorityQueue(){
+		webAppScanService.scheduledRunWebAppScan(1);
 	}
 
 }
