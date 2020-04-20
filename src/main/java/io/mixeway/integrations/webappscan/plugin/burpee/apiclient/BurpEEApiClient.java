@@ -162,8 +162,10 @@ public class BurpEEApiClient implements SecurityScanner, WebAppScanClient {
                     WebAppVuln vuln = new WebAppVuln(webApp, issue.getIssue());
                     Optional<WebAppVuln> webAppVulnOptional = oldVulns.stream().filter(webAppVuln -> webAppVuln.getSeverity().equals(vuln.getSeverity()) &&
                             webAppVuln.getLocation().equals(vuln.getLocation()) && webAppVuln.getName().equals(vuln.getName())).findFirst();
-                    if (webAppVulnOptional.isPresent())
+                    if (webAppVulnOptional.isPresent()) {
                         vuln.setStatus(statusRepository.findByName(Constants.STATUS_EXISTING));
+                        vuln.setGrade(webAppVulnOptional.get().getGrade());
+                    }
                     else
                         vuln.setStatus(statusRepository.findByName(Constants.STATUS_NEW));
                     webAppVulnRepository.save(vuln);

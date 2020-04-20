@@ -146,6 +146,9 @@ public class OpenVasSocketClient implements NetworkScanClient, SecurityScanner {
                 if (oldVulns.stream().anyMatch(infrastructureVuln -> infrastructureVuln.getName().equals(iv.getName()) && infrastructureVuln.getDescription().equals(iv.getDescription())
                         && infrastructureVuln.getSeverity().equals(iv.getSeverity()) && infrastructureVuln.getPort().equals(iv.getPort()))){
                     iv.setStatus(statusRepository.findByName(Constants.STATUS_EXISTING));
+                    Optional<InfrastructureVuln> infrastructureVuln = oldVulns.stream().filter(v -> v.getName().equals(iv.getName()) && v.getDescription().equals(iv.getDescription())
+                            && v.getSeverity().equals(iv.getSeverity()) && v.getPort().equals(iv.getPort())).findFirst();
+                    infrastructureVuln.ifPresent(value -> iv.setGrade(value.getGrade()));
                 } else {
                     iv.setStatus(statusRepository.findByName(Constants.STATUS_NEW));
                 }

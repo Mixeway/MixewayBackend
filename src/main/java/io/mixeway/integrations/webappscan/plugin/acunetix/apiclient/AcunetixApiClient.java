@@ -297,6 +297,7 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 						if (oldVulnExist.isPresent()) {
 							vuln.setStatus(statusRepository.findByName(Constants.STATUS_EXISTING));
 							vuln.setTicketId(oldVulnExist.get().getTicketId());
+							vuln.setGrade(oldVulnExist.get().getGrade());
 						} else {
 							vuln.setStatus(statusRepository.findByName(Constants.STATUS_NEW));
 							//TODO JIRA CREATION

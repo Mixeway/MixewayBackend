@@ -203,6 +203,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 					cv.setAnalysis(x.get().getAnalysis());
 					cv.setTicketId(x.get().getTicketId());
 					cv.setStatus(statusRepository.findByName(Constants.STATUS_EXISTING));
+					cv.setGrade(x.get().getGrade());
 				} else {
 					cv.setStatus(statusRepository.findByName(Constants.STATUS_NEW));
 					//TODO AUto Jira creation
