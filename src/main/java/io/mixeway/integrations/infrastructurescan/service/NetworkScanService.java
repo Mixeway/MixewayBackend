@@ -432,7 +432,7 @@ public class NetworkScanService {
                         if (networkScanClient.canProcessRequest(ns) && networkScanClient.isScanDone(ns)) {
                             networkScanClient.loadVulnerabilities(ns);
                             deleteRulsFromRfw(ns);
-                            updateRiskForInterfaces(ns);
+                            //updateRiskForInterfaces(ns);
                         }
                     }
                     //For nessus create webapp linking
