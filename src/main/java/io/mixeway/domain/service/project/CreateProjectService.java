@@ -25,12 +25,12 @@ public class CreateProjectService {
     }
 
     @Transactional
-    public boolean putProject(String projectName, String projectDescription, String ciid, boolean enableVulnManage){
+    public boolean putProject(String projectName, String projectDescription, String ciid, int enableVulnManage){
         try {
             Project p = new Project();
             p.setName(projectName);
             p.setDescription(projectDescription);
-            p.setEnableVulnManage(enableVulnManage);
+            p.setEnableVulnManage(enableVulnManage == 1);
             p.setCiid(ciid);
             projectRepository.save(p);
             return true;

@@ -6,13 +6,13 @@ public class Projects {
     String description;
     int risk;
     String ciid;
-    boolean enableVulnManage;
+    int enableVulnManage;
 
-    public boolean isEnableVulnManage() {
+    public int getEnableVulnManage() {
         return enableVulnManage;
     }
 
-    public void setEnableVulnManage(boolean enableVulnManage) {
+    public void setEnableVulnManage(int enableVulnManage) {
         this.enableVulnManage = enableVulnManage;
     }
 

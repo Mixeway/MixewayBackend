@@ -77,12 +77,13 @@ public class DashboardService {
             projects1.setName(p.getName());
             projects1.setDescription(p.getDescription());
             projects1.setRisk(p.getRisk());
+            projects1.setEnableVulnManage(p.isEnableVulnManage() ? 1 : 0 );
             projects.add(projects1);
         }
         return projects;
     }
 
-    public ResponseEntity putProject(String projectName, String projectDescription, String ciid, boolean enableVulnManage, String user) {
+    public ResponseEntity putProject(String projectName, String projectDescription, String ciid, int enableVulnManage, String user) {
         if (!projectRepository.findByName(projectName).isPresent() && createProjectService.putProject(projectName,projectDescription,ciid, enableVulnManage)){
             log.info("{} - Created new project {}", user, LogUtil.prepare(projectName));
             return new ResponseEntity(HttpStatus.CREATED);
@@ -98,7 +99,7 @@ public class DashboardService {
             project.get().setName(projectObject.getName());
             project.get().setDescription(projectObject.getDescription());
             project.get().setCiid(projectObject.getCiid());
-            project.get().setEnableVulnManage(projectObject.isEnableVulnManage());
+            project.get().setEnableVulnManage(projectObject.getEnableVulnManage() == 1);
             log.info("{} - Updated project {}, new name is {}", user, oldName,project.get().getName());
             projectRepository.save(project.get());
         } else {

@@ -64,7 +64,7 @@ public class DashboardController {
     public ResponseEntity putProject(@PathVariable(value = "projectName") String projectName,
                                      @PathVariable(value="projectDescription") String projectDescription,
                                      @PathVariable(value="ciid") String ciid,
-                                     @PathVariable(value="enableVulnManage") boolean enableVulnManage, Principal principal)  {
+                                     @PathVariable(value="enableVulnManage") int enableVulnManage, Principal principal)  {
         return dashboardService.putProject(projectName, projectDescription, ciid, enableVulnManage, principal.getName());
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
