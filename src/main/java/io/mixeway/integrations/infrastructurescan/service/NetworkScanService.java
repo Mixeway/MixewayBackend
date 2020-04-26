@@ -124,6 +124,7 @@ public class NetworkScanService {
             project = new Project();
             project.setName(req.getProjectName());
             project.setCiid(req.getCiid());
+            project.setEnableVulnManage(req.getEnableVulnManage().isPresent() ? req.getEnableVulnManage().get() : true);
             projectRepository.save(project);
         }
         List<Interface> intfs = updateAssetsAndPrepareInterfacesForScan(req, project);

@@ -134,6 +134,7 @@ public class CodeScanService {
                 project = new Project();
                 project.setName(codeScanRequest.getProjectName());
                 project.setCiid(codeScanRequest.getCiid());
+                project.setEnableVulnManage(codeScanRequest.getEnableVulnManage().isPresent() ? codeScanRequest.getEnableVulnManage().get() : true);
                 project = projectRepository.save(project);
             }
 

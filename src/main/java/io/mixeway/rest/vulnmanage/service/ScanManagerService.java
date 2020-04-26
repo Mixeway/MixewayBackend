@@ -98,6 +98,7 @@ public class ScanManagerService {
                         project.setName("Autogen name for ciid: "+webAppScanRequest.getCiid().get());
                     }
                     project.setCiid(webAppScanRequest.getCiid().get());
+                    project.setEnableVulnManage(webAppScanRequest.getEnableVulnManage().isPresent() ? webAppScanRequest.getEnableVulnManage().get() : true);
                     project = projectRepository.save(project);
                 }
                 return acunetixService.processScanWebAppRequest(project.getId(), webAppScanRequest.getWebApp(), Constants.STRATEGY_GUI);

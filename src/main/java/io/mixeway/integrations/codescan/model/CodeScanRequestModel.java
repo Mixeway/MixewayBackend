@@ -2,10 +2,20 @@ package io.mixeway.integrations.codescan.model;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import java.util.Optional;
 
 public class CodeScanRequestModel {
     @NotBlank @NotNull String projectName;
     String ciid;
+    Optional<Boolean> enableVulnManage;
+
+    public Optional<Boolean> getEnableVulnManage() {
+        return enableVulnManage;
+    }
+
+    public void setEnableVulnManage(Optional<Boolean> enableVulnManage) {
+        this.enableVulnManage = enableVulnManage;
+    }
     @NotBlank @NotNull String codeProjectName;
     @NotBlank @NotNull String codeGroupName;
     @NotBlank @NotNull String tech;
