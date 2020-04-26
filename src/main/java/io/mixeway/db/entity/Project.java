@@ -49,6 +49,16 @@ public class Project implements Serializable{
 	@JsonIgnore private String apiKey;
 	@JsonIgnore private Set<VulnHistory> vulnHistories;
 	private int risk;
+	private boolean enableVulnManage;
+
+	@Column(name = "enablevulnmanage")
+	public boolean isEnableVulnManage() {
+		return enableVulnManage;
+	}
+
+	public void setEnableVulnManage(boolean enableVulnManage) {
+		this.enableVulnManage = enableVulnManage;
+	}
 
 	public int getRisk() {
 		return risk;
