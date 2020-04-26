@@ -20,7 +20,7 @@ WebAppVulnRepository extends JpaRepository<WebAppVuln, Long>{
 	Set<WebAppVuln> findByWebAppIn(Set<WebApp> webApps);
 	@Query(value = "SELECT * from webappvuln where webapp_id in (select id from webapp where project_id=:projectId)", nativeQuery = true)
 	Stream<WebAppVuln> getWebAppVulnsForProject(@Param("projectId")Long projectId);
-	@Query(value = "SELECT * from webappvuln", nativeQuery = true)
+	@Query(value = "SELECT v.* from webappvuln v, webapp w, project p where v.webapp_id=w.id and w.project_id=p.id and p.enablevulnmanage=true", nativeQuery = true)
 	Stream<WebAppVuln> getAllWebAppVulns();
 	Set<WebAppVuln> findByWebAppInAndSeverityNot(Set<WebApp> webApps, String severity);
 	Set<WebAppVuln> findByWebAppInAndSeverityIn(Set<WebApp> webApps, List<String> severities);

@@ -3,6 +3,7 @@ package io.mixeway.integrations.infrastructurescan.model;
 import io.mixeway.pojo.AssetToCreate;
 
 import java.util.List;
+import java.util.Optional;
 
 public class NetworkScanRequestModel {
 
@@ -15,6 +16,15 @@ public class NetworkScanRequestModel {
 	}
 	private String projectName;
 	private String ciid;
+	Optional<Boolean> enableVulnManage;
+
+	public Optional<Boolean> getEnableVulnManage() {
+		return enableVulnManage;
+	}
+
+	public void setEnableVulnManage(Optional<Boolean> enableVulnManage) {
+		this.enableVulnManage = enableVulnManage;
+	}
 	
 	public String getProjectName() {
 		return projectName;

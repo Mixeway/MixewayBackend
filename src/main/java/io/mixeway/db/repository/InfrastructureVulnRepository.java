@@ -45,6 +45,9 @@ public interface InfrastructureVulnRepository extends JpaRepository<Infrastructu
 	Long countByName(String name);
 
 	List<InfrastructureVuln> findBySeverityNot(String threat);
+	@Query(value="select v.* from infrastructurevuln v, interface i, asset a, project p where " +
+			"v.interface_id=i.id and i.asset_id=a.id and a.project_id = p.id and p.enablevulnmanage=true and threat!='Log'", nativeQuery = true)
+	Stream<InfrastructureVuln> getSeveritiesForVulnManage();
 	Long countBySeverityNot(String threat);
 	List<InfrastructureVuln> findByIntfInAndSeverityIn(List<Interface> intfs, List<String> threats);
 	@Query(value = "SELECT i from InfrastructureVuln i where i.intf in :interfaces and i.port like '%www%'")

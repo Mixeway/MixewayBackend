@@ -8,6 +8,15 @@ public class WebAppScanRequestModel {
 	List<WebAppScanModel> webApp;
 	Optional<String> ciid;
 	Optional<String> projectName;
+	Optional<Boolean> enableVulnManage;
+
+	public Optional<Boolean> getEnableVulnManage() {
+		return enableVulnManage;
+	}
+
+	public void setEnableVulnManage(Optional<Boolean> enableVulnManage) {
+		this.enableVulnManage = enableVulnManage;
+	}
 
 	public Optional<String> getProjectName() {
 		return projectName;

@@ -6,6 +6,15 @@ public class Projects {
     String description;
     int risk;
     String ciid;
+    int enableVulnManage;
+
+    public int getEnableVulnManage() {
+        return enableVulnManage;
+    }
+
+    public void setEnableVulnManage(int enableVulnManage) {
+        this.enableVulnManage = enableVulnManage;
+    }
 
     public String getCiid() {
         return ciid;

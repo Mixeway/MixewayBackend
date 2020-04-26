@@ -60,11 +60,12 @@ public class DashboardController {
     }
 
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
-    @PutMapping(value = "/projects/{projectName}/{projectDescription}/{ciid}")
+    @PutMapping(value = "/projects/{projectName}/{projectDescription}/{ciid}/{enableVulnManage}")
     public ResponseEntity putProject(@PathVariable(value = "projectName") String projectName,
                                      @PathVariable(value="projectDescription") String projectDescription,
-                                     @PathVariable(value="ciid") String ciid, Principal principal)  {
-        return dashboardService.putProject(projectName, projectDescription, ciid, principal.getName());
+                                     @PathVariable(value="ciid") String ciid,
+                                     @PathVariable(value="enableVulnManage") int enableVulnManage, Principal principal)  {
+        return dashboardService.putProject(projectName, projectDescription, ciid, enableVulnManage, principal.getName());
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @PatchMapping(value = "/projects/{projectId}")

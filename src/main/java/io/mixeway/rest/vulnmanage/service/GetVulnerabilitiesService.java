@@ -129,9 +129,9 @@ public class GetVulnerabilitiesService {
         List<Vuln> tmpVulns = vulns.getVulnerabilities();
         List<SoftwarePacketVulnerability> softVuln = null;
         if (project != null)
-            softVuln = new ArrayList<SoftwarePacketVulnerability>();
+            softVuln = softwarePacketVulnerabilityRepository.getSoftwareVulnsForProject(project.getId());
         else
-            softVuln = softwarePacketVulnerabilityReposutitory.findAll();
+            softVuln = softwarePacketVulnerabilityReposutitory.getSoftwarePacketVulnerabilitiesForVulnManage();
         for (SoftwarePacketVulnerability spv : softVuln) {
             for (Asset a : spv.getSoftwarepacket().getAssets()) {
                 Vuln v = new Vuln();
@@ -333,7 +333,9 @@ public class GetVulnerabilitiesService {
                 infraVulns = vulnsForProject.collect(Collectors.toList());
             }
         } else {
-            infraVulns = infrastractureVulnRepository.findBySeverityNot("Log");
+            try (Stream<InfrastructureVuln> vulnsForProject = infrastractureVulnRepository.getSeveritiesForVulnManage()) {
+                infraVulns = vulnsForProject.collect(Collectors.toList());
+            }
         }
         for (InfrastructureVuln iv : infraVulns) {
             Vuln v = new Vuln();
@@ -355,7 +357,9 @@ public class GetVulnerabilitiesService {
             	v.setCiid(iv.getIntf().getAsset().getProject().getCiid());
             v.setRoutingDomainName(iv.getIntf().getRoutingDomain() != null ? iv.getIntf().getRoutingDomain().getName() : "");
             v.setPort(iv.getPort().split("/")[0].trim().replace(" ",""));
-            v.setIpProtocol(iv.getPort().split("/")[1].trim().replace(" ",""));
+            try {
+                v.setIpProtocol(iv.getPort().split("/")[1].trim().replace(" ", ""));
+            } catch (ArrayIndexOutOfBoundsException ignored){ }
             v.setType(Constants.API_SCANNER_OPENVAS);
             tmpVulns.add(v);
         }

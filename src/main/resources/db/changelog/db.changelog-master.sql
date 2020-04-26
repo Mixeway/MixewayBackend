@@ -974,3 +974,7 @@ update webappvuln set grade =-1;
 --changeset siewer:187
 alter table webapp add column priority int;
 update webapp set priority=0;
+
+--changeset siewer:188
+alter table project add column enablevulnmanage boolean;
+update project set enablevulnmanage=true;

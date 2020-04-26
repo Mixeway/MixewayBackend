@@ -12,6 +12,7 @@ import io.mixeway.rest.model.Projects;
 import io.mixeway.rest.model.SourceDetectionChartData;
 import io.mixeway.rest.model.VulnResponse;
 import io.mixeway.rest.utils.ProjectRiskAnalyzer;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -76,13 +77,14 @@ public class DashboardService {
             projects1.setName(p.getName());
             projects1.setDescription(p.getDescription());
             projects1.setRisk(p.getRisk());
+            projects1.setEnableVulnManage(p.isEnableVulnManage() ? 1 : 0 );
             projects.add(projects1);
         }
         return projects;
     }
 
-    public ResponseEntity putProject(String projectName, String projectDescription, String ciid, String user) {
-        if (!projectRepository.findByName(projectName).isPresent() && createProjectService.putProject(projectName,projectDescription,ciid)){
+    public ResponseEntity putProject(String projectName, String projectDescription, String ciid, int enableVulnManage, String user) {
+        if (!projectRepository.findByName(projectName).isPresent() && createProjectService.putProject(projectName,projectDescription,ciid, enableVulnManage)){
             log.info("{} - Created new project {}", user, LogUtil.prepare(projectName));
             return new ResponseEntity(HttpStatus.CREATED);
         } else {
@@ -97,6 +99,7 @@ public class DashboardService {
             project.get().setName(projectObject.getName());
             project.get().setDescription(projectObject.getDescription());
             project.get().setCiid(projectObject.getCiid());
+            project.get().setEnableVulnManage(projectObject.getEnableVulnManage() == 1);
             log.info("{} - Updated project {}, new name is {}", user, oldName,project.get().getName());
             projectRepository.save(project.get());
         } else {
