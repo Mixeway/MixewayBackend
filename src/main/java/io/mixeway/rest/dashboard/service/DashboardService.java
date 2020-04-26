@@ -12,6 +12,7 @@ import io.mixeway.rest.model.Projects;
 import io.mixeway.rest.model.SourceDetectionChartData;
 import io.mixeway.rest.model.VulnResponse;
 import io.mixeway.rest.utils.ProjectRiskAnalyzer;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -97,6 +98,7 @@ public class DashboardService {
             project.get().setName(projectObject.getName());
             project.get().setDescription(projectObject.getDescription());
             project.get().setCiid(projectObject.getCiid());
+            project.get().setEnableVulnManage(projectObject.isEnableVulnManage());
             log.info("{} - Updated project {}, new name is {}", user, oldName,project.get().getName());
             projectRepository.save(project.get());
         } else {
