@@ -390,8 +390,11 @@ public class WebAppScanService {
                     deactivateWebApp(app);
                     scanner.setRunningScans(scanner.getRunningScans()-1);
                     log.warn("WebApp deleted manualy from scanner - {} {}", e.getRawStatusCode(), app.getUrl());
-                } else
+                } else {
+                    scanner.setRunningScans(scanner.getRunningScans() - 1);
+                    scannerRepository.save(scanner);
                     log.warn("HttpClientException with code {} for webapp {}", e.getRawStatusCode(), app.getUrl());
+                }
             }
         }
     }

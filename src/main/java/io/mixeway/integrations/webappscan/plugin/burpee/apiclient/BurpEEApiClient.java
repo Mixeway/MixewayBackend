@@ -120,6 +120,8 @@ public class BurpEEApiClient implements SecurityScanner, WebAppScanClient {
                             || response.getBody().getScan_status().equals(Constants.BURP_STATUS_SUCCEEDED)));
 
         } catch (HttpClientErrorException e){
+            scanner.setRunningScans(scanner.getRunningScans() - 1);
+            scannerRepository.save(scanner);
             log.error("Cannot check if scan is done for {} - {}", webApp.getUrl(), e.getStatusCode());
         } catch (ResourceAccessException rao) {
             log.error("Resource access exception for {} - {}", webApp.getUrl(), rao.getLocalizedMessage());
