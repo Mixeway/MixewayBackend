@@ -16,6 +16,7 @@ import io.mixeway.rest.utils.ProjectRiskAnalyzer;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 
 import javax.persistence.NonUniqueResultException;
+import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -108,9 +110,9 @@ public class WebAppScanService {
             Optional<Project> project = projectRepository.findById(id);
             if (project.isPresent()) {
                 for (WebAppScanModel webAppScanModel : webAppScanModelList) {
+                    String urlToCompareSimiliar = getUrltoCompare(webAppScanModel.getUrl());
+                    String urlToCompareWithRegexx = WebAppScanHelper.normalizeUrl(webAppScanModel.getUrl()) + "$";
                     try {
-                        String urlToCompareSimiliar = getUrltoCompare(webAppScanModel.getUrl());
-                        String urlToCompareWithRegexx = WebAppScanHelper.normalizeUrl(webAppScanModel.getUrl()) + "$";
                         List<WebApp> webAppOptional = waRepository.getWebAppBySimiliarUrlOrRegexUrl(urlToCompareSimiliar, urlToCompareWithRegexx, project.get().getId());
                         if (webAppOptional.size() == 1){
                             requestId = updateAndPutWebAppToQueue(webAppOptional.stream().findFirst().get(), webAppScanModel);
@@ -123,6 +125,10 @@ public class WebAppScanService {
                         }
                     } catch (NonUniqueResultException | IncorrectResultSizeDataAccessException | ParseException ex) {
                         waRepository.flush();
+                        return new ResponseEntity<>(HttpStatus.PRECONDITION_FAILED);
+                    } catch (DataIntegrityViolationException e){
+                        waRepository.flush();
+                        log.error("Cannot put {} into queue, error is dataintegrity violation", urlToCompareWithRegexx);
                         return new ResponseEntity<>(HttpStatus.PRECONDITION_FAILED);
                     }
                 }
