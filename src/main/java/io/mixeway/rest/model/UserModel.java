@@ -3,6 +3,7 @@ package io.mixeway.rest.model;
 import io.mixeway.db.entity.Project;
 
 import java.util.List;
+import java.util.Optional;
 
 public class UserModel {
     String userRole;
@@ -10,13 +11,13 @@ public class UserModel {
     Boolean passwordAuth;
     String userPassword;
     String userUsername;
-    List<Long> projects;
+    Optional<List<Long>> projects;
 
-    public List<Long> getProjects() {
+    public Optional<List<Long>> getProjects() {
         return projects;
     }
 
-    public void setProjects(List<Long> projects) {
+    public void setProjects(Optional<List<Long>> projects) {
         this.projects = projects;
     }
 
