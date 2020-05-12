@@ -55,7 +55,7 @@ public class AdminUserRestService {
             if ( userModel.getPasswordAuth())
                 userToCreate.setPassword(bCryptPasswordEncoder.encode(userModel.getUserPassword()));
             userRepository.save(userToCreate);
-            if (userModel.getProjects().size()>0)
+            if (userModel.getProjects() != null && userModel.getProjects().size()>0)
                 loadProjectPermissionsForUser(userModel.getProjects(),userToCreate);
             log.info("{} - Created new user {} with role {}", name, LogUtil.prepare(userToCreate.getCommonName()), LogUtil.prepare(userToCreate.getPermisions()));
             return new ResponseEntity<>(new Status("ok"), HttpStatus.CREATED);
