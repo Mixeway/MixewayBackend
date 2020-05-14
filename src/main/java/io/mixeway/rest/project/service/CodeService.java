@@ -129,6 +129,8 @@ public class CodeService {
         cp.setRepoUrl(codeGroup.getRepoUrl());
         cp.setRepoPassword(codeGroup.getRepoPassword());
         cp.setRepoUsername(codeGroup.getRepoUsername());
+        cp.setTechnique(codeGroup.getTechnique());
+        cp.setInQueue(false);
         cp.setdTrackUuid(codeGroupPutModel.getdTrackUuid());
         codeProjectRepository.save(cp);
     }
@@ -235,6 +237,9 @@ public class CodeService {
                 }
                 if (editCodeProjectModel.getSastProject() > 0) {
                     codeProject.get().getCodeGroup().setVersionIdAll(editCodeProjectModel.getSastProject());
+                    if (!codeProject.get().getCodeGroup().getHasProjects()){
+                        codeProject.get().getCodeGroup().setVersionIdsingle(editCodeProjectModel.getSastProject());
+                    }
                     codeGroupRepository.save(codeProject.get().getCodeGroup());
                     log.info("{} Successfully Edited codeProject {}", name, codeProject.get().getName());
                 }
