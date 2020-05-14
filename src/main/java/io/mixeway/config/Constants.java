@@ -263,4 +263,8 @@ public class Constants {
 	public static final String BURP_STATUS_FAILED = "failed";
 	public static final String BURP_STATUS_SUCCEEDED = "succeeded";
     public static final String ROLE_API = "ROLE_API";
+    public static final String VULN_TYPE_OPENSOURCE = "OpenSource";
+    public static final String VULN_TYPE_SOURCECODE = "SourceCode";
+    public static final String VULN_TYPE_WEBAPP = "WebApplication";
+    public static final String VULN_TYPE_NETWORK = "Network";
 }

@@ -1,14 +1,13 @@
 package io.mixeway.rest.project.controller;
 
+import io.mixeway.db.entity.Vulnerability;
 import io.mixeway.rest.project.model.AssetCard;
 import io.mixeway.rest.project.model.AssetPutModel;
 import io.mixeway.rest.project.model.RunScanForAssets;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-import io.mixeway.db.entity.InfrastructureVuln;
 import io.mixeway.pojo.Status;
 import io.mixeway.rest.project.service.AssetService;
 
@@ -57,7 +56,7 @@ public class AssetControler {
     }
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping(value = "/{id}/vulns/infra")
-    public ResponseEntity<List<InfrastructureVuln>> showInfraVulns(Principal principal,@PathVariable("id")Long id) {
+    public ResponseEntity<List<Vulnerability>> showInfraVulns(Principal principal, @PathVariable("id")Long id) {
         return assetService.showInfraVulns(id,principal);
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")

@@ -41,7 +41,6 @@ public class CodeScanService {
     private final ProjectRepository projectRepository;
     private final CodeGroupRepository codeGroupRepository;
     private final CodeProjectRepository codeProjectRepository;
-    private final CodeVulnRepository codeVulnRepository;
     private final CodeAccessVerifier codeAccessVerifier;
     private final VaultHelper vaultHelper;
     private final List<CodeScanClient> codeScanClients;
@@ -49,18 +48,19 @@ public class CodeScanService {
     private final ScannerTypeRepository scannerTypeRepository;
     private final CiOperationsRepository ciOperationsRepository;
     private final ProjectRiskAnalyzer projectRiskAnalyzer;
+    private final ProjectVulnerabilityRepository projectVulnerabilityRepository;
 
 
     CodeScanService(ProjectRepository projectRepository, CodeGroupRepository codeGroupRepository, CodeProjectRepository codeProjectRepository,
-                    CodeVulnRepository codeVulnRepository, CodeAccessVerifier codeAccessVerifier, VaultHelper vaultHelper,
+                    ProjectVulnerabilityRepository projectVulnerabilityRepository, CodeAccessVerifier codeAccessVerifier, VaultHelper vaultHelper,
                     List<CodeScanClient> codeScanClients, ScannerRepository scannerRepository, ScannerTypeRepository scannerTypeRepository,
                     CiOperationsRepository ciOperationsRepository, ProjectRiskAnalyzer projectRiskAnalyzer){
         this.projectRepository = projectRepository;
         this.codeGroupRepository = codeGroupRepository;
         this.codeProjectRepository = codeProjectRepository;
-        this.codeVulnRepository = codeVulnRepository;
         this.codeAccessVerifier = codeAccessVerifier;
         this.vaultHelper = vaultHelper;
+        this.projectVulnerabilityRepository = projectVulnerabilityRepository;
         this.codeScanClients = codeScanClients;
         this.ciOperationsRepository = ciOperationsRepository;
         this.scannerRepository = scannerRepository;
@@ -78,16 +78,16 @@ public class CodeScanService {
      * @param projectName name of CodeProject entity
      * @return List of a CodeVulns for a given CodeProject
      */
-    public ResponseEntity<List<CodeVuln>> getResultsForProject(long projectId, String groupName, String projectName){
+    public ResponseEntity<List<ProjectVulnerability>> getResultsForProject(long projectId, String groupName, String projectName){
         Optional<Project> project = projectRepository.findById(projectId);
         if (codeAccessVerifier.verifyPermissions(projectId,groupName,projectName,false).getValid() && project.isPresent()){
             CodeProject cp = codeProjectRepository.findByCodeGroupAndName(codeGroupRepository
                     .findByProjectAndName(project.get(),groupName).orElse(null),projectName).orElse(null);
-            List<CodeVuln> codeVulns = codeVulnRepository.findByCodeProjectAndAnalysisNot(cp,"Not an Issue");
+            List<ProjectVulnerability> codeVulns = projectVulnerabilityRepository.findByCodeProjectAndAnalysisNot(cp,"Not an Issue");
             new ResponseEntity<>(codeVulns, HttpStatus.OK);
 
         } else
-            new ResponseEntity<List<CodeVuln>>(new ArrayList<>(), HttpStatus.PRECONDITION_FAILED);
+            new ResponseEntity<List<ProjectVulnerability>>(new ArrayList<>(), HttpStatus.PRECONDITION_FAILED);
 
 
         return null;
@@ -101,16 +101,16 @@ public class CodeScanService {
      * @param groupName name of CodeGroup entity
      * @return List of CodeVulns for given CodeGroup
      */
-    public ResponseEntity<List<CodeVuln>> getResultsForGroup(long projectId, String groupName){
+    public ResponseEntity<List<ProjectVulnerability>> getResultsForGroup(long projectId, String groupName){
 
         if (codeAccessVerifier.verifyPermissions(projectId,groupName,null, false).getValid()){
             CodeGroup cg = codeGroupRepository
                     .findByProjectAndName(projectRepository.findById(projectId).orElse(null),groupName).orElse(null);
-            List<CodeVuln> codeVulns = codeVulnRepository.findByCodeGroupAndAnalysisNot(cg,"Not an Issue");
+            List<ProjectVulnerability> codeVulns = projectVulnerabilityRepository.findByCodeProjectInAndAnalysisNot(new ArrayList<>(cg.getProjects()),"Not an Issue");
             new ResponseEntity<>(codeVulns, HttpStatus.OK);
 
         } else
-            new ResponseEntity<List<CodeVuln>>(new ArrayList<>(), HttpStatus.PRECONDITION_FAILED);
+            new ResponseEntity<List<ProjectVulnerability>>(new ArrayList<>(), HttpStatus.PRECONDITION_FAILED);
 
 
         return null;
@@ -277,7 +277,7 @@ public class CodeScanService {
         Optional<Scanner> sastScanner = scannerRepository.findByScannerTypeInAndStatus(scannerTypeRepository.getCodeScanners(), true).stream().findFirst();
         if (sastScanner.isPresent() && sastScanner.get().getStatus()) {
             for (CodeGroup group : groups) {
-                List<CodeVuln> tmpVulns = deleteVulnsForCodeGroup(group);
+                List<ProjectVulnerability> tmpVulns = deleteVulnsForCodeGroup(group);
                 if (group.getVersionIdAll() > 0) {
                     for(CodeScanClient codeScanClient : codeScanClients){
                         if (codeScanClient.canProcessRequest(sastScanner.get())){
@@ -320,7 +320,7 @@ public class CodeScanService {
         Optional<Scanner> sastScanner = scannerRepository.findByScannerTypeInAndStatus(scannerTypeRepository.getCodeScanners(), true).stream().findFirst();
         if (sastScanner.isPresent()) {
             for (CodeProject codeProject : codeProjectRepository.findByRunning(true)) {
-                List<CodeVuln> codeVulns = codeVulns = deleteVulnsForProject(codeProject);
+                List<ProjectVulnerability> codeVulns = deleteVulnsForProject(codeProject);
                 for (CodeScanClient codeScanClient : codeScanClients) {
                     if (codeScanClient.canProcessRequest(sastScanner.get()) && codeScanClient.isScanDone(null, codeProject)) {
                         codeScanClient.loadVulnerabilities(sastScanner.get(), codeProject.getCodeGroup(), null, true, codeProject, codeVulns);
@@ -365,8 +365,8 @@ public class CodeScanService {
         if (operations.isPresent()){
             CiOperations operation = operations.get();
             operation.setSastScan(true);
-            int sastCrit = codeVulnRepository.findByCodeProjectAndSeverityAndAnalysis(codeProject, Constants.VULN_CRITICALITY_CRITICAL, Constants.FORTIFY_ANALYSIS_EXPLOITABLE).size();
-            int sastHigh = codeVulnRepository.findByCodeProjectAndSeverityAndAnalysis(codeProject, Constants.VULN_CRITICALITY_HIGH, Constants.FORTIFY_ANALYSIS_EXPLOITABLE).size();
+            int sastCrit = projectVulnerabilityRepository.findByCodeProjectAndSeverityAndAnalysis(codeProject, Constants.VULN_CRITICALITY_CRITICAL, Constants.FORTIFY_ANALYSIS_EXPLOITABLE).size();
+            int sastHigh = projectVulnerabilityRepository.findByCodeProjectAndSeverityAndAnalysis(codeProject, Constants.VULN_CRITICALITY_HIGH, Constants.FORTIFY_ANALYSIS_EXPLOITABLE).size();
             operation.setSastCrit(sastCrit);
             operation.setSastHigh(sastHigh);
             operation.setEnded(new Date());
@@ -442,16 +442,16 @@ public class CodeScanService {
      * @param group codeGroup to delate vulns for
      * @return List of deleted vulns to set proper status
      */
-    private List<CodeVuln> deleteVulnsForCodeGroup(CodeGroup group) {
-        List<CodeVuln> tmpVulns = new ArrayList<>();
+    private List<ProjectVulnerability> deleteVulnsForCodeGroup(CodeGroup group) {
+        List<ProjectVulnerability> tmpVulns = new ArrayList<>();
         if (group.getHasProjects()) {
             for (CodeProject cp : group.getProjects()) {
-                tmpVulns.addAll(codeVulnRepository.findByCodeProject(cp));
-                codeVulnRepository.deleteVulnsForCodeProject(cp);
+                tmpVulns.addAll(projectVulnerabilityRepository.findByCodeProject(cp));
+                projectVulnerabilityRepository.deleteByCodeProject(cp);
             }
         } else{
-            tmpVulns.addAll(codeVulnRepository.findByCodeGroup(group));
-            codeVulnRepository.deleteVulnsForCodeGroup(group);
+            tmpVulns.addAll(projectVulnerabilityRepository.findByCodeProjectIn(new ArrayList<>(group.getProjects())));
+            projectVulnerabilityRepository.deleteByCodeProjectIn(new ArrayList<>(group.getProjects()));
         }
         return tmpVulns;
     }
@@ -461,9 +461,9 @@ public class CodeScanService {
      * @param codeProject CodeProject to delate vulns for
      * @return List of deleted vulns to set proper status
      */
-    private List<CodeVuln> deleteVulnsForProject(CodeProject codeProject){
-        List<CodeVuln> codeVulns = codeVulnRepository.findByCodeProject(codeProject);
-        codeVulnRepository.deleteVulnsForCodeProject(codeProject);
+    private List<ProjectVulnerability> deleteVulnsForProject(CodeProject codeProject){
+        List<ProjectVulnerability> codeVulns = projectVulnerabilityRepository.findByCodeProject(codeProject);
+        projectVulnerabilityRepository.deleteByCodeProject(codeProject);
         return codeVulns;
     }
 

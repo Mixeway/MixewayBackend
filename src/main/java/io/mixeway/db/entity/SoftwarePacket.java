@@ -32,7 +32,6 @@ public class SoftwarePacket {
 	@JsonIgnore private Set<Asset> assets;
 	@JsonIgnore private Set<CodeProject> codeProjects;
 	@JsonIgnore private Boolean uptated;
-	@JsonIgnore private Set<SoftwarePacketVulnerability> vulns;
 	@ManyToMany(fetch = FetchType.LAZY,
 			cascade = {
 					CascadeType.PERSIST,
@@ -81,13 +80,4 @@ public class SoftwarePacket {
 	public void setUptated(Boolean uptated) {
 		this.uptated = uptated;
 	}
-	@OneToMany(mappedBy = "softwarepacket", cascade = CascadeType.REMOVE,orphanRemoval=true,fetch=FetchType.LAZY)
-	public Set<SoftwarePacketVulnerability> getVulns() {
-		return vulns;
-	}
-	public void setVulns(Set<SoftwarePacketVulnerability> vulns) {
-		this.vulns = vulns;
-	}
-	
-
 }

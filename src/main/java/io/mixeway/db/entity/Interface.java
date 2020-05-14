@@ -29,7 +29,6 @@ public class Interface {
 	private Asset asset;
 	@JsonIgnore private String networkTag;
 	@JsonIgnore private Set<NessusScan> scans;
-	@JsonIgnore private Set<InfrastructureVuln> vulns;
 	@JsonIgnore private Set<Service> services;
 	private RoutingDomain routingDomain;
 	@JsonIgnore private int hostid;
@@ -139,13 +138,6 @@ public class Interface {
 	}
 	public void setScans(Set<NessusScan> scans) {
 		this.scans = scans;
-	}
-	@OneToMany(mappedBy = "intf", cascade = CascadeType.REMOVE,orphanRemoval=true,fetch=FetchType.LAZY)
-	public Set<InfrastructureVuln> getVulns() {
-		return vulns;
-	}
-	public void setVulns(Set<InfrastructureVuln> vulns) {
-		this.vulns = vulns;
 	}
 	@ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "routingdomain_id", nullable = false)

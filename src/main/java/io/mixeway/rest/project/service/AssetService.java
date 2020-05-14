@@ -10,7 +10,6 @@ import io.mixeway.rest.project.model.AssetModel;
 import io.mixeway.rest.project.model.AssetPutModel;
 import io.mixeway.rest.project.model.RunScanForAssets;
 import io.mixeway.rest.utils.IpAddressUtils;
-import io.mixeway.rest.utils.ProjectRiskAnalyzer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -32,9 +31,11 @@ public class AssetService {
     private final RoutingDomainRepository routingDomainRepository;
     private final AssetRepository assetRepository;
     private final ScanHelper scanHelper;
-    private final InfrastructureVulnRepository infrastructureVulnRepository;
     private final NetworkScanService networkScanService;
     private final PermissionFactory permissionFactory;
+    private final ProjectVulnerabilityRepository projectVulnerabilityRepository;
+    private final VulnerabilitySourceRepository vulnerabilitySourceRepository;
+    private final VulnerabilitySource NETWORK_SOURCE;
     private List<String> logs = new ArrayList<String>(){{
         add(Constants.LOG_SEVERITY);
         add(Constants.INFO_SEVERITY);
@@ -42,16 +43,18 @@ public class AssetService {
 
     AssetService(ProjectRepository projectRepository, InterfaceRepository interfaceRepository,
                  RoutingDomainRepository routingDomainRepository, AssetRepository assetRepository,
-                 ScanHelper scanHelper, InfrastructureVulnRepository infrastructureVulnRepository, NetworkScanService networkScanService,
-                 PermissionFactory permissionFactory){
+                 ScanHelper scanHelper, ProjectVulnerabilityRepository projectVulnerabilityRepository, NetworkScanService networkScanService,
+                 PermissionFactory permissionFactory, VulnerabilitySourceRepository vulnerabilitySourceRepository){
         this.projectRepository = projectRepository;
         this.interfaceRepository = interfaceRepository;
         this.permissionFactory = permissionFactory;
         this.routingDomainRepository = routingDomainRepository;
         this.assetRepository = assetRepository;
         this.scanHelper = scanHelper;
-        this.infrastructureVulnRepository = infrastructureVulnRepository;
         this.networkScanService = networkScanService;
+        this.projectVulnerabilityRepository = projectVulnerabilityRepository;
+        this.vulnerabilitySourceRepository = vulnerabilitySourceRepository;
+        this.NETWORK_SOURCE = this.vulnerabilitySourceRepository.findByName(Constants.VULN_TYPE_NETWORK);
     }
 
     public ResponseEntity<AssetCard> showAssets(Long id, Principal principal) {
@@ -189,11 +192,10 @@ public class AssetService {
         return new ResponseEntity<>(null,HttpStatus.OK);
     }
 
-    public ResponseEntity<List<InfrastructureVuln>> showInfraVulns(Long id, Principal principal) {
+    public ResponseEntity<List<Vulnerability>> showInfraVulns(Long id, Principal principal) {
         Optional<Project> project = projectRepository.findById(id);
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal,project.get())){
-            List<Interface> interfaces = interfaceRepository.findByAssetIn(new ArrayList<>(project.get().getAssets()));
-            List<InfrastructureVuln> vulnsNotLog = infrastructureVulnRepository.findByIntfInAndSeverityNotIn(interfaces, logs);
+            List<Vulnerability> vulnsNotLog = projectVulnerabilityRepository.findByProjectAndVulnerabilitySourceAndSeverityNotIn(project.get(),NETWORK_SOURCE, logs);
             return new ResponseEntity<>(vulnsNotLog,HttpStatus.OK);
         } else {
             return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);

@@ -68,7 +68,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
         this.secureRestTemplate = secureRestTemplate;
     }
     @Override
-    public void loadVulnerabilities(Scanner scanner, CodeGroup codeGroup, String urlToGetNext, Boolean single, CodeProject codeProject, List<CodeVuln> codeVulns) throws ParseException, JSONException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+    public void loadVulnerabilities(Scanner scanner, CodeGroup codeGroup, String urlToGetNext, Boolean single, CodeProject codeProject, List<ProjectVulnerability> codeVulns) throws ParseException, JSONException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         downloadResultsForScan(scanner,codeProject, codeGroup);
     }
 
@@ -416,9 +416,8 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
         for (CxResult result : results.stream().filter(cr ->
                 cr.getSeverity().equals(Constants.API_SEVERITY_CRITICAL) ||
                         cr.getSeverity().equals(Constants.API_SEVERITY_HIGH)).collect(Collectors.toList())){
-            CodeVuln codeVuln = new CodeVuln();
+            ProjectVulnerability codeVuln = new ProjectVulnerability();
             codeVuln.setCodeProject(codeProject);
-            codeVuln.setCodeGroup(codeProject.getCodeGroup());
             //codeVuln.set
         }
     }
