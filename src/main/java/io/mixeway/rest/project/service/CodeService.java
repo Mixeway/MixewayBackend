@@ -2,7 +2,9 @@ package io.mixeway.rest.project.service;
 
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.Project;
+import io.mixeway.db.entity.ProjectVulnerability;
 import io.mixeway.db.repository.*;
+import io.mixeway.domain.service.vulnerability.VulnTemplate;
 import io.mixeway.integrations.opensourcescan.model.Projects;
 import io.mixeway.integrations.codescan.service.CodeScanService;
 import io.mixeway.integrations.opensourcescan.service.OpenSourceScanService;
@@ -10,7 +12,6 @@ import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.PermissionFactory;
 import io.mixeway.pojo.VaultHelper;
 import io.mixeway.rest.project.model.*;
-import io.mixeway.rest.utils.ProjectRiskAnalyzer;
 import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +21,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import io.mixeway.db.entity.CodeGroup;
 import io.mixeway.db.entity.CodeProject;
-import io.mixeway.db.entity.CodeVuln;
 import io.mixeway.pojo.Status;
 
 import java.io.IOException;
@@ -38,19 +38,19 @@ public class CodeService {
     private final CodeProjectRepository codeProjectRepository;
     private final CodeGroupRepository codeGroupRepository;
     private final VaultHelper vaultHelper;
-    private final CodeVulnRepository codeVulnRepository;
     private final PermissionFactory permissionFactory;
     private final CodeScanService codeScanService;
     private final OpenSourceScanService openSourceScanService;
+    private final VulnTemplate vulnTemplate;
 
     CodeService(ProjectRepository projectRepository, CodeProjectRepository codeProjectRepository, CodeGroupRepository codeGroupRepository,
-                VaultHelper vaultHelper, CodeVulnRepository codeVulnRepository, PermissionFactory permissionFactory,
+                VaultHelper vaultHelper, VulnTemplate vulnTemplate, PermissionFactory permissionFactory,
                 CodeScanService  codeScanService, OpenSourceScanService openSourceScanService) {
         this.projectRepository = projectRepository;
         this.codeProjectRepository = codeProjectRepository;
         this.vaultHelper = vaultHelper;
         this.codeGroupRepository = codeGroupRepository;
-        this.codeVulnRepository = codeVulnRepository;
+        this.vulnTemplate = vulnTemplate;
         this.permissionFactory = permissionFactory;
         this.openSourceScanService = openSourceScanService;
         this.codeScanService = codeScanService;
@@ -196,11 +196,12 @@ public class CodeService {
         return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
     }
     @Transactional
-    public ResponseEntity<List<CodeVuln>> showCodeVulns(Long id, Principal principal) {
+    public ResponseEntity<List<ProjectVulnerability>> showCodeVulns(Long id, Principal principal) {
         Optional<Project> project = projectRepository.findById(id);
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
-            List<CodeVuln> codeVulns;
-            try(Stream<CodeVuln> vulns = codeVulnRepository.findByCodeGroupInAndAnalysisNot(project.get().getCodes(),"Not an Issue")){
+            List<ProjectVulnerability> codeVulns;
+            try(Stream<ProjectVulnerability> vulns = vulnTemplate.projectVulnerabilityRepository
+                    .findByProjectAndVulnerabilitySourceAndAnalysisNot(project.get(),vulnTemplate.SOURCE_SOURCECODE,"Not an Issue")){
                 codeVulns = vulns.collect(Collectors.toList());
             }
             return new ResponseEntity<>(codeVulns,HttpStatus.OK);

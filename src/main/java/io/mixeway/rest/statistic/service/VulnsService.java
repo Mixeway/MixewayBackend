@@ -1,64 +1,52 @@
 package io.mixeway.rest.statistic.service;
 
-import io.mixeway.db.repository.SoftwarePacketVulnerabilityRepository;
-import io.mixeway.pojo.BarChartProjection2;
-import org.springframework.beans.factory.annotation.Autowired;
+import io.mixeway.domain.service.vulnerability.VulnTemplate;
+import io.mixeway.pojo.VulnBarChartProjection;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import io.mixeway.db.repository.CodeVulnRepository;
-import io.mixeway.db.repository.InfrastructureVulnRepository;
-import io.mixeway.db.repository.WebAppVulnRepository;
 
 import java.util.List;
 
 @Service
 public class VulnsService {
-    private final CodeVulnRepository codeVulnRepository;
-    private final InfrastructureVulnRepository infrastructureVulnRepository;
-    private final WebAppVulnRepository webAppVulnRepository;
-    private final SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository;
-
-    VulnsService(CodeVulnRepository codeVulnRepository, InfrastructureVulnRepository infrastructureVulnRepository,
-                 WebAppVulnRepository webAppVulnRepository, SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository){
-        this.codeVulnRepository = codeVulnRepository;
-        this.infrastructureVulnRepository = infrastructureVulnRepository;
-        this.webAppVulnRepository = webAppVulnRepository;
-        this.softwarePacketVulnerabilityRepository = softwarePacketVulnerabilityRepository;
+    private final VulnTemplate vulnTemplate;
+    VulnsService(VulnTemplate vulnTemplate){
+        this.vulnTemplate = vulnTemplate;
     }
 
-    public ResponseEntity<List<BarChartProjection2>> getCodeVulnsTop() {
-        return new ResponseEntity<>(codeVulnRepository.get10TenCodeVulns(), HttpStatus.OK);
+    public ResponseEntity<List<VulnBarChartProjection>> getCodeVulnsTop() {
+        return new ResponseEntity<>(vulnTemplate.projectVulnerabilityRepository.top10CodeVulns(), HttpStatus.OK);
     }
 
-    public ResponseEntity<List<BarChartProjection2>> getCodeProjectsTop() {
-        return new ResponseEntity<>(codeVulnRepository.get10TopCodeProjects(), HttpStatus.OK);
+    public ResponseEntity<List<VulnBarChartProjection>> getCodeProjectsTop() {
+        return new ResponseEntity<>(vulnTemplate.projectVulnerabilityRepository.top10CodeProjects(), HttpStatus.OK);
     }
 
-    public ResponseEntity<List<BarChartProjection2>> getInfraVulnsTop() {
-        return new ResponseEntity<>(infrastructureVulnRepository.getTopVulns(), HttpStatus.OK);
+    public ResponseEntity<List<VulnBarChartProjection>> getInfraVulnsTop() {
+        return new ResponseEntity<>(vulnTemplate.projectVulnerabilityRepository.top10InfraVulns(), HttpStatus.OK);
 
     }
 
-    public ResponseEntity<List<BarChartProjection2>> getInfraIntfsTop() {
-        return new ResponseEntity<>(infrastructureVulnRepository.getTopTargets(), HttpStatus.OK);
+    public ResponseEntity<List<VulnBarChartProjection>> getInfraIntfsTop() {
+        return new ResponseEntity<>(vulnTemplate.projectVulnerabilityRepository.top10Interfaces(), HttpStatus.OK);
 
     }
 
-    public ResponseEntity<List<BarChartProjection2>> getWebVulnsTop() {
-        return new ResponseEntity<>(webAppVulnRepository.getTopVulns(), HttpStatus.OK);
+    public ResponseEntity<List<VulnBarChartProjection>> getWebVulnsTop() {
+        return new ResponseEntity<>(vulnTemplate.projectVulnerabilityRepository.top10WebApps(), HttpStatus.OK);
 
     }
 
-    public ResponseEntity<List<BarChartProjection2>> getWebAppsTop() {
-        return new ResponseEntity<>(webAppVulnRepository.getTopTargets(), HttpStatus.OK);
+    public ResponseEntity<List<VulnBarChartProjection>> getWebAppsTop() {
+        return new ResponseEntity<>(vulnTemplate.projectVulnerabilityRepository.top10WebAppVulns(), HttpStatus.OK);
     }
 
-    public ResponseEntity<List<BarChartProjection2>> getOpenSourceVulns() {
-        return new ResponseEntity<>(softwarePacketVulnerabilityRepository.getTopOpenSourceVulns(), HttpStatus.OK);
+    public ResponseEntity<List<VulnBarChartProjection>> getOpenSourceVulns() {
+        return new ResponseEntity<>(vulnTemplate.projectVulnerabilityRepository.top10OpenSource(), HttpStatus.OK);
     }
 
-    public ResponseEntity<List<BarChartProjection2>> getOpenSourceVulnsForCodeProject() {
-        return new ResponseEntity<>(softwarePacketVulnerabilityRepository.getTopOpenSourceVulnsForCodeProject(), HttpStatus.OK);
+    public ResponseEntity<List<VulnBarChartProjection>> getOpenSourceVulnsForCodeProject() {
+        return new ResponseEntity<>(vulnTemplate.projectVulnerabilityRepository.top10OpenSourceCodeProjects(), HttpStatus.OK);
     }
 }

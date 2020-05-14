@@ -1,5 +1,6 @@
 package io.mixeway.rest.project.controller;
 
+import io.mixeway.db.entity.ProjectVulnerability;
 import io.mixeway.db.entity.Vulnerability;
 import io.mixeway.rest.project.model.AssetCard;
 import io.mixeway.rest.project.model.AssetPutModel;
@@ -56,7 +57,7 @@ public class AssetControler {
     }
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping(value = "/{id}/vulns/infra")
-    public ResponseEntity<List<Vulnerability>> showInfraVulns(Principal principal, @PathVariable("id")Long id) {
+    public ResponseEntity<List<ProjectVulnerability>> showInfraVulns(Principal principal, @PathVariable("id")Long id) {
         return assetService.showInfraVulns(id,principal);
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")

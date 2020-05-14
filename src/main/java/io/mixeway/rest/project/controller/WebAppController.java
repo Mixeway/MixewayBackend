@@ -1,5 +1,6 @@
 package io.mixeway.rest.project.controller;
 
+import io.mixeway.db.entity.ProjectVulnerability;
 import io.mixeway.rest.project.model.RunScanForWebApps;
 import io.mixeway.rest.project.model.WebAppCard;
 import io.mixeway.rest.project.model.WebAppPutModel;
@@ -8,7 +9,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-import io.mixeway.db.entity.WebAppVuln;
 import io.mixeway.pojo.Status;
 import io.mixeway.rest.project.service.WebAppService;
 
@@ -33,7 +33,7 @@ public class WebAppController {
     }
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping(value = "/{id}/vulns/webapp")
-    public ResponseEntity<List<WebAppVuln>> showWebAppVulns(@PathVariable("id")Long id, Principal principal) {
+    public ResponseEntity<List<ProjectVulnerability>> showWebAppVulns(@PathVariable("id")Long id, Principal principal) {
         return webAppService.showWebAppVulns(id, principal);
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")

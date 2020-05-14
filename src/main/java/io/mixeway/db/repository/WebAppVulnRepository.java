@@ -5,7 +5,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import io.mixeway.pojo.BarChartProjection;
-import io.mixeway.pojo.BarChartProjection2;
+import io.mixeway.pojo.VulnBarChartProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -37,9 +37,9 @@ WebAppVulnRepository extends JpaRepository<WebAppVuln, Long>{
 	List<BarChartProjection> getWebAppVulnByName(Long projectId);
 	Long countByWebAppInAndSeverity(Set<WebApp> webApps, String severity);
 	@Query(value = "select count(*) as value, name as namee from webappvuln where severity in ('High','Critical')  group by name order by value desc limit 10", nativeQuery = true)
-	List<BarChartProjection2> getTopVulns();
+	List<VulnBarChartProjection> getTopVulns();
 	@Query(value = "select count(*) as value, w.url as namee from webappvuln wv, webapp w where w.id=wv.webapp_id and wv.severity in ('High','Critical')  group by w.url order by value desc limit 10", nativeQuery = true)
-	List<BarChartProjection2> getTopTargets();
+	List<VulnBarChartProjection> getTopTargets();
 	@Query(value = "select count(*) from webappvuln where webapp_id in (select id from webapp where project_id=?1) and severity=?2", nativeQuery =true)
 	Long getCountByProjectIdAndSeverity(@Param("id")Long id, @Param("severity") String severity);
 	@Query(value = "select count(*) from webappvuln where webapp_id=?1 and severity=?2", nativeQuery =true)

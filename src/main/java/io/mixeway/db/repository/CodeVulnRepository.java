@@ -6,7 +6,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import io.mixeway.pojo.BarChartProjection;
-import io.mixeway.pojo.BarChartProjection2;
+import io.mixeway.pojo.VulnBarChartProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -58,9 +58,9 @@ public interface CodeVulnRepository extends JpaRepository<CodeVuln, Long>{
 	Long countByCodeProjectInAndSeverityAndAnalysis(List<CodeProject> codeProjects, String severity, String analysis);
 
 	@Query(value="select count(*) as value, name as namee from codevuln where severity in ('Critical','High') and analysis != 'Not an Issue' group by name order by value desc limit 10", nativeQuery = true)
-	List<BarChartProjection2> get10TenCodeVulns();
+	List<VulnBarChartProjection> get10TenCodeVulns();
 	@Query(value="select count(*) as value, cp.name as namee from codevuln cv, codeproject cp where cp.id=cv.codeproject_id and cv.severity in ('Critical','High') and cv.analysis != 'Not an Issue' group by cp.name order by value desc limit 10;", nativeQuery = true)
-	List<BarChartProjection2> get10TopCodeProjects();
+	List<VulnBarChartProjection> get10TopCodeProjects();
 
 	@Query(value="select count(*) from codevuln where codegroup_id in (select id from codegroup where project_id=?1) and severity=?2 and analysis=?3", nativeQuery = true)
     Long getCountByProjectIdSeverityAndAnalysis(@Param("id") Long id, @Param("severity") String severity, @Param("analysis") String analysis);

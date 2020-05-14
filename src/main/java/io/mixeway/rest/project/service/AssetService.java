@@ -3,6 +3,7 @@ package io.mixeway.rest.project.service;
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
+import io.mixeway.domain.service.vulnerability.VulnTemplate;
 import io.mixeway.pojo.PermissionFactory;
 import io.mixeway.pojo.ScanHelper;
 import io.mixeway.rest.project.model.AssetCard;
@@ -33,9 +34,7 @@ public class AssetService {
     private final ScanHelper scanHelper;
     private final NetworkScanService networkScanService;
     private final PermissionFactory permissionFactory;
-    private final ProjectVulnerabilityRepository projectVulnerabilityRepository;
-    private final VulnerabilitySourceRepository vulnerabilitySourceRepository;
-    private final VulnerabilitySource NETWORK_SOURCE;
+    private final VulnTemplate vulnTemplate;
     private List<String> logs = new ArrayList<String>(){{
         add(Constants.LOG_SEVERITY);
         add(Constants.INFO_SEVERITY);
@@ -43,8 +42,8 @@ public class AssetService {
 
     AssetService(ProjectRepository projectRepository, InterfaceRepository interfaceRepository,
                  RoutingDomainRepository routingDomainRepository, AssetRepository assetRepository,
-                 ScanHelper scanHelper, ProjectVulnerabilityRepository projectVulnerabilityRepository, NetworkScanService networkScanService,
-                 PermissionFactory permissionFactory, VulnerabilitySourceRepository vulnerabilitySourceRepository){
+                 ScanHelper scanHelper, NetworkScanService networkScanService,
+                 PermissionFactory permissionFactory, VulnTemplate vulnTemplate){
         this.projectRepository = projectRepository;
         this.interfaceRepository = interfaceRepository;
         this.permissionFactory = permissionFactory;
@@ -52,9 +51,7 @@ public class AssetService {
         this.assetRepository = assetRepository;
         this.scanHelper = scanHelper;
         this.networkScanService = networkScanService;
-        this.projectVulnerabilityRepository = projectVulnerabilityRepository;
-        this.vulnerabilitySourceRepository = vulnerabilitySourceRepository;
-        this.NETWORK_SOURCE = this.vulnerabilitySourceRepository.findByName(Constants.VULN_TYPE_NETWORK);
+        this.vulnTemplate = vulnTemplate;
     }
 
     public ResponseEntity<AssetCard> showAssets(Long id, Principal principal) {
@@ -192,10 +189,11 @@ public class AssetService {
         return new ResponseEntity<>(null,HttpStatus.OK);
     }
 
-    public ResponseEntity<List<Vulnerability>> showInfraVulns(Long id, Principal principal) {
+    public ResponseEntity<List<ProjectVulnerability>> showInfraVulns(Long id, Principal principal) {
         Optional<Project> project = projectRepository.findById(id);
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal,project.get())){
-            List<Vulnerability> vulnsNotLog = projectVulnerabilityRepository.findByProjectAndVulnerabilitySourceAndSeverityNotIn(project.get(),NETWORK_SOURCE, logs);
+            List<ProjectVulnerability> vulnsNotLog = vulnTemplate.projectVulnerabilityRepository
+                    .findByProjectAndVulnerabilitySourceAndSeverityNotIn(project.get(),vulnTemplate.SOURCE_NETWORK, logs);
             return new ResponseEntity<>(vulnsNotLog,HttpStatus.OK);
         } else {
             return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);

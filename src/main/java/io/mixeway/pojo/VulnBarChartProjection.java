@@ -1,6 +1,6 @@
 package io.mixeway.pojo;
 
-public interface BarChartProjection2 {
+public interface VulnBarChartProjection {
     public Long getValue();
     public String getNamee();
 }

@@ -6,7 +6,7 @@ import java.util.stream.Stream;
 
 import io.mixeway.db.entity.Interface;
 import io.mixeway.pojo.BarChartProjection;
-import io.mixeway.pojo.BarChartProjection2;
+import io.mixeway.pojo.VulnBarChartProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -65,10 +65,10 @@ public interface InfrastructureVulnRepository extends JpaRepository<Infrastructu
 	Long countByIntfInAndSeverity(List<Interface> interfaces, String threat);
 
 	@Query(value="select count(*) as value, name as namee from infrastructurevuln where threat in ('Critical','High') group by name order by value desc limit 10", nativeQuery = true)
-	List<BarChartProjection2> getTopVulns();
+	List<VulnBarChartProjection> getTopVulns();
 	@Query(value="select count(*) as value, i.privateip||' ('||a.name||')' as namee from infrastructurevuln iv, interface i, asset a where iv.interface_id=i.id and i.asset_id=a.id and iv.threat in ('Critical','High') " +
 			"group by namee order by value desc limit 10",nativeQuery = true)
-	List<BarChartProjection2> getTopTargets();
+	List<VulnBarChartProjection> getTopTargets();
 	@Query(value ="select count(*) from infrastructurevuln where interface_id in (select id from interface where active=true and asset_id in (select id from asset where project_id=?1))" +
 			"and threat=?2", nativeQuery = true)
 	Long getCountByProjectIdAndThreat(@Param("id")Long id, @Param("threat")String threat);
