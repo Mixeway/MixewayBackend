@@ -244,7 +244,8 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 			}
 			if (intfActive != null) {
 				Vulnerability vulnerability = vulnTemplate.createOrGetVulnerabilityService.createOrGetVulnerability(v.getString(Constants.IF_VULN_NAME));
-				ProjectVulnerability projectVulnerability = new ProjectVulnerability(intfActive, dateFormat.format(new Date()), v, vulnerability);
+				ProjectVulnerability projectVulnerability = new ProjectVulnerability(intfActive,null,vulnerability,v.getString(Constants.IF_VULN_DESC),null
+						,v.getString(Constants.IF_VULN_THREAT),v.getString(Constants.IF_VULN_PORT),null,null,vulnTemplate.SOURCE_NETWORK);
 				projectVulnerability.updateStatusAndGrade(oldVulns, vulnTemplate);
 				vulnTemplate.projectVulnerabilityRepository.save(projectVulnerability);
 			} else  {

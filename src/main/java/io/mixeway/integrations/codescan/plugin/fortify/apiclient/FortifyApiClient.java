@@ -1,11 +1,13 @@
 package io.mixeway.integrations.codescan.plugin.fortify.apiclient;
+import static java.lang.Math.toIntExact;
 
 import com.google.gson.JsonObject;
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
+import io.mixeway.db.entity.Vulnerability;
 import io.mixeway.db.repository.*;
-import io.mixeway.integrations.opensourcescan.plugins.dependencytrack.apiclient.DependencyTrackApiClient;
+import io.mixeway.domain.service.vulnerability.VulnTemplate;
 import io.mixeway.integrations.bugtracker.BugTracking;
 import io.mixeway.integrations.codescan.plugin.fortify.model.*;
 import io.mixeway.integrations.codescan.model.TokenValidator;
@@ -51,34 +53,32 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 	private static final Logger log = LoggerFactory.getLogger(FortifyApiClient.class);
 	private VaultHelper vaultHelper;
 	private ScannerRepository scannerRepository;
-	private CodeVulnRepository codeVulnRepository;
 	private CodeProjectRepository codeProjectRepository;
 	private CodeGroupRepository codeGroupRepository;
 	private FortifySingleAppRepository fortifySingleAppRepository;
-	private StatusRepository statusRepository;
 	private SecureRestTemplate secureRestTemplate;
 	private ScannerTypeRepository scannerTypeRepository;
 	private BugTrackerRepository bugTrackerRepository;
 	private List<BugTracking> bugTrackings ;
 	private CiOperationsRepository ciOperationsRepository;
+	private VulnTemplate vulnTemplate;
 	private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 	private SimpleDateFormat sdfForFortify = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 	private String[] blackListedLocation = new String[] {"src","source","vendor","lib" };
 
 
-	FortifyApiClient(VaultHelper vaultHelper, ScannerRepository scannerRepository, CodeVulnRepository codeVulnRepository, List<BugTracking> bugTrackings, DependencyTrackApiClient dependencyTrackApiClient,
+	FortifyApiClient(VaultHelper vaultHelper, ScannerRepository scannerRepository, VulnTemplate vulnTemplate, List<BugTracking> bugTrackings,
 					 CodeProjectRepository codeProjectRepository, CodeGroupRepository codeGroupRepository, FortifySingleAppRepository fortifySingleAppRepository,
-					 StatusRepository statusRepository, SecureRestTemplate secureRestTemplate, ScannerTypeRepository scannerTypeRepository,
+					 SecureRestTemplate secureRestTemplate, ScannerTypeRepository scannerTypeRepository,
 					 BugTrackerRepository bugTrackerRepository, CiOperationsRepository ciOperationsRepository){
 		this.vaultHelper = vaultHelper;
 		this.bugTrackerRepository = bugTrackerRepository;
 		this.scannerRepository = scannerRepository;
-		this.codeVulnRepository = codeVulnRepository;
+		this.vulnTemplate = vulnTemplate;
 		this.codeProjectRepository = codeProjectRepository;
 		this.bugTrackings = bugTrackings;
 		this.codeGroupRepository = codeGroupRepository;
 		this.fortifySingleAppRepository = fortifySingleAppRepository;
-		this.statusRepository = statusRepository;
 		this.secureRestTemplate = secureRestTemplate;
 		this.scannerTypeRepository = scannerTypeRepository;
 		this.ciOperationsRepository = ciOperationsRepository;
@@ -139,7 +139,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 
 	//SSC Loading Vulnerabilities
 	@Override
-	public void loadVulnerabilities(io.mixeway.db.entity.Scanner scanner, CodeGroup codeGroup, String urlToGetNext, Boolean single, CodeProject codeProject, List<CodeVuln> codeVulns) throws ParseException, JSONException {
+	public void loadVulnerabilities(io.mixeway.db.entity.Scanner scanner, CodeGroup codeGroup, String urlToGetNext, Boolean single, CodeProject codeProject, List<ProjectVulnerability> codeVulns) throws ParseException, JSONException {
 		try {
 			CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
 			String url;
@@ -181,34 +181,34 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 		if (operations.isPresent()){
 			CiOperations operation = operations.get();
 			operation.setSastScan(true);
-			operation.setSastCrit(codeVulnRepository.findByCodeProjectAndSeverityAndAnalysis(codeProject, Constants.VULN_CRITICALITY_CRITICAL, Constants.FORTIFY_ANALYSIS_EXPLOITABLE).size());
-			operation.setSastHigh(codeVulnRepository.findByCodeProjectAndSeverityAndAnalysis(codeProject, Constants.VULN_CRITICALITY_HIGH, Constants.FORTIFY_ANALYSIS_EXPLOITABLE).size());
+			operation.setSastCrit(vulnTemplate.projectVulnerabilityRepository.findByCodeProjectAndSeverityAndAnalysis(codeProject, Constants.VULN_CRITICALITY_CRITICAL, Constants.FORTIFY_ANALYSIS_EXPLOITABLE).size());
+			operation.setSastHigh(vulnTemplate.projectVulnerabilityRepository.findByCodeProjectAndSeverityAndAnalysis(codeProject, Constants.VULN_CRITICALITY_HIGH, Constants.FORTIFY_ANALYSIS_EXPLOITABLE).size());
 			ciOperationsRepository.save(operation);
 			log.info("CI Operation updated for {} - {} settings SAST scan to true", codeProject.getCodeGroup().getProject().getName(),codeProject.getName());
 		}
 	}
 
 	//For single project reimporting analysis
-	private void reimportAnalysisFromScans(CodeProject codeProject, CodeGroup codeGroup, List<CodeVuln> oldVulns) {
-		List<CodeVuln> codeVulns = new ArrayList<>();
+	private void reimportAnalysisFromScans(CodeProject codeProject, CodeGroup codeGroup, List<ProjectVulnerability> oldVulns) {
+		List<ProjectVulnerability> codeVulns = new ArrayList<>();
 		if (codeProject !=null ) {
-			codeVulns = codeVulnRepository.findByCodeProject(codeProject);
+			codeVulns = vulnTemplate.projectVulnerabilityRepository.findByCodeProject(codeProject);
 		} else if (codeGroup!=null) {
-			codeVulns = codeVulnRepository.findByCodeGroup(codeGroup);
+			codeVulns = vulnTemplate.projectVulnerabilityRepository.findByCodeProjectIn(new ArrayList<>(codeGroup.getProjects()));
 		}
-		for (CodeVuln cv : codeVulns){
+		for (ProjectVulnerability cv : codeVulns){
 			try {
-				Optional<CodeVuln> x = oldVulns.stream().filter(c -> c.getExternalId().equals(cv.getExternalId())).findFirst();
+				Optional<ProjectVulnerability> x = oldVulns.stream().filter(c -> c.getExternalId() == cv.getExternalId()).findFirst();
 				if (x.isPresent()) {
 					cv.setAnalysis(x.get().getAnalysis());
 					cv.setTicketId(x.get().getTicketId());
-					cv.setStatus(statusRepository.findByName(Constants.STATUS_EXISTING));
+					cv.setStatus(vulnTemplate.STATUS_EXISTING);
 					cv.setGrade(x.get().getGrade());
 				} else {
-					cv.setStatus(statusRepository.findByName(Constants.STATUS_NEW));
+					cv.setStatus(vulnTemplate.STATUS_NEW);
 					//TODO AUto Jira creation
 				}
-				codeVulnRepository.save(cv);
+				vulnTemplate.projectVulnerabilityRepository.save(cv);
 			} catch (NullPointerException ignored) {}
 		}
 	}
@@ -217,37 +217,21 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 	private void saveVulnerabilities(CodeGroup codeGroup, JSONArray jsonArray, CodeProject cp, io.mixeway.db.entity.Scanner scanner) throws JSONException, CertificateException, ParseException, NoSuchAlgorithmException, KeyManagementException, UnrecoverableKeyException, KeyStoreException, IOException, URISyntaxException {
 		for (int i = 0; i < jsonArray.length(); i++) {
 			JSONObject vulnJson = jsonArray.getJSONObject(i);
-			CodeVuln vuln = new CodeVuln();
-			vuln.setAnalysis(vulnJson.getString(Constants.VULN_ANALYSIS));
-			vuln.setSeverity(vulnJson.getString(Constants.VULN_CRITICALITY));
-			vuln.setName(vulnJson.getString(Constants.VULN_NAME));
-			vuln.setInserted(sdf.format(new Date()));
-			if(codeGroup.getHasProjects() && cp == null) {
-				CodeProject codeProject = getProjectFromPath(codeGroup,vulnJson.getString(Constants.VULN_PATH));
-				if (codeProject == null)
-					return;
-				vuln.setCodeProject(codeProject);
-				vuln.setCodeGroup(codeGroup);
-			}else if (codeGroup.getHasProjects() && cp != null){
-				vuln.setCodeProject(cp);
-				vuln.setCodeGroup(codeGroup);
-			}else {
-				vuln.setCodeGroup(codeGroup);
-				List<CodeProject> codeProject = codeProjectRepository.findByCodeGroup(codeGroup);
-				if (codeProject.size() == 1)
-					vuln.setCodeProject(codeProject.get(0));
-			}
-			vuln.setFilePath(vulnJson.getString(Constants.VULN_PATH)+":"+vulnJson.getString(Constants.FORTIFY_LINE_NUMVER));
-			vuln = createDescriptionAndState(vulnJson.getString(Constants.VULN_ISSUE_INSTANCE_ID),vulnJson.getLong(Constants.VULN_ISSUE_ID),
-					codeGroup.getVersionIdAll(), scanner, vuln);
-			codeVulnRepository.save(vuln);
+			Vulnerability vulnerability = vulnTemplate.createOrGetVulnerabilityService.createOrGetVulnerability(vulnJson.getString(Constants.VULN_NAME));
+
+			ProjectVulnerability projectVulnerability = new ProjectVulnerability(cp,cp,vulnerability,null,null,
+					vulnJson.getString(Constants.VULN_CRITICALITY),null,null,vulnJson.getString(Constants.VULN_ANALYSIS), vulnTemplate.SOURCE_SOURCECODE );
+
+			projectVulnerability = createDescriptionAndState(vulnJson.getString(Constants.VULN_ISSUE_INSTANCE_ID),vulnJson.getLong(Constants.VULN_ISSUE_ID),
+					codeGroup.getVersionIdAll(), scanner, projectVulnerability);
+			vulnTemplate.projectVulnerabilityRepository.save(projectVulnerability);
 		}
 
 	}
 
-	private CodeVuln createDescriptionAndState(String instanceId, Long id, int versionid, io.mixeway.db.entity.Scanner scanner, CodeVuln codeVuln) throws ParseException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, IOException, URISyntaxException {
+	private ProjectVulnerability createDescriptionAndState(String instanceId, Long id, int versionid, io.mixeway.db.entity.Scanner scanner, ProjectVulnerability codeVuln) throws ParseException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, IOException, URISyntaxException {
 		StringBuilder issueDetails = new StringBuilder();
-		codeVuln.setExternalId((id));
+		codeVuln.setExternalId(toIntExact(id));
 		CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
 		ResponseEntity<IssueDetailDataModel> response = codeRequestHelper
 				.getRestTemplate()
@@ -270,11 +254,11 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 			//		.append(getCodeSnippet(scanner, versionid, response.getBody().getIssueDetailModel().getFullFileName(),
 			//		response.getBody().getIssueDetailModel().getLineNumber()));
 			codeVuln.setDescription(issueDetails.toString());
-			codeVuln.setFilePath(response.getBody().getIssueDetailModel().getFullFileName()+":"+response.getBody().getIssueDetailModel().getLineNumber());
+			codeVuln.setLocation(response.getBody().getIssueDetailModel().getFullFileName()+":"+response.getBody().getIssueDetailModel().getLineNumber());
 			if (response.getBody().getIssueDetailModel().getScanStatus().equals(Constants.FORTIFY_ISSUE_STATE_UPDATED)){
-				codeVuln.setStatus(statusRepository.findByName(Constants.STATUS_EXISTING));
+				codeVuln.setStatus(vulnTemplate.STATUS_EXISTING);
 			} else {
-				codeVuln.setStatus(statusRepository.findByName(Constants.STATUS_NEW));
+				codeVuln.setStatus(vulnTemplate.STATUS_NEW);
 				processIssueTracking(codeVuln);
 				//TODO Auto jira generation
 			}
@@ -283,13 +267,13 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 		return codeVuln;
 	}
 
-	private void processIssueTracking(CodeVuln codeVuln) throws URISyntaxException {
-		if (codeVuln.getCodeGroup()!=null) {
-			Optional<BugTracker> bugTracker = bugTrackerRepository.findByProjectAndVulns(codeVuln.getCodeGroup().getProject(), Constants.VULN_JIRA_CODE);
-			if (bugTracker.isPresent() && codeVuln.getTicketId() == null) {
+	private void processIssueTracking(ProjectVulnerability codeVuln) throws URISyntaxException {
+		if (codeVuln.getCodeProject()!=null) {
+			Optional<BugTracker> bugTracker = bugTrackerRepository.findByProjectAndVulns(codeVuln.getProject(), Constants.VULN_JIRA_CODE);
+			if (bugTracker.isPresent() && codeVuln.getTicketId() == 0) {
 				for (BugTracking bugTracking : bugTrackings) {
 					if (bugTracking.canProcessRequest(bugTracker.get())) {
-						bugTracking.processRequest(codeVulnRepository, Optional.of(codeVuln), bugTracker.get(), codeVuln.getCodeGroup().getProject(), Constants.VULN_JIRA_CODE, Constants.SCAN_MODE_AUTO, false);
+						bugTracking.processRequest(vulnTemplate.projectVulnerabilityRepository, Optional.of(codeVuln), bugTracker.get(), codeVuln.getProject(), Constants.VULN_JIRA_CODE, Constants.SCAN_MODE_AUTO, false);
 					}
 				}
 			}

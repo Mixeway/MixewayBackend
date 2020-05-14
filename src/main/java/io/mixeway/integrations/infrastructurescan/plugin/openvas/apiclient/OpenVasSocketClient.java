@@ -137,7 +137,8 @@ public class OpenVasSocketClient implements NetworkScanClient, SecurityScanner {
             }
             if (intfActive != null) {
                 Vulnerability vulnerability = vulnTemplate.createOrGetVulnerabilityService.createOrGetVulnerability(result.getName());
-                ProjectVulnerability projectVulnerability = new ProjectVulnerability(intfActive, dateFormat.format(new Date()), result, vulnerability);
+                ProjectVulnerability projectVulnerability = new ProjectVulnerability(intfActive, null, vulnerability, result.getDescription(), null, result.getThreat(),
+                        result.getPort(),null,null,vulnTemplate.SOURCE_NETWORK);
                 projectVulnerability.updateStatusAndGrade(oldVulns, vulnTemplate);
                 vulnTemplate.projectVulnerabilityRepository.save(projectVulnerability);
             } else  {

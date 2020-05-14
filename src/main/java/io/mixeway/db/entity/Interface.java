@@ -4,6 +4,7 @@ import java.util.Set;
 
 import javax.persistence.*;
 
+import io.mixeway.pojo.VulnSource;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
@@ -18,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 @EntityListeners(AuditingEntityListener.class)
 @Cacheable
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
-public class Interface {
+public class Interface implements VulnSource {
 
 	@JsonIgnore private Long id;
 	private String privateip;

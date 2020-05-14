@@ -8,6 +8,8 @@ public class DTrackVuln {
     private String source;
     private String description;
     private Timestamp published;
+    private String recommendation;
+    private String references;
     private String Severity;
     private List<Component> components;
 
@@ -57,5 +59,21 @@ public class DTrackVuln {
 
     public void setComponents(List<Component> components) {
         this.components = components;
+    }
+
+    public String getRecommendation() {
+        return recommendation;
+    }
+
+    public void setRecommendation(String recommendation) {
+        this.recommendation = recommendation;
+    }
+
+    public String getReferences() {
+        return references;
+    }
+
+    public void setReferences(String references) {
+        this.references = references;
     }
 }

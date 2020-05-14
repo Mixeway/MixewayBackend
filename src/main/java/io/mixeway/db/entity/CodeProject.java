@@ -4,6 +4,7 @@ import java.util.Set;
 
 import javax.persistence.*;
 
+import io.mixeway.pojo.VulnSource;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
@@ -15,7 +16,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 @EntityScan
 @Table(name = "codeproject")
 @EntityListeners(AuditingEntityListener.class)
-public class CodeProject {
+public class CodeProject implements VulnSource {
 	private Long id;
 	private CodeGroup codeGroup;
 	private String name;

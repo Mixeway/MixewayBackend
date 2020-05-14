@@ -4,6 +4,7 @@ import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
 import io.mixeway.domain.service.vulnerability.CreateOrGetVulnerabilityService;
+import io.mixeway.domain.service.vulnerability.VulnTemplate;
 import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.Status;
 import org.jsoup.Jsoup;
@@ -32,25 +33,15 @@ public class MvnDependencyCheckUploadService {
     private final ProjectRepository projectRepository;
     private final CodeProjectRepository codeProjectRepository;
     private final SoftwarePacketRepository softwarePacketRepository;
-    private final StatusRepository statusRepository;
-    private final ProjectVulnerabilityRepository projectVulnerabilityRepository;
-    private final VulnerabilitySourceRepository vulnerabilitySourceRepository;
-    private final CreateOrGetVulnerabilityService createOrGetVulnerabilityService;
-    private final VulnerabilitySource OPEN_SOURCE_VULN_TYPE;
-
+    private final VulnTemplate vulnTemplate;
     MvnDependencyCheckUploadService(CodeGroupRepository codeGroupRepository, ProjectRepository projectRepository,
                                     CodeProjectRepository codeProjectRepository, SoftwarePacketRepository softwarePacketRepository,
-                                    ProjectVulnerabilityRepository projectVulnerabilityRepository, StatusRepository statusRepository,
-                                    VulnerabilitySourceRepository vulnerabilitySourceRepository, CreateOrGetVulnerabilityService createOrGetVulnerabilityService){
+                                    VulnTemplate vulnTemplate){
         this.codeGroupRepository = codeGroupRepository;
         this.codeProjectRepository =  codeProjectRepository;
         this.projectRepository = projectRepository;
         this.softwarePacketRepository = softwarePacketRepository;
-        this.statusRepository = statusRepository;
-        this.projectVulnerabilityRepository = projectVulnerabilityRepository;
-        this.vulnerabilitySourceRepository = vulnerabilitySourceRepository;
-        this.createOrGetVulnerabilityService = createOrGetVulnerabilityService;
-        this.OPEN_SOURCE_VULN_TYPE = vulnerabilitySourceRepository.findByName(Constants.VULN_TYPE_OPENSOURCE);
+        this.vulnTemplate = vulnTemplate;
     }
 
 
@@ -105,23 +96,23 @@ public class MvnDependencyCheckUploadService {
         }
     }
     private void saveVuln(String cve, String score, String description, SoftwarePacket softwarePacket, CodeProject codeProject){
-        Vulnerability vulnerability = createOrGetVulnerabilityService.createOrGetVulnerability(cve);
+        Vulnerability vulnerability = vulnTemplate.createOrGetVulnerabilityService.createOrGetVulnerability(cve);
 
         ProjectVulnerability openSourceVulns;
-        Optional<ProjectVulnerability> projectVulnerability = projectVulnerabilityRepository.findByVulnerabilityAndVulnerabilitySource(vulnerability, OPEN_SOURCE_VULN_TYPE);
+        Optional<ProjectVulnerability> projectVulnerability = vulnTemplate.projectVulnerabilityRepository.findByVulnerabilityAndVulnerabilitySource(vulnerability, vulnTemplate.SOURCE_OPENSOURCE);
         if (projectVulnerability.isPresent()){
             openSourceVulns = projectVulnerability.get();
-            openSourceVulns.setStatus(statusRepository.findByName(Constants.STATUS_EXISTING));
+            openSourceVulns.setStatus(vulnTemplate.STATUS_EXISTING);
         } else {
             openSourceVulns = new ProjectVulnerability();
-            openSourceVulns.setStatus(statusRepository.findByName(Constants.STATUS_NEW));
+            openSourceVulns.setStatus(vulnTemplate.STATUS_NEW);
         }
         openSourceVulns.updateOpenSourceVulnInfo(Double.valueOf(score.split(" \\(")[1].substring(0, (score.split(" \\(")[1].length() - 1))),
                 dateFormat.format(new Date()),
                 softwarePacket,
                 codeProject.getCodeGroup().getProject(),
                 description);
-        projectVulnerabilityRepository.save(openSourceVulns);
+        vulnTemplate.projectVulnerabilityRepository.save(openSourceVulns);
 
         log.info("Saved new vulnerability {} with score {} for CodeProject {} of {}", LogUtil.prepare(vulnerability.getName()),
                 LogUtil.prepare(String.valueOf(score)),LogUtil.prepare(codeProject.getName()),LogUtil.prepare(codeProject.getCodeGroup().getProject().getName()));

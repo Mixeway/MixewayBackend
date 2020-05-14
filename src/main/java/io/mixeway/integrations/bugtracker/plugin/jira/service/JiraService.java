@@ -73,11 +73,11 @@ public class JiraService implements BugTracking {
         return null;
     }
     @Override
-    public <T extends JpaRepository, V extends Vulnerability> ResponseEntity<Status> processRequest(T o, Optional<V> entity, BugTracker bugTracker, Project project, String vulnType, String principal, Boolean manual) throws URISyntaxException {
-        if (entity.isPresent()  && entity.get().getTicketId()==null && canIssueTicket(manual,entity.get(),bugTracker.getAutoStrategy())){
-            entity.get().setTicketId(this.createIssue(entity.get().getName(),entity.get().getDescription(),bugTracker));
+    public <T extends JpaRepository> ResponseEntity<Status> processRequest(T o, Optional<ProjectVulnerability> entity, BugTracker bugTracker, Project project, String vulnType, String principal, Boolean manual) throws URISyntaxException {
+        if (entity.isPresent()  && entity.get().getTicketId()==0 && canIssueTicket(manual, entity.get() ,bugTracker.getAutoStrategy())){
+            entity.get().setTicketId(Integer.parseInt(this.createIssue(entity.get().getVulnerability().getName(),entity.get().getDescription(),bugTracker)));
             o.save(entity.get());
-            log.info("{} - Issued ticket for {} for {} vulns {}", LogUtil.prepare(principal), LogUtil.prepare(project.getName()), LogUtil.prepare(bugTracker.getVulns()), LogUtil.prepare(entity.get().getName()));
+            log.info("{} - Issued ticket for {} for {} vulns {}", LogUtil.prepare(principal), LogUtil.prepare(project.getName()), LogUtil.prepare(bugTracker.getVulns()), LogUtil.prepare(entity.get().getVulnerability().getName()));
             return new ResponseEntity<>(HttpStatus.CREATED);
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -101,48 +101,21 @@ public class JiraService implements BugTracking {
         TransitionInput transitionInput = new TransitionInput(251);
         client.getIssueClient().transition(issue, transitionInput);
     }
-    private <V extends Vulnerability> void getDetailsForClosingIssue(V vulnerability){
-        if (vulnerability instanceof WebAppVuln){
-            Optional<BugTracker> bugTracker = bugTrackerRepository.findByProjectAndVulns(((WebAppVuln) vulnerability).getWebApp().getProject(),Constants.VULN_JIRA_WEBAPP);
-            if (bugTracker.isPresent()){
-
-            }
-        } else if (vulnerability instanceof InfrastructureVuln){
-            Optional<BugTracker> bugTracker = bugTrackerRepository.findByProjectAndVulns(((InfrastructureVuln) vulnerability).getIntf().getAsset().getProject(),Constants.VULN_JIRA_INFRASTRUCTURE);
-        } else if (vulnerability instanceof CodeVuln){
-            Optional<BugTracker> bugTracker = bugTrackerRepository.findByProjectAndVulns(((CodeVuln) vulnerability).getCodeGroup().getProject(),Constants.VULN_JIRA_CODE);
-        } else if (vulnerability instanceof SoftwarePacketVulnerability){
-            Optional<BugTracker> bugTracker = bugTrackerRepository.findByProjectAndVulns(((SoftwarePacketVulnerability) vulnerability).getProject(),Constants.VULN_JIRA_OPENSOURCE);
-
-        }
+    private void getDetailsForClosingIssue(ProjectVulnerability vulnerability){
+        Optional<BugTracker> bugTracker = bugTrackerRepository.findByProjectAndVulns(vulnerability.getProject(),Constants.VULN_JIRA_OPENSOURCE);
     }
 
     @Override
-    public <V extends Vulnerability> Boolean canIssueTicket(boolean mode, V vulnerability, String issueStrategy){
+    public Boolean canIssueTicket(boolean mode, ProjectVulnerability vulnerability, String issueStrategy){
         if (mode){
             return true;
         } else if (issueStrategy.equals(Constants.VULN_CRITICALITY_HIGH)){
-            if (vulnerability instanceof CodeVuln){
-                return (((CodeVuln) vulnerability).getAnalysis().equals(Constants.FORTIFY_ANALYSIS_EXPLOITABLE) && vulnerability.getSeverity().equals(Constants.VULN_CRITICALITY_HIGH)) ;
-            } else {
-                return vulnerability.getSeverity().equals(Constants.VULN_CRITICALITY_HIGH);
-            }
+            return vulnerability.getGrade() == 1 && vulnerability.getSeverity().equals(Constants.VULN_CRITICALITY_HIGH);
         } else if (issueStrategy.equals("Medium")){
-            if (vulnerability instanceof CodeVuln){
-                return (((CodeVuln) vulnerability).getAnalysis().equals(Constants.FORTIFY_ANALYSIS_EXPLOITABLE) &&
-                        (vulnerability.getSeverity().equals(Constants.VULN_CRITICALITY_HIGH) || vulnerability.getSeverity().equals(Constants.VULN_CRITICALITY_MEDIUM ))) ;
-            } else {
-                return (vulnerability.getSeverity().equals(Constants.VULN_CRITICALITY_HIGH) || vulnerability.getSeverity().equals(Constants.VULN_CRITICALITY_MEDIUM ));
-            }
+            return vulnerability.getGrade() == 1 && (vulnerability.getSeverity().equals(Constants.VULN_CRITICALITY_HIGH) || vulnerability.getSeverity().equals(Constants.VULN_CRITICALITY_MEDIUM ));
         } else if (issueStrategy.equals("Low")){
-            if (vulnerability instanceof CodeVuln){
-                return (((CodeVuln) vulnerability).getAnalysis().equals(Constants.FORTIFY_ANALYSIS_EXPLOITABLE) &&
-                        (vulnerability.getSeverity().equals(Constants.VULN_CRITICALITY_HIGH) || vulnerability.getSeverity().equals(Constants.VULN_CRITICALITY_MEDIUM ) ||
-                                vulnerability.getSeverity().equals(Constants.VULN_CRITICALITY_LOW ))) ;
-            } else {
-                return (vulnerability.getSeverity().equals(Constants.VULN_CRITICALITY_HIGH) || vulnerability.getSeverity().equals(Constants.VULN_CRITICALITY_MEDIUM ) ||
-                        vulnerability.getSeverity().equals(Constants.VULN_CRITICALITY_LOW ));
-            }
+            return vulnerability.getGrade() == 1 && (vulnerability.getSeverity().equals(Constants.VULN_CRITICALITY_HIGH) || vulnerability.getSeverity().equals(Constants.VULN_CRITICALITY_MEDIUM ) ||
+                    vulnerability.getSeverity().equals(Constants.VULN_CRITICALITY_LOW ));
         }
         return false;
     }

@@ -4,7 +4,7 @@ import java.util.Set;
 
 import javax.persistence.*;
 
-import org.apache.commons.lang3.StringUtils;
+import io.mixeway.pojo.VulnSource;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
@@ -16,7 +16,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 @EntityScan
 @EntityListeners(AuditingEntityListener.class)
 @Table(name = "webapp", uniqueConstraints={@UniqueConstraint(columnNames = "url")})
-public class WebApp {
+public class WebApp implements VulnSource {
 	
 	private Long id;
 	private Project project;

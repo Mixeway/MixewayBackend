@@ -154,11 +154,12 @@ public class NexposeApiClient implements NetworkScanClient, SecurityScanner {
                 VulnerabilityDetailsDTO vulnDetails = getVulnDetailsForId(scan,avr.getId());
                 for(Result result : avr.getResults()){
                     Vulnerability vulnerability = vulnTemplate.createOrGetVulnerabilityService.createOrGetVulnerability(vulnDetails.getTitle());
-                    ProjectVulnerability projectVulnerability = new ProjectVulnerability(intf, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date())
-                            ,"<br/><b>Vulnerability satus: "+result.getStatus()+"</b><br/>" +
+                    ProjectVulnerability projectVulnerability = new ProjectVulnerability(intf, null,vulnerability,"<br/><b>Vulnerability satus: "+result.getStatus()+"</b><br/>" +
                             "<b>Categories: "+ StringUtils.join(vulnDetails.getCategories(),", ")+"</b><br/>" +
                             "<br/><br/>Proof:<br/>"+result.getProof()+
-                            "<br/>Description:<br/>"+vulnDetails.getDescription().getHtml() , setNexposeThreat(vulnDetails.getSeverity()), String.valueOf(result.getPort()), vulnerability);
+                            "<br/>Description:<br/>"+vulnDetails.getDescription().getHtml(),null,
+                            setNexposeThreat(vulnDetails.getSeverity()),String.valueOf(result.getPort()),null,null, vulnTemplate.SOURCE_NETWORK);
+
                     projectVulnerability.updateStatusAndGrade(oldVulns, vulnTemplate);
                     vulnTemplate.projectVulnerabilityRepository.save(projectVulnerability);
                 }
