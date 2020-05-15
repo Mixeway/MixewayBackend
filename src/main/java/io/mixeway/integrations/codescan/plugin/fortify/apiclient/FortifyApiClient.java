@@ -160,6 +160,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 				JSONObject responseJson = new JSONObject(Objects.requireNonNull(response.getBody()));
 				saveVulnerabilities(codeGroup, responseJson.getJSONArray(Constants.VULNERABILITIES_LIST),codeProject,scanner);
 				if (responseJson.getJSONObject(Constants.FORTIFY_LINKS).has(Constants.FORTIFY_LINKS_NEXT)){
+					log.info("Loading page {}", urlToGetNext!=null ? urlToGetNext:"0");
 					this.loadVulnerabilities(scanner,codeGroup,responseJson.getJSONObject(Constants.FORTIFY_LINKS)
 							.getJSONObject(Constants.FORTIFY_LINKS_NEXT).getString(Constants.FORTIFY_LINKS_NEXT_HREF),single,codeProject,codeVulns);
 				}
@@ -237,7 +238,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 			vuln.setFilePath(vulnJson.getString(Constants.VULN_PATH)+":"+vulnJson.getString(Constants.FORTIFY_LINE_NUMVER));
 			vuln = createDescriptionAndState(vulnJson.getString(Constants.VULN_ISSUE_INSTANCE_ID),vulnJson.getLong(Constants.VULN_ISSUE_ID),
 					codeGroup.getVersionIdAll(), scanner, vuln);
-			codeVulnRepository.save(vuln);
+			codeVulnRepository.saveAndFlush(vuln);
 		}
 
 	}

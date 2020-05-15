@@ -119,7 +119,7 @@ public class CronScheduler {
 
         return (Long) (long)softwarePacketVulnerabilityRepository.getSoftwareVulnsForProject(project.getId()).size();
     }
-    @Scheduled(initialDelay=0,fixedDelay = 1500000)
+    @Scheduled(initialDelay=1500000,fixedDelay = 1500000)
     public void getDepTrackVulns() {
         try {
             for (CodeProject cp : codeProjectRepository.getCodeProjectsWithOSIntegrationEnabled()){
