@@ -222,20 +222,17 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 			vuln.setSeverity(vulnJson.getString(Constants.VULN_CRITICALITY));
 			vuln.setName(vulnJson.getString(Constants.VULN_NAME));
 			vuln.setInserted(sdf.format(new Date()));
-			if(codeGroup.getHasProjects() && cp == null) {
-				CodeProject codeProject = getProjectFromPath(codeGroup,vulnJson.getString(Constants.VULN_PATH));
-				if (codeProject == null)
-					return;
-				vuln.setCodeProject(codeProject);
-				vuln.setCodeGroup(codeGroup);
-			}else if (codeGroup.getHasProjects() && cp != null){
-				vuln.setCodeProject(cp);
+			if(codeGroup.getHasProjects()) {
+				vuln.setCodeProject(getProjectFromPath(codeGroup,vulnJson.getString(Constants.VULN_PATH)));
 				vuln.setCodeGroup(codeGroup);
 			}else {
-				vuln.setCodeGroup(codeGroup);
-				List<CodeProject> codeProject = codeProjectRepository.findByCodeGroup(codeGroup);
-				if (codeProject.size() == 1)
-					vuln.setCodeProject(codeProject.get(0));
+				if (codeGroup.getProjects().size() ==1){
+					vuln.setCodeProject(codeGroup.getProjects().stream().findFirst().orElse(null));
+					vuln.setCodeGroup(codeGroup);
+				} else if (codeGroup.getProjects().size() ==0){
+					vuln.setCodeProject(createCodeProjectForSignleCodeGroup(codeGroup));
+					vuln.setCodeGroup(codeGroup);
+				}
 			}
 			vuln.setFilePath(vulnJson.getString(Constants.VULN_PATH)+":"+vulnJson.getString(Constants.FORTIFY_LINE_NUMVER));
 			vuln = createDescriptionAndState(vulnJson.getString(Constants.VULN_ISSUE_INSTANCE_ID),vulnJson.getLong(Constants.VULN_ISSUE_ID),
@@ -243,6 +240,14 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 			codeVulnRepository.save(vuln);
 		}
 
+	}
+
+	private CodeProject createCodeProjectForSignleCodeGroup(CodeGroup codeGroup) {
+		CodeProject cp = new CodeProject();
+		cp.setName(codeGroup.getName());
+		cp.setCodeGroup(codeGroup);
+		cp.setTechnique(codeGroup.getTechnique());
+		return codeProjectRepository.save(cp);
 	}
 
 	private CodeVuln createDescriptionAndState(String instanceId, Long id, int versionid, io.mixeway.db.entity.Scanner scanner, CodeVuln codeVuln) throws ParseException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, IOException, URISyntaxException {
