@@ -214,8 +214,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 		}
 	}
 
-	@Transactional(propagation = Propagation.REQUIRES_NEW)
-	public void saveVulnerabilities(CodeGroup codeGroup, JSONArray jsonArray, CodeProject cp, io.mixeway.db.entity.Scanner scanner) throws JSONException, CertificateException, ParseException, NoSuchAlgorithmException, KeyManagementException, UnrecoverableKeyException, KeyStoreException, IOException, URISyntaxException {
+	private void saveVulnerabilities(CodeGroup codeGroup, JSONArray jsonArray, CodeProject cp, io.mixeway.db.entity.Scanner scanner) throws JSONException, CertificateException, ParseException, NoSuchAlgorithmException, KeyManagementException, UnrecoverableKeyException, KeyStoreException, IOException, URISyntaxException {
 		for (int i = 0; i < jsonArray.length(); i++) {
 			JSONObject vulnJson = jsonArray.getJSONObject(i);
 			CodeVuln vuln = new CodeVuln();
