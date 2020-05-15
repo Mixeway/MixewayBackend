@@ -274,6 +274,7 @@ public class CodeScanService {
      */
     public void schedulerReportSynchro() throws CertificateException, ParseException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, UnrecoverableKeyException, IOException {
         List<CodeGroup> groups = codeGroupRepository.findAll();
+        log.info("SAST Offline synchronization Started");
         Optional<Scanner> sastScanner = scannerRepository.findByScannerTypeInAndStatus(scannerTypeRepository.getCodeScanners(), true).stream().findFirst();
         if (sastScanner.isPresent() && sastScanner.get().getStatus()) {
             for (CodeGroup group : groups) {
