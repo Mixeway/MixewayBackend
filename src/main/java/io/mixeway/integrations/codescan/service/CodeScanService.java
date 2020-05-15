@@ -283,6 +283,7 @@ public class CodeScanService {
                     for(CodeScanClient codeScanClient : codeScanClients){
                         if (codeScanClient.canProcessRequest(sastScanner.get())){
                             codeScanClient.loadVulnerabilities(sastScanner.get(),group,null,false,null,tmpVulns);
+                            log.info("Loaded SAST vulns for - {}", group.getName());
                         }
                     }
                 }

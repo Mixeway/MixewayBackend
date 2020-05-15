@@ -139,6 +139,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 
 	//SSC Loading Vulnerabilities
 	@Override
+	@Transactional(propagation = Propagation.REQUIRES_NEW)
 	public void loadVulnerabilities(io.mixeway.db.entity.Scanner scanner, CodeGroup codeGroup, String urlToGetNext, Boolean single, CodeProject codeProject, List<CodeVuln> codeVulns) throws ParseException, JSONException {
 		try {
 			CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
