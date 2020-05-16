@@ -103,10 +103,8 @@ public class CodeService {
             codeGroup.setVersionIdsingle(codeGroupPutModel.getVersionIdSingle());
             codeGroup.setProject(project.get());
             codeGroupRepository.save(codeGroup);
-            if (!codeGroup.getHasProjects()) {
-                codeGroup.setVersionIdsingle(codeGroupPutModel.getVersionIdAll());
-                createProjectForCodeGroup(codeGroup, codeGroupPutModel);
-            }
+            codeGroup.setVersionIdsingle(codeGroupPutModel.getVersionIdAll());
+            createProjectForCodeGroup(codeGroup, codeGroupPutModel);
             String uuidToken = UUID.randomUUID().toString();
             if (vaultHelper.savePassword(codeGroupPutModel.getGitpassword(), uuidToken)) {
                 codeGroup.setRepoPassword(uuidToken);

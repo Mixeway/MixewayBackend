@@ -22,6 +22,7 @@ public interface CodeGroupRepository extends JpaRepository<CodeGroup, Long>{
 	List<CodeGroup> findByInQueue(Boolean inqueue);
 	List<CodeGroup> findByAuto(Boolean auto);
 	List<CodeGroup> findByRunning(Boolean running);
+	List<CodeGroup> findByVersionIdAllGreaterThan(int greater);
 	@Query(value = "update codegroup set scanid = :scanid where id=:id",nativeQuery = true)
 	@Modifying
     void runUpdateScanGroupToSetScanId(@Param("id") Long id, @Param("scanid") String scanId);

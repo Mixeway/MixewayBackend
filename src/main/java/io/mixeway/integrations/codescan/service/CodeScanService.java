@@ -274,7 +274,7 @@ public class CodeScanService {
      * Method executed by scheduler to load Vulnerabilities Reports for each entity within database
      */
     public void schedulerReportSynchro() throws CertificateException, ParseException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, UnrecoverableKeyException, IOException {
-        List<CodeGroup> groups = codeGroupRepository.findAll();
+        List<CodeGroup> groups = codeGroupRepository.findByVersionIdAllGreaterThan(0);
         log.info("SAST Offline synchronization Started");
         Optional<Scanner> sastScanner = scannerRepository.findByScannerTypeInAndStatus(scannerTypeRepository.getCodeScanners(), true).stream().findFirst();
         if (sastScanner.isPresent() && sastScanner.get().getStatus()) {
