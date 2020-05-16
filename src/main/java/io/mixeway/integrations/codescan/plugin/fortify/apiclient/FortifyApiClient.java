@@ -266,24 +266,8 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 				.getRestTemplate()
 				.exchange(scanner.getApiUrl()+"/api/v1/issueDetails/"+id, HttpMethod.GET, codeRequestHelper.getHttpEntity(), IssueDetailDataModel.class);
 		if (response.getStatusCode() == HttpStatus.OK) {
-			issueDetails.append("Severity: ")
-					.append(codeVuln.getSeverity());
-			issueDetails.append("\n");
-			issueDetails.append("\n");
-			issueDetails.append("Full details: " + "https://fortifyssc.corpnet.pl/ssc/html/ssc/version/" + versionid + "/fix/" + id + "/?engineType=SCA&issue=" + instanceId + "&filterSet=a243b195-0a59-3f8b-1403-d55b7a7d78e6");
-			issueDetails.append("\n");
-			issueDetails.append("Full filename: ")
-					.append(Objects.requireNonNull(response.getBody()).getIssueDetailModel().getFullFileName())
-					.append(":").append(response.getBody().getIssueDetailModel().getLineNumber());
-			issueDetails.append("\n");
-			issueDetails.append("Details: ")
-					.append(response.getBody().getIssueDetailModel().getDetail());
-			issueDetails.append("\n");
-			//issueDetails.append("CodeSnippet:\n ")
-			//		.append(getCodeSnippet(scanner, versionid, response.getBody().getIssueDetailModel().getFullFileName(),
-			//		response.getBody().getIssueDetailModel().getLineNumber()));
-			codeVuln.setDescription(issueDetails.toString());
-			codeVuln.setFilePath(response.getBody().getIssueDetailModel().getFullFileName()+":"+response.getBody().getIssueDetailModel().getLineNumber());
+			codeVuln.setDescription("Full Description here: https://fortifyssc.corpnet.pl/ssc/html/ssc/version/" + versionid + "/fix/" + id + "/?engineType=SCA&issue=" + instanceId + "&filterSet=a243b195-0a59-3f8b-1403-d55b7a7d78e6\n\n\n" +
+					"Details: " + response.getBody().getIssueDetailModel().getDetail() );
 			if (response.getBody().getIssueDetailModel().getScanStatus().equals(Constants.FORTIFY_ISSUE_STATE_UPDATED)){
 				codeVuln.setStatus(statusRepository.findByName(Constants.STATUS_EXISTING));
 			} else {
