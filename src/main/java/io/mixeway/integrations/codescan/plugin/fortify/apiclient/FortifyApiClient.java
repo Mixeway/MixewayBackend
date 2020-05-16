@@ -219,7 +219,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 			} catch (NullPointerException ignored) {}
 		}
 	}
-
+	@Transactional(timeout = 300000)
 	private void saveVulnerabilities(CodeGroup codeGroup, List<FortifyVuln> fortifyVulns, CodeProject cp, io.mixeway.db.entity.Scanner scanner) throws JSONException, CertificateException, ParseException, NoSuchAlgorithmException, KeyManagementException, UnrecoverableKeyException, KeyStoreException, IOException, URISyntaxException {
 		List<CodeVuln> codeVulns = new ArrayList<>();
 		for (FortifyVuln fortifyVuln: fortifyVulns) {
