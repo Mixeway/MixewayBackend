@@ -247,6 +247,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 			//codeVulnRepository.saveAndFlush(vuln);
 		}
 		codeVulnRepository.saveAll(codeVulns);
+		log.info("Saved vulns for  {}", codeGroup.getName());
 	}
 
 	private CodeProject createCodeProjectForSignleCodeGroup(CodeGroup codeGroup) {
