@@ -143,7 +143,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 
 	//SSC Loading Vulnerabilities
 	@Override
-	public void loadVulnerabilities(io.mixeway.db.entity.Scanner scanner, CodeGroup codeGroup, String urlToGetNext, Boolean single, CodeProject codeProject, List<CodeVuln> codeVulns) throws ParseException, JSONException {
+	public void loadVulnerabilities(io.mixeway.db.entity.Scanner scanner, CodeGroup codeGroup, String urlToGetNext, Boolean single, CodeProject codeProject, List<CodeVuln> codeVulns) throws URISyntaxException, ParseException, JSONException {
 		try {
 			CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
 			String url;
@@ -161,13 +161,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 					.getRestTemplate()
 					.exchange(url, HttpMethod.GET, codeRequestHelper.getHttpEntity(), FortifyVulnList.class);
 			if (response.getStatusCode() == HttpStatus.OK) {
-				new Thread(() -> {
-					try {
-						saveVulnerabilities(codeGroup, response.getBody().getData(),codeProject,scanner);
-					} catch (JSONException | CertificateException | ParseException | NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException | IOException | URISyntaxException | KeyManagementException e) {
-						log.debug("unable to save vulnerabilities for {}", codeGroup.getName());
-					}
-				}).start();
+				saveVulnerabilities(codeGroup, response.getBody().getData(),codeProject,scanner);
 				if (response.getBody().getLinks().getNext() != null ){
 					this.loadVulnerabilities(scanner,codeGroup,response.getBody().getLinks().getNext().getHref(),single,codeProject,codeVulns);
 				}
