@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
@@ -213,7 +214,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 			} catch (NullPointerException ignored) {}
 		}
 	}
-	@Transactional(timeout = 300000)
+	@Transactional(timeout = 300000, propagation = Propagation.REQUIRES_NEW, isolation = Isolation.SERIALIZABLE)
 	private void saveVulnerabilities(CodeGroup codeGroup, List<FortifyVuln> fortifyVulns, CodeProject cp, io.mixeway.db.entity.Scanner scanner) throws JSONException, CertificateException, ParseException, NoSuchAlgorithmException, KeyManagementException, UnrecoverableKeyException, KeyStoreException, IOException, URISyntaxException {
 		List<CodeVuln> codeVulns = new ArrayList<>();
 		for (FortifyVuln fortifyVuln: fortifyVulns) {
