@@ -171,7 +171,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 				log.error("Fortify Authorization failure");
 			}
 			if (codeVulns !=null) {
-				log.debug("Contains old vulns, reimporting");
+				log.info("Contains old vulns, reimporting");
 				reimportAnalysisFromScans(codeProject,codeGroup, codeVulns);
 			}
 		} catch (ResourceAccessException | HttpClientErrorException | CertificateException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyManagementException | KeyStoreException | IOException | HttpServerErrorException hcee){
