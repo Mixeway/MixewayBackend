@@ -248,11 +248,15 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 	}
 
 	private CodeProject createCodeProjectForSignleCodeGroup(CodeGroup codeGroup) {
-		CodeProject cp = new CodeProject();
-		cp.setName(codeGroup.getName());
-		cp.setCodeGroup(codeGroup);
-		cp.setTechnique(codeGroup.getTechnique());
-		return codeProjectRepository.save(cp);
+		Optional<CodeProject> optionalCodeProject = codeProjectRepository.findByCodeGroupAndName(codeGroup,codeGroup.getName());
+		if (!optionalCodeProject.isPresent()) {
+			CodeProject cp = new CodeProject();
+			cp.setName(codeGroup.getName());
+			cp.setCodeGroup(codeGroup);
+			cp.setTechnique(codeGroup.getTechnique());
+			return codeProjectRepository.save(cp);
+		} else
+			return optionalCodeProject.get();
 	}
 
 	private CodeVuln createDescriptionAndState(String instanceId, Long id, int versionid, io.mixeway.db.entity.Scanner scanner, CodeVuln codeVuln) throws ParseException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, IOException, URISyntaxException {
