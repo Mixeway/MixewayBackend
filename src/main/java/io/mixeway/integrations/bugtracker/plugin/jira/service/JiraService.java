@@ -122,7 +122,7 @@ public class JiraService implements BugTracking {
         if (mode){
             return true;
         } else if (issueStrategy.equals(Constants.VULN_CRITICALITY_HIGH)){
-            if (vulnerability instanceof CodeVuln){
+            if (vulnerability instanceof CodeVuln && ((CodeVuln) vulnerability).getAnalysis()!=null){
                 return (((CodeVuln) vulnerability).getAnalysis().equals(Constants.FORTIFY_ANALYSIS_EXPLOITABLE) && vulnerability.getSeverity().equals(Constants.VULN_CRITICALITY_HIGH)) ;
             } else {
                 return vulnerability.getSeverity().equals(Constants.VULN_CRITICALITY_HIGH);

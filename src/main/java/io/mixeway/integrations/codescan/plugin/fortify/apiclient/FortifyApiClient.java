@@ -166,7 +166,6 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 				if (response.getBody().getLinks().getNext() != null ){
 					this.loadVulnerabilities(scanner,codeGroup,response.getBody().getLinks().getNext().getHref(),single,codeProject,codeVulns);
 				}
-				log.info("done loading for {}",codeGroup.getName());
 			} else {
 				log.error("Fortify Authorization failure");
 			}
@@ -216,7 +215,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 		}
 	}
 	@Transactional(timeout = 300000, propagation = Propagation.REQUIRES_NEW, isolation = Isolation.SERIALIZABLE)
-	private void saveVulnerabilities(CodeGroup codeGroup, List<FortifyVuln> fortifyVulns, CodeProject cp, io.mixeway.db.entity.Scanner scanner) throws JSONException, CertificateException, ParseException, NoSuchAlgorithmException, KeyManagementException, UnrecoverableKeyException, KeyStoreException, IOException, URISyntaxException {
+	public void saveVulnerabilities(CodeGroup codeGroup, List<FortifyVuln> fortifyVulns, CodeProject cp, io.mixeway.db.entity.Scanner scanner) throws JSONException, CertificateException, ParseException, NoSuchAlgorithmException, KeyManagementException, UnrecoverableKeyException, KeyStoreException, IOException, URISyntaxException {
 		List<CodeVuln> codeVulns = new ArrayList<>();
 		for (FortifyVuln fortifyVuln: fortifyVulns) {
 			CodeVuln vuln = new CodeVuln();
@@ -224,26 +223,27 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 			vuln.setSeverity(fortifyVuln.getFriority());
 			vuln.setName(fortifyVuln.getIssueName());
 			vuln.setInserted(sdf.format(new Date()));
-			if(codeGroup.getHasProjects()) {
-				vuln.setCodeProject(getProjectFromPath(codeGroup,fortifyVuln.getFullFileName()));
-				vuln.setCodeGroup(codeGroup);
-			}else {
-				if (codeGroup.getProjects().size() ==1){
-					vuln.setCodeProject(codeGroup.getProjects().stream().findFirst().orElse(null));
-					vuln.setCodeGroup(codeGroup);
-				} else if (codeGroup.getProjects().size() ==0){
-					vuln.setCodeProject(createCodeProjectForSignleCodeGroup(codeGroup));
-					vuln.setCodeGroup(codeGroup);
-				}
-			}
-
+			vuln.setCodeGroup(codeGroup);
+			vuln.setCodeProject(setCodeProjectForScan(codeGroup,cp,fortifyVuln));
 			vuln = createDescriptionAndState(fortifyVuln.getIssueInstanceId(),fortifyVuln.getId(),
 					codeGroup.getVersionIdAll(), scanner, vuln);
 			codeVulns.add(vuln);
-			//codeVulnRepository.saveAndFlush(vuln);
 		}
 		codeVulnRepository.saveAll(codeVulns);
-		log.info("Saved vulns for  {}", codeGroup.getName());
+	}
+
+	private CodeProject setCodeProjectForScan(CodeGroup codeGroup, CodeProject cp, FortifyVuln fortifyVuln) {
+		if (cp != null){
+			return cp;
+		} else {
+			if (!codeGroup.getHasProjects() && codeGroup.getProjects().size() == 0){
+				return createCodeProjectForSignleCodeGroup(codeGroup);
+			} else if (!codeGroup.getHasProjects() && codeGroup.getProjects().size() == 1){
+				return codeGroup.getProjects().stream().findFirst().orElse(null);
+			} else {
+				return getProjectFromPath(codeGroup,fortifyVuln.getFullFileName());
+			}
+		}
 	}
 
 	private CodeProject createCodeProjectForSignleCodeGroup(CodeGroup codeGroup) {
