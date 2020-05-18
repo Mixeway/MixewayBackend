@@ -222,6 +222,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 			vuln.setAnalysis(fortifyVuln.getPrimaryTag());
 			vuln.setSeverity(fortifyVuln.getFriority());
 			vuln.setName(fortifyVuln.getIssueName());
+			vuln.setFilePath(fortifyVuln.getFullFileName()+":"+fortifyVuln.getLineNumber());
 			vuln.setInserted(sdf.format(new Date()));
 			vuln.setCodeGroup(codeGroup);
 			vuln.setCodeProject(setCodeProjectForScan(codeGroup,cp,fortifyVuln));
