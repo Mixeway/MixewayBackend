@@ -4,7 +4,7 @@ import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.CodeProjectRepository;
 import io.mixeway.db.repository.ProjectRepository;
-import io.mixeway.db.repository.SoftwarePacketVulnerabilityRepository;
+import io.mixeway.domain.service.vulnerability.VulnTemplate;
 import io.mixeway.integrations.codescan.service.CodeScanService;
 import io.mixeway.integrations.opensourcescan.plugins.mvndependencycheck.model.SASTRequestVerify;
 import io.mixeway.integrations.opensourcescan.service.OpenSourceScanService;
@@ -31,6 +31,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class CiOperationsService {
@@ -40,22 +41,26 @@ public class CiOperationsService {
     private final ProjectRepository projectRepository;
     private final CodeAccessVerifier codeAccessVerifier;
     private final CodeProjectRepository codeProjectRepository;
-    private final SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository;
     private final OpenSourceScanService openSourceScanService;
     private final CodeScanService codeScanService;
+    private final VulnTemplate vulnTemplate;
+    ArrayList<String> severitiesHigh = new ArrayList<String>() {{
+        add("Critical");
+        add("High");
+    }};
 
     CiOperationsService(CiOperationsRepository ciOperationsRepository, PermissionFactory permissionFactory,
                         ProjectRepository projectRepository, CodeAccessVerifier codeAccessVerifier,
-                        CodeProjectRepository codeProjectRepository, SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository,
+                        CodeProjectRepository codeProjectRepository, VulnTemplate vulnTemplate,
                         OpenSourceScanService openSourceScanService, CodeScanService codeScanService){
         this.ciOperationsRepository = ciOperationsRepository;
         this.permissionFactory = permissionFactory;
-        this.softwarePacketVulnerabilityRepository = softwarePacketVulnerabilityRepository;
         this.projectRepository = projectRepository;
         this.codeProjectRepository = codeProjectRepository;
         this.openSourceScanService = openSourceScanService;
         this.codeScanService = codeScanService;
         this.codeAccessVerifier = codeAccessVerifier;
+        this.vulnTemplate = vulnTemplate;
     }
 
     public ResponseEntity<List<OverAllVulnTrendChartData>> getVulnTrendData(Principal principal) {
@@ -146,35 +151,27 @@ public class CiOperationsService {
 
     private List<VulnManageResponse> createVulnManageResponseForCodeProject(CodeProject cp){
         List<VulnManageResponse> vulnManageResponses = new ArrayList<>();
-        List<WebAppVuln> vulnsForCP = cp.getWebAppVulns().stream()
-                .filter(wav -> wav.getSeverity().equals(Constants.API_SEVERITY_HIGH))
-                .collect(Collectors.toList());
-        List<CodeVuln> codeVulnsForCP = cp.getVulns().stream()
-                .filter (cv -> cv.getSeverity().equals(Constants.API_SEVERITY_CRITICAL))
-                .filter (cv -> cv.getAnalysis().equals(Constants.FORTIFY_ANALYSIS_EXPLOITABLE))
-                .collect(Collectors.toList());
-        List<SoftwarePacketVulnerability> softVulnForCP = softwarePacketVulnerabilityRepository.getSoftwareVulnsForCodeProject(cp.getId())
-                .stream().filter(v -> v.getScore() > 7).collect(Collectors.toList());
-        // petla po webappvuln
-        for (WebAppVuln wav : vulnsForCP){
-            VulnManageResponse vmr = new VulnManageResponse();
-            vmr.setDateDiscovered(wav.getWebApp().getLastExecuted());
-            vmr.setSeverity(wav.getSeverity());
-            vmr.setVulnerabilityName(wav.getName());
-            vulnManageResponses.add(vmr);
+        List<ProjectVulnerability> codeVulns = null;
+        try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository
+                .findByCodeProjectAndVulnerabilitySourceAndSeverityAndAnalysis(cp, vulnTemplate.SOURCE_SOURCECODE,
+                        Constants.VULN_CRITICALITY_CRITICAL,
+                        Constants.FORTIFY_ANALYSIS_EXPLOITABLE)) {
+            codeVulns.addAll(vulnsForProject.collect(Collectors.toList()));
         }
-        // petla po code vuln
-        for (CodeVuln cv : codeVulnsForCP){
-            VulnManageResponse vmr = new VulnManageResponse();
-            vmr.setVulnerabilityName(cv.getName());
-            vmr.setSeverity(cv.getSeverity());
-            vmr.setDateDiscovered(cv.getInserted());
-            vulnManageResponses.add(vmr);
+        try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository
+                .findByCodeProjectAndVulnerabilitySourceAndSeverityIn(cp, vulnTemplate.SOURCE_OPENSOURCE,
+                        severitiesHigh)) {
+            codeVulns.addAll(vulnsForProject.collect(Collectors.toList()));
+        }
+        try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository
+                .findByCodeProjectAndVulnerabilitySourceAndSeverityIn(cp, vulnTemplate.SOURCE_WEBAPP,
+                        severitiesHigh)) {
+            codeVulns.addAll(vulnsForProject.collect(Collectors.toList()));
         }
         //pentla po softvu
-        for (SoftwarePacketVulnerability spv : softVulnForCP){
+        for (ProjectVulnerability spv : codeVulns){
             VulnManageResponse vmr = new VulnManageResponse();
-            vmr.setVulnerabilityName(spv.getName());
+            vmr.setVulnerabilityName(spv.getVulnerability().getName());
             vmr.setSeverity(spv.getSeverity());
             vmr.setDateDiscovered(spv.getInserted());
             vulnManageResponses.add(vmr);

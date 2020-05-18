@@ -1,7 +1,6 @@
 package io.mixeway.rest.legacy.controller;
 
 import io.mixeway.config.Constants;
-import io.mixeway.db.entity.Vulnerability;
 import io.mixeway.domain.service.project.GetOrCreateProjectService;
 import io.mixeway.integrations.audit.plugins.cisbenchmark.Service.CisDockerBenchmarkService;
 import io.mixeway.integrations.audit.plugins.cisbenchmark.Service.CisK8sBenchmarkService;
@@ -16,6 +15,7 @@ import io.mixeway.integrations.utils.CodeAccessVerifier;
 import io.mixeway.integrations.webappscan.model.WebAppScanRequestModel;
 import io.mixeway.integrations.webappscan.service.WebAppScanService;
 import io.mixeway.pojo.Status;
+import io.mixeway.pojo.Vulnerability;
 import org.codehaus.jettison.json.JSONException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;

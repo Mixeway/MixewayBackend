@@ -52,15 +52,13 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
     private final CodeGroupRepository codeGroupRepository;
     private final CodeProjectRepository codeProjectRepository;
     private final ProxiesRepository proxiesRepository;
-    private final CodeVulnRepository codeVulnRepository;
     private TokenValidator tokenValidator = new TokenValidator();
 
     CheckmarxApiClient(ScannerTypeRepository scannerTypeRepository, ScannerRepository scannerRepository,
-                       CodeProjectRepository codeProjectRepository, ProxiesRepository proxiesRepository, CodeVulnRepository codeVulnRepository,
+                       CodeProjectRepository codeProjectRepository, ProxiesRepository proxiesRepository,
                        VaultHelper vaultHelper, SecureRestTemplate secureRestTemplate, CodeGroupRepository codeGroupRepository){
         this.vaultHelper = vaultHelper;
         this.scannerRepository = scannerRepository;
-        this.codeVulnRepository = codeVulnRepository;
         this.proxiesRepository = proxiesRepository;
         this.scannerTypeRepository = scannerTypeRepository;
         this.codeProjectRepository = codeProjectRepository;
@@ -412,7 +410,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
     }
     // TODO: to check in checkmarx API options for state and analysis
     private void processVulnReportForCodeProject(List<CxResult> results, CodeProject codeProject) {
-        codeVulnRepository.deleteVulnsForCodeProject(codeProject);
+        //delete etc
         for (CxResult result : results.stream().filter(cr ->
                 cr.getSeverity().equals(Constants.API_SEVERITY_CRITICAL) ||
                         cr.getSeverity().equals(Constants.API_SEVERITY_HIGH)).collect(Collectors.toList())){

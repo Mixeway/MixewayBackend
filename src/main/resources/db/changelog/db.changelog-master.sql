@@ -1017,19 +1017,29 @@ create table projectvulnerability(
 );
 insert into vulnerability (name) select name from codevuln union select name from infrastructurevuln union select name from webappvuln union select name from softwarepacketvulnerability;
 
-insert into projectvulnerability (vulnerability_id,project_id,webapp_id, description, recommendation, severity, status_id, grade,vulnerabilitysource_id,inserted)
+insert into projectvulnerability (vulnerability_id,project_id,webapp_id, description, recommendation, severity, status_id, grade,vulnerabilitysource_id,inserted, location)
     select vuln.id, webapp.project_id, webappvuln.webapp_id, webappvuln.description, webappvuln.recommendation, webappvuln.severity, webappvuln.status_id,
-           webappvuln.grade, source.id, webapp.lastexecuted from vulnerability vuln, webapp webapp, webappvuln webappvuln, vulnerabilitysource source where webapp.id=webappvuln.webapp_id
+           webappvuln.grade, source.id, webapp.lastexecuted, webappvuln.location from vulnerability vuln, webapp webapp, webappvuln webappvuln, vulnerabilitysource source where webapp.id=webappvuln.webapp_id
             and source.name='WebApplication' and vuln.name=webappvuln.name;
 
-insert into projectvulnerability (vulnerability_id, project_id, interface_id, description, severity,inserted, status_id, grade,vulnerabilitysource_id)
-    select vuln.id, a.project_id, v.interface_id, v.description, v.threat, v.inserted, v.status_id, v.grade, source.id from vulnerability vuln, asset a, interface i,
+insert into projectvulnerability (vulnerability_id, project_id, interface_id, description, severity,inserted, status_id, grade,vulnerabilitysource_id, location)
+    select vuln.id, a.project_id, v.interface_id, v.description, v.threat, v.inserted, v.status_id, v.grade, source.id, a.name from vulnerability vuln, asset a, interface i,
         infrastructurevuln v, vulnerabilitysource source where v.interface_id = i.id and i.asset_id=a.id and vuln.name=v.name and source.name='Network';
 
 insert into projectvulnerability (vulnerability_id, project_id, codeproject_id, location, severity, analysis, inserted, description, status_id, externalid, vulnerabilitysource_id)
     select vuln.id, cg.project_id, v.codeproject_id, v.filepath, v.severity, v.analysis, v.inserted, v.description, v.status_id, v.externalid, source.id from
         vulnerability vuln, codegroup cg, codevuln v, vulnerabilitysource source where v.codegroup_id=cg.id and vuln.name=v.name and source.name='SourceCode';
 
-insert into projectvulnerability (vulnerability_id, softwarepacket_id, severity, description, status_id, grade, inserted, project_id, vulnerabilitysource_id)
-    select vuln.id, v.softwarepacket_id, v.severity, v.description, v.status_id, v.grade, v.inserted, v.project_id, source.id from
-        softwarepacketvulnerability v, vulnerability vuln, vulnerabilitysource source where vuln.name=v.name and source.name='OpenSource';
+insert into projectvulnerability (vulnerability_id, softwarepacket_id, severity, description, status_id, grade, inserted, project_id, vulnerabilitysource_id, location)
+    select vuln.id, v.softwarepacket_id, v.severity, v.description, v.status_id, v.grade, v.inserted, v.project_id, source.id, p.name from
+        softwarepacketvulnerability v, vulnerability vuln, vulnerabilitysource source, softwarepacket p where p.id=v.softwarepacket_id and vuln.name=v.name and source.name='OpenSource';
+
+--changeset siewer:190
+insert into vulnerabilitysource (name) values ('OSPackage');
+
+--changeset siewer:191
+update projectvulnerability set externalid=0 where externalid is null;
+update projectvulnerability set ticketid=0 where ticketid is null;
+
+--changeset siewer:192
+update projectvulnerability set grade=-1 where grade is null;

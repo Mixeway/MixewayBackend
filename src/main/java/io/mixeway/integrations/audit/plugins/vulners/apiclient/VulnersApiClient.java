@@ -5,16 +5,15 @@ import java.net.Proxy;
 import java.net.Proxy.Type;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.Optional;
 
 import io.mixeway.db.entity.Asset;
+import io.mixeway.db.entity.ProjectVulnerability;
 import io.mixeway.db.entity.SoftwarePacket;
-import io.mixeway.db.entity.SoftwarePacketVulnerability;
-import io.mixeway.db.repository.AssetRepository;
+import io.mixeway.db.entity.Vulnerability;
 import io.mixeway.db.repository.SoftwarePacketRepository;
-import io.mixeway.db.repository.SoftwarePacketVulnerabilityRepository;
+import io.mixeway.domain.service.vulnerability.VulnTemplate;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -35,15 +34,13 @@ import io.mixeway.integrations.audit.plugins.vulners.model.VulnersRequest;
 
 @Component
 public class VulnersApiClient {
-    private final AssetRepository assetRepository;
     private final SoftwarePacketRepository softwarePacketRepository;
-    private final SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository;
+    private final VulnTemplate vulnTemplate;
 
-	VulnersApiClient(final AssetRepository assetRepository, final SoftwarePacketRepository softwarePacketRepository,
-					 final SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository){
-		this.assetRepository = assetRepository;
-		this.softwarePacketVulnerabilityRepository = softwarePacketVulnerabilityRepository;
+	VulnersApiClient(final SoftwarePacketRepository softwarePacketRepository, VulnTemplate vulnTemplate
+					 ){
 		this.softwarePacketRepository = softwarePacketRepository;
+		this.vulnTemplate = vulnTemplate;
 	}
 
 
@@ -86,24 +83,25 @@ public class VulnersApiClient {
 	}
 	// TO REVIEW
 	private void createVulnerability(SoftwarePacket softPack, String vulnCode, Double cvss,String fix,Asset asset) {
-		SoftwarePacketVulnerability spv = new SoftwarePacketVulnerability();
-		spv.setName(vulnCode);
-		spv.setScore(cvss);
-		spv.setInserted(dateFormat.format(new Date()));
-		spv.setSoftwarepacket(softPack);
-		spv.setProject(asset.getProject());
-		spv.setFix(fix);
-		softwarePacketVulnerabilityRepository.save(spv);
+		Vulnerability vulnerability = vulnTemplate.createOrGetVulnerabilityService.createOrGetVulnerability(vulnCode);
+		ProjectVulnerability spv = new ProjectVulnerability(softPack,null,vulnerability,null, fix,createScore(cvss),null,null,null,vulnTemplate.SOURCE_OSPACKAGE);
+		vulnTemplate.projectVulnerabilityRepository.save(spv);
 		
 	}
+	private String createScore(Double severity) {
+		if (severity >= 8){
+			return "Critical";
+		} else if (severity >= 6 && severity < 8){
+			return "High";
+		} else if (severity >= 4 && severity < 6){
+			return "Medium";
+		} else
+			return "Low";
+	}
+
 	@Transactional(propagation = Propagation.REQUIRED, readOnly = false)
 	public void deleteOldVulns(SoftwarePacket softPack) {
-		//for(SoftwarePacketVulnerability spv : softPack.getVulns()) {
-		//	softwarePacketVulnerabilityRepository.delete(spv);
-		//}
-		//Long deleted = (long) 0;
-		//softPack.getVulns().clear();
-		softwarePacketVulnerabilityRepository.deleteVulnsForPacket(softPack.getId());
+		vulnTemplate.projectVulnerabilityRepository.deleteBySoftwarePacket(softPack);
 	}
 	public RestTemplate restTemplate() {
 	    SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();

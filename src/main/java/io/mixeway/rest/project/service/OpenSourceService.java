@@ -10,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import io.mixeway.db.entity.CodeProject;
 import io.mixeway.db.repository.ProjectRepository;
-import io.mixeway.db.repository.SoftwarePacketVulnerabilityRepository;
 import io.mixeway.rest.project.model.SoftVuln;
 
 import java.security.Principal;

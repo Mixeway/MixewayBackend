@@ -3,13 +3,12 @@ package io.mixeway.pojo;
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.InterfaceRepository;
+import io.mixeway.domain.service.vulnerability.VulnTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-import io.mixeway.db.repository.InfrastructureVulnRepository;
 import io.mixeway.db.repository.WebAppRepository;
 
 import java.util.*;
@@ -21,36 +20,36 @@ import java.util.stream.Collectors;
 @Component
 public class WebAppHelper {
     private static final Logger log = LoggerFactory.getLogger(WebAppHelper.class);
-    private InfrastructureVulnRepository infrastructureVulnRepository;
     private InterfaceRepository interfaceRepository;
     private WebAppRepository webAppRepository;
+    private VulnTemplate vulnTemplate;
 
     @Autowired
-    WebAppHelper(InfrastructureVulnRepository infrastructureVulnRepository, InterfaceRepository interfaceRepository,
+    WebAppHelper(VulnTemplate vulnTemplate, InterfaceRepository interfaceRepository,
                  WebAppRepository webAppRepository){
-        this.infrastructureVulnRepository = infrastructureVulnRepository;
         this.interfaceRepository = interfaceRepository;
         this.webAppRepository = webAppRepository;
+        this.vulnTemplate = vulnTemplate;
     }
 
     public void discoverWebAppFromInfrastructureVulns(Project project, NessusScan ns){
         List<Interface> interfaces = interfaceRepository.findByAssetIn(new ArrayList<>(project.getAssets()));
-        List<InfrastructureVuln> vulns = infrastructureVulnRepository.getVulnsByInterfacesAndWithWWW(interfaces);
-        List<InfrastructureVuln> uniqueWWW = vulns
+        List<ProjectVulnerability> vulns = vulnTemplate.projectVulnerabilityRepository.getVulnsByInterfacesAndWithWWW(interfaces);
+        List<ProjectVulnerability> uniqueWWW = vulns
                 .stream()
-                .filter(distinctByKeys(InfrastructureVuln::getIntf, InfrastructureVuln::getPort))
+                .filter(distinctByKeys(ProjectVulnerability::getAnInterface, ProjectVulnerability::getPort))
                 .collect(Collectors.toList());
         createOrVerifyWebApps(project, uniqueWWW, ns);
 
     }
-    public void createOrVerifyWebApps(Project project, List<InfrastructureVuln> vulns, NessusScan ns){
-        for (InfrastructureVuln iv : vulns){
+    public void createOrVerifyWebApps(Project project, List<ProjectVulnerability> vulns, NessusScan ns){
+        for (ProjectVulnerability iv : vulns){
             String port = iv.getPort().split("/")[0].trim();
             String proto ="http://";
             if (port.endsWith("443")){
                 proto="https://";
             }
-            String url = proto+iv.getIntf().getPrivateip()+":"+port;
+            String url = proto+iv.getAnInterface().getPrivateip()+":"+port;
             Optional<WebApp> webApp = webAppRepository.findByUrl(url);
             try {
                 if (!webApp.isPresent()) {
@@ -61,7 +60,7 @@ public class WebAppHelper {
                     webAppToCreate.setRunning(false);
                     webAppToCreate.setAutoStart(true);
                     webAppToCreate.setRoutingDomain(ns.getNessus().getRoutingDomain());
-                    webAppToCreate.setPublicscan(iv.getIntf().getRoutingDomain().getName().equals("Internet"));
+                    webAppToCreate.setPublicscan(iv.getAnInterface().getRoutingDomain().getName().equals("Internet"));
                     webAppRepository.save(webAppToCreate);
                     log.info("Created WebApp for project {} - {}", project.getName(), webAppToCreate.getUrl());
                 }

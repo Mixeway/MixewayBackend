@@ -1,13 +1,9 @@
 package io.mixeway.rest.project.controller;
 
-import io.mixeway.db.entity.Proxies;
-import io.mixeway.db.entity.RoutingDomain;
-import io.mixeway.db.entity.ScannerType;
-import io.mixeway.db.entity.Status;
+import io.mixeway.db.entity.*;
 import io.mixeway.rest.project.model.ContactList;
 import io.mixeway.rest.project.model.ProjectVulnTrendChart;
 import io.mixeway.rest.project.model.RiskCards;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +12,7 @@ import io.mixeway.rest.project.service.ProjectRestService;
 import java.security.Principal;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Stream;
 
 @RestController()
 @RequestMapping("/v2/api/show/project")
@@ -51,6 +48,11 @@ public class ProjectRestController {
     @GetMapping(value = "/{id}/vulns/severitychart")
     public ResponseEntity<HashMap<String,Long>> showSeverityChart(@PathVariable("id")Long id, Principal principal) {
         return projectService.showSeverityChart(id, principal);
+    }
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @GetMapping(value = "/{id}/vulnerabilities")
+    public ResponseEntity<List<ProjectVulnerability>> showProjectVulnerabilities(@PathVariable("id")Long id, Principal principal) {
+        return projectService.showVulnerabilitiesForProject(id, principal);
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @PatchMapping(value = "/{id}/contactlist")

@@ -211,17 +211,6 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
         }
     }
 
-    private Double createScore(String severity) {
-        if (severity.equals(Constants.API_SEVERITY_CRITICAL.toUpperCase())){
-            return 10.0;
-        } else if (severity.equals(Constants.API_SEVERITY_HIGH.toUpperCase())){
-            return 7.0;
-        } else if (severity.equals(Constants.API_SEVERITY_MEDIUM.toUpperCase())){
-            return 4.0;
-        } else
-            return 1.0;
-    }
-
     private HttpHeaders prepareAuthHeader(Scanner scanner) {
         HttpHeaders headers = new HttpHeaders();
         headers.set(Constants.DTRACK_AUTH_HEADER, vaultHelper.getPassword(scanner.getApiKey()));

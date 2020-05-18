@@ -4,6 +4,7 @@ import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
 import io.mixeway.domain.service.project.CreateProjectService;
 import io.mixeway.domain.service.project.FindProjectService;
+import io.mixeway.domain.service.vulnerability.VulnTemplate;
 import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.PermissionFactory;
 import io.mixeway.rest.dashboard.model.SearchRequest;
@@ -37,12 +38,10 @@ public class DashboardService {
     private final InterfaceRepository interfaceRepository;
     private final WebAppRepository webAppRepository;
     private final CodeProjectRepository codeProjectRepository;
-    private final WebAppVulnRepository webAppVulnRepository;
-    private final CodeVulnRepository codeVulnRepository;
-    private final InfrastructureVulnRepository infrastructureVulnRepository;
     private final PermissionFactory permissionFactory;
+    private final VulnTemplate vulnTemplate;
 
-    DashboardService(InfrastructureVulnRepository infrastructureVulnRepository, CodeVulnRepository codeVulnRepository, WebAppVulnRepository webAppVulnRepository,
+    DashboardService(VulnTemplate vulnTemplate,
                      CodeProjectRepository codeProjectRepository, WebAppRepository webAppRepository, InterfaceRepository interfaceRepository,
                      UserRepository userRepository, ProjectRepository projectRepository, VulnHistoryRepository vulnHistoryRepository,
                      CreateProjectService createProjectService,PermissionFactory permissionFactory){
@@ -53,10 +52,8 @@ public class DashboardService {
         this.vulnHistoryRepository = vulnHistoryRepository;
         this.codeProjectRepository = codeProjectRepository;
         this.webAppRepository = webAppRepository;
-        this.infrastructureVulnRepository = infrastructureVulnRepository;
-        this.codeVulnRepository = codeVulnRepository;
-        this.webAppVulnRepository = webAppVulnRepository;
         this.interfaceRepository = interfaceRepository;
+        this.vulnTemplate = vulnTemplate;
     }
 
     private static final Logger log = LoggerFactory.getLogger(DashboardService.class);
@@ -145,43 +142,17 @@ public class DashboardService {
 
     private List<VulnResponse> setVulnsForVulnName(String search) {
         List<VulnResponse> vulns = new ArrayList<>();
-        for (CodeVuln cv : codeVulnRepository.searchForName(search)) {
+        List<ProjectVulnerability> vulnerabilities = vulnTemplate.projectVulnerabilityRepository
+                .findTop100ByVulnerabilityIn(vulnTemplate.vulnerabilityRepository.findByNameContainingIgnoreCase(search));
+        for (ProjectVulnerability pv : vulnerabilities){
             if (vulns.size() > 100)
                 break;
             VulnResponse vuln = new VulnResponse();
-            vuln.setLocation(cv.getCodeProject() != null ? cv.getCodeProject().getName() : cv.getCodeGroup().getName());
-            vuln.setProjectId(cv.getCodeProject() != null ? cv.getCodeProject().getCodeGroup().getProject().getId() : cv.getCodeGroup().getProject().getId());
-            vuln.setName(cv.getName());
-            vuln.setSource("Source Code");
+            vuln.setLocation(pv.getLocation());
+            vuln.setProjectId(pv.getProject().getId());
+            vuln.setName(pv.getVulnerability().getName());
+            vuln.setSource(pv.getVulnerabilitySource().getName());
             vulns.add(vuln);
-        }
-        for (WebAppVuln wav : webAppVulnRepository.searchForName(search)){
-            if (vulns.size() > 100)
-                break;
-            try {
-                VulnResponse vuln = new VulnResponse();
-                vuln.setLocation(wav.getLocation());
-                vuln.setProjectId(wav.getWebApp().getProject().getId());
-                vuln.setName(wav.getName());
-                vuln.setSource("WebApplication DAST Scan");
-                vulns.add(vuln);
-            } catch (EntityNotFoundException e){
-
-            }
-        }
-        for (InfrastructureVuln iv : infrastructureVulnRepository.searchForName(search)){
-            if (vulns.size() > 100)
-                break;
-            try {
-                VulnResponse vuln = new VulnResponse();
-                vuln.setLocation(iv.getIntf().getPrivateip() + " (" + iv.getIntf().getAsset().getName() + ")");
-                vuln.setProjectId(iv.getIntf().getAsset().getProject().getId());
-                vuln.setName(iv.getName());
-                vuln.setSource("Infrastructure scan");
-                vulns.add(vuln);
-            } catch (EntityNotFoundException e){
-
-            }
         }
         return  vulns;
     }

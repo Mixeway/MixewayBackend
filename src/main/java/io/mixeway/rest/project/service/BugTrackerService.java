@@ -2,6 +2,7 @@ package io.mixeway.rest.project.service;
 
 import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
+import io.mixeway.domain.service.vulnerability.VulnTemplate;
 import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.VaultHelper;
 import org.slf4j.Logger;
@@ -24,27 +25,20 @@ public class BugTrackerService {
     private final BugTrackerRepository bugTrackerRepository;
     private final VaultHelper vaultHelper;
     private final ProjectRepository projectRepository;
-    private final InfrastructureVulnRepository infrastructureVulnRepository;
-    private final WebAppVulnRepository webAppVulnRepository;
-    private final CodeVulnRepository codeVulnRepository;
     private final List<BugTracking> bugTrackings;
-    private final SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository;
+    private final VulnTemplate vulnTemplate;
     private List<String> types = Arrays.asList("infra", "code", "webapp","opensource");
     private List<String> strategy = Arrays.asList("Manual", "High", "Medium","Low");
 
     BugTrackerService(BugTrackerTypeRepository bugTrackerTypeRepository, BugTrackerRepository bugTrackerRepository,
                       VaultHelper vaultHelper, ProjectRepository projectRepository, List<BugTracking> bugTrackings,
-                      InfrastructureVulnRepository infrastructureVulnRepository, WebAppVulnRepository webAppVulnRepository,
-                      CodeVulnRepository codeVulnRepository, SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository){
+                      VulnTemplate vulnTemplate){
         this.bugTrackerTypeRepository = bugTrackerTypeRepository;
         this.vaultHelper = vaultHelper;
         this.projectRepository = projectRepository;
-        this.infrastructureVulnRepository = infrastructureVulnRepository;
-        this.webAppVulnRepository = webAppVulnRepository;
-        this.codeVulnRepository = codeVulnRepository;
-        this.softwarePacketVulnerabilityRepository = softwarePacketVulnerabilityRepository;
         this.bugTrackerRepository = bugTrackerRepository;
         this.bugTrackings = bugTrackings;
+        this.vulnTemplate = vulnTemplate;
     }
     public ResponseEntity<List<BugTrackerType>> getIssueTypes() {
         return new ResponseEntity<>(bugTrackerTypeRepository.findAll(), HttpStatus.OK);
@@ -88,36 +82,13 @@ public class BugTrackerService {
         Optional<Project> project = projectRepository.findById(id);
         if (project.isPresent()) {
             Optional<BugTracker> bugTracker = bugTrackerRepository.findByProjectAndVulns(project.get(),vulnType);
-            if (bugTracker.isPresent() && vulnType.equals("infra")) {
-                Optional<InfrastructureVuln> infrastructureVuln = infrastructureVulnRepository.findById(vulnId);
-                for (BugTracking bugTracking : bugTrackings){
-                    if (bugTracking.canProcessRequest(bugTracker.get())){
-                        return bugTracking.processRequest(infrastructureVulnRepository, infrastructureVuln,bugTracker.get(), project.get(), vulnType, name, true);
+            Optional<ProjectVulnerability> projectVulnerability = vulnTemplate.projectVulnerabilityRepository.findById(vulnId);
+            if (bugTracker.isPresent() && projectVulnerability.isPresent()) {
+                for (BugTracking bugTracking : bugTrackings) {
+                    if (bugTracking.canProcessRequest(bugTracker.get())) {
+                        return bugTracking.processRequest(vulnTemplate.projectVulnerabilityRepository, projectVulnerability, bugTracker.get(), project.get(), vulnType, name, true);
                     }
                 }
-            } else if (bugTracker.isPresent() &&vulnType.equals("webapp")) {
-                Optional<WebAppVuln> webAppVuln = webAppVulnRepository.findById(vulnId);
-                for (BugTracking bugTracking : bugTrackings){
-                    if (bugTracking.canProcessRequest(bugTracker.get())){
-                        return bugTracking.processRequest(webAppVulnRepository, webAppVuln,bugTracker.get(), project.get(), vulnType, name, true);
-                    }
-                }
-            } else if (bugTracker.isPresent() &&vulnType.equals("code")) {
-                Optional<CodeVuln> codeVuln = codeVulnRepository.getVulnsById(vulnId);
-                for (BugTracking bugTracking : bugTrackings){
-                    if (bugTracking.canProcessRequest(bugTracker.get())){
-                        return bugTracking.processRequest(codeVulnRepository, codeVuln,bugTracker.get(), project.get(), vulnType, name, true);
-                    }
-                }
-            } else if (bugTracker.isPresent() &&vulnType.equals("opensource")) {
-                Optional<SoftwarePacketVulnerability> softwarePacketVulnerability = softwarePacketVulnerabilityRepository.findById(id);
-                for (BugTracking bugTracking : bugTrackings){
-                    if (bugTracking.canProcessRequest(bugTracker.get())){
-                        return bugTracking.processRequest(softwarePacketVulnerabilityRepository, softwarePacketVulnerability,bugTracker.get(), project.get(), vulnType, name, true);
-                    }
-                }
-            } else {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
         }
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);

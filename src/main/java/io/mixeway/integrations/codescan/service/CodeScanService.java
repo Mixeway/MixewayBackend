@@ -8,6 +8,7 @@ import io.mixeway.integrations.opensourcescan.plugins.mvndependencycheck.model.S
 import io.mixeway.integrations.codescan.model.CodeScanRequestModel;
 import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.VaultHelper;
+import io.mixeway.pojo.Vulnerability;
 import io.mixeway.rest.project.model.RunScanForCodeProject;
 import io.mixeway.rest.project.model.SASTProject;
 import io.mixeway.rest.utils.ProjectRiskAnalyzer;
@@ -78,7 +79,7 @@ public class CodeScanService {
      * @param projectName name of CodeProject entity
      * @return List of a CodeVulns for a given CodeProject
      */
-    public ResponseEntity<List<ProjectVulnerability>> getResultsForProject(long projectId, String groupName, String projectName){
+    public ResponseEntity<List<Vulnerability>> getResultsForProject(long projectId, String groupName, String projectName){
         Optional<Project> project = projectRepository.findById(projectId);
         if (codeAccessVerifier.verifyPermissions(projectId,groupName,projectName,false).getValid() && project.isPresent()){
             CodeProject cp = codeProjectRepository.findByCodeGroupAndName(codeGroupRepository

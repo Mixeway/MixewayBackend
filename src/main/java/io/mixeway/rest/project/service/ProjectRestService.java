@@ -3,6 +3,7 @@ package io.mixeway.rest.project.service;
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
+import io.mixeway.domain.service.vulnerability.VulnTemplate;
 import io.mixeway.pojo.PermissionFactory;
 import io.mixeway.rest.project.model.ContactList;
 import io.mixeway.rest.project.model.ProjectVulnTrendChart;
@@ -11,18 +12,20 @@ import io.mixeway.rest.project.model.RiskCards;
 import io.mixeway.rest.utils.ProjectRiskAnalyzer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import springfox.documentation.service.Contact;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import java.security.Principal;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
+@Transactional
 public class ProjectRestService {
     private static final Logger log = LoggerFactory.getLogger(ProjectRestService.class);
 
@@ -34,12 +37,9 @@ public class ProjectRestService {
     private final CodeProjectRepository codeProjectRepository;
     private final VulnHistoryRepository vulnHistoryRepository;
     private final PermissionFactory permissionFactory;
-    private final InfrastructureVulnRepository infrastructureVulnRepository;
-    private final CodeVulnRepository codeVulnRepository;
-    private final WebAppVulnRepository webAppVulnRepository;
-    private final SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository;
     private final SoftwarePacketRepository softwarePacketRepository;
     private final ScannerRepository scannerRepository;
+    private final VulnTemplate vulnTemplate;
 
     ProjectRestService(RoutingDomainRepository routingDomainRepository,
                         ProxiesRepository proxiesRepository,
@@ -48,11 +48,8 @@ public class ProjectRestService {
                         ProjectRiskAnalyzer projectRiskAnalyzer,
                         CodeProjectRepository codeProjectRepository,
                         VulnHistoryRepository vulnHistoryRepository,
-                        InfrastructureVulnRepository infrastructureVulnRepository,
-                        CodeVulnRepository codeVulnRepository,
-                        WebAppVulnRepository webAppVulnRepository,
-                        SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository,
                         ScannerRepository scannerRepository,
+                       VulnTemplate vulnTemplate,
                        PermissionFactory permissionFactory,
                        SoftwarePacketRepository softwarePacketRepository){
         this.routingDomainRepository = routingDomainRepository;
@@ -64,11 +61,8 @@ public class ProjectRestService {
         this.permissionFactory = permissionFactory;
         this.codeProjectRepository = codeProjectRepository;
         this.vulnHistoryRepository = vulnHistoryRepository;
-        this.infrastructureVulnRepository = infrastructureVulnRepository;
-        this.codeVulnRepository = codeVulnRepository;
-        this.webAppVulnRepository = webAppVulnRepository;
         this.scannerRepository = scannerRepository;
-        this.softwarePacketVulnerabilityRepository = softwarePacketVulnerabilityRepository;
+        this.vulnTemplate = vulnTemplate;
     }
 
 
@@ -91,15 +85,15 @@ public class ProjectRestService {
             int codeProjects = codeProjectRepository.findByCodeGroupIn(project.get().getCodes()).size();
             RiskCards riskCards = new RiskCards();
             riskCards.setWebAppNumber(project.get().getWebapps().size());
-            riskCards.setWebAppRisk(webAppRisk > 100 ? 100 : webAppRisk);
+            riskCards.setWebAppRisk(Math.min(webAppRisk, 100));
             riskCards.setAudit(project.get().getNodes().size());
-            riskCards.setAuditRisk(auditRisk > 100 ? 100 : auditRisk);
+            riskCards.setAuditRisk(Math.min(auditRisk, 100));
             riskCards.setAssetNumber(interfaceRepository.findByAssetIn(new ArrayList<>(project.get().getAssets())).size());
-            riskCards.setAssetRisk(assetRisk > 100 ? 100 : assetRisk);
+            riskCards.setAssetRisk(Math.min(assetRisk, 100));
             riskCards.setCodeRepoNumber(codeProjects == 0 ? project.get().getCodes().size() : codeProjects);
-            riskCards.setCodeRisk(codeRisk > 100 ? 100 : codeRisk);
+            riskCards.setCodeRisk(Math.min(codeRisk, 100));
             riskCards.setOpenSourceLibs(softwarePacketRepository.getSoftwarePacketForProject(project.get().getId()).size());
-            riskCards.setOpenSourceRisk(openSourceRisk > 100 ? 100 : openSourceRisk);
+            riskCards.setOpenSourceRisk(Math.min(openSourceRisk, 100));
             riskCards.setProjectName(project.get().getName());
             riskCards.setProjectDescription(project.get().getDescription());
             return new ResponseEntity<>(riskCards,HttpStatus.OK);
@@ -184,10 +178,10 @@ public class ProjectRestService {
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             for (String severity : severityList){
                 pieData.put(severity,
-                        (infrastructureVulnRepository.countByIntfInAndSeverity(interfaceRepository.findByAssetIn(new ArrayList<>(project.get().getAssets())),severity)
-                        + codeVulnRepository.countByCodeProjectInAndSeverityAndAnalysis(codeProjectRepository.findByCodeGroupIn(project.get().getCodes()),severity,Constants.FORTIFY_ANALYSIS_EXPLOITABLE)
-                        + webAppVulnRepository.countByWebAppInAndSeverity(project.get().getWebapps(),severity)
-                        + softwarePacketVulnerabilityRepository.getSoftwareVulnsForProjectAndSeverity(project.get().getId(), severity).size()));
+                        (vulnTemplate.projectVulnerabilityRepository.countByAnInterfaceInAndSeverity(interfaceRepository.findByAssetIn(new ArrayList<>(project.get().getAssets())),severity)
+                        + vulnTemplate.projectVulnerabilityRepository.countByCodeProjectInAndSeverityAndAnalysis(codeProjectRepository.findByCodeGroupIn(project.get().getCodes()),severity,Constants.FORTIFY_ANALYSIS_EXPLOITABLE)
+                        + vulnTemplate.projectVulnerabilityRepository.countByWebAppInAndSeverity(new ArrayList<>(project.get().getWebapps()),severity)
+                        + vulnTemplate.projectVulnerabilityRepository.getSoftwareVulnsForProjectAndSeverity(project.get().getId(), severity).size()));
             }
             return new ResponseEntity<>(pieData,HttpStatus.OK);
         } else {
@@ -221,5 +215,17 @@ public class ProjectRestService {
 
     public ResponseEntity<List<ScannerType>> scannersAvaliable() {
         return new ResponseEntity<>(scannerRepository.getDistinctScannerTypes(), HttpStatus.OK);
+    }
+
+    public ResponseEntity<List<ProjectVulnerability>> showVulnerabilitiesForProject(Long id, Principal principal) {
+        Optional<Project> project = projectRepository.findById(id);
+        if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
+            List<ProjectVulnerability> vulns;
+            try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository.findByProject(project.get())) {
+                return new ResponseEntity<>(vulnsForProject.collect(Collectors.toList()),HttpStatus.OK);
+            }
+        } else {
+            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+        }
     }
 }
