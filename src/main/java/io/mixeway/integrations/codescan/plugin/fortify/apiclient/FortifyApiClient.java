@@ -327,8 +327,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 				return group.getProjects().stream().findFirst().orElse(null);
 			}
 		}
-		else
-			return null;
+		return null;
 	}
 	//SSC - status of cloduscan job
 	private boolean verifyCloudScanJob(CodeGroup cg) throws ParseException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, IOException {
