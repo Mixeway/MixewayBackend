@@ -325,6 +325,9 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 				return createCodeProjectForSignleCodeGroup(group);
 			} else if (!group.getHasProjects() && group.getProjects().size() == 1){
 				return group.getProjects().stream().findFirst().orElse(null);
+			} else {
+				Optional<CodeProject> optionalCodeProject = codeProjectRepository.findByCodeGroupAndName(group,group.getName());
+				return optionalCodeProject.orElseGet(() -> createCodeProjectForSignleCodeGroup(group));
 			}
 		}
 		return null;
