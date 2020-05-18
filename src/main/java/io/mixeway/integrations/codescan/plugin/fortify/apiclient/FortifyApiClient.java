@@ -312,7 +312,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 		Optional<CodeProject> codeProject = codeProjectRepository.findByCodeGroupAndName(group, projectName);
 		if(codeProject.isPresent())
 			return codeProject.get();
-		else if (!Arrays.stream(blackListedLocation).anyMatch(projectName::equals)) {
+		else if (Arrays.stream(blackListedLocation).noneMatch(projectName::equals)) {
 			CodeProject codeProjectNew = new CodeProject();
 			codeProjectNew.setCodeGroup(group);
 			codeProjectNew.setSkipAllScan(true);
@@ -320,7 +320,14 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 			codeProjectRepository.save(codeProjectNew);
 			log.info("Creating project {} for group {}", projectName,group.getName());
 			return codeProjectNew;
-		} else
+		} else if(Arrays.asList(blackListedLocation).contains(projectName)) {
+			if (!group.getHasProjects() && group.getProjects().size() == 0){
+				return createCodeProjectForSignleCodeGroup(group);
+			} else if (!group.getHasProjects() && group.getProjects().size() == 1){
+				return group.getProjects().stream().findFirst().orElse(null);
+			}
+		}
+		else
 			return null;
 	}
 	//SSC - status of cloduscan job
