@@ -54,6 +54,11 @@ public class ProjectRestController {
     public ResponseEntity<List<ProjectVulnerability>> showProjectVulnerabilities(@PathVariable("id")Long id, Principal principal) {
         return projectService.showVulnerabilitiesForProject(id, principal);
     }
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @GetMapping(value = "/{id}/vulnerabilities/{vulnId}")
+    public ResponseEntity<ProjectVulnerability> showVulnerability(@PathVariable("id")Long id,@PathVariable("vulnId")Long vulnId, Principal principal) {
+        return projectService.showVulnerability(id,vulnId, principal);
+    }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @PatchMapping(value = "/{id}/contactlist")
     public ResponseEntity<Status> updateContactList(@PathVariable("id")Long id, @RequestBody ContactList contactList) {

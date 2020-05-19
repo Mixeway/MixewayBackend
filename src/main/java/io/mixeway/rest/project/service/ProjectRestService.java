@@ -221,11 +221,23 @@ public class ProjectRestService {
         Optional<Project> project = projectRepository.findById(id);
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             List<ProjectVulnerability> vulns;
-            try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository.findByProject(project.get())) {
+            try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository.findByProjectAndSeverityIn(project.get(), severityList)) {
                 return new ResponseEntity<>(vulnsForProject.collect(Collectors.toList()),HttpStatus.OK);
             }
         } else {
             return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
         }
+    }
+
+    public ResponseEntity<ProjectVulnerability> showVulnerability(Long id, Long vulnId, Principal principal) {
+        Optional<Project> project = projectRepository.findById(id);
+        if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
+            Optional<ProjectVulnerability> projectVulnerability = vulnTemplate.projectVulnerabilityRepository.findById(vulnId);
+            if (projectVulnerability.isPresent() && projectVulnerability.get().getProject().getId().equals(project.get().getId()))
+                return new ResponseEntity<>(projectVulnerability.get(),HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+        }
+        return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
     }
 }

@@ -1030,9 +1030,10 @@ insert into projectvulnerability (vulnerability_id, project_id, codeproject_id, 
     select vuln.id, cg.project_id, v.codeproject_id, v.filepath, v.severity, v.analysis, v.inserted, v.description, v.status_id, v.externalid, source.id from
         vulnerability vuln, codegroup cg, codevuln v, vulnerabilitysource source where v.codegroup_id=cg.id and vuln.name=v.name and source.name='SourceCode';
 
-insert into projectvulnerability (vulnerability_id, softwarepacket_id, severity, description, status_id, grade, inserted, project_id, vulnerabilitysource_id, location)
-    select vuln.id, v.softwarepacket_id, v.severity, v.description, v.status_id, v.grade, v.inserted, v.project_id, source.id, p.name from
-        softwarepacketvulnerability v, vulnerability vuln, vulnerabilitysource source, softwarepacket p where p.id=v.softwarepacket_id and vuln.name=v.name and source.name='OpenSource';
+insert into projectvulnerability (vulnerability_id, softwarepacket_id, severity, description, status_id, grade, inserted, project_id, vulnerabilitysource_id, location,codeproject_id)
+    select vuln.id, v.softwarepacket_id, v.severity, v.description, v.status_id, v.grade, v.inserted, cg.project_id, source.id, p.name, csp.codeproject_id from
+        softwarepacketvulnerability v, vulnerability vuln, vulnerabilitysource source, softwarepacket p, codeproject_softwarepacket csp, codeproject cp, codegroup cg
+        where p.id=v.softwarepacket_id and vuln.name=v.name and source.name='OpenSource' and csp.softwarepacket_id=p.id and cp.id=csp.codeproject_id and cg.id=cp.codegroup_id;
 
 --changeset siewer:190
 insert into vulnerabilitysource (name) values ('OSPackage');
