@@ -222,7 +222,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 			Vulnerability vulnerability = vulnTemplate.createOrGetVulnerabilityService.createOrGetVulnerability(fortifyVuln.getIssueName());
 
 			ProjectVulnerability projectVulnerability = new ProjectVulnerability(cp,cp,vulnerability,null,null,
-					fortifyVuln.getFriority(),null,null,fortifyVuln.getPrimaryTag(), vulnTemplate.SOURCE_SOURCECODE );
+					fortifyVuln.getFriority(),null,fortifyVuln.getFullFileName()+":"+fortifyVuln.getLineNumber(),fortifyVuln.getPrimaryTag(), vulnTemplate.SOURCE_SOURCECODE );
 
 			projectVulnerability = createDescriptionAndState(fortifyVuln.getIssueInstanceId(),fortifyVuln.getId(),
 					codeGroup.getVersionIdAll(), scanner, projectVulnerability);
