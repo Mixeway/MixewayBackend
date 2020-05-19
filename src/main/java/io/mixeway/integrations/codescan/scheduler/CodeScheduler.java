@@ -1,6 +1,7 @@
 package io.mixeway.integrations.codescan.scheduler;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -30,8 +31,8 @@ public class CodeScheduler {
 	
 	
 	@Transactional
-	@Scheduled(fixedRate = 3000000)
-	public void getReportForAllGroups() throws JSONException, ParseException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+	@Scheduled(initialDelay=0,fixedRate = 3000000)
+	public void getReportForAllGroups() throws JSONException, ParseException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, URISyntaxException {
 		codeScanService.schedulerReportSynchro();
 	}
 	@Transactional
@@ -40,7 +41,7 @@ public class CodeScheduler {
 		codeScanService.schedulerRunAutoScans();
 	}
 	@Scheduled(fixedDelay = 30000)
-	public void getVulns() throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
+	public void getVulns() throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException, URISyntaxException {
 		codeScanService.getResultsForRunningScan();
 	}
 

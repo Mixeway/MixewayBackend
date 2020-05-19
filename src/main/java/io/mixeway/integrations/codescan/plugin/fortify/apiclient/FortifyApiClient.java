@@ -1,5 +1,4 @@
 package io.mixeway.integrations.codescan.plugin.fortify.apiclient;
-import static java.lang.Math.toIntExact;
 
 import com.google.gson.JsonObject;
 import io.mixeway.config.Constants;
@@ -8,6 +7,7 @@ import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.entity.Vulnerability;
 import io.mixeway.db.repository.*;
 import io.mixeway.domain.service.vulnerability.VulnTemplate;
+import io.mixeway.integrations.opensourcescan.plugins.dependencytrack.apiclient.DependencyTrackApiClient;
 import io.mixeway.integrations.bugtracker.BugTracking;
 import io.mixeway.integrations.codescan.plugin.fortify.model.*;
 import io.mixeway.integrations.codescan.model.TokenValidator;
@@ -24,10 +24,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.BufferedReader;
@@ -41,6 +43,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
@@ -56,6 +59,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 	private CodeProjectRepository codeProjectRepository;
 	private CodeGroupRepository codeGroupRepository;
 	private FortifySingleAppRepository fortifySingleAppRepository;
+	private StatusRepository statusRepository;
 	private SecureRestTemplate secureRestTemplate;
 	private ScannerTypeRepository scannerTypeRepository;
 	private BugTrackerRepository bugTrackerRepository;
@@ -67,18 +71,19 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 	private String[] blackListedLocation = new String[] {"src","source","vendor","lib" };
 
 
-	FortifyApiClient(VaultHelper vaultHelper, ScannerRepository scannerRepository, VulnTemplate vulnTemplate, List<BugTracking> bugTrackings,
+	FortifyApiClient(VaultHelper vaultHelper, ScannerRepository scannerRepository, VulnTemplate vulnTemplate , List<BugTracking> bugTrackings, DependencyTrackApiClient dependencyTrackApiClient,
 					 CodeProjectRepository codeProjectRepository, CodeGroupRepository codeGroupRepository, FortifySingleAppRepository fortifySingleAppRepository,
-					 SecureRestTemplate secureRestTemplate, ScannerTypeRepository scannerTypeRepository,
+					 StatusRepository statusRepository, SecureRestTemplate secureRestTemplate, ScannerTypeRepository scannerTypeRepository,
 					 BugTrackerRepository bugTrackerRepository, CiOperationsRepository ciOperationsRepository){
 		this.vaultHelper = vaultHelper;
 		this.bugTrackerRepository = bugTrackerRepository;
 		this.scannerRepository = scannerRepository;
-		this.vulnTemplate = vulnTemplate;
 		this.codeProjectRepository = codeProjectRepository;
 		this.bugTrackings = bugTrackings;
+		this.vulnTemplate = vulnTemplate;
 		this.codeGroupRepository = codeGroupRepository;
 		this.fortifySingleAppRepository = fortifySingleAppRepository;
+		this.statusRepository = statusRepository;
 		this.secureRestTemplate = secureRestTemplate;
 		this.scannerTypeRepository = scannerTypeRepository;
 		this.ciOperationsRepository = ciOperationsRepository;
@@ -139,7 +144,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 
 	//SSC Loading Vulnerabilities
 	@Override
-	public void loadVulnerabilities(io.mixeway.db.entity.Scanner scanner, CodeGroup codeGroup, String urlToGetNext, Boolean single, CodeProject codeProject, List<ProjectVulnerability> codeVulns) throws ParseException, JSONException {
+	public void loadVulnerabilities(io.mixeway.db.entity.Scanner scanner, CodeGroup codeGroup, String urlToGetNext, Boolean single, CodeProject codeProject, List<ProjectVulnerability> codeVulns) throws URISyntaxException, ParseException, JSONException {
 		try {
 			CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
 			String url;
@@ -153,25 +158,22 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 			}
 			if (urlToGetNext != null)
 				url = url+"&"+urlToGetNext.split("&")[2];
-			ResponseEntity<String> response = codeRequestHelper
+			ResponseEntity<FortifyVulnList> response = codeRequestHelper
 					.getRestTemplate()
-					.exchange(url, HttpMethod.GET, codeRequestHelper.getHttpEntity(), String.class);
+					.exchange(url, HttpMethod.GET, codeRequestHelper.getHttpEntity(), FortifyVulnList.class);
 			if (response.getStatusCode() == HttpStatus.OK) {
-				JSONObject responseJson = new JSONObject(Objects.requireNonNull(response.getBody()));
-				saveVulnerabilities(codeGroup, responseJson.getJSONArray(Constants.VULNERABILITIES_LIST),codeProject,scanner);
-				if (responseJson.getJSONObject(Constants.FORTIFY_LINKS).has(Constants.FORTIFY_LINKS_NEXT)){
-					this.loadVulnerabilities(scanner,codeGroup,responseJson.getJSONObject(Constants.FORTIFY_LINKS)
-							.getJSONObject(Constants.FORTIFY_LINKS_NEXT).getString(Constants.FORTIFY_LINKS_NEXT_HREF),single,codeProject,codeVulns);
+				saveVulnerabilities(codeGroup, response.getBody().getData(),codeProject,scanner);
+				if (response.getBody().getLinks().getNext() != null ){
+					this.loadVulnerabilities(scanner,codeGroup,response.getBody().getLinks().getNext().getHref(),single,codeProject,codeVulns);
 				}
-				log.debug("FortifyApiClient- loaded {} vulns for {}", responseJson.getJSONArray(Constants.VULNERABILITIES_LIST).length(), codeGroup.getName());
 			} else {
 				log.error("Fortify Authorization failure");
 			}
 			if (codeVulns !=null && codeProject != null) {
-				log.debug("Contains old vulns, reimporting");
+				log.info("Contains old vulns, reimporting");
 				reimportAnalysisFromScans(codeProject,codeGroup, codeVulns);
 			}
-		} catch (HttpClientErrorException | CertificateException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyManagementException | KeyStoreException | IOException | URISyntaxException | HttpServerErrorException hcee){
+		} catch (ResourceAccessException | HttpClientErrorException | CertificateException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyManagementException | KeyStoreException | IOException | HttpServerErrorException hcee){
 			log.error("FortifySSC HttpClientErrorExceptio was unsuccessfull with code of: {} {} ",hcee.getLocalizedMessage(),hcee.getMessage());
 		}
 	}
@@ -212,55 +214,68 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 			} catch (NullPointerException ignored) {}
 		}
 	}
-
-
-	private void saveVulnerabilities(CodeGroup codeGroup, JSONArray jsonArray, CodeProject cp, io.mixeway.db.entity.Scanner scanner) throws JSONException, CertificateException, ParseException, NoSuchAlgorithmException, KeyManagementException, UnrecoverableKeyException, KeyStoreException, IOException, URISyntaxException {
-		for (int i = 0; i < jsonArray.length(); i++) {
-			JSONObject vulnJson = jsonArray.getJSONObject(i);
-			Vulnerability vulnerability = vulnTemplate.createOrGetVulnerabilityService.createOrGetVulnerability(vulnJson.getString(Constants.VULN_NAME));
+	private void saveVulnerabilities(CodeGroup codeGroup, List<FortifyVuln> fortifyVulns, CodeProject cp, io.mixeway.db.entity.Scanner scanner) throws JSONException, CertificateException, ParseException, NoSuchAlgorithmException, KeyManagementException, UnrecoverableKeyException, KeyStoreException, IOException, URISyntaxException {
+		for (FortifyVuln fortifyVuln: fortifyVulns) {
+			if (cp == null){
+				cp = setCodeProjectForScan(codeGroup,cp,fortifyVuln);
+			}
+			Vulnerability vulnerability = vulnTemplate.createOrGetVulnerabilityService.createOrGetVulnerability(fortifyVuln.getIssueName());
 
 			ProjectVulnerability projectVulnerability = new ProjectVulnerability(cp,cp,vulnerability,null,null,
-					vulnJson.getString(Constants.VULN_CRITICALITY),null,null,vulnJson.getString(Constants.VULN_ANALYSIS), vulnTemplate.SOURCE_SOURCECODE );
+					fortifyVuln.getFriority(),null,null,fortifyVuln.getPrimaryTag(), vulnTemplate.SOURCE_SOURCECODE );
 
-			projectVulnerability = createDescriptionAndState(vulnJson.getString(Constants.VULN_ISSUE_INSTANCE_ID),vulnJson.getLong(Constants.VULN_ISSUE_ID),
+			projectVulnerability = createDescriptionAndState(fortifyVuln.getIssueInstanceId(),fortifyVuln.getId(),
 					codeGroup.getVersionIdAll(), scanner, projectVulnerability);
 			vulnTemplate.projectVulnerabilityRepository.save(projectVulnerability);
 		}
 
 	}
 
+	private CodeProject setCodeProjectForScan(CodeGroup codeGroup, CodeProject cp, FortifyVuln fortifyVuln) {
+		if (cp != null){
+			return cp;
+		} else {
+			if (!codeGroup.getHasProjects() && codeGroup.getProjects().size() == 0){
+				return createCodeProjectForSignleCodeGroup(codeGroup);
+			} else if (!codeGroup.getHasProjects() && codeGroup.getProjects().size() == 1){
+				return codeGroup.getProjects().stream().findFirst().orElse(null);
+			} else {
+				return getProjectFromPath(codeGroup,fortifyVuln.getFullFileName());
+			}
+		}
+	}
+
+	private CodeProject createCodeProjectForSignleCodeGroup(CodeGroup codeGroup) {
+		Optional<CodeProject> optionalCodeProject = codeProjectRepository.findByCodeGroupAndName(codeGroup,codeGroup.getName());
+		if (!optionalCodeProject.isPresent()) {
+			CodeProject cp = new CodeProject();
+			cp.setName(codeGroup.getName());
+			cp.setCodeGroup(codeGroup);
+			cp.setTechnique(codeGroup.getTechnique());
+			return codeProjectRepository.save(cp);
+		} else
+			return optionalCodeProject.get();
+	}
+
 	private ProjectVulnerability createDescriptionAndState(String instanceId, Long id, int versionid, io.mixeway.db.entity.Scanner scanner, ProjectVulnerability codeVuln) throws ParseException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, IOException, URISyntaxException {
 		StringBuilder issueDetails = new StringBuilder();
-		codeVuln.setExternalId(toIntExact(id));
+		codeVuln.setExternalId(Math.toIntExact((id)));
 		CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
 		ResponseEntity<IssueDetailDataModel> response = codeRequestHelper
 				.getRestTemplate()
 				.exchange(scanner.getApiUrl()+"/api/v1/issueDetails/"+id, HttpMethod.GET, codeRequestHelper.getHttpEntity(), IssueDetailDataModel.class);
 		if (response.getStatusCode() == HttpStatus.OK) {
-			issueDetails.append("Severity: ")
-					.append(codeVuln.getSeverity());
-			issueDetails.append("\n");
-			issueDetails.append("\n");
-			issueDetails.append("Full details: " + "https://fortifyssc.corpnet.pl/ssc/html/ssc/version/" + versionid + "/fix/" + id + "/?engineType=SCA&issue=" + instanceId + "&filterSet=a243b195-0a59-3f8b-1403-d55b7a7d78e6");
-			issueDetails.append("\n");
-			issueDetails.append("Full filename: ")
-					.append(Objects.requireNonNull(response.getBody()).getIssueDetailModel().getFullFileName())
-					.append(":").append(response.getBody().getIssueDetailModel().getLineNumber());
-			issueDetails.append("\n");
-			issueDetails.append("Details: ")
-					.append(response.getBody().getIssueDetailModel().getDetail());
-			issueDetails.append("\n");
-			//issueDetails.append("CodeSnippet:\n ")
-			//		.append(getCodeSnippet(scanner, versionid, response.getBody().getIssueDetailModel().getFullFileName(),
-			//		response.getBody().getIssueDetailModel().getLineNumber()));
-			codeVuln.setDescription(issueDetails.toString());
-			codeVuln.setLocation(response.getBody().getIssueDetailModel().getFullFileName()+":"+response.getBody().getIssueDetailModel().getLineNumber());
+			Vulnerability vulnerability = codeVuln.getVulnerability();
+			vulnerability.setRefs(response.getBody().getIssueDetailModel().getReferences());
+			vulnerability.setRecommendation(response.getBody().getIssueDetailModel().getRecommendation());
+			vulnTemplate.vulnerabilityRepository.save(vulnerability);
+			codeVuln.setDescription("Full Description here: https://fortifyssc.corpnet.pl/ssc/html/ssc/version/" + versionid + "/fix/" + id + "/?engineType=SCA&issue=" + instanceId + "&filterSet=a243b195-0a59-3f8b-1403-d55b7a7d78e6\n\n\n" +
+					"Details: " + response.getBody().getIssueDetailModel().getDetail() );
 			if (response.getBody().getIssueDetailModel().getScanStatus().equals(Constants.FORTIFY_ISSUE_STATE_UPDATED)){
-				codeVuln.setStatus(vulnTemplate.STATUS_EXISTING);
+				codeVuln.setStatus(statusRepository.findByName(Constants.STATUS_EXISTING));
 			} else {
-				codeVuln.setStatus(vulnTemplate.STATUS_NEW);
+				codeVuln.setStatus(statusRepository.findByName(Constants.STATUS_NEW));
 				processIssueTracking(codeVuln);
-				//TODO Auto jira generation
 			}
 		}
 
@@ -279,7 +294,6 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 			}
 		}
 	}
-
 	private String getCodeSnippet(io.mixeway.db.entity.Scanner scanner, int versionid, String fullFileName, int lineNumber) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, JSONException, ParseException {
 		String codeSnippet = "";
 		CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
@@ -302,7 +316,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 		Optional<CodeProject> codeProject = codeProjectRepository.findByCodeGroupAndName(group, projectName);
 		if(codeProject.isPresent())
 			return codeProject.get();
-		else if (!Arrays.stream(blackListedLocation).anyMatch(projectName::equals)) {
+		else if (Arrays.stream(blackListedLocation).noneMatch(projectName::equals)) {
 			CodeProject codeProjectNew = new CodeProject();
 			codeProjectNew.setCodeGroup(group);
 			codeProjectNew.setSkipAllScan(true);
@@ -310,8 +324,17 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 			codeProjectRepository.save(codeProjectNew);
 			log.info("Creating project {} for group {}", projectName,group.getName());
 			return codeProjectNew;
-		} else
-			return null;
+		} else if(Arrays.asList(blackListedLocation).contains(projectName)) {
+			if (!group.getHasProjects() && group.getProjects().size() == 0){
+				return createCodeProjectForSignleCodeGroup(group);
+			} else if (!group.getHasProjects() && group.getProjects().size() == 1){
+				return group.getProjects().stream().findFirst().orElse(null);
+			} else {
+				Optional<CodeProject> optionalCodeProject = codeProjectRepository.findByCodeGroupAndName(group,group.getName());
+				return optionalCodeProject.orElseGet(() -> createCodeProjectForSignleCodeGroup(group));
+			}
+		}
+		return null;
 	}
 	//SSC - status of cloduscan job
 	private boolean verifyCloudScanJob(CodeGroup cg) throws ParseException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, IOException {
@@ -355,7 +378,10 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 	}
 
 	private CodeRequestHelper prepareRestTemplate(io.mixeway.db.entity.Scanner scanner) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
-		Date fortifyTokenExpirationDate = sdf.parse(scanner.getFortifytokenexpiration()+".123");
+		String dateToParse = scanner.getFortifytokenexpiration().split("\\.")[0];
+		DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH);
+		Date fortifyTokenExpirationDate = format.parse(dateToParse);
+		//Date fortifyTokenExpirationDate = ldt;
 		LocalDateTime fortifyTokenExpiration = LocalDateTime.ofInstant(fortifyTokenExpirationDate.toInstant(), ZoneId.systemDefault());
 		if (tokenValidator.isTokenValid(scanner.getFortifytoken(), fortifyTokenExpiration)) {
 			generateToken(scanner);

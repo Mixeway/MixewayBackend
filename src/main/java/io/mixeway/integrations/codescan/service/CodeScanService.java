@@ -21,10 +21,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import io.mixeway.integrations.utils.CodeAccessVerifier;
 import io.mixeway.pojo.Status;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -273,8 +275,9 @@ public class CodeScanService {
     /**
      * Method executed by scheduler to load Vulnerabilities Reports for each entity within database
      */
-    public void schedulerReportSynchro() throws CertificateException, ParseException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, UnrecoverableKeyException, IOException {
-        List<CodeGroup> groups = codeGroupRepository.findAll();
+    public void schedulerReportSynchro() throws CertificateException, ParseException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, UnrecoverableKeyException, IOException, URISyntaxException {
+        List<CodeGroup> groups = codeGroupRepository.findByVersionIdAllGreaterThan(0);
+        log.info("SAST Offline synchronization Started");
         Optional<Scanner> sastScanner = scannerRepository.findByScannerTypeInAndStatus(scannerTypeRepository.getCodeScanners(), true).stream().findFirst();
         if (sastScanner.isPresent() && sastScanner.get().getStatus()) {
             for (CodeGroup group : groups) {
@@ -282,7 +285,9 @@ public class CodeScanService {
                 if (group.getVersionIdAll() > 0) {
                     for(CodeScanClient codeScanClient : codeScanClients){
                         if (codeScanClient.canProcessRequest(sastScanner.get())){
+                            log.info("Starting loading SAST vulns for - {}", group.getName());
                             codeScanClient.loadVulnerabilities(sastScanner.get(),group,null,false,null,tmpVulns);
+                            log.info("Loaded SAST vulns for - {}", group.getName());
                         }
                     }
                 }
@@ -317,7 +322,7 @@ public class CodeScanService {
      * Method which is looking for CodeProject and CodeGroup with running = true
      * Verify if scan is done, and if so loads vulnerabilities
      */
-    public void getResultsForRunningScan() throws CertificateException, ParseException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, UnrecoverableKeyException, IOException {
+    public void getResultsForRunningScan() throws CertificateException, ParseException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, UnrecoverableKeyException, IOException, URISyntaxException {
         Optional<Scanner> sastScanner = scannerRepository.findByScannerTypeInAndStatus(scannerTypeRepository.getCodeScanners(), true).stream().findFirst();
         if (sastScanner.isPresent()) {
             for (CodeProject codeProject : codeProjectRepository.findByRunning(true)) {

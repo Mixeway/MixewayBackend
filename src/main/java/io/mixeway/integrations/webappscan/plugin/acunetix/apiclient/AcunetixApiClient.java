@@ -9,6 +9,7 @@ import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.*;
 import io.mixeway.domain.service.vulnerability.VulnTemplate;
+import io.mixeway.integrations.webappscan.plugin.acunetix.model.Reference;
 import io.mixeway.integrations.webappscan.service.WebAppScanClient;
 import io.mixeway.integrations.webappscan.plugin.acunetix.model.AcunetixSeverity;
 import io.mixeway.integrations.webappscan.model.*;
@@ -280,7 +281,7 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 				ResponseEntity<LoadVlnerabilitiesModel> response = restTemplate.exchange(scanner.getApiUrl() + "/api/v1/vulnerabilities?q=target_id:" + webApp.getTargetId() + coursor, HttpMethod.GET, entity, LoadVlnerabilitiesModel.class);
 				if (response.getStatusCode() == HttpStatus.OK) {
 					for (VulnerabilityModel vulnFromAcu : response.getBody().getVulnerabilities()){
-						Vulnerability vulnerability = vulnTemplate.createOrGetVulnerabilityService.createOrGetVulnerability(vulnFromAcu.getVt_name());
+						Vulnerability vulnerability = vulnTemplate.createOrGetVulnerabilityService.createOrGetVulnerabilityWithRecommendationAndReferences(vulnFromAcu.getVt_name(),vulnFromAcu.getRecommendation(),prepareRefs(vulnFromAcu.getReferences()));
 						ProjectVulnerability vuln = new ProjectVulnerability(webApp,null,vulnerability,null,
 								null,AcunetixSeverity.resolveSeverity(vulnFromAcu.getSeverity()),null,vulnFromAcu.getAffects_url(),
 								null,vulnTemplate.SOURCE_WEBAPP);
@@ -313,6 +314,15 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 			}
 		} else
 			throw new Exception("Scanner Not initialized");
+	}
+
+	private String prepareRefs(List<Reference> references) {
+		int i = 1;
+		String refs = "";
+		for (Reference ref : references) {
+			refs += "["+i+"] " + ref.getHref()+"\n";
+		}
+		return refs;
 	}
 
 	@Override
