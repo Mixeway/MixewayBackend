@@ -5,16 +5,15 @@ import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
 import io.mixeway.domain.service.vulnerability.VulnTemplate;
 import io.mixeway.pojo.PermissionFactory;
-import io.mixeway.rest.project.model.ContactList;
-import io.mixeway.rest.project.model.ProjectVulnTrendChart;
-import io.mixeway.rest.project.model.ProjectVulnTrendChartSerie;
-import io.mixeway.rest.project.model.RiskCards;
+import io.mixeway.rest.project.model.*;
 import io.mixeway.rest.utils.ProjectRiskAnalyzer;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.mail.internet.AddressException;
@@ -84,6 +83,7 @@ public class ProjectRestService {
             int openSourceRisk = projectRiskAnalyzer.getProjectOpenSourceRisk(project.get());
             int codeProjects = codeProjectRepository.findByCodeGroupIn(project.get().getCodes()).size();
             RiskCards riskCards = new RiskCards();
+            riskCards.setEnableVulnAuditor(project.get().isVulnAuditorEnable());
             riskCards.setWebAppNumber(project.get().getWebapps().size());
             riskCards.setWebAppRisk(Math.min(webAppRisk, 100));
             riskCards.setAudit(project.get().getNodes().size());
@@ -239,5 +239,28 @@ public class ProjectRestService {
             return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
         }
         return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+    }
+
+    public ResponseEntity<Project> showProject(Long id, Principal principal) {
+        Optional<Project> project = projectRepository.findById(id);
+        if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
+           return new ResponseEntity<>(project.get(), HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+        }
+    }
+    @Transactional(propagation = Propagation.REQUIRED)
+    public ResponseEntity<Status> updateVulnAuditorSettings(Long id, VulnAuditorSettings settings, Principal principal) {
+        Optional<Project> project = projectRepository.findById(id);
+        if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
+            project.get().setVulnAuditorEnable(settings.isEnableVulnAuditor());
+            if (StringUtils.isNotBlank(settings.getAppClient()))
+                project.get().setAppClient(settings.getAppClient());
+            if (StringUtils.isNotBlank(settings.getDclocation()))
+                project.get().setNetworkdc(settings.getDclocation());
+            return new ResponseEntity<>(HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+        }
     }
 }

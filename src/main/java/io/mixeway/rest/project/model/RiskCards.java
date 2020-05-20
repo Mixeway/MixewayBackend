@@ -3,6 +3,7 @@ package io.mixeway.rest.project.model;
 public class RiskCards {
     String projectName;
     String projectDescription;
+    boolean enableVulnAuditor;
     int assetNumber;
     int assetRisk;
     int webAppNumber;
@@ -13,6 +14,14 @@ public class RiskCards {
     int auditRisk;
     int openSourceLibs;
     int openSourceRisk;
+
+    public boolean isEnableVulnAuditor() {
+        return enableVulnAuditor;
+    }
+
+    public void setEnableVulnAuditor(boolean enableVulnAuditor) {
+        this.enableVulnAuditor = enableVulnAuditor;
+    }
 
     public int getOpenSourceLibs() {
         return openSourceLibs;

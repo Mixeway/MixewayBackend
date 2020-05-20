@@ -1,15 +1,16 @@
 package io.mixeway.rest.project.controller;
 
 import io.mixeway.db.entity.*;
-import io.mixeway.rest.project.model.ContactList;
-import io.mixeway.rest.project.model.ProjectVulnTrendChart;
-import io.mixeway.rest.project.model.RiskCards;
+import io.mixeway.rest.project.model.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import io.mixeway.rest.project.service.ProjectRestService;
 
-import java.security.Principal;
+import javax.validation.Valid;
+import java.io.IOException;
+import java.security.*;
+import java.security.cert.CertificateException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Stream;
@@ -69,7 +70,16 @@ public class ProjectRestController {
     public ResponseEntity<List<ScannerType>> scannersAvaliable() {
         return projectService.scannersAvaliable();
     }
-
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @GetMapping(value = "/{id}")
+    public ResponseEntity<Project> showProject(@PathVariable("id") Long id, Principal principal) {
+        return projectService.showProject(id, principal);
+    }
+    @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
+    @PostMapping(value = "/{id}/vulnauditor")
+    public ResponseEntity<Status> updateVulnAuditorSettings(@PathVariable("id")Long id, @Valid @RequestBody VulnAuditorSettings settings, Principal principal) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+        return projectService.updateVulnAuditorSettings(id, settings, principal);
+    }
     //endregion
 
 

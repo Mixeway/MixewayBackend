@@ -45,6 +45,16 @@ public class WebApp implements VulnSource {
 	@JsonIgnore String username;
 	@JsonIgnore String password;
 	private int priority;
+	private String appClient;
+
+	@Column(name="appclient")
+	public String getAppClient() {
+		return appClient;
+	}
+
+	public void setAppClient(String appClient) {
+		this.appClient = appClient;
+	}
 
 	public int getPriority() {
 		return priority;

@@ -102,6 +102,7 @@ public class CodeService {
             codeGroup.setVersionIdAll(codeGroupPutModel.getVersionIdAll());
             codeGroup.setVersionIdsingle(codeGroupPutModel.getVersionIdSingle());
             codeGroup.setProject(project.get());
+            codeGroup.setAppClient(codeGroupPutModel.getAppClient());
             codeGroupRepository.save(codeGroup);
             codeGroup.setVersionIdsingle(codeGroupPutModel.getVersionIdAll());
             createProjectForCodeGroup(codeGroup, codeGroupPutModel);

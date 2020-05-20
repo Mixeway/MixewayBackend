@@ -50,6 +50,35 @@ public class Project implements Serializable{
 	@JsonIgnore private Set<VulnHistory> vulnHistories;
 	private int risk;
 	private boolean enableVulnManage;
+	private boolean vulnAuditorEnable;
+	private String networkdc;
+	private String appClient;
+
+	@Column(name="appclient")
+	public String getAppClient() {
+		return appClient;
+	}
+
+	public void setAppClient(String appClient) {
+		this.appClient = appClient;
+	}
+
+	public String getNetworkdc() {
+		return networkdc;
+	}
+
+	public void setNetworkdc(String networkdc) {
+		this.networkdc = networkdc;
+	}
+
+	@Column(name = "vulnauditorenable")
+	public boolean isVulnAuditorEnable() {
+		return vulnAuditorEnable;
+	}
+
+	public void setVulnAuditorEnable(boolean vulnAuditorEnable) {
+		this.vulnAuditorEnable = vulnAuditorEnable;
+	}
 
 	@Column(name = "enablevulnmanage")
 	public boolean isEnableVulnManage() {

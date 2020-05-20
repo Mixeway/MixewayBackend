@@ -11,6 +11,15 @@ public class CodeGroupPutModel {
     private boolean autoScan;
     private boolean childs;
     private String dTrackUuid;
+    private String appClient;
+
+    public String getAppClient() {
+        return appClient;
+    }
+
+    public void setAppClient(String appClient) {
+        this.appClient = appClient;
+    }
 
     public String getdTrackUuid() {
         return dTrackUuid;

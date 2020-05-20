@@ -1044,3 +1044,15 @@ update projectvulnerability set ticketid=0 where ticketid is null;
 
 --changeset siewer:192
 update projectvulnerability set grade=-1 where grade is null;
+
+--changeset siewer:193
+alter table project add column vulnauditorenable boolean;
+update project set vulnauditorenable=true;
+alter table project add column networkdc text;
+alter table codegroup add column appclient text;
+alter table webapp add column appclient text;
+
+--changeset siewer:194
+alter table project add column appclient text;
+alter table settings add column vulnauditorenable boolean;
+update settings set  vulnauditorenable=false;

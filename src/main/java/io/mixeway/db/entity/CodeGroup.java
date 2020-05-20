@@ -36,6 +36,16 @@ public class CodeGroup {
 	@JsonIgnore private String requestid;
 	@JsonIgnore private String scanid;
 	@JsonIgnore private String scope;
+	private String appClient;
+
+	@Column(name="appclient")
+	public String getAppClient() {
+		return appClient;
+	}
+
+	public void setAppClient(String appClient) {
+		this.appClient = appClient;
+	}
 
 	public String getScope() {
 		return scope;

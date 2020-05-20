@@ -29,6 +29,16 @@ public class Settings {
     private String codeAutoCron;
     private String trendEmailCron;
     private String domain;
+    private boolean vulnAuditorEnable;
+
+    @Column(name="vulnauditorenable")
+    public boolean isVulnAuditorEnable() {
+        return vulnAuditorEnable;
+    }
+
+    public void setVulnAuditorEnable(boolean vulnAuditorEnable) {
+        this.vulnAuditorEnable = vulnAuditorEnable;
+    }
 
     @Column(name="trendemailcron")
     public String getTrendEmailCron() {
