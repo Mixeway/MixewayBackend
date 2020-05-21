@@ -252,6 +252,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 		if (!optionalCodeProject.isPresent()) {
 			CodeProject cp = new CodeProject();
 			cp.setName(codeGroup.getName());
+			cp.setSkipAllScan(true);
 			cp.setCodeGroup(codeGroup);
 			cp.setTechnique(codeGroup.getTechnique());
 			return codeProjectRepository.save(cp);
