@@ -426,7 +426,7 @@ public class NetworkScanService {
      */
     public void scheduledCheckStatusAndLoadVulns() {
         try {
-            List<NessusScan> nsl = nessusScanRepository.findTop5ByRunningOrderByIdAsc(true);
+            List<NessusScan> nsl = nessusScanRepository.findByRunning(true);
             for (NessusScan ns : nsl) {
                 if (ns.getNessus().getStatus()) {
                     for (NetworkScanClient networkScanClient :networkScanClients) {
