@@ -1022,8 +1022,8 @@ insert into projectvulnerability (vulnerability_id,project_id,webapp_id, descrip
            webappvuln.grade, source.id, webapp.lastexecuted, webappvuln.location from vulnerability vuln, webapp webapp, webappvuln webappvuln, vulnerabilitysource source where webapp.id=webappvuln.webapp_id
             and source.name='WebApplication' and vuln.name=webappvuln.name;
 
-insert into projectvulnerability (vulnerability_id, project_id, interface_id, description, severity,inserted, status_id, grade,vulnerabilitysource_id, location)
-    select vuln.id, a.project_id, v.interface_id, v.description, v.threat, v.inserted, v.status_id, v.grade, source.id, a.name from vulnerability vuln, asset a, interface i,
+insert into projectvulnerability (vulnerability_id, project_id, interface_id, description, severity,inserted, status_id, grade,vulnerabilitysource_id, location,port)
+    select vuln.id, a.project_id, v.interface_id, v.description, v.threat, v.inserted, v.status_id, v.grade, source.id, a.name,v.port from vulnerability vuln, asset a, interface i,
         infrastructurevuln v, vulnerabilitysource source where v.interface_id = i.id and i.asset_id=a.id and vuln.name=v.name and source.name='Network';
 
 insert into projectvulnerability (vulnerability_id, project_id, codeproject_id, location, severity, analysis, inserted, description, status_id, externalid, vulnerabilitysource_id)
