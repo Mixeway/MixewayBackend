@@ -270,7 +270,7 @@ public class BurpEEApiClient implements SecurityScanner, WebAppScanClient {
      * @param scannerModel model from GUI to create scanner
      */
     @Override
-    public void saveScanner(ScannerModel scannerModel) {
+    public Scanner saveScanner(ScannerModel scannerModel) {
         if (StringUtils.isNotBlank(scannerModel.getApiUrl()) && StringUtils.isNotBlank(scannerModel.getApiKey()) && scannerModel.getScannerType().equals(Constants.SCANNER_TYPE_BURP)){
             Scanner burp = new Scanner();
             ScannerType scannerType = scannerTypeRepository.findByNameIgnoreCase(scannerModel.getScannerType());
@@ -290,7 +290,8 @@ public class BurpEEApiClient implements SecurityScanner, WebAppScanClient {
             } else {
                 burp.setApiKey(scannerModel.getApiKey());
             }
-            scannerRepository.save(burp);
+            return scannerRepository.save(burp);
         }
+        return null;
     }
 }

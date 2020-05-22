@@ -634,7 +634,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 	}
 
 	@Override
-	public void saveScanner(ScannerModel scannerModel) throws Exception {
+	public Scanner saveScanner(ScannerModel scannerModel) throws Exception {
 		List<Scanner>  scanners = scannerRepository.findByScannerTypeInAndStatus(scannerTypeRepository.getCodeScanners(), true);
 		if (scanners.stream().findFirst().isPresent()){
 			throw new Exception(Constants.SAST_SCANNER_ALREADY_REGISTERED);
@@ -653,7 +653,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 				} else {
 					fortify.setPassword(scannerModel.getPassword());
 				}
-				scannerRepository.save(fortify);
+				return scannerRepository.save(fortify);
 			} else if (scannerType.getName().equals(Constants.SCANNER_TYPE_FORTIFY_SCA)) {
 				io.mixeway.db.entity.Scanner fortify = new io.mixeway.db.entity.Scanner();
 				fortify.setApiUrl(scannerModel.getApiUrl());
@@ -666,9 +666,10 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 				} else {
 					fortify.setFortifytoken(scannerModel.getCloudCtrlToken());
 				}
-				scannerRepository.save(fortify);
+				return scannerRepository.save(fortify);
 			}
 		}
+		return null;
 	}
 
 	private void getScanId(CodeGroup cg) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {

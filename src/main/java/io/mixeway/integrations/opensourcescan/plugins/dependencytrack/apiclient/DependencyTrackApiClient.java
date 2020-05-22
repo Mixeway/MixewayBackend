@@ -254,7 +254,7 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
     }
 
     @Override
-    public void saveScanner(ScannerModel scannerModel) throws Exception {
+    public Scanner saveScanner(ScannerModel scannerModel) throws Exception {
         Scanner scanner = new Scanner();
         ScannerType scannerType = scannerTypeRepository.findByNameIgnoreCase(scannerModel.getScannerType());
         Proxies proxy = null;
@@ -274,7 +274,7 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
         } else {
             scanner.setApiKey(scannerModel.getApiKey());
         }
-        scannerRepository.save(scanner);
+        return scannerRepository.save(scanner);
 
     }
 }

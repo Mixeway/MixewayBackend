@@ -119,7 +119,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
     }
 
     @Override
-    public void saveScanner(ScannerModel scannerModel) throws Exception {
+    public Scanner saveScanner(ScannerModel scannerModel) throws Exception {
         List<Scanner>  scanners = scannerRepository.findByScannerTypeInAndStatus(scannerTypeRepository.getCodeScanners(), true);
         Optional<Proxies> proxies = proxiesRepository.findById(scannerModel.getProxy());
         if (scanners.stream().findFirst().isPresent()){
@@ -141,7 +141,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
             } else {
                 checkmarx.setPassword(scannerModel.getPassword());
             }
-            scannerRepository.save(checkmarx);
+            return scannerRepository.save(checkmarx);
         }
 
     }

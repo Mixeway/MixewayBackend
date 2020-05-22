@@ -341,7 +341,7 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 	}
 
 	@Override
-	public void saveScanner(ScannerModel scannerModel) throws Exception {
+	public Scanner saveScanner(ScannerModel scannerModel) throws Exception {
 		io.mixeway.db.entity.Scanner acunetix= new io.mixeway.db.entity.Scanner();
 		ScannerType scannerType = scannerTypeRepository.findByNameIgnoreCase(scannerModel.getScannerType());
 		Proxies proxy = null;
@@ -360,7 +360,7 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 		} else {
 			acunetix.setApiKey(scannerModel.getApiKey());
 		}
-		scannerRepository.save(acunetix);
+		return scannerRepository.save(acunetix);
 	}
 
 	private ProjectVulnerability loadVulnDetails(ProjectVulnerability vuln, io.mixeway.db.entity.Scanner scanner, String vulnid) throws Exception {

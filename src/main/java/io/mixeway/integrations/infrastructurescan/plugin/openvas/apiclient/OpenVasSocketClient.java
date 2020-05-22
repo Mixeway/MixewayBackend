@@ -354,7 +354,7 @@ public class OpenVasSocketClient implements NetworkScanClient, SecurityScanner {
     }
 
     @Override
-    public void saveScanner(ScannerModel scannerModel) throws Exception {
+    public Scanner saveScanner(ScannerModel scannerModel) throws Exception {
         ScannerType scannerType = scannerTypeRepository.findByNameIgnoreCase(scannerModel.getScannerType());
         Proxies proxy = null;
         if (scannerModel.getProxy() != 0)
@@ -371,8 +371,9 @@ public class OpenVasSocketClient implements NetworkScanClient, SecurityScanner {
             } else {
                 nessus.setPassword(scannerModel.getPassword());
             }
-            scannerRepository.save(nessus);
+            return scannerRepository.save(nessus);
         }
+        return null;
     }
     private Scanner nessusOperations(Long domainId, Scanner nessus, Proxies proxy, String apiurl, ScannerType scannerType) throws Exception{
         if(domainId == 0)

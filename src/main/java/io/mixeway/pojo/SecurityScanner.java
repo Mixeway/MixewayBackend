@@ -19,5 +19,5 @@ public interface SecurityScanner {
     boolean canProcessRequest(Scanner scanner);
     boolean canProcessInitRequest(Scanner scanner);
     boolean canProcessRequest(ScannerType scannerType);
-    void saveScanner(ScannerModel scannerModel) throws Exception;
+    Scanner saveScanner(ScannerModel scannerModel) throws Exception;
 }
