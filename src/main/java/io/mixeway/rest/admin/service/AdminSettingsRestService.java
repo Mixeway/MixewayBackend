@@ -5,9 +5,8 @@ import io.mixeway.db.repository.*;
 import io.mixeway.domain.service.scanner.VerifyWebAppScannerService;
 import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.VaultHelper;
-import io.mixeway.rest.admin.model.CronSettings;
-import io.mixeway.rest.admin.model.SmtpSettingsModel;
-import io.mixeway.rest.admin.model.WebAppScanStrategyModel;
+import io.mixeway.rest.admin.model.*;
+import io.mixeway.rest.project.model.VulnAuditorSettings;
 import org.quartz.CronExpression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.vault.core.VaultOperations;
 import io.mixeway.pojo.Status;
-import io.mixeway.rest.admin.model.AuthSettingsModel;
 import sun.rmi.runtime.Log;
 
 import java.text.ParseException;
@@ -289,5 +287,27 @@ public class AdminSettingsRestService {
     public ResponseEntity<WebAppScanStrategy> getWebAppStrategies(String name) {
         WebAppScanStrategy webAppScanStrategy = webAppScanStrategyRepository.findAll().stream().findFirst().orElse(null);
         return new ResponseEntity<>(webAppScanStrategy, HttpStatus.OK);
+    }
+
+    public ResponseEntity<Status> updateVulnAuditorSettings(VulnAuditorEditSettings vulnAuditorSettings, String name) {
+        Optional<Settings> settings = settingsRepository.findAll().stream().findFirst();
+        if (settings.isPresent()){
+            settings.get().setVulnAuditorEnable(vulnAuditorSettings.isEnabled());
+            settings.get().setVulnAuditorUrl(vulnAuditorSettings.getUrl());
+            settingsRepository.save(settings.get());
+            log.info("{} - Updated Vuln Auditor Settings - enabled {} url {}", LogUtil.prepare(name),
+                    LogUtil.prepare(String.valueOf(vulnAuditorSettings.isEnabled())), LogUtil.prepare(vulnAuditorSettings.getUrl()));
+            return new ResponseEntity<>( HttpStatus.OK);
+        }
+        return new ResponseEntity<>( HttpStatus.PRECONDITION_FAILED);
+    }
+
+    public ResponseEntity<VulnAuditorEditSettings> getVulnAuditorSettings(String name) {
+        Optional<Settings> settings = settingsRepository.findAll().stream().findFirst();
+        if (settings.isPresent()){
+            VulnAuditorEditSettings vulnAuditorEditSettings = new VulnAuditorEditSettings(settings.get());
+            return new ResponseEntity<>(vulnAuditorEditSettings, HttpStatus.OK);
+        }
+        return new ResponseEntity<>( HttpStatus.PRECONDITION_FAILED);
     }
 }

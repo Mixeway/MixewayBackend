@@ -1059,3 +1059,5 @@ update settings set  vulnauditorenable=false;
 
 --changeset siewer:195
 insert into status (name) values ('REMOVED');
+alter table settings add column vulnauditorurl text;
+update settings set vulnauditorurl='https://localhost:8445';
