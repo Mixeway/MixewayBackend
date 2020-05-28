@@ -1056,3 +1056,6 @@ alter table webapp add column appclient text;
 alter table project add column appclient text;
 alter table settings add column vulnauditorenable boolean;
 update settings set  vulnauditorenable=false;
+
+--changeset siewer:195
+insert into status (name) values ('REMOVED');

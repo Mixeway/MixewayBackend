@@ -127,7 +127,9 @@ public class OpenVasSocketClient implements NetworkScanClient, SecurityScanner {
     }
 
     private void getVulns(NessusScan nessusScan, ComandResponseGetReport reportResponse) throws JSONException {
-        List<ProjectVulnerability> oldVulns = oldVulnDelete(nessusScan);
+        List<ProjectVulnerability> oldVulns = getVulnsForNessusScan(nessusScan);
+        vulnTemplate.projectVulnerabilityRepository.updateVulnState(oldVulns, vulnTemplate.STATUS_REMOVED);
+
         List<Asset> assetsActive = assetRepository.findByProject(nessusScan.getProject());
         Interface intfActive;
         for (Result result : reportResponse.getGetReportResponse().getReportFirstLvl().getReportSecondLvl().getResults().getResults()) {
@@ -140,7 +142,7 @@ public class OpenVasSocketClient implements NetworkScanClient, SecurityScanner {
                 ProjectVulnerability projectVulnerability = new ProjectVulnerability(intfActive, null, vulnerability, result.getDescription(), null, result.getThreat(),
                         result.getPort(),null,null,vulnTemplate.SOURCE_NETWORK);
                 projectVulnerability.updateStatusAndGrade(oldVulns, vulnTemplate);
-                vulnTemplate.projectVulnerabilityRepository.save(projectVulnerability);
+                vulnTemplate.vulnerabilityPersist(oldVulns, projectVulnerability);
             } else  {
                 log.error("Report contains ip {} which is not found in assets for project {}",result.getHost().getHostname(), nessusScan.getProject().getName());
             }
@@ -187,7 +189,7 @@ public class OpenVasSocketClient implements NetworkScanClient, SecurityScanner {
         interfaceRepository.save(intf);
         return intf;
     }
-    private List<ProjectVulnerability> oldVulnDelete(NessusScan ns) {
+    private List<ProjectVulnerability> getVulnsForNessusScan(NessusScan ns) {
         List<Interface> intfs = null;
         List<ProjectVulnerability> tmpVulns = new ArrayList<>();
         long deleted = 0;
@@ -206,7 +208,6 @@ public class OpenVasSocketClient implements NetworkScanClient, SecurityScanner {
         assert intfs != null;
         for( Interface i : intfs) {
             tmpVulns.addAll(projectVulnerabilityRepository.findByAnInterface(i));
-            projectVulnerabilityRepository.deleteByAnInterface(i);
         }
         return tmpVulns;
     }
@@ -285,6 +286,7 @@ public class OpenVasSocketClient implements NetworkScanClient, SecurityScanner {
         if (reportResponse.getStatus().equals("200")){
             getVulns(nessusScan, reportResponse);
         }
+        vulnTemplate.projectVulnerabilityRepository.deleteByStatus(vulnTemplate.STATUS_REMOVED);
     }
 
     @Override

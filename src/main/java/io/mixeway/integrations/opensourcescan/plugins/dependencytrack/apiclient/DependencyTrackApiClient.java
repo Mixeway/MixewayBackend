@@ -35,6 +35,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScanClient {
@@ -96,6 +97,7 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
                 if (response.getStatusCode() == HttpStatus.OK) {
                     createVulns(codeProject, Objects.requireNonNull(response.getBody()));
                     updateCiOperations(codeProject);
+                    vulnTemplate.projectVulnerabilityRepository.deleteByStatus(vulnTemplate.STATUS_REMOVED);
                 } else {
                     log.error("Unable to get Findings from Dependency Track for project {}", codeProject.getdTrackUuid());
                 }
@@ -174,8 +176,9 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
     }
 
     public void createVulns(CodeProject codeProject, List<DTrackVuln> body) {
-        codeProject.getSoftwarePackets().removeAll(codeProject.getSoftwarePackets());
-        codeProjectRepository.saveAndFlush(codeProject);
+        List<ProjectVulnerability> oldVulns = vulnTemplate.projectVulnerabilityRepository
+                .findByCodeProjectAndVulnerabilitySource(codeProject, vulnTemplate.SOURCE_OPENSOURCE).collect(Collectors.toList());
+        vulnTemplate.projectVulnerabilityRepository.updateVulnState(oldVulns, vulnTemplate.STATUS_REMOVED);
         for(DTrackVuln dTrackVuln : body){
             List<SoftwarePacket> softwarePackets = new ArrayList<>();
             for(Component component : dTrackVuln.getComponents()){
@@ -199,12 +202,13 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
                         ProjectVulnerability projectVulnerability = new ProjectVulnerability(sPacket,codeProject,vuln,dTrackVuln.getDescription(),dTrackVuln.getRecommendation(),
                                 dTrackVuln.getSeverity(), null, null, null,vulnTemplate.SOURCE_OPENSOURCE);
                         projectVulnerability.setStatus(vulnTemplate.STATUS_NEW);
-                        vulnTemplate.projectVulnerabilityRepository.saveAndFlush(projectVulnerability);
+                        vulnTemplate.vulnerabilityPersist(oldVulns, projectVulnerability);
                     } else {
                         softwarePacketVulnerability.get().setInserted(dateFormat.format(new Date()));
                         softwarePacketVulnerability.get().setStatus(vulnTemplate.STATUS_EXISTING);
-                        vulnTemplate.projectVulnerabilityRepository.saveAndFlush(softwarePacketVulnerability.get());
+                        vulnTemplate.vulnerabilityPersist(oldVulns, softwarePacketVulnerability.get());
                     }
+
                 }
             }
             codeProjectRepository.saveAndFlush(codeProject);

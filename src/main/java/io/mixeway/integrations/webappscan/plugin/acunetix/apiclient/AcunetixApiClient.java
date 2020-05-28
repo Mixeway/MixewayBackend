@@ -290,7 +290,8 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 						}
 						vuln = loadVulnDetails(vuln, scanner, vulnFromAcu.getVuln_id());
 						vuln.updateStatusAndGrade(oldVulns,vulnTemplate);
-						vulnTemplate.projectVulnerabilityRepository.save(vuln);
+						vulnTemplate.vulnerabilityPersist(oldVulns, vuln);
+						//vulnTemplate.projectVulnerabilityRepository.save(vuln);
 						//TODO JIRA CREATION
 
 					}

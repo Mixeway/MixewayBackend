@@ -268,4 +268,5 @@ public class Constants {
     public static final String VULN_TYPE_WEBAPP = "WebApplication";
     public static final String VULN_TYPE_NETWORK = "Network";
     public static final String VULN_TYPE_OSPACKAGE = "OSPackage";
+    public static final String STATUS_REMOVED = "REMOVED";
 }

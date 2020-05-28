@@ -5,6 +5,7 @@ import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.*;
 import io.mixeway.domain.service.vulnerability.CreateOrGetVulnerabilityService;
+import io.mixeway.domain.service.vulnerability.VulnTemplate;
 import io.mixeway.integrations.webappscan.plugin.burpee.model.*;
 import io.mixeway.integrations.webappscan.service.WebAppScanClient;
 import io.mixeway.pojo.SecureRestTemplate;
@@ -38,18 +39,15 @@ public class BurpEEApiClient implements SecurityScanner, WebAppScanClient {
     private final ScannerRepository scannerRepository;
     private final SecureRestTemplate secureRestTemplate;
     private final NessusScanTemplateRepository nessusScanTemplateRepository;
-    private final StatusRepository statusRepository;
     private final WebAppRepository webAppRepository;
     private final CreateOrGetVulnerabilityService createOrGetVulnerabilityService;
-    private final ProjectVulnerabilityRepository projectVulnerabilityRepository;
-    private final Status STATUS_NEW;
-    private final Status STATUS_EXISTING;
+    private final VulnTemplate vulnTemplate;
     private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     public BurpEEApiClient(ScannerTypeRepository scannerTypeRepository, ProxiesRepository proxiesRepository,
                            RoutingDomainRepository routingDomainRepository, ScannerRepository scannerRepository,
                            VaultHelper vaultHelper, SecureRestTemplate secureRestTemplate,
-                           NessusScanTemplateRepository nessusScanTemplateRepository, ProjectVulnerabilityRepository projectVulnerabilityRepository,
+                           NessusScanTemplateRepository nessusScanTemplateRepository, VulnTemplate vulnTemplate,
                            StatusRepository statusRepository, WebAppRepository webAppRepository, CreateOrGetVulnerabilityService createOrGetVulnerabilityService){
         this.scannerTypeRepository = scannerTypeRepository;
         this.proxiesRepository = proxiesRepository;
@@ -58,12 +56,9 @@ public class BurpEEApiClient implements SecurityScanner, WebAppScanClient {
         this.scannerRepository = scannerRepository;
         this.secureRestTemplate = secureRestTemplate;
         this.nessusScanTemplateRepository = nessusScanTemplateRepository;
-        this.statusRepository = statusRepository;
+        this.vulnTemplate = vulnTemplate;
         this.webAppRepository = webAppRepository;
         this.createOrGetVulnerabilityService = createOrGetVulnerabilityService;
-        this.projectVulnerabilityRepository = projectVulnerabilityRepository;
-        this.STATUS_EXISTING = statusRepository.findByName(Constants.STATUS_EXISTING);
-        this.STATUS_NEW = statusRepository.findByName(Constants.STATUS_NEW);
     }
 
     /**
@@ -175,12 +170,12 @@ public class BurpEEApiClient implements SecurityScanner, WebAppScanClient {
                     Optional<ProjectVulnerability> webAppVulnOptional = oldVulns.stream().filter(webAppVuln -> webAppVuln.getSeverity().equals(vuln.getSeverity()) &&
                             webAppVuln.getLocation().equals(vuln.getLocation()) && webAppVuln.getVulnerability().equals(vuln.getVulnerability())).findFirst();
                     if (webAppVulnOptional.isPresent()) {
-                        vuln.setStatus(STATUS_EXISTING);
+                        vuln.setStatus(vulnTemplate.STATUS_EXISTING);
                         vuln.setGrade(webAppVulnOptional.get().getGrade());
                     }
                     else
-                        vuln.setStatus(STATUS_NEW);
-                    projectVulnerabilityRepository.save(vuln);
+                        vuln.setStatus(vulnTemplate.STATUS_NEW);
+                    vulnTemplate.vulnerabilityPersist(oldVulns, vuln);
                 }
                 webApp.setLastExecuted(sdf.format(new Date()));
                 webApp.setRunning(false);

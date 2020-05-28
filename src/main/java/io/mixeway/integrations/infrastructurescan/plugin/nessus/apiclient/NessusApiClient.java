@@ -10,6 +10,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
@@ -464,7 +465,8 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 	public void loadVulnForInterface(NessusScan ns, Interface i) throws JSONException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
 		try {
 			List<ProjectVulnerability> tmpOldVulns = vulnTemplate.projectVulnerabilityRepository.findByAnInterface(i);
-			vulnTemplate.projectVulnerabilityRepository.deleteByAnInterface(i);
+			vulnTemplate.projectVulnerabilityRepository.updateVulnState(tmpOldVulns, vulnTemplate.STATUS_REMOVED);
+
 			RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(ns.getNessus());
 			HttpEntity<String> entity = new HttpEntity<>(prepareAuthHeaderForNessus(ns.getNessus()));
 			ResponseEntity<String> response = restTemplate.exchange(ns.getNessus().getApiUrl() + "/scans/" + ns.getScanId() + "/hosts/" + i.getHostid(),
@@ -542,8 +544,8 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 					ProjectVulnerability projectVulnerability = new ProjectVulnerability(i, null, vulnerability,bodyJ.getJSONObject(Constants.NESSUS_SCAN_INFO).getJSONObject(Constants.NESSUS_PLUGINDESCRIPTION)
 							.getJSONObject(Constants.NESSUS_PLUGINATTRIBUTES).getString(Constants.NESSUS_VULN_DESCRIPTION),null,threat, key,null,null, vulnTemplate.SOURCE_NETWORK);
 					projectVulnerability.updateStatusAndGrade(oldVulns, vulnTemplate);
-					vulnTemplate.projectVulnerabilityRepository.save(projectVulnerability);
 
+					vulnTemplate.vulnerabilityPersist(oldVulns, projectVulnerability);
 				}
 			}
 

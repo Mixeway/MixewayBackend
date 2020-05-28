@@ -163,6 +163,7 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 			if (response.getStatusCode() == HttpStatus.OK) {
 				setVulnerabilities(nessusScan, response.getBody());
 			}
+			vulnTemplate.projectVulnerabilityRepository.deleteByStatus(vulnTemplate.STATUS_REMOVED);
 			nessusScan.setRunning(false);
 			nessusScanRepository.save(nessusScan);
 		} catch (HttpClientErrorException ex) {
@@ -229,7 +230,9 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 	}
 
 	private void setVulnerabilities(NessusScan ns, String body) throws JSONException  {
-		List<ProjectVulnerability> oldVulns = oldVulnDelete(ns);
+		List<ProjectVulnerability> oldVulns = getProjectVulnerabilititiesByScan(ns);
+		vulnTemplate.projectVulnerabilityRepository.updateVulnState(oldVulns, vulnTemplate.STATUS_REMOVED);
+
 		List<Asset> assetsActive = assetRepository.findByProject(ns.getProject());
 		JSONObject vuln = new JSONObject(body);
 		JSONArray vulns = vuln.getJSONArray(Constants.IF_VULNS);
@@ -247,7 +250,9 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 				ProjectVulnerability projectVulnerability = new ProjectVulnerability(intfActive,null,vulnerability,v.getString(Constants.IF_VULN_DESC),null
 						,v.getString(Constants.IF_VULN_THREAT),v.getString(Constants.IF_VULN_PORT),null,null,vulnTemplate.SOURCE_NETWORK);
 				projectVulnerability.updateStatusAndGrade(oldVulns, vulnTemplate);
-				vulnTemplate.projectVulnerabilityRepository.save(projectVulnerability);
+
+				vulnTemplate.vulnerabilityPersist(oldVulns,projectVulnerability);
+				//vulnTemplate.projectVulnerabilityRepository.save(projectVulnerability);
 			} else  {
 				log.error("Report contains ip {} which is not found in assets for project {}",v.getString(Constants.IF_VULN_HOST), ns.getProject().getName());
 			}
@@ -297,7 +302,7 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 		return intf;
 	}
 
-	private List<ProjectVulnerability> oldVulnDelete(NessusScan ns) {
+	private List<ProjectVulnerability> getProjectVulnerabilititiesByScan(NessusScan ns) {
 		List<Interface> intfs = null;
 		List<ProjectVulnerability> tmpVulns = new ArrayList<>();
 		Long deleted = (long)0;
@@ -316,7 +321,6 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 		assert intfs != null;
 		for( Interface i : intfs) {
 			tmpVulns.addAll(projectVulnerabilityRepository.findByAnInterface(i));
-			projectVulnerabilityRepository.deleteByAnInterface(i);
 		}
 		return tmpVulns;
 	}

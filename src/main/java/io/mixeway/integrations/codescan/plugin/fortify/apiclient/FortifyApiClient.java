@@ -162,7 +162,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 					.getRestTemplate()
 					.exchange(url, HttpMethod.GET, codeRequestHelper.getHttpEntity(), FortifyVulnList.class);
 			if (response.getStatusCode() == HttpStatus.OK) {
-				saveVulnerabilities(codeGroup, response.getBody().getData(),codeProject,scanner);
+				saveVulnerabilities(codeGroup, response.getBody().getData(),codeProject,scanner, codeVulns);
 				if (response.getBody().getLinks().getNext() != null ){
 					this.loadVulnerabilities(scanner,codeGroup,response.getBody().getLinks().getNext().getHref(),single,codeProject,codeVulns);
 				}
@@ -214,7 +214,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 			} catch (NullPointerException ignored) {}
 		}
 	}
-	private void saveVulnerabilities(CodeGroup codeGroup, List<FortifyVuln> fortifyVulns, CodeProject cp, io.mixeway.db.entity.Scanner scanner) throws JSONException, CertificateException, ParseException, NoSuchAlgorithmException, KeyManagementException, UnrecoverableKeyException, KeyStoreException, IOException, URISyntaxException {
+	private void saveVulnerabilities(CodeGroup codeGroup, List<FortifyVuln> fortifyVulns, CodeProject cp, io.mixeway.db.entity.Scanner scanner, List<ProjectVulnerability> oldVulns) throws JSONException, CertificateException, ParseException, NoSuchAlgorithmException, KeyManagementException, UnrecoverableKeyException, KeyStoreException, IOException, URISyntaxException {
 		for (FortifyVuln fortifyVuln: fortifyVulns) {
 			if (cp == null){
 				cp = setCodeProjectForScan(codeGroup,cp,fortifyVuln);
@@ -224,9 +224,10 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 			ProjectVulnerability projectVulnerability = new ProjectVulnerability(cp,cp,vulnerability,null,null,
 					fortifyVuln.getFriority(),null,fortifyVuln.getFullFileName()+":"+fortifyVuln.getLineNumber(),fortifyVuln.getPrimaryTag(), vulnTemplate.SOURCE_SOURCECODE );
 
+
 			projectVulnerability = createDescriptionAndState(fortifyVuln.getIssueInstanceId(),fortifyVuln.getId(),
 					codeGroup.getVersionIdAll(), scanner, projectVulnerability);
-			vulnTemplate.projectVulnerabilityRepository.save(projectVulnerability);
+			vulnTemplate.vulnerabilityPersist(oldVulns, projectVulnerability);
 		}
 
 	}

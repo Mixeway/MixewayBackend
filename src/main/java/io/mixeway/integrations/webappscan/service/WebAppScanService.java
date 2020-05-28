@@ -381,13 +381,15 @@ public class WebAppScanService {
                             List<ProjectVulnerability> tmpVulns = new ArrayList<>();
                             if (app.getVulns().size() > 0) {
                                 tmpVulns = vulnTemplate.projectVulnerabilityRepository.findByWebApp(app);
-                                vulnTemplate.projectVulnerabilityRepository.deleteByWebApp(app);
+                                vulnTemplate.projectVulnerabilityRepository.updateVulnState(tmpVulns, vulnTemplate.STATUS_REMOVED);
+                                //vulnTemplate.projectVulnerabilityRepository.deleteByWebApp(app);
                                 app = waRepository.getOne(app.getId());
                             }
                             webAppScanClient.loadVulnerabilities(scanner,app, null, tmpVulns);
                             scanner.setRunningScans(scanner.getRunningScans() - 1);
                             scannerRepository.save(scanner);
                             app.setRisk(projectRiskAnalyzer.getWebAppRisk(app));
+                            vulnTemplate.projectVulnerabilityRepository.deleteByStatus(vulnTemplate.STATUS_REMOVED);
                             break;
                         }
                     }
