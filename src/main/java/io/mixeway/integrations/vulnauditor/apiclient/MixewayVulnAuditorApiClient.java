@@ -50,7 +50,7 @@ public class MixewayVulnAuditorApiClient {
      */
     @Transactional
     public void perdict(List<ProjectVulnerability> projectVulnerability, String vulnAuditorUrl) throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
-        RestTemplate restTemplate = secureRestTemplate.noVerificationClient(null);
+        RestTemplate restTemplate = new RestTemplate();
         VulnAuditorRequestModel vulnAuditorRequestModel = prepareRequestModel(projectVulnerability);
         HttpEntity<List<VulnAuditorRequest>> entity = new HttpEntity<>(vulnAuditorRequestModel.getVulnAuditorRequests());
         System.setProperty("https.protocols", "TLSv1,TLSv1.1,TLSv1.2");
