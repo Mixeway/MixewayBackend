@@ -1,5 +1,6 @@
 package io.mixeway.integrations.vulnauditor.service;
 
+import io.mixeway.db.entity.ProjectVulnerability;
 import io.mixeway.db.entity.Settings;
 import io.mixeway.db.repository.SettingsRepository;
 import io.mixeway.domain.service.vulnerability.VulnTemplate;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -32,8 +34,9 @@ public class MixewayVulnAuditorService {
 
     public void perdictVulnerabilities() throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         Optional<Settings> settings = settingsRepository.findAll().stream().findFirst();
-        if (settings.isPresent() && settings.get().isVulnAuditorEnable()){
-            mixewayVulnAuditorApiClient.perdict(vulnTemplate.projectVulnerabilityRepository.findByGrade(-1), settings.get().getVulnAuditorUrl());
+        List<ProjectVulnerability> projectVulnerabilities = vulnTemplate.projectVulnerabilityRepository.findByGrade(-1);
+        if (settings.isPresent() && settings.get().isVulnAuditorEnable() && projectVulnerabilities.size()>0){
+            mixewayVulnAuditorApiClient.perdict(projectVulnerabilities, settings.get().getVulnAuditorUrl());
         }
     }
 }

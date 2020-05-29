@@ -52,16 +52,16 @@ public class MixewayVulnAuditorApiClient {
     public void perdict(List<ProjectVulnerability> projectVulnerability, String vulnAuditorUrl) throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         RestTemplate restTemplate = secureRestTemplate.noVerificationClient(null);
         VulnAuditorRequestModel vulnAuditorRequestModel = prepareRequestModel(projectVulnerability);
-        HttpEntity<VulnAuditorRequestModel> entity = new HttpEntity<>(vulnAuditorRequestModel);
-        ResponseEntity<VulnAuditorResponseModel> response = restTemplate.exchange(vulnAuditorUrl +
-                "/vuln/perdict", HttpMethod.GET, entity, VulnAuditorResponseModel.class);
+        HttpEntity<List<VulnAuditorRequest>> entity = new HttpEntity<>(vulnAuditorRequestModel.getVulnAuditorRequests());
+        ResponseEntity<VulnAuditorResponse[]> response = restTemplate.exchange(vulnAuditorUrl +
+                "/vuln/perdict", HttpMethod.POST, entity, VulnAuditorResponse[].class);
         if (response.getStatusCode().equals(HttpStatus.OK)){
-            for (VulnAuditorResponse vulnAuditorResponse : response.getBody().getVulnAuditorResponses()){
+            for (VulnAuditorResponse vulnAuditorResponse : response.getBody()){
                 ProjectVulnerability vulnerability = vulnTemplate.projectVulnerabilityRepository.getOne(vulnAuditorResponse.getId());
                 vulnerability.setGrade(vulnAuditorResponse.getAudit());
             }
         }
-        log.info("Successfully loaded perdicted classification for {} Vulnerabilities", response.getBody().getVulnAuditorResponses().size());
+        log.info("Successfully loaded perdicted classification for {} Vulnerabilities", response.getBody().length);
     }
 
     /**
