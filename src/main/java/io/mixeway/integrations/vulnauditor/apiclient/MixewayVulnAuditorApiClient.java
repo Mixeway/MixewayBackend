@@ -53,6 +53,7 @@ public class MixewayVulnAuditorApiClient {
         RestTemplate restTemplate = secureRestTemplate.noVerificationClient(null);
         VulnAuditorRequestModel vulnAuditorRequestModel = prepareRequestModel(projectVulnerability);
         HttpEntity<List<VulnAuditorRequest>> entity = new HttpEntity<>(vulnAuditorRequestModel.getVulnAuditorRequests());
+        System.setProperty("https.protocols", "TLSv1,TLSv1.1,TLSv1.2");
         ResponseEntity<VulnAuditorResponse[]> response = restTemplate.exchange(vulnAuditorUrl +
                 "/vuln/perdict", HttpMethod.POST, entity, VulnAuditorResponse[].class);
         if (response.getStatusCode().equals(HttpStatus.OK)){
