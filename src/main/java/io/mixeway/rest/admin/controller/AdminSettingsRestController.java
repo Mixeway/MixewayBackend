@@ -102,13 +102,13 @@ public class AdminSettingsRestController {
     public ResponseEntity<WebAppScanStrategy> getWebAppStrategies(Principal principal)  {
         return adminSettingsRestService.getWebAppStrategies(principal.getName());
     }
-    @PreAuthorize("hasAuhtority('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping(value = "/settings/vulnauditor")
     public ResponseEntity<Status> updateVulnAuditorSettings(@RequestBody @Valid VulnAuditorEditSettings vulnAuditorSettings, Principal principal)  {
         return adminSettingsRestService.updateVulnAuditorSettings(vulnAuditorSettings, principal.getName());
     }
 
-    @PreAuthorize("hasAuhtority('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping(value = "/settings/vulnauditor")
     public ResponseEntity<VulnAuditorEditSettings> getVulnAuditorSettings(Principal principal)  {
         return adminSettingsRestService.getVulnAuditorSettings(principal.getName());

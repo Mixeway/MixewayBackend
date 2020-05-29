@@ -263,4 +263,19 @@ public class ProjectRestService {
             return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
         }
     }
+
+    public ResponseEntity<io.mixeway.pojo.Status> setGradeForVulnerability(Long id, Long vulnId,int grade, Principal principal) {
+        Optional<Project> project = projectRepository.findById(id);
+        if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
+            Optional<ProjectVulnerability> projectVulnerability = vulnTemplate.projectVulnerabilityRepository.findById(vulnId);
+            if (projectVulnerability.isPresent() && projectVulnerability.get().getProject().getId().equals(project.get().getId()) && (grade==1 || grade==0)) {
+                projectVulnerability.get().setGrade(grade);
+                log.info("{} - changed Grade for Vulnerability {} to {}", principal.getName(), projectVulnerability.get().getId(), grade);
+                return new ResponseEntity<>( HttpStatus.OK);
+            }
+        } else {
+            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+        }
+        return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+    }
 }

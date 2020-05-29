@@ -14,6 +14,7 @@ public class VulnAuditorEditSettings {
         this.enabled = settings.isVulnAuditorEnable();
     }
 
+    public VulnAuditorEditSettings(){}
     public String getUrl() {
         return url;
     }
