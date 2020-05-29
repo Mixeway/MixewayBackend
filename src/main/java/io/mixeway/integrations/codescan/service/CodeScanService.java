@@ -35,6 +35,7 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.text.ParseException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author gsiewruk
@@ -459,7 +460,8 @@ public class CodeScanService {
         } else{
             tmpVulns.addAll(vulnTemplate.projectVulnerabilityRepository.findByCodeProjectIn(new ArrayList<>(group.getProjects())));
         }
-        vulnTemplate.projectVulnerabilityRepository.updateVulnState(tmpVulns,vulnTemplate.STATUS_REMOVED);
+        vulnTemplate.projectVulnerabilityRepository.updateVulnState(tmpVulns.stream().map(ProjectVulnerability::getId).collect(Collectors.toList()),
+                vulnTemplate.STATUS_REMOVED.getId());
         return tmpVulns;
     }
     /**
@@ -470,7 +472,8 @@ public class CodeScanService {
      */
     private List<ProjectVulnerability> getOldVulnsForCodeProject(CodeProject codeProject){
         List<ProjectVulnerability> codeVulns = vulnTemplate.projectVulnerabilityRepository.findByCodeProject(codeProject);
-        vulnTemplate.projectVulnerabilityRepository.updateVulnState(codeVulns, vulnTemplate.STATUS_REMOVED);
+        vulnTemplate.projectVulnerabilityRepository.updateVulnState(codeVulns.stream().map(ProjectVulnerability::getId).collect(Collectors.toList()),
+                vulnTemplate.STATUS_REMOVED.getId());
         return codeVulns;
     }
 
