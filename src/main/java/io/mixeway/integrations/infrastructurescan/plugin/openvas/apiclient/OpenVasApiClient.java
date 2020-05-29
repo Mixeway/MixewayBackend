@@ -231,8 +231,9 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 
 	private void setVulnerabilities(NessusScan ns, String body) throws JSONException  {
 		List<ProjectVulnerability> oldVulns = getProjectVulnerabilititiesByScan(ns);
-		vulnTemplate.projectVulnerabilityRepository.updateVulnState(oldVulns.stream().map(ProjectVulnerability::getId).collect(Collectors.toList()),
-				vulnTemplate.STATUS_REMOVED.getId());
+		if (oldVulns.size() > 0)
+			vulnTemplate.projectVulnerabilityRepository.updateVulnState(oldVulns.stream().map(ProjectVulnerability::getId).collect(Collectors.toList()),
+					vulnTemplate.STATUS_REMOVED.getId());
 
 		List<Asset> assetsActive = assetRepository.findByProject(ns.getProject());
 		JSONObject vuln = new JSONObject(body);

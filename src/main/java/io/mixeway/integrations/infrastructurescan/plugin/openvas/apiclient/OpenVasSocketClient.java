@@ -129,8 +129,9 @@ public class OpenVasSocketClient implements NetworkScanClient, SecurityScanner {
 
     private void getVulns(NessusScan nessusScan, ComandResponseGetReport reportResponse) throws JSONException {
         List<ProjectVulnerability> oldVulns = getVulnsForNessusScan(nessusScan);
-        vulnTemplate.projectVulnerabilityRepository.updateVulnState(oldVulns.stream().map(ProjectVulnerability::getId).collect(Collectors.toList()),
-                vulnTemplate.STATUS_REMOVED.getId());
+        if (oldVulns.size() > 0)
+            vulnTemplate.projectVulnerabilityRepository.updateVulnState(oldVulns.stream().map(ProjectVulnerability::getId).collect(Collectors.toList()),
+                    vulnTemplate.STATUS_REMOVED.getId());
 
         List<Asset> assetsActive = assetRepository.findByProject(nessusScan.getProject());
         Interface intfActive;

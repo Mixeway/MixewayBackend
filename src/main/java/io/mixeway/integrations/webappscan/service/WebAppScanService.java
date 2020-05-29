@@ -382,8 +382,9 @@ public class WebAppScanService {
                             List<ProjectVulnerability> tmpVulns = new ArrayList<>();
                             if (app.getVulns().size() > 0) {
                                 tmpVulns = vulnTemplate.projectVulnerabilityRepository.findByWebApp(app);
-                                vulnTemplate.projectVulnerabilityRepository.updateVulnState(tmpVulns.stream().map(ProjectVulnerability::getId).collect(Collectors.toList()),
-                                        vulnTemplate.STATUS_REMOVED.getId());
+                                if (tmpVulns.size() > 0)
+                                    vulnTemplate.projectVulnerabilityRepository.updateVulnState(tmpVulns.stream().map(ProjectVulnerability::getId).collect(Collectors.toList()),
+                                            vulnTemplate.STATUS_REMOVED.getId());
                                 //vulnTemplate.projectVulnerabilityRepository.deleteByWebApp(app);
                                 app = waRepository.getOne(app.getId());
                             }

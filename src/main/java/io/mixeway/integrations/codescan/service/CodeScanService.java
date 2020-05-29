@@ -460,8 +460,9 @@ public class CodeScanService {
         } else{
             tmpVulns.addAll(vulnTemplate.projectVulnerabilityRepository.findByCodeProjectIn(new ArrayList<>(group.getProjects())));
         }
-        vulnTemplate.projectVulnerabilityRepository.updateVulnState(tmpVulns.stream().map(ProjectVulnerability::getId).collect(Collectors.toList()),
-                vulnTemplate.STATUS_REMOVED.getId());
+        if (tmpVulns.size()>0)
+            vulnTemplate.projectVulnerabilityRepository.updateVulnState(tmpVulns.stream().map(ProjectVulnerability::getId).collect(Collectors.toList()),
+                    vulnTemplate.STATUS_REMOVED.getId());
         return tmpVulns;
     }
     /**
@@ -472,8 +473,9 @@ public class CodeScanService {
      */
     private List<ProjectVulnerability> getOldVulnsForCodeProject(CodeProject codeProject){
         List<ProjectVulnerability> codeVulns = vulnTemplate.projectVulnerabilityRepository.findByCodeProject(codeProject);
-        vulnTemplate.projectVulnerabilityRepository.updateVulnState(codeVulns.stream().map(ProjectVulnerability::getId).collect(Collectors.toList()),
-                vulnTemplate.STATUS_REMOVED.getId());
+        if (codeVulns.size() > 0)
+            vulnTemplate.projectVulnerabilityRepository.updateVulnState(codeVulns.stream().map(ProjectVulnerability::getId).collect(Collectors.toList()),
+                    vulnTemplate.STATUS_REMOVED.getId());
         return codeVulns;
     }
 
