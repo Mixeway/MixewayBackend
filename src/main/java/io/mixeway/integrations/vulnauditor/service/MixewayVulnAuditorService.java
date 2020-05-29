@@ -1,7 +1,9 @@
 package io.mixeway.integrations.vulnauditor.service;
 
+import io.mixeway.db.entity.Project;
 import io.mixeway.db.entity.ProjectVulnerability;
 import io.mixeway.db.entity.Settings;
+import io.mixeway.db.repository.ProjectRepository;
 import io.mixeway.db.repository.SettingsRepository;
 import io.mixeway.domain.service.vulnerability.VulnTemplate;
 import io.mixeway.integrations.vulnauditor.apiclient.MixewayVulnAuditorApiClient;
@@ -22,21 +24,25 @@ import java.util.Optional;
 public class MixewayVulnAuditorService {
     private final static Logger log = LoggerFactory.getLogger(MixewayVulnAuditorService.class);
     private final VulnTemplate vulnTemplate;
+    private final ProjectRepository projectRepository;
     private final MixewayVulnAuditorApiClient mixewayVulnAuditorApiClient;
     private final SettingsRepository settingsRepository;
 
     public MixewayVulnAuditorService(VulnTemplate vulnTemplate, MixewayVulnAuditorApiClient mixewayVulnAuditorApiClient,
-                                     SettingsRepository settingsRepository){
+                                     SettingsRepository settingsRepository, ProjectRepository projectRepository){
         this.vulnTemplate = vulnTemplate;
+        this.projectRepository = projectRepository;
         this.mixewayVulnAuditorApiClient = mixewayVulnAuditorApiClient;
         this.settingsRepository = settingsRepository;
     }
 
     public void perdictVulnerabilities() throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         Optional<Settings> settings = settingsRepository.findAll().stream().findFirst();
-        List<ProjectVulnerability> projectVulnerabilities = vulnTemplate.projectVulnerabilityRepository.findByGrade(-1);
-        if (settings.isPresent() && settings.get().isVulnAuditorEnable() && projectVulnerabilities.size()>0){
-            mixewayVulnAuditorApiClient.perdict(projectVulnerabilities, settings.get().getVulnAuditorUrl());
+        for (Project project : projectRepository.findByVulnAuditorEnable(true)) {
+            List<ProjectVulnerability> projectVulnerabilities = vulnTemplate.projectVulnerabilityRepository.findByGradeAndProject(-1, project);
+            if (settings.isPresent() && settings.get().isVulnAuditorEnable() && projectVulnerabilities.size() > 0) {
+                mixewayVulnAuditorApiClient.perdict(projectVulnerabilities, settings.get().getVulnAuditorUrl());
+            }
         }
     }
 }
