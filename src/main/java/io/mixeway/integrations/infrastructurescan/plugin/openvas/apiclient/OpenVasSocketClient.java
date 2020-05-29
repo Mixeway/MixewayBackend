@@ -32,6 +32,7 @@ import java.security.cert.CertificateException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class OpenVasSocketClient implements NetworkScanClient, SecurityScanner {
@@ -128,7 +129,8 @@ public class OpenVasSocketClient implements NetworkScanClient, SecurityScanner {
 
     private void getVulns(NessusScan nessusScan, ComandResponseGetReport reportResponse) throws JSONException {
         List<ProjectVulnerability> oldVulns = getVulnsForNessusScan(nessusScan);
-        vulnTemplate.projectVulnerabilityRepository.updateVulnState(oldVulns, vulnTemplate.STATUS_REMOVED);
+        vulnTemplate.projectVulnerabilityRepository.updateVulnState(oldVulns.stream().map(ProjectVulnerability::getId).collect(Collectors.toList()),
+                vulnTemplate.STATUS_REMOVED.getId());
 
         List<Asset> assetsActive = assetRepository.findByProject(nessusScan.getProject());
         Interface intfActive;

@@ -178,7 +178,8 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
     public void createVulns(CodeProject codeProject, List<DTrackVuln> body) {
         List<ProjectVulnerability> oldVulns = vulnTemplate.projectVulnerabilityRepository
                 .findByCodeProjectAndVulnerabilitySource(codeProject, vulnTemplate.SOURCE_OPENSOURCE).collect(Collectors.toList());
-        vulnTemplate.projectVulnerabilityRepository.updateVulnState(oldVulns, vulnTemplate.STATUS_REMOVED);
+        vulnTemplate.projectVulnerabilityRepository.updateVulnState(oldVulns.stream().map(ProjectVulnerability::getId).collect(Collectors.toList()),
+                vulnTemplate.STATUS_REMOVED.getId());
         for(DTrackVuln dTrackVuln : body){
             List<SoftwarePacket> softwarePackets = new ArrayList<>();
             for(Component component : dTrackVuln.getComponents()){

@@ -32,6 +32,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * @author gsiewruk
@@ -381,7 +382,8 @@ public class WebAppScanService {
                             List<ProjectVulnerability> tmpVulns = new ArrayList<>();
                             if (app.getVulns().size() > 0) {
                                 tmpVulns = vulnTemplate.projectVulnerabilityRepository.findByWebApp(app);
-                                vulnTemplate.projectVulnerabilityRepository.updateVulnState(tmpVulns, vulnTemplate.STATUS_REMOVED);
+                                vulnTemplate.projectVulnerabilityRepository.updateVulnState(tmpVulns.stream().map(ProjectVulnerability::getId).collect(Collectors.toList()),
+                                        vulnTemplate.STATUS_REMOVED.getId());
                                 //vulnTemplate.projectVulnerabilityRepository.deleteByWebApp(app);
                                 app = waRepository.getOne(app.getId());
                             }
