@@ -102,9 +102,11 @@ public class OpenSourceScanService {
     public void loadVulnerabilities(CodeProject codeProjectToVerify) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         for (OpenSourceScanClient openSourceScanClient : openSourceScanClients){
             if (openSourceScanClient.canProcessRequest(codeProjectToVerify)){
-                vulnTemplate.projectVulnerabilityRepository.updateVulnState(vulnTemplate.projectVulnerabilityRepository.
-                        findByCodeProjectAndVulnerabilitySource(codeProjectToVerify, vulnTemplate.SOURCE_OPENSOURCE).map(ProjectVulnerability::getId).collect(Collectors.toList()),
-                        vulnTemplate.STATUS_REMOVED.getId());
+                List<Long> vulnsToUpdate = vulnTemplate.projectVulnerabilityRepository.
+                        findByCodeProjectAndVulnerabilitySource(codeProjectToVerify, vulnTemplate.SOURCE_OPENSOURCE).map(ProjectVulnerability::getId).collect(Collectors.toList());
+                if (vulnsToUpdate.size() >  0)
+                    vulnTemplate.projectVulnerabilityRepository.updateVulnState(vulnsToUpdate,
+                            vulnTemplate.STATUS_REMOVED.getId());
                 openSourceScanClient.loadVulnerabilities(codeProjectToVerify);
                 vulnTemplate.projectVulnerabilityRepository.deleteByStatus(vulnTemplate.STATUS_REMOVED);
                 break;
