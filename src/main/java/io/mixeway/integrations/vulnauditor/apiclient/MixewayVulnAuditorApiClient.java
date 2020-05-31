@@ -89,7 +89,7 @@ public class MixewayVulnAuditorApiClient {
             } else if (pv.getVulnerabilitySource().getName().equals(Constants.VULN_TYPE_WEBAPP)){
                 appName = pv.getLocation();
                 appContext = "type webapp client "+ (StringUtils.isNotBlank(pv.getProject().getAppClient()) ? pv.getProject().getAppClient() : "empty")+ " domain "+ pv.getWebApp().getRoutingDomain().getName();
-            } else if (pv.getVulnerabilitySource().equals(Constants.VULN_TYPE_OPENSOURCE)){
+            } else if (pv.getVulnerabilitySource().getName().equals(Constants.VULN_TYPE_OPENSOURCE)){
                 appName = pv.getCodeProject().getName();
                 appContext = "type opensource";
             } else {
