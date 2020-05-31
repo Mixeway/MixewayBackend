@@ -1,7 +1,6 @@
 package io.mixeway.rest.legacy.controller;
 
 import io.mixeway.config.Constants;
-import io.mixeway.db.entity.CodeVuln;
 import io.mixeway.domain.service.project.GetOrCreateProjectService;
 import io.mixeway.integrations.audit.plugins.cisbenchmark.Service.CisDockerBenchmarkService;
 import io.mixeway.integrations.audit.plugins.cisbenchmark.Service.CisK8sBenchmarkService;
@@ -16,6 +15,7 @@ import io.mixeway.integrations.utils.CodeAccessVerifier;
 import io.mixeway.integrations.webappscan.model.WebAppScanRequestModel;
 import io.mixeway.integrations.webappscan.service.WebAppScanService;
 import io.mixeway.pojo.Status;
+import io.mixeway.pojo.Vulnerability;
 import org.codehaus.jettison.json.JSONException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -112,9 +112,9 @@ public class LegacyController {
 
     @PreAuthorize("hasAuthority('ROLE_API')")
     @GetMapping("/api/sast/show/{projectId}/{groupName}/{projectNane}")
-    public ResponseEntity<List<CodeVuln>> getResultsForProjectScan(@PathVariable(value = "projectId") Long id,
-                                                                   @PathVariable(value="groupName") String groupName,
-                                                                   @PathVariable(value="projectNane") String projectName)  {
+    public ResponseEntity<List<Vulnerability>> getResultsForProjectScan(@PathVariable(value = "projectId") Long id,
+                                                                        @PathVariable(value="groupName") String groupName,
+                                                                        @PathVariable(value="projectNane") String projectName)  {
 
         return codeScanService.getResultsForProject(id,groupName,projectName);
     }

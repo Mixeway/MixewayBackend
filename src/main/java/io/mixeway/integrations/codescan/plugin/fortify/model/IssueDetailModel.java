@@ -5,6 +5,16 @@ public class IssueDetailModel {
     String recommendation;
     String scanStatus;
     String fullFileName;
+    String references;
+
+    public String getReferences() {
+        return references;
+    }
+
+    public void setReferences(String references) {
+        this.references = references;
+    }
+
     int lineNumber;
 
     public String getDetail() {

@@ -10,14 +10,15 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.*;
+import io.mixeway.domain.service.vulnerability.VulnTemplate;
 import io.mixeway.integrations.infrastructurescan.service.NetworkScanClient;
 import io.mixeway.integrations.infrastructurescan.service.NetworkScanService;
-import io.mixeway.integrations.infrastructurescan.plugin.remotefirewall.apiclient.RfwApiClient;
 import io.mixeway.pojo.ScanHelper;
 import io.mixeway.pojo.SecureRestTemplate;
 import io.mixeway.pojo.SecurityScanner;
@@ -54,7 +55,6 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 	private final AssetRepository assetRepository;
 	private final InterfaceRepository interfaceRepository;
 	private final NessusScanRepository nessusScanRepository;
-	private final InfrastructureVulnRepository infrastructureVulnRepository;
 	private final ScanHelper scanHelper;
 	private final SecureRestTemplate secureRestTemplate;
 	private final ServiceRepository serviceRepository;
@@ -63,11 +63,12 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 	private final RoutingDomainRepository routingDomainRepository;
 	private final ProxiesRepository proxiesRepository;
 	private final NetworkScanService networkScanService;
+	private final VulnTemplate vulnTemplate;
 
 	@Lazy
 	NessusApiClient(VaultHelper vaultHelper, ScannerRepository scannerRepository, NessusScanTemplateRepository nessusScanTemplateRepository,
 					AssetRepository assetRepository, InterfaceRepository interfaceRepository, NessusScanRepository nessusScanRepository,
-					InfrastructureVulnRepository infrastructureVulnRepository, ScanHelper scanHelper, NetworkScanService networkScanService,
+					VulnTemplate vulnTemplate, ScanHelper scanHelper, NetworkScanService networkScanService,
 					SecureRestTemplate secureRestTemplate, ServiceRepository serviceRepository, StatusRepository statusRepository,
 					ScannerTypeRepository scannerTypeRepository, RoutingDomainRepository routingDomainRepository, ProxiesRepository proxiesRepository){
 		this.vaultHelper = vaultHelper;
@@ -76,7 +77,6 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 		this.assetRepository = assetRepository;
 		this.interfaceRepository = interfaceRepository;
 		this.nessusScanTemplateRepository = nessusScanTemplateRepository;
-		this.infrastructureVulnRepository = infrastructureVulnRepository;
 		this.networkScanService = networkScanService;
 		this.scanHelper = scanHelper;
 		this.secureRestTemplate = secureRestTemplate;
@@ -85,6 +85,7 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 		this.routingDomainRepository = routingDomainRepository;
 		this.scannerTypeRepository = scannerTypeRepository;
 		this.proxiesRepository = proxiesRepository;
+		this.vulnTemplate = vulnTemplate;
 	}
 	@Override
 	public boolean initialize(io.mixeway.db.entity.Scanner scanner) throws JSONException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
@@ -134,7 +135,7 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 	}
 
 	@Override
-	public void saveScanner(ScannerModel scannerModel) throws Exception {
+	public Scanner saveScanner(ScannerModel scannerModel) throws Exception {
 		ScannerType scannerType = scannerTypeRepository.findByNameIgnoreCase(scannerModel.getScannerType());
 		Proxies proxy = null;
 		if (scannerModel.getProxy() != 0)
@@ -154,7 +155,7 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 		} else {
 			nessus.setSecretKey(scannerModel.getSecretkey());
 		}
-		scannerRepository.save(nessus);
+		return scannerRepository.save(nessus);
 	}
 	private io.mixeway.db.entity.Scanner nessusOperations(Long domainId, io.mixeway.db.entity.Scanner nessus, Proxies proxy, String apiurl, ScannerType scannerType) throws Exception{
 		if(domainId == 0)
@@ -461,9 +462,11 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 	@Transactional(propagation = Propagation.REQUIRES_NEW)
 	public void loadVulnForInterface(NessusScan ns, Interface i) throws JSONException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
 		try {
-			i.getVulns().clear();
-			List<InfrastructureVuln> tmpOldVulns = infrastructureVulnRepository.findByIntf(i);
-			infrastructureVulnRepository.deleteByIntf(i);
+			List<ProjectVulnerability> tmpOldVulns = vulnTemplate.projectVulnerabilityRepository.findByAnInterface(i);
+			if (tmpOldVulns.size() > 0)
+				vulnTemplate.projectVulnerabilityRepository.updateVulnState(tmpOldVulns.stream().map(ProjectVulnerability::getId).collect(Collectors.toList()),
+						vulnTemplate.STATUS_REMOVED.getId());
+
 			RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(ns.getNessus());
 			HttpEntity<String> entity = new HttpEntity<>(prepareAuthHeaderForNessus(ns.getNessus()));
 			ResponseEntity<String> response = restTemplate.exchange(ns.getNessus().getApiUrl() + "/scans/" + ns.getScanId() + "/hosts/" + i.getHostid(),
@@ -490,7 +493,7 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 	}
 
 
-	private void createVulnerability(JSONObject vuln, NessusScan ns, Interface i, List<InfrastructureVuln> oldVulns) throws JSONException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+	private void createVulnerability(JSONObject vuln, NessusScan ns, Interface i, List<ProjectVulnerability> oldVulns) throws JSONException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
 		int pluginid = vuln.getInt(Constants.NESSUS_PLUGIN_ID);
 		String pluginName = vuln.getString(Constants.NESSUS_PLUGIN_NAME);
 		RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(ns.getNessus());
@@ -506,7 +509,7 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 		
 	}
 
-	private void createVuln(JSONObject vuln, Interface i, String body, String pluginName, List<InfrastructureVuln> oldVulns) throws JSONException {
+	private void createVuln(JSONObject vuln, Interface i, String body, String pluginName, List<ProjectVulnerability> oldVulns) throws JSONException {
 		JSONObject bodyJ = new JSONObject(body);
 		try {
 			JSONArray outputs = bodyJ.getJSONArray(Constants.NESSUS_OUTPUTS);
@@ -526,14 +529,7 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 				JSONArray keys = output.names ();
 				for (int j = 0; j < keys.length (); ++j) {
 					String threat;
-					String key = keys.getString (j); 
-					InfrastructureVuln iv = new InfrastructureVuln();
-					iv.setIntf(i);
-					iv.setDescription(bodyJ.getJSONObject(Constants.NESSUS_SCAN_INFO).getJSONObject(Constants.NESSUS_PLUGINDESCRIPTION)
-						   .getJSONObject(Constants.NESSUS_PLUGINATTRIBUTES).getString(Constants.NESSUS_VULN_DESCRIPTION));
-					iv.setName(vuln.getString(Constants.NESSUS_PLUGIN_NAME));
-					iv.setPort(key);
-					iv.setInserted(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+					String key = keys.getString (j);
 					if (vuln.getInt(Constants.NESSUS_SEVERITY) == 0)
 						threat = "Info";
 					else if (vuln.getInt(Constants.NESSUS_SEVERITY) == 1)
@@ -544,18 +540,12 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 						threat = "High";
 					else
 						threat = "Critical";
-					iv.setSeverity(threat);
-					if (oldVulns.stream().anyMatch(v -> v.getName().equals(iv.getName()) && v.getDescription().equals(iv.getDescription())
-					&& v.getSeverity().equals(iv.getSeverity()) && v.getPort().equals(iv.getPort()))){
-						iv.setStatus(statusRepository.findByName(Constants.STATUS_EXISTING));
-						Optional<InfrastructureVuln> infrastructureVuln = oldVulns.stream().filter(v -> v.getName().equals(iv.getName()) && v.getDescription().equals(iv.getDescription())
-								&& v.getSeverity().equals(iv.getSeverity()) && v.getPort().equals(iv.getPort())).findFirst();
-						infrastructureVuln.ifPresent(value -> iv.setGrade(value.getGrade()));
-					} else {
-						iv.setStatus(statusRepository.findByName(Constants.STATUS_NEW));
-					}
-					infrastructureVulnRepository.save(iv);
-	
+					Vulnerability vulnerability = vulnTemplate.createOrGetVulnerabilityService.createOrGetVulnerability(vuln.getString(Constants.NESSUS_PLUGIN_NAME));
+					ProjectVulnerability projectVulnerability = new ProjectVulnerability(i, null, vulnerability,bodyJ.getJSONObject(Constants.NESSUS_SCAN_INFO).getJSONObject(Constants.NESSUS_PLUGINDESCRIPTION)
+							.getJSONObject(Constants.NESSUS_PLUGINATTRIBUTES).getString(Constants.NESSUS_VULN_DESCRIPTION),null,threat, key,null,null, vulnTemplate.SOURCE_NETWORK);
+					projectVulnerability.updateStatusAndGrade(oldVulns, vulnTemplate);
+
+					vulnTemplate.vulnerabilityPersist(oldVulns, projectVulnerability);
 				}
 			}
 
@@ -567,7 +557,7 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 
 		serviceRepository.updateServiceSetStatusNullForInterface(i.getId());
 		List<Service> services = serviceRepository.findByAnInterface(i);
-		for (String port : infrastructureVulnRepository.getPortsFromInfraVulnForInterface(i.getId())){
+		for (String port : vulnTemplate.projectVulnerabilityRepository.getPortsFromInfraVulnForInterface(i)){
 			String[] splitedPort = port.split("/");
 			Optional<Service> optionalService = services.stream().filter(s -> s.getAppProto().equals(splitedPort[2].trim()) && s.getNetProto().equals(splitedPort[1].trim()) &&
 					s.getPort()==Integer.parseInt(splitedPort[0].trim())).findFirst();

@@ -1,5 +1,6 @@
 package io.mixeway.rest.project.controller;
 
+import io.mixeway.db.entity.ProjectVulnerability;
 import io.mixeway.integrations.opensourcescan.model.Projects;
 import io.mixeway.rest.project.model.*;
 import org.codehaus.jettison.json.JSONException;
@@ -8,7 +9,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import io.mixeway.db.entity.CodeGroup;
-import io.mixeway.db.entity.CodeVuln;
 import io.mixeway.pojo.Status;
 import io.mixeway.rest.project.service.CodeService;
 
@@ -75,7 +75,7 @@ public class CodeController {
     }
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping(value = "/{id}/vulns/code")
-    public ResponseEntity<List<CodeVuln>> showCodeVulns(@PathVariable("id")Long id, Principal principal) {
+    public ResponseEntity<List<ProjectVulnerability>> showCodeVulns(@PathVariable("id")Long id, Principal principal) {
         return codeService.showCodeVulns(id, principal);
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")

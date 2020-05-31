@@ -11,6 +11,16 @@ public class WebAppPutModel {
     private boolean scanPublic;
     private String webAppUsername;
     private String webAppPassword;
+    private String appClient;
+
+    public String getAppClient() {
+        return appClient;
+    }
+
+    public void setAppClient(String appClient) {
+        this.appClient = appClient;
+    }
+
     @NotNull
     @Min(1) private Long routingDomainForAsset;
 

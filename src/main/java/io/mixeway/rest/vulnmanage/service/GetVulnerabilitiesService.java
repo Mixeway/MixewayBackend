@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
+import io.mixeway.domain.service.vulnerability.VulnTemplate;
 import io.mixeway.integrations.opensourcescan.service.OpenSourceScanService;
 import io.mixeway.pojo.*;
 import io.mixeway.rest.project.model.SoftVuln;
@@ -15,8 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import io.mixeway.integrations.infrastructurescan.plugin.nessus.apiclient.NessusApiClient;
-import io.mixeway.integrations.infrastructurescan.plugin.openvas.apiclient.OpenVasApiClient;
 import io.mixeway.rest.vulnmanage.model.Vulnerabilities;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +31,7 @@ import java.security.cert.CertificateException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -40,12 +40,6 @@ import java.util.stream.Stream;
 @Service
 public class GetVulnerabilitiesService {
     private static final Logger log = LoggerFactory.getLogger(GetVulnerabilitiesService.class);
-    @Autowired
-    OpenVasApiClient openVasApiClient;
-    @Autowired
-    NessusApiClient nessusApiClient;
-    @Autowired
-    NessusScanTemplateRepository nessusScanTemplateRepository;
     @Autowired
     ApiTypeRepository apiTypeRepository;
     @Autowired
@@ -79,16 +73,6 @@ public class GetVulnerabilitiesService {
     @Autowired
     ScannerTypeRepository scannerTypeRepository;
     @Autowired
-    InfrastructureVulnRepository infrastractureVulnRepository;
-    @Autowired
-    WebAppVulnRepository webAppVulnRepository;
-    @Autowired
-    CodeVulnRepository codeVulnRepository;
-    @Autowired
-    NessusScanRepository nessusScanRepository;
-    @Autowired
-    SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityReposutitory;
-    @Autowired
     CodeProjectRepository codeProjectRepository;
     @Autowired
     CiOperationsRepository ciOperationsRepository;
@@ -99,12 +83,18 @@ public class GetVulnerabilitiesService {
     @Autowired
     CodeGroupRepository codeGroupRepository;
     @Autowired
-    SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository;
-    @Autowired
     OpenSourceScanService openSourceScanService;
     @Autowired
-    SoftwarePacketVulnerabilityRepository getSoftwarePacketVulnerabilityReposutitory;
+    VulnTemplate vulnTemplate;
 
+    ArrayList<String> severitiesNot = new ArrayList<String>() {{
+        add("Log");
+        add("Info");
+    }};
+    ArrayList<String> severitiesHigh = new ArrayList<String>() {{
+        add("Critical");
+        add("High");
+    }};
     DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     private final List<String> scannerTypes = Arrays.asList(Constants.API_SCANNER_AUDIT, Constants.API_SCANNER_CODE, Constants.API_SCANNER_OPENVAS,
@@ -125,59 +115,36 @@ public class GetVulnerabilitiesService {
         vulns = setPackageVulns(vulns,null);
         return new ResponseEntity<>(vulns, HttpStatus.OK);
     }
-    private Vulnerabilities setPackageVulns(Vulnerabilities vulns, Project project) {
+    private Vulnerabilities setPackageVulns(Vulnerabilities vulns, Project project) throws UnknownHostException {
         List<Vuln> tmpVulns = vulns.getVulnerabilities();
-        List<SoftwarePacketVulnerability> softVuln = null;
-        if (project != null)
-            softVuln = softwarePacketVulnerabilityRepository.getSoftwareVulnsForProject(project.getId());
-        else
-            softVuln = softwarePacketVulnerabilityReposutitory.getSoftwarePacketVulnerabilitiesForVulnManage();
-        for (SoftwarePacketVulnerability spv : softVuln) {
-            for (Asset a : spv.getSoftwarepacket().getAssets()) {
-                Vuln v = new Vuln();
-                v.setId(spv.getId());
-                v.setType(Constants.API_SCANNER_PACKAGE);
-                v.setVulnerabilityName(spv.getName());
-                v.setSeverity(setSeverity(spv.getScore()));
-                v.setDescription(spv.getFix());
-                v.setHostname(a.getName());
-                if (a.getProject().getCiid() != null && !a.getProject().getCiid().isEmpty())
-                	v.setCiid(a.getProject().getCiid());
-                v.setDateCreated(spv.getInserted());
+        List<ProjectVulnerability> softVuln = null;
+        if (project != null) {
+            try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository.findByProjectAndVulnerabilitySource(project, vulnTemplate.SOURCE_OPENSOURCE)) {
+                softVuln = vulnsForProject.collect(Collectors.toList());
+            }
+        }
+        else {
+            try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository.findByVulnerabilitySource(vulnTemplate.SOURCE_OPENSOURCE)) {
+                softVuln = vulnsForProject.collect(Collectors.toList());
+            }
+        }
+        for (ProjectVulnerability projectVulnerability : softVuln) {
+            for (Asset a : projectVulnerability.getSoftwarePacket().getAssets()) {
+                String hostname;
+                AtomicReference<String> ipAddress = null;
+                hostname = a.getName();
                 Optional<Interface> interfaceToAdd = a.getInterfaces().stream().findFirst();
-                interfaceToAdd.ifPresent(anInterface -> v.setIpAddress(anInterface.getPrivateip()));
-                v.setPacketName(spv.getSoftwarepacket().getName());
+                interfaceToAdd.ifPresent(anInterface -> ipAddress.set(anInterface.getPrivateip()));
+                Vuln v = new Vuln(projectVulnerability, hostname, ipAddress.get(), a, Constants.API_SCANNER_PACKAGE);
                 tmpVulns.add(v);
             }
-            for (CodeProject cp : spv.getSoftwarepacket().getCodeProjects()) {
-                Vuln v = new Vuln();
-                v.setId(spv.getId());
-                v.setType(Constants.API_SCANNER_PACKAGE);
-                v.setVulnerabilityName(spv.getName());
-                v.setSeverity(setSeverity(spv.getScore()));
-                v.setDescription(spv.getFix()+ " " + spv.getDescription());
-                v.setProject(cp.getName());
-                if (cp.getCodeGroup().getProject().getCiid() != null && !cp.getCodeGroup().getProject().getCiid().isEmpty())
-                    v.setCiid(cp.getCodeGroup().getProject().getCiid());
-                v.setDateCreated(spv.getInserted());
-                v.setPacketName(spv.getSoftwarepacket().getName());
+            for (CodeProject cp : projectVulnerability.getSoftwarePacket().getCodeProjects()) {
+                Vuln v = new Vuln(projectVulnerability, null, null,cp, Constants.API_SCANNER_PACKAGE);
                 tmpVulns.add(v);
             }
         }
         vulns.setVulnerabilities(tmpVulns);
         return vulns;
-    }
-    private String setSeverity(Double score) {
-        if (score < 1)
-            return Constants.API_SEVERITY_INFO;
-        else if (score > 1 && score < 3)
-            return Constants.API_SEVERITY_LOW;
-        else if (score >3 && score <5)
-            return Constants.API_SEVERITY_MEDIUM;
-        else if (score > 5 && score < 8)
-            return Constants.API_SEVERITY_HIGH;
-        else
-            return Constants.API_SEVERITY_CRITICAL;
     }
     private Vulnerabilities setAuditResults(Vulnerabilities vulns,Project project) {
         List<Vuln> tmpVulns = vulns.getVulnerabilities();
@@ -206,41 +173,23 @@ public class GetVulnerabilitiesService {
         return vulns;
     }
 
-    private Vulnerabilities setCodeVulns(Vulnerabilities vulns, Project project) {
+    private Vulnerabilities setCodeVulns(Vulnerabilities vulns, Project project) throws UnknownHostException {
         List<Vuln> tmpVulns = vulns.getVulnerabilities();
-        List<CodeVuln> codeVulns = null;
+        List<ProjectVulnerability> codeVulns = null;
         if (project != null) {
-            try (Stream<CodeVuln> vulnsForProject = codeVulnRepository.findByCodeGroupInAndAnalysis(project.getCodes(), Constants.FORTIFY_ANALYSIS_EXPLOITABLE)) {
+            try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository
+                    .findByProjectAndVulnerabilitySourceAndAnalysisNot(project, vulnTemplate.SOURCE_SOURCECODE, Constants.FORTIFY_NOT_AN_ISSUE)) {
                 codeVulns = vulnsForProject.collect(Collectors.toList());
             }
         }
         else {
-            try (Stream<CodeVuln> vulnsForProject = codeVulnRepository.findAllCodeVulns("Not an Issue")){
+            try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository
+                    .findByVulnerabilitySourceAndAnalysisNot(vulnTemplate.SOURCE_SOURCECODE, Constants.FORTIFY_NOT_AN_ISSUE)){
                 codeVulns = vulnsForProject.collect(Collectors.toList());
             }
         }
-        for (CodeVuln cv : codeVulns) {
-            Vuln v = new Vuln();
-            v.setGrade(cv.getGrade());
-            v.setId(cv.getId());
-            v.setVulnerabilityName(cv.getName());
-            v.setSeverity(cv.getSeverity());
-            //TODO: zrobienie opisu dla fortify
-            v.setDescription(cv.getDescription());
-            if (cv.getCodeProject() == null) {
-                v.setProject(cv.getCodeGroup().getName());
-                if (cv.getCodeGroup().getProject().getCiid() != null && !cv.getCodeGroup().getProject().getCiid().isEmpty())
-                	v.setCiid(cv.getCodeGroup().getProject().getCiid());
-            }
-            else {
-                v.setProject(cv.getCodeProject().getName());
-                if (cv.getCodeProject().getCodeGroup().getProject().getCiid() != null && !cv.getCodeProject().getCodeGroup().getProject().getCiid().isEmpty())
-                	v.setCiid(cv.getCodeProject().getCodeGroup().getProject().getCiid());
-            }
-            v.setLocation(cv.getFilePath());
-            v.setAnalysis(cv.getAnalysis());
-            v.setDateCreated(cv.getInserted());
-            v.setType(Constants.API_SCANNER_CODE);
+        for (ProjectVulnerability cv : codeVulns) {
+            Vuln v = new Vuln(cv, null, null,new CodeProject(), Constants.API_SCANNER_PACKAGE);
             tmpVulns.add(v);
         }
         vulns.setVulnerabilities(tmpVulns);
@@ -248,154 +197,60 @@ public class GetVulnerabilitiesService {
     }
     private Vulnerabilities setWebApplicationVulns(Vulnerabilities vulns,Project project) throws UnknownHostException {
         List<Vuln> tmpVulns = vulns.getVulnerabilities();
-        List<WebAppVuln> webAppVulns = null;
+        List<ProjectVulnerability> webAppVulns = null;
         if (project != null) {
             //webAppVulns = new ArrayList<>(webAppVulnRepository.findByWebAppIn(project.getWebapps()));
-            try (Stream<WebAppVuln> vulnsForProject = webAppVulnRepository.getWebAppVulnsForProject(project.getId())) {
+            try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository
+                    .findByProjectAndVulnerabilitySource(project, vulnTemplate.SOURCE_WEBAPP)) {
                 webAppVulns = vulnsForProject.collect(Collectors.toList());
             }
         }
         else {
-            try (Stream<WebAppVuln> vulnsForProject = webAppVulnRepository.getAllWebAppVulns()) {
+            try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository.findByVulnerabilitySource(vulnTemplate.SOURCE_WEBAPP)) {
                 webAppVulns = vulnsForProject.collect(Collectors.toList());
             }
         }
-        for (WebAppVuln wav : webAppVulns) {
-            Vuln v = new Vuln();
-            v.setGrade(wav.getGrade());
-            v.setId(wav.getId());
-            v.setVulnerabilityName(wav.getName());
-            v.setSeverity(wav.getSeverity());
-            v.setDescription(wav.getDescription()+"\n\n"+wav.getRecommendation());
-            v.setBaseURL(wav.getWebApp().getUrl());
-            v.setLocation(wav.getLocation());
-            v.setRoutingDomainName(wav.getWebApp().getPublicscan() ? "Internet":"Intranet");
-            String ipA = getIpAddressFromUrl(wav.getWebApp().getUrl());
-            String ipP = getPortFromUrl(wav.getWebApp().getUrl());
-            v.setIpAddress(ipA);
-            if (wav.getWebApp().getProject().getCiid() != null && !wav.getWebApp().getProject().getCiid().isEmpty())
-            	v.setCiid(wav.getWebApp().getProject().getCiid());
-            //TODO
-            v.setDateCreated(wav.getWebApp().getLastExecuted());
-            v.setPort(ipP);
-            v.setType(Constants.API_SCANNER_WEBAPP);
+        for (ProjectVulnerability wav : webAppVulns) {
+            Vuln v = new Vuln(wav, null, null,new WebApp(), Constants.API_SCANNER_WEBAPP);
             tmpVulns.add(v);
         }
         vulns.setVulnerabilities(tmpVulns);
         return vulns;
     }
-    public String getPortFromUrl(String url){
-        String port = null;
-        try {
-            port = url.split(":")[2].split("/")[0];
-        } catch(Exception e){
-            log.debug("Port is not visible on {}", url);
-        }
-        if (port==null){
-            if (url.split(":")[0].equals("http")){
-                port="80";
-            } else{
-                port = "443";
-            }
-        }
-
-        return port;
-    }
-    public String getIpAddressFromUrl(String url) throws UnknownHostException {
-        String ipA = null;
-        Pattern p = Pattern.compile("\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}(?:\\/\\d{2})?");
-        Matcher m = p.matcher(url);
-        try {
-            if (m.find())
-                ipA = m.group(0);
-            else {
-                String tmp;
-                if (url.split("://")[1].contains(":")) {
-                    tmp = url.split("://")[1].split(":")[0];
-                } else if (url.split("://")[1].contains("/")) {
-                    tmp = url.split("://")[1].split("/")[0];
-                } else
-                    tmp = url.split("://")[1];
-                InetAddress address = InetAddress.getByName(tmp);
-                ipA = address.getHostAddress();
-            }
-        }catch (Exception e){
-            log.debug("Exception during hostname resolution for {}",url);
-        }
-
-        return ipA;
-    }
-    private Vulnerabilities setInfrastructureVulns(Vulnerabilities vulns,Project project) {
+    private Vulnerabilities setInfrastructureVulns(Vulnerabilities vulns,Project project) throws UnknownHostException {
         List<Vuln> tmpVulns = vulns.getVulnerabilities();
-        List<InfrastructureVuln> infraVulns = null;
+        List<ProjectVulnerability> infraVulns = null;
         if (project != null) {
-            try (Stream<InfrastructureVuln> vulnsForProject = infrastractureVulnRepository.getVulnsForProject(project.getId())) {
+            try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository
+                    .findByProjectAndVulnerabilitySource(project,vulnTemplate.SOURCE_NETWORK)) {
                 infraVulns = vulnsForProject.collect(Collectors.toList());
             }
         } else {
-            try (Stream<InfrastructureVuln> vulnsForProject = infrastractureVulnRepository.getSeveritiesForVulnManage()) {
+            try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository
+                    .findByVulnerabilitySource(vulnTemplate.SOURCE_NETWORK)) {
                 infraVulns = vulnsForProject.collect(Collectors.toList());
             }
         }
-        for (InfrastructureVuln iv : infraVulns) {
-            Vuln v = new Vuln();
-            v.setId(iv.getId());
-            v.setGrade(iv.getGrade());
-            v.setVulnerabilityName(iv.getName());
-            v.setSeverity(iv.getSeverity());
-            v.setDescription(iv.getDescription());
-            try {
-	            if ( iv.getIntf().getPrivateip() == null && iv.getIntf().getPrivateip().equals("") )
-	                v.setIpAddress(iv.getIntf().getFloatingip());
-	            else
-	                v.setIpAddress(iv.getIntf().getPrivateip());
-            } catch (NullPointerException e) {
-            	v.setIpAddress("null ");
-            }
-            v.setDateCreated(iv.getInserted());
-            if (iv.getIntf().getAsset().getProject().getCiid() != null && !iv.getIntf().getAsset().getProject().getCiid().isEmpty())
-            	v.setCiid(iv.getIntf().getAsset().getProject().getCiid());
-            v.setRoutingDomainName(iv.getIntf().getRoutingDomain() != null ? iv.getIntf().getRoutingDomain().getName() : "");
-            v.setPort(iv.getPort().split("/")[0].trim().replace(" ",""));
-            try {
-                v.setIpProtocol(iv.getPort().split("/")[1].trim().replace(" ", ""));
-            } catch (ArrayIndexOutOfBoundsException ignored){ }
-            v.setType(Constants.API_SCANNER_OPENVAS);
+        for (ProjectVulnerability iv : infraVulns) {
+            Vuln v = new Vuln(iv, null, null,new Interface(), Constants.API_SCANNER_OPENVAS);
             tmpVulns.add(v);
         }
         vulns.setVulnerabilities(tmpVulns);
         return vulns;
     }
-    private Vulnerabilities setInfrastructureVulnsForRequestId(Vulnerabilities vulns,String requestId) {
+    private Vulnerabilities setInfrastructureVulnsForRequestId(Vulnerabilities vulns,String requestId) throws UnknownHostException {
         List<Vuln> tmpVulns = new ArrayList<>();
-        List<InfrastructureVuln> infraVulns = null;
+        List<ProjectVulnerability> infraVulns = null;
         List<Asset> assetsWithRequestId = assetRepository.findByRequestId(requestId);
         if (assetsWithRequestId.size() == 0)
             throw new NullPointerException();
 
-        infraVulns = infrastractureVulnRepository
-                    .findByIntfInAndSeverityNot(interfaceRepository.findByAssetIn(assetsWithRequestId),"Log");
-        for (InfrastructureVuln iv : infraVulns) {
-            Vuln v = new Vuln();
-            v.setGrade(iv.getGrade());
-            v.setId(iv.getId());
-            v.setVulnerabilityName(iv.getName());
-            v.setSeverity(iv.getSeverity());
-            v.setDescription(iv.getDescription());
-            try {
-                if ( iv.getIntf().getPrivateip() == null && iv.getIntf().getPrivateip().equals("") )
-                    v.setIpAddress(iv.getIntf().getFloatingip());
-                else
-                    v.setIpAddress(iv.getIntf().getPrivateip());
-            } catch (NullPointerException e) {
-                v.setIpAddress("null ");
-            }
-            v.setDateCreated(iv.getInserted());
-            if (iv.getIntf().getAsset().getProject().getCiid() != null && !iv.getIntf().getAsset().getProject().getCiid().isEmpty())
-                v.setCiid(iv.getIntf().getAsset().getProject().getCiid());
-            v.setPort(iv.getPort().split("/")[0].trim().replace(" ",""));
-            v.setIpProtocol(iv.getPort().split("/")[1].trim().replace(" ",""));
-            v.setType(Constants.API_SCANNER_OPENVAS);
+        try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository
+                .findByanInterfaceInAndSeverityNotIn(interfaceRepository.findByAssetIn(assetsWithRequestId),severitiesNot)) {
+            infraVulns = vulnsForProject.collect(Collectors.toList());
+        }
+        for (ProjectVulnerability iv : infraVulns) {
+            Vuln v = new Vuln(iv, null, null,new Interface(), Constants.API_SCANNER_OPENVAS);
             tmpVulns.add(v);
         }
         vulns.setVulnerabilities(tmpVulns);
@@ -435,22 +290,16 @@ public class GetVulnerabilitiesService {
 
     }
 
-    private Vulnerabilities setOpenSourceResults(Vulnerabilities vulns, Project project) {
+    private Vulnerabilities setOpenSourceResults(Vulnerabilities vulns, Project project) throws UnknownHostException {
         List<Vuln> tmpVulns = vulns.getVulnerabilities();
-        List<SoftwarePacketVulnerability> osVulns = null;
+        List<ProjectVulnerability> osVulns = null;
         if (project != null) {
             List<SoftVuln> softVulns = new ArrayList<>();
             for (CodeProject cp : codeProjectRepository.findByCodeGroupIn(project.getCodes())){
-                try (Stream<SoftwarePacketVulnerability> softwarePacketVulnerabilities = softwarePacketVulnerabilityRepository.getSoftwareVulnsForCodeProjectWithStream(cp.getId());) {
-                    for (SoftwarePacketVulnerability spv : softwarePacketVulnerabilities.collect(Collectors.toList())){
-                        Vuln v = new Vuln();
-                        v.setGrade(spv.getGrade());
-                        v.setId(spv.getId());
-                        v.setSeverity(spv.getSeverity());
-                        v.setDateCreated(spv.getInserted());
-                        v.setVulnerabilityName(spv.getName());
-                        v.setPacketName(spv.getSoftwarepacket().getName());
-                        v.setLocation("["+cp.getCodeGroup().getName()+"] "+ cp.getName());
+                try (Stream<ProjectVulnerability> softwarePacketVulnerabilities = vulnTemplate.projectVulnerabilityRepository
+                        .findByCodeProjectAndVulnerabilitySource(cp, vulnTemplate.SOURCE_SOURCECODE)) {
+                    for (ProjectVulnerability spv : softwarePacketVulnerabilities.collect(Collectors.toList())){
+                        Vuln v = new Vuln(spv, null, null,cp, Constants.API_SCANNER_PACKAGE);
                         tmpVulns.add(v);
                     }
                 }
@@ -525,35 +374,27 @@ public class GetVulnerabilitiesService {
     }
     private List<VulnManageResponse> createVulnManageResponseForCodeProject(CodeProject cp){
         List<VulnManageResponse> vulnManageResponses = new ArrayList<>();
-        List<WebAppVuln> vulnsForCP = cp.getWebAppVulns().stream()
-                .filter(wav -> wav.getSeverity().equals(Constants.API_SEVERITY_HIGH))
-                .collect(Collectors.toList());
-        List<CodeVuln> codeVulnsForCP = cp.getVulns().stream()
-                .filter (cv -> cv.getSeverity().equals(Constants.API_SEVERITY_CRITICAL))
-                .filter (cv -> cv.getAnalysis().equals(Constants.FORTIFY_ANALYSIS_EXPLOITABLE))
-                .collect(Collectors.toList());
-        List<SoftwarePacketVulnerability> softVulnForCP = softwarePacketVulnerabilityReposutitory.getSoftwareVulnsForCodeProject(cp.getId())
-                .stream().filter(v -> v.getScore() > 7).collect(Collectors.toList());
-        // petla po webappvuln
-        for (WebAppVuln wav : vulnsForCP){
-            VulnManageResponse vmr = new VulnManageResponse();
-            vmr.setDateDiscovered(wav.getWebApp().getLastExecuted());
-            vmr.setSeverity(wav.getSeverity());
-            vmr.setVulnerabilityName(wav.getName());
-            vulnManageResponses.add(vmr);
+        List<ProjectVulnerability> codeVulns = null;
+        try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository
+                .findByCodeProjectAndVulnerabilitySourceAndSeverityAndAnalysis(cp, vulnTemplate.SOURCE_SOURCECODE,
+                        Constants.VULN_CRITICALITY_CRITICAL,
+                        Constants.FORTIFY_ANALYSIS_EXPLOITABLE)) {
+            codeVulns.addAll(vulnsForProject.collect(Collectors.toList()));
         }
-        // petla po code vuln
-        for (CodeVuln cv : codeVulnsForCP){
-            VulnManageResponse vmr = new VulnManageResponse();
-            vmr.setVulnerabilityName(cv.getName());
-            vmr.setSeverity(cv.getSeverity());
-            vmr.setDateDiscovered(cv.getInserted());
-            vulnManageResponses.add(vmr);
+        try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository
+                .findByCodeProjectAndVulnerabilitySourceAndSeverityIn(cp, vulnTemplate.SOURCE_OPENSOURCE,
+                        severitiesHigh)) {
+            codeVulns.addAll(vulnsForProject.collect(Collectors.toList()));
+        }
+        try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository
+                .findByCodeProjectAndVulnerabilitySourceAndSeverityIn(cp, vulnTemplate.SOURCE_WEBAPP,
+                        severitiesHigh)) {
+            codeVulns.addAll(vulnsForProject.collect(Collectors.toList()));
         }
         //pentla po softvu
-        for (SoftwarePacketVulnerability spv : softVulnForCP){
+        for (ProjectVulnerability spv : codeVulns){
             VulnManageResponse vmr = new VulnManageResponse();
-            vmr.setVulnerabilityName(spv.getName());
+            vmr.setVulnerabilityName(spv.getVulnerability().getName());
             vmr.setSeverity(spv.getSeverity());
             vmr.setDateDiscovered(spv.getInserted());
             vulnManageResponses.add(vmr);
@@ -609,38 +450,17 @@ public class GetVulnerabilitiesService {
     public ResponseEntity<Vulnerabilities> getNetworkVulnerabilitiesByRequestId(String requestId) {
         try {
             return new ResponseEntity<>(this.setInfrastructureVulnsForRequestId(new Vulnerabilities(), requestId), HttpStatus.OK);
-        } catch (NullPointerException ex){
+        } catch (NullPointerException | UnknownHostException ex){
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public ResponseEntity setGradeForVulnerabiility(String type, Long id, int grade) {
-        if (scannerTypes.contains(type)) {
-            switch (type) {
-                case Constants.API_SCANNER_OPENVAS:
-                    Optional<InfrastructureVuln> iv = infrastractureVulnRepository.getById(id);
-                    if (iv.isPresent()){
-                        iv.get().setGrade(grade);
-                        infrastractureVulnRepository.saveAndFlush(iv.get());
-                    }
-                    break;
-                case Constants.API_SCANNER_WEBAPP:
-                    Optional<WebAppVuln> vuln = webAppVulnRepository.findById(id);
-                    vuln.ifPresent(webAppVuln -> webAppVuln.setGrade(grade));
-                    break;
-                case Constants.API_SCANNER_CODE:
-                    Optional<CodeVuln> cv = codeVulnRepository.findById(id);
-                    cv.ifPresent(codeVuln -> codeVuln.setGrade(grade));
-                    break;
-                case Constants.API_SCANNER_PACKAGE:
-                    Optional<SoftwarePacketVulnerability> spv = softwarePacketVulnerabilityRepository.findById(id);
-                    spv.ifPresent(softwarePacketVulnerability -> softwarePacketVulnerability.setGrade(grade));
-                    break;
-
-            }
-            return new ResponseEntity(HttpStatus.OK);
-        } else
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Proper scanner type is: networkScanner,webApplicationScanner,codeScanner, audit,packageScan");
+        Optional<ProjectVulnerability> projectVulnerability = vulnTemplate.projectVulnerabilityRepository.findById(id);
+        if (projectVulnerability.isPresent()){
+            projectVulnerability.get().setGrade(grade);
+        }
+        return new ResponseEntity(HttpStatus.OK);
     }
 }

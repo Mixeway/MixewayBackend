@@ -4,6 +4,7 @@ import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.*;
+import io.mixeway.domain.service.vulnerability.VulnTemplate;
 import io.mixeway.integrations.opensourcescan.plugins.dependencytrack.model.*;
 import io.mixeway.integrations.opensourcescan.model.Projects;
 import io.mixeway.integrations.opensourcescan.service.OpenSourceScanClient;
@@ -34,6 +35,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScanClient {
@@ -46,19 +48,17 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
     private final ProxiesRepository proxiesRepository;
     private final RoutingDomainRepository routingDomainRepository;
     private final SoftwarePacketRepository softwarePacketRepository;
-    private final StatusRepository statusRepository;
-    private final SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository;
     private final CodeProjectRepository codeProjectRepository;
     private final CiOperationsRepository ciOperationsRepository;
+    private final VulnTemplate vulnTemplate;
 
-    public DependencyTrackApiClient(ScannerRepository scannerRepository, ScannerTypeRepository scannerTypeRepository, StatusRepository statusRepository,
+    public DependencyTrackApiClient(ScannerRepository scannerRepository, ScannerTypeRepository scannerTypeRepository,
                                     SecureRestTemplate secureRestTemplate, VaultHelper vaultHelper, CodeProjectRepository codeProjectRepository,
                                     ProxiesRepository proxiesRepository, RoutingDomainRepository routingDomainRepository,
-                                    SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository, SoftwarePacketRepository softwarePacketRepository,
+                                    VulnTemplate vulnTemplate, SoftwarePacketRepository softwarePacketRepository,
                                     CiOperationsRepository ciOperationsRepository){
         this.scannerRepository = scannerRepository;
         this.vaultHelper = vaultHelper;
-        this.statusRepository = statusRepository;
         this.codeProjectRepository = codeProjectRepository;
         this.routingDomainRepository = routingDomainRepository;
         this.ciOperationsRepository = ciOperationsRepository;
@@ -66,7 +66,7 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
         this.scannerTypeRepository = scannerTypeRepository;
         this.proxiesRepository = proxiesRepository;
         this.softwarePacketRepository = softwarePacketRepository;
-        this.softwarePacketVulnerabilityRepository = softwarePacketVulnerabilityRepository;
+        this.vulnTemplate = vulnTemplate;
     }
 
     @Override
@@ -112,10 +112,10 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
         if (operations.isPresent()){
             CiOperations operation = operations.get();
             operation.setOpenSourceScan(true);
-            int highVulns = (int) softwarePacketVulnerabilityRepository
-                    .getSoftwareVulnsForCodeProject(codeProject.getId()).stream().filter(v -> v.getSeverity().equals(Constants.VULN_CRITICALITY_HIGH)).count();
-            int critVulns = (int) softwarePacketVulnerabilityRepository
-                    .getSoftwareVulnsForCodeProject(codeProject.getId()).stream().filter(v -> v.getSeverity().equals(Constants.VULN_CRITICALITY_CRITICAL)).count();
+            List<ProjectVulnerability> vulnsForCp = vulnTemplate.projectVulnerabilityRepository
+                    .getSoftwareVulnsForCodeProject(codeProject.getId());
+            int highVulns = (int) vulnsForCp.stream().filter(v -> v.getSeverity().equals(Constants.VULN_CRITICALITY_HIGH)).count();
+            int critVulns = (int) vulnsForCp.stream().filter(v -> v.getSeverity().equals(Constants.VULN_CRITICALITY_CRITICAL)).count();
             operation.setOpenSourceCrit(critVulns);
             operation.setOpenSourceHigh(highVulns);
             ciOperationsRepository.save(operation);
@@ -175,8 +175,8 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
     }
 
     public void createVulns(CodeProject codeProject, List<DTrackVuln> body) {
-        codeProject.getSoftwarePackets().removeAll(codeProject.getSoftwarePackets());
-        codeProjectRepository.saveAndFlush(codeProject);
+        List<ProjectVulnerability> oldVulns = vulnTemplate.projectVulnerabilityRepository
+                .findByCodeProjectAndVulnerabilitySource(codeProject, vulnTemplate.SOURCE_OPENSOURCE).collect(Collectors.toList());
         for(DTrackVuln dTrackVuln : body){
             List<SoftwarePacket> softwarePackets = new ArrayList<>();
             for(Component component : dTrackVuln.getComponents()){
@@ -192,38 +192,26 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
                     softwarePackets.add(softwarePacket);
                 }
                 for (SoftwarePacket sPacket : softwarePackets){
-                    Optional<SoftwarePacketVulnerability> softwarePacketVulnerability = softwarePacketVulnerabilityRepository.findBySoftwarepacketAndName(sPacket,dTrackVuln.getVulnId());
+                    Vulnerability vuln = vulnTemplate.createOrGetVulnerabilityService.createOrGetVulnerabilityWithDescAndReferences(dTrackVuln.getVulnId(), dTrackVuln.getDescription(),
+                            dTrackVuln.getReferences(), dTrackVuln.getRecommendation());
+                    Optional<ProjectVulnerability> softwarePacketVulnerability = vulnTemplate.projectVulnerabilityRepository
+                            .findBySoftwarePacketAndVulnerability(sPacket,vuln);
                     if (!softwarePacketVulnerability.isPresent()){
-                        SoftwarePacketVulnerability vulnerability = new SoftwarePacketVulnerability();
-                        vulnerability.setSoftwarepacket(sPacket);
-                        vulnerability.setName(dTrackVuln.getVulnId());
-                        vulnerability.setDescription(dTrackVuln.getDescription());
-                        vulnerability.setSeverity(dTrackVuln.getSeverity());
-                        vulnerability.setInserted(dateFormat.format(new Date()));
-                        vulnerability.setProject(codeProject.getCodeGroup().getProject());
-                        vulnerability.setScore(createScore(dTrackVuln.getSeverity()));
-                        vulnerability.setStatus(statusRepository.findByName(Constants.STATUS_NEW));
-                        softwarePacketVulnerabilityRepository.saveAndFlush(vulnerability);
+                        ProjectVulnerability projectVulnerability = new ProjectVulnerability(sPacket,codeProject,vuln,dTrackVuln.getDescription(),dTrackVuln.getRecommendation(),
+                                dTrackVuln.getSeverity(), null, null, null,vulnTemplate.SOURCE_OPENSOURCE);
+                        projectVulnerability.setStatus(vulnTemplate.STATUS_NEW);
+                        vulnTemplate.vulnerabilityPersist(oldVulns, projectVulnerability);
                     } else {
+                        softwarePacketVulnerability.get().setCodeProject(codeProject);
                         softwarePacketVulnerability.get().setInserted(dateFormat.format(new Date()));
-                        softwarePacketVulnerability.get().setStatus(statusRepository.findByName(Constants.STATUS_EXISTING));
-                        softwarePacketVulnerabilityRepository.saveAndFlush(softwarePacketVulnerability.get());
+                        softwarePacketVulnerability.get().setStatus(vulnTemplate.STATUS_EXISTING);
+                        vulnTemplate.vulnerabilityPersist(oldVulns, softwarePacketVulnerability.get());
                     }
+
                 }
             }
             codeProjectRepository.saveAndFlush(codeProject);
         }
-    }
-
-    private Double createScore(String severity) {
-        if (severity.equals(Constants.API_SEVERITY_CRITICAL.toUpperCase())){
-            return 10.0;
-        } else if (severity.equals(Constants.API_SEVERITY_HIGH.toUpperCase())){
-            return 7.0;
-        } else if (severity.equals(Constants.API_SEVERITY_MEDIUM.toUpperCase())){
-            return 4.0;
-        } else
-            return 1.0;
     }
 
     private HttpHeaders prepareAuthHeader(Scanner scanner) {
@@ -269,7 +257,7 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
     }
 
     @Override
-    public void saveScanner(ScannerModel scannerModel) throws Exception {
+    public Scanner saveScanner(ScannerModel scannerModel) throws Exception {
         Scanner scanner = new Scanner();
         ScannerType scannerType = scannerTypeRepository.findByNameIgnoreCase(scannerModel.getScannerType());
         Proxies proxy = null;
@@ -289,7 +277,7 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
         } else {
             scanner.setApiKey(scannerModel.getApiKey());
         }
-        scannerRepository.save(scanner);
+        return scannerRepository.save(scanner);
 
     }
 }

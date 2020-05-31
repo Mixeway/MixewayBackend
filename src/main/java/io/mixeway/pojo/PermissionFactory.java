@@ -47,6 +47,7 @@ public class PermissionFactory {
                 UUID test = UUID.fromString(principal.getName());
                 User u = new User();
                 u.setUsername(Constants.API_URL);
+                u.setPermisions("ROLE_API");
                 return u;
             }
         } catch (IllegalArgumentException exception) {

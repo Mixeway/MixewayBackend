@@ -4,6 +4,7 @@ import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.*;
+import io.mixeway.domain.service.vulnerability.VulnTemplate;
 import io.mixeway.integrations.webappscan.service.WebAppScanService;
 import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.PermissionFactory;
@@ -12,7 +13,6 @@ import io.mixeway.rest.project.model.RunScanForWebApps;
 import io.mixeway.rest.project.model.WebAppCard;
 import io.mixeway.rest.project.model.WebAppModel;
 import io.mixeway.rest.project.model.WebAppPutModel;
-import io.mixeway.rest.utils.ProjectRiskAnalyzer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -33,15 +33,18 @@ public class WebAppService {
     private final ProjectRepository projectRepository;
     private final WebAppHeaderRepository webAppHeaderRepository;
     private final WebAppScanRepository webAppScanRepository;
-    private final WebAppVulnRepository webAppVulnRepository;
     private final WebAppScanService webAppScanService;
     private final PermissionFactory permissionFactory;
     private final RoutingDomainRepository routingDomainRepository;
     private final VaultHelper vaultHelper;
-
+    private final VulnTemplate vulnTemplate;
+    private List<String> logs = new ArrayList<String>(){{
+        add(Constants.LOG_SEVERITY);
+        add(Constants.INFO_SEVERITY);
+    }};
     WebAppService(WebAppRepository webAppRepository, ScannerTypeRepository scannerTypeRepository, WebAppScanService webAppScanService,
                   ScannerRepository scannerRepository, ProjectRepository projectRepository, WebAppHeaderRepository webAppHeaderRepository,
-                  WebAppScanRepository webAppScanRepository, WebAppVulnRepository webAppVulnRepository,
+                  WebAppScanRepository webAppScanRepository, VulnTemplate vulnTemplate,
                   PermissionFactory permissionFactory, RoutingDomainRepository routingDomainRepository,
                   VaultHelper vaultHelper){
         this.webAppHeaderRepository = webAppHeaderRepository;
@@ -52,7 +55,7 @@ public class WebAppService {
         this.vaultHelper =vaultHelper;
         this.webAppScanRepository = webAppScanRepository;
         this.permissionFactory = permissionFactory;
-        this.webAppVulnRepository = webAppVulnRepository;
+        this.vulnTemplate = vulnTemplate;
         this.webAppScanService = webAppScanService;
         this.routingDomainRepository = routingDomainRepository;
     }
@@ -103,6 +106,7 @@ public class WebAppService {
                 webApp.setUrl(webAppPutMode.getWebAppUrl());
                 webApp.setRunning(false);
                 webApp.setInQueue(false);
+                webApp.setAppClient(webAppPutMode.getAppClient());
                 webApp.setRoutingDomain(routingDomainRepository.getOne(webAppPutMode.getRoutingDomainForAsset()));
                 webApp.setOrigin(Constants.STRATEGY_GUI);
                 webApp.setPublicscan(webAppPutMode.isScanPublic());
@@ -157,10 +161,11 @@ public class WebAppService {
             return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
         }
     }
-    public ResponseEntity<List<WebAppVuln>> showWebAppVulns(Long id, Principal principal) {
+    public ResponseEntity<List<ProjectVulnerability>> showWebAppVulns(Long id, Principal principal) {
         Optional<Project> project = projectRepository.findById(id);
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
-            Set<WebAppVuln> appVulns = webAppVulnRepository.findByWebAppInAndSeverityNot(project.get().getWebapps(),Constants.INFO_SEVERITY);
+            List<ProjectVulnerability> appVulns = vulnTemplate.projectVulnerabilityRepository
+                    .findByProjectAndVulnerabilitySourceAndSeverityNotIn(project.get(), vulnTemplate.SOURCE_WEBAPP,logs);
             return new ResponseEntity<>(new ArrayList<>(appVulns),HttpStatus.OK);
         } else {
             return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);

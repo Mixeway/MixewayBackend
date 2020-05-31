@@ -3,7 +3,9 @@ package io.mixeway.integrations.infrastructurescan.plugin.nexpose.apiclient;
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
+import io.mixeway.db.entity.Vulnerability;
 import io.mixeway.db.repository.*;
+import io.mixeway.domain.service.vulnerability.VulnTemplate;
 import io.mixeway.integrations.infrastructurescan.plugin.nexpose.model.*;
 import io.mixeway.integrations.infrastructurescan.service.NetworkScanClient;
 import io.mixeway.pojo.*;
@@ -34,15 +36,15 @@ public class NexposeApiClient implements NetworkScanClient, SecurityScanner {
     private final NessusScanRepository nessusScanRepository;
     private final InterfaceRepository interfaceRepository;
     private final AssetRepository assetRepository;
-    private final InfrastructureVulnRepository infrastructureVulnRepository;
     private final RoutingDomainRepository routingDomainRepository;
     private final ProxiesRepository proxiesRepository;
     private final ScannerTypeRepository scannerTypeRepository;
+    private final VulnTemplate vulnTemplate;
 
 
     NexposeApiClient(VaultHelper vaultHelper, SecureRestTemplate secureRestTemplate, ScannerRepository scannerRepository,
                      ScanHelper scanHelper, NessusScanRepository nessusScanRepository, InterfaceRepository interfaceRepository,
-                     AssetRepository assetRepository,InfrastructureVulnRepository infrastructureVulnRepository, ScannerTypeRepository scannerTypeRepository,
+                     AssetRepository assetRepository, ScannerTypeRepository scannerTypeRepository, VulnTemplate vulnTemplate,
                      ProxiesRepository proxiesRepository, RoutingDomainRepository routingDomainRepository){
         this.vaultHelper = vaultHelper;
         this.secureRestTemplate = secureRestTemplate;
@@ -51,10 +53,10 @@ public class NexposeApiClient implements NetworkScanClient, SecurityScanner {
         this.nessusScanRepository = nessusScanRepository;
         this.interfaceRepository = interfaceRepository;
         this.assetRepository = assetRepository;
-        this.infrastructureVulnRepository = infrastructureVulnRepository;
         this.proxiesRepository = proxiesRepository;
         this.routingDomainRepository = routingDomainRepository;
         this.scannerTypeRepository = scannerTypeRepository;
+        this.vulnTemplate = vulnTemplate;
 
     }
 
@@ -120,9 +122,16 @@ public class NexposeApiClient implements NetworkScanClient, SecurityScanner {
         if (response.getStatusCode().equals(HttpStatus.OK)){
             for (SiteAssetsResources a: Objects.requireNonNull(response.getBody()).getResources()){
                 Interface intf = verifyAndCreateAsset(scan,a);
-                loadVulnerabilitiesForAsset(scan,intf,a.getId(),0);
+                List<ProjectVulnerability> oldVulns = deleteVulnsForInterface(intf);
+                loadVulnerabilitiesForAsset(scan,intf,a.getId(),0, oldVulns);
             }
         }
+    }
+
+    private List<ProjectVulnerability> deleteVulnsForInterface(Interface intf) {
+        List<ProjectVulnerability> oldVulns = vulnTemplate.projectVulnerabilityRepository.findByAnInterface(intf);
+        vulnTemplate.projectVulnerabilityRepository.deleteByAnInterface(intf);
+        return oldVulns;
     }
 
     @Override
@@ -135,7 +144,7 @@ public class NexposeApiClient implements NetworkScanClient, SecurityScanner {
         return false;
     }
 
-    private void loadVulnerabilitiesForAsset(NessusScan scan, Interface intf, int id, int page) throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
+    private void loadVulnerabilitiesForAsset(NessusScan scan, Interface intf, int id, int page, List<ProjectVulnerability> oldVulns) throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         RestTemplateBasicAuth templateBasicAuth = new RestTemplateBasicAuth();
         RestTemplate restTemplate = secureRestTemplate.noVerificationClient(scan.getNessus());
         ResponseEntity<AssetVulnerabilitiesResponseDTO> response = restTemplate.exchange(scan.getNessus().getApiUrl() + "/api/3/assets/"+id+"/vulnerabilities?page="+page+"&size=500&sort=id,asc",
@@ -144,22 +153,19 @@ public class NexposeApiClient implements NetworkScanClient, SecurityScanner {
             for (AssetVulnerabilitiesResource avr : Objects.requireNonNull(response.getBody()).getResources()){
                 VulnerabilityDetailsDTO vulnDetails = getVulnDetailsForId(scan,avr.getId());
                 for(Result result : avr.getResults()){
-                    InfrastructureVuln iv = new InfrastructureVuln();
-                    iv.setIntf(intf);
-                    iv.setInserted(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
-                    assert vulnDetails != null;
-                    iv.setName(vulnDetails.getTitle());
-                    iv.setPort(String.valueOf(result.getPort()));
-                    iv.setSeverity(setNexposeThreat(vulnDetails.getSeverity()));
-                    iv.setDescription("<br/><b>Vulnerability satus: "+result.getStatus()+"</b><br/>" +
+                    Vulnerability vulnerability = vulnTemplate.createOrGetVulnerabilityService.createOrGetVulnerability(vulnDetails.getTitle());
+                    ProjectVulnerability projectVulnerability = new ProjectVulnerability(intf, null,vulnerability,"<br/><b>Vulnerability satus: "+result.getStatus()+"</b><br/>" +
                             "<b>Categories: "+ StringUtils.join(vulnDetails.getCategories(),", ")+"</b><br/>" +
                             "<br/><br/>Proof:<br/>"+result.getProof()+
-                            "<br/>Description:<br/>"+vulnDetails.getDescription().getHtml());
-                    infrastructureVulnRepository.save(iv);
+                            "<br/>Description:<br/>"+vulnDetails.getDescription().getHtml(),null,
+                            setNexposeThreat(vulnDetails.getSeverity()),String.valueOf(result.getPort()),null,null, vulnTemplate.SOURCE_NETWORK);
+
+                    projectVulnerability.updateStatusAndGrade(oldVulns, vulnTemplate);
+                    vulnTemplate.projectVulnerabilityRepository.save(projectVulnerability);
                 }
             }
             if (response.getBody().getPage().getTotalPages() > (response.getBody().getPage().getNumber() + 1)){
-                this.loadVulnerabilitiesForAsset(scan,intf,id, page+1 );
+                this.loadVulnerabilitiesForAsset(scan,intf,id, page+1, oldVulns );
             }
 
         }
@@ -305,7 +311,7 @@ public class NexposeApiClient implements NetworkScanClient, SecurityScanner {
     }
 
     @Override
-    public void saveScanner(ScannerModel scannerModel) throws Exception {
+    public Scanner saveScanner(ScannerModel scannerModel) throws Exception {
         ScannerType scannerType = scannerTypeRepository.findByNameIgnoreCase(scannerModel.getScannerType());
         Proxies proxy = null;
         if (scannerModel.getProxy() != 0)
@@ -321,9 +327,9 @@ public class NexposeApiClient implements NetworkScanClient, SecurityScanner {
             } else {
                 nessus.setPassword(scannerModel.getPassword());
             }
-            scannerRepository.save(nessus);
+            return scannerRepository.save(nessus);
         }
-
+        return null;
     }
     private io.mixeway.db.entity.Scanner nessusOperations(Long domainId, Scanner nessus, Proxies proxy, String apiurl, ScannerType scannerType) throws Exception{
         if(domainId == 0)

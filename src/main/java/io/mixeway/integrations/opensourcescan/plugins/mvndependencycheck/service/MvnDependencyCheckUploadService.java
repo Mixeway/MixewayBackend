@@ -1,11 +1,10 @@
 package io.mixeway.integrations.opensourcescan.plugins.mvndependencycheck.service;
 
 import io.mixeway.config.Constants;
-import io.mixeway.db.entity.CodeGroup;
-import io.mixeway.db.entity.CodeProject;
-import io.mixeway.db.entity.SoftwarePacket;
-import io.mixeway.db.entity.SoftwarePacketVulnerability;
+import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
+import io.mixeway.domain.service.vulnerability.CreateOrGetVulnerabilityService;
+import io.mixeway.domain.service.vulnerability.VulnTemplate;
 import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.Status;
 import org.jsoup.Jsoup;
@@ -34,18 +33,15 @@ public class MvnDependencyCheckUploadService {
     private final ProjectRepository projectRepository;
     private final CodeProjectRepository codeProjectRepository;
     private final SoftwarePacketRepository softwarePacketRepository;
-    private final SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository;
-    private final StatusRepository statusRepository;
-
+    private final VulnTemplate vulnTemplate;
     MvnDependencyCheckUploadService(CodeGroupRepository codeGroupRepository, ProjectRepository projectRepository,
                                     CodeProjectRepository codeProjectRepository, SoftwarePacketRepository softwarePacketRepository,
-                                    SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository, StatusRepository statusRepository){
+                                    VulnTemplate vulnTemplate){
         this.codeGroupRepository = codeGroupRepository;
         this.codeProjectRepository =  codeProjectRepository;
         this.projectRepository = projectRepository;
         this.softwarePacketRepository = softwarePacketRepository;
-        this.softwarePacketVulnerabilityRepository = softwarePacketVulnerabilityRepository;
-        this.statusRepository = statusRepository;
+        this.vulnTemplate = vulnTemplate;
     }
 
 
@@ -100,25 +96,26 @@ public class MvnDependencyCheckUploadService {
         }
     }
     private void saveVuln(String cve, String score, String description, SoftwarePacket softwarePacket, CodeProject codeProject){
-        SoftwarePacketVulnerability spv;
-        Optional<SoftwarePacketVulnerability> softwarePacketVulnerability = softwarePacketVulnerabilityRepository.findByName(cve);
-        if (softwarePacketVulnerability.isPresent()){
-            spv = softwarePacketVulnerability.get();
-            spv.setStatus(statusRepository.findByName(Constants.STATUS_EXISTING));
-        } else {
-            spv = new SoftwarePacketVulnerability();
-            spv.setStatus(statusRepository.findByName(Constants.STATUS_NEW));
-        }
-        spv.setName(cve);
-        spv.setScore(Double.valueOf(score.split(" \\(")[1].substring(0, (score.split(" \\(")[1].length() - 1))));
-        spv.setInserted(dateFormat.format(new Date()));
-        spv.setSoftwarepacket(softwarePacket);
-        spv.setProject(codeProject.getCodeGroup().getProject());
-        spv.setDescription(description);
-        softwarePacketVulnerabilityRepository.save(spv);
+        Vulnerability vulnerability = vulnTemplate.createOrGetVulnerabilityService.createOrGetVulnerability(cve);
 
-        log.info("Saved new vulnerability {} with score {} for CodeProject {} of {}", LogUtil.prepare(spv.getName()),
-                LogUtil.prepare(String.valueOf(spv.getScore())),LogUtil.prepare(codeProject.getName()),LogUtil.prepare(codeProject.getCodeGroup().getProject().getName()));
+        ProjectVulnerability openSourceVulns;
+        Optional<ProjectVulnerability> projectVulnerability = vulnTemplate.projectVulnerabilityRepository.findByVulnerabilityAndVulnerabilitySource(vulnerability, vulnTemplate.SOURCE_OPENSOURCE);
+        if (projectVulnerability.isPresent()){
+            openSourceVulns = projectVulnerability.get();
+            openSourceVulns.setStatus(vulnTemplate.STATUS_EXISTING);
+        } else {
+            openSourceVulns = new ProjectVulnerability();
+            openSourceVulns.setStatus(vulnTemplate.STATUS_NEW);
+        }
+        openSourceVulns.updateOpenSourceVulnInfo(Double.valueOf(score.split(" \\(")[1].substring(0, (score.split(" \\(")[1].length() - 1))),
+                dateFormat.format(new Date()),
+                softwarePacket,
+                codeProject.getCodeGroup().getProject(),
+                description);
+        vulnTemplate.projectVulnerabilityRepository.save(openSourceVulns);
+
+        log.info("Saved new vulnerability {} with score {} for CodeProject {} of {}", LogUtil.prepare(vulnerability.getName()),
+                LogUtil.prepare(String.valueOf(score)),LogUtil.prepare(codeProject.getName()),LogUtil.prepare(codeProject.getCodeGroup().getProject().getName()));
 
     }
     private  static File multipartToFile(MultipartFile multipart) throws IllegalStateException, IOException {

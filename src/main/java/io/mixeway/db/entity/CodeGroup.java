@@ -22,7 +22,6 @@ public class CodeGroup {
 	@JsonIgnore private String basePath;
 	@JsonIgnore private String gitUrl;
 	@JsonIgnore private Set<CodeProject> projects;
-	@JsonIgnore private Set<CodeVuln> vulns;
 	@JsonIgnore private Boolean hasProjects;
 	@JsonIgnore private int versionIdAll;
 	@JsonIgnore private int versionIdsingle;
@@ -37,6 +36,16 @@ public class CodeGroup {
 	@JsonIgnore private String requestid;
 	@JsonIgnore private String scanid;
 	@JsonIgnore private String scope;
+	private String appClient;
+
+	@Column(name="appclient")
+	public String getAppClient() {
+		return appClient;
+	}
+
+	public void setAppClient(String appClient) {
+		this.appClient = appClient;
+	}
 
 	public String getScope() {
 		return scope;
@@ -187,13 +196,6 @@ public class CodeGroup {
 	}
 	public void setProjects(Set<CodeProject> projects) {
 		this.projects = projects;
-	}
-	@OneToMany(mappedBy = "codeGroup", cascade = CascadeType.ALL)
-	public Set<CodeVuln> getVulns() {
-		return vulns;
-	}
-	public void setVulns(Set<CodeVuln> vulns) {
-		this.vulns = vulns;
 	}
 	@Column(name="hasprojects")
 	public Boolean getHasProjects() {

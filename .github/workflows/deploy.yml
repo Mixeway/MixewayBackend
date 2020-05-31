@@ -27,4 +27,4 @@ jobs:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.DOCKER_TOKEN }}
           repository: mixeway/backend
-          tags: 1.2.0
+          tags: 1.3.0

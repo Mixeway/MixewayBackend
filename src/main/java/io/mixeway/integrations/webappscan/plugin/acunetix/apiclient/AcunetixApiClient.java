@@ -8,6 +8,8 @@ import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.*;
+import io.mixeway.domain.service.vulnerability.VulnTemplate;
+import io.mixeway.integrations.webappscan.plugin.acunetix.model.Reference;
 import io.mixeway.integrations.webappscan.service.WebAppScanClient;
 import io.mixeway.integrations.webappscan.plugin.acunetix.model.AcunetixSeverity;
 import io.mixeway.integrations.webappscan.model.*;
@@ -38,7 +40,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.google.gson.Gson;
 
-import javax.annotation.Resource;
 import javax.transaction.Transactional;
 
 
@@ -47,27 +48,26 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 	private final static Logger log = LoggerFactory.getLogger(AcunetixApiClient.class);
 	private final VaultHelper vaultHelper;
 	private final WebAppRepository webAppRepository;
-	private final WebAppVulnRepository webAppVulnRepository;
 	private final SecureRestTemplate secureRestTemplate;
 	private final StatusRepository statusRepository;
 	private final RoutingDomainRepository routingDomainRepository;
 	private final ScannerRepository scannerRepository;
 	private final ScannerTypeRepository scannerTypeRepository;
 	private final ProxiesRepository proxiesRepository;
+	private final VulnTemplate vulnTemplate;
 
-
-	AcunetixApiClient(VaultHelper vaultHelper, WebAppRepository webAppRepository, WebAppVulnRepository webAppVulnRepository,
+	AcunetixApiClient(VaultHelper vaultHelper, WebAppRepository webAppRepository, VulnTemplate vulnTemplate,
 					  SecureRestTemplate secureRestTemplate, StatusRepository statusRepository, RoutingDomainRepository routingDomainRepository,
 					  ScannerRepository scannerRepository, ScannerTypeRepository scannerTypeRepository, ProxiesRepository proxiesRepository){
 		this.vaultHelper = vaultHelper;
 		this.webAppRepository = webAppRepository;
 		this.routingDomainRepository = routingDomainRepository;
 		this.scannerRepository = scannerRepository;
-		this.webAppVulnRepository = webAppVulnRepository;
 		this.secureRestTemplate = secureRestTemplate;
 		this.statusRepository = statusRepository;
 		this.proxiesRepository = proxiesRepository;
 		this.scannerTypeRepository = scannerTypeRepository;
+		this.vulnTemplate = vulnTemplate;
 	}
 
 	private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -269,7 +269,7 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 			throw new Exception("Scanner Not initialized");
 	}
 	@Override
-	public Boolean loadVulnerabilities(io.mixeway.db.entity.Scanner scanner, WebApp webApp, String paginator, List<WebAppVuln> oldVulns) throws Exception {
+	public Boolean loadVulnerabilities(io.mixeway.db.entity.Scanner scanner, WebApp webApp, String paginator, List<ProjectVulnerability> oldVulns) throws Exception {
 		if (scanner.getStatus()) {
 			try {
 				RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(null);
@@ -281,28 +281,18 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 				ResponseEntity<LoadVlnerabilitiesModel> response = restTemplate.exchange(scanner.getApiUrl() + "/api/v1/vulnerabilities?q=target_id:" + webApp.getTargetId() + coursor, HttpMethod.GET, entity, LoadVlnerabilitiesModel.class);
 				if (response.getStatusCode() == HttpStatus.OK) {
 					for (VulnerabilityModel vulnFromAcu : response.getBody().getVulnerabilities()){
-						WebAppVuln vuln = new WebAppVuln();
+						Vulnerability vulnerability = vulnTemplate.createOrGetVulnerabilityService.createOrGetVulnerabilityWithRecommendationAndReferences(vulnFromAcu.getVt_name(),vulnFromAcu.getRecommendation(),prepareRefs(vulnFromAcu.getReferences()));
+						ProjectVulnerability vuln = new ProjectVulnerability(webApp,null,vulnerability,null,
+								null,AcunetixSeverity.resolveSeverity(vulnFromAcu.getSeverity()),null,vulnFromAcu.getAffects_url(),
+								null,vulnTemplate.SOURCE_WEBAPP);
 						if (webApp.getCodeGroup() != null && webApp.getCodeProject() != null) {
 							vuln.setCodeProject(webApp.getCodeProject());
 						}
-						vuln.setName(vulnFromAcu.getVt_name());
-						vuln.setLocation(vulnFromAcu.getAffects_url());
-						vuln.setSeverity(AcunetixSeverity.resolveSeverity(vulnFromAcu.getSeverity()));
-						vuln.setWebApp(webApp);
-						webAppVulnRepository.save(vuln);
 						vuln = loadVulnDetails(vuln, scanner, vulnFromAcu.getVuln_id());
-						WebAppVuln finalVuln = vuln;
-						Optional<WebAppVuln> oldVulnExist = oldVulns.stream().filter(v -> v.getName().equals(finalVuln.getName()) && v.getSeverity().equals(finalVuln.getSeverity()) &&
-								v.getLocation().equals(finalVuln.getLocation()) && v.getDescription().equals(finalVuln.getDescription())).findFirst();
-						if (oldVulnExist.isPresent()) {
-							vuln.setStatus(statusRepository.findByName(Constants.STATUS_EXISTING));
-							vuln.setTicketId(oldVulnExist.get().getTicketId());
-							vuln.setGrade(oldVulnExist.get().getGrade());
-						} else {
-							vuln.setStatus(statusRepository.findByName(Constants.STATUS_NEW));
-							//TODO JIRA CREATION
-							//jiraService.processRequest(webAppVulnRepository, Optional.of(vuln),webApp.getProject(),Constants.VULN_JIRA_WEBAPP,Constants.JIRA_AUTOCREATOR_LOG,false);
-						}
+						vuln.updateStatusAndGrade(oldVulns,vulnTemplate);
+						vulnTemplate.vulnerabilityPersist(oldVulns, vuln);
+						//vulnTemplate.projectVulnerabilityRepository.save(vuln);
+						//TODO JIRA CREATION
 
 					}
 					if (response.getBody().getPagination().getNext_cursor() != null) {
@@ -327,6 +317,15 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 			throw new Exception("Scanner Not initialized");
 	}
 
+	private String prepareRefs(List<Reference> references) {
+		int i = 1;
+		String refs = "";
+		for (Reference ref : references) {
+			refs += "["+i+"] " + ref.getHref()+"\n";
+		}
+		return refs;
+	}
+
 	@Override
 	public boolean canProcessRequest(Scanner scanner) {
 		return scanner.getScannerType().getName().equals(Constants.SCANNER_TYPE_ACUNETIX) && scanner.getStatus();
@@ -343,7 +342,7 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 	}
 
 	@Override
-	public void saveScanner(ScannerModel scannerModel) throws Exception {
+	public Scanner saveScanner(ScannerModel scannerModel) throws Exception {
 		io.mixeway.db.entity.Scanner acunetix= new io.mixeway.db.entity.Scanner();
 		ScannerType scannerType = scannerTypeRepository.findByNameIgnoreCase(scannerModel.getScannerType());
 		Proxies proxy = null;
@@ -362,10 +361,10 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 		} else {
 			acunetix.setApiKey(scannerModel.getApiKey());
 		}
-		scannerRepository.save(acunetix);
+		return scannerRepository.save(acunetix);
 	}
 
-	private WebAppVuln loadVulnDetails(WebAppVuln vuln, io.mixeway.db.entity.Scanner scanner, String vulnid) throws Exception {
+	private ProjectVulnerability loadVulnDetails(ProjectVulnerability vuln, io.mixeway.db.entity.Scanner scanner, String vulnid) throws Exception {
 		if (scanner.getStatus()) {
 			RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(null);
 			HttpHeaders headers = prepareAuthHeader(scanner);
@@ -380,7 +379,7 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 					vuln.setDescription("Description: " + vulnDesc.getString(Constants.ACUNETIX_VULN_DESCRIPTION) + "\nImpact: " + vulnDesc.getString(Constants.ACUNETIX_IMPACT));
 				}
 				vuln.setRecommendation(vulnDesc.getString(Constants.ACUNETIX_VULN_RECOMMENDATION));
-				vuln = webAppVulnRepository.save(vuln);
+				vuln = vulnTemplate.projectVulnerabilityRepository.save(vuln);
 				return vuln;
 			} else
 				log.error("Unable to get vuln details info for {}",vulnid);

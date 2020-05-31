@@ -4,6 +4,7 @@ import java.util.Set;
 
 import javax.persistence.*;
 
+import io.mixeway.pojo.VulnSource;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
@@ -18,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 @EntityListeners(AuditingEntityListener.class)
 @Cacheable
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
-public class Interface {
+public class Interface implements VulnSource {
 
 	@JsonIgnore private Long id;
 	private String privateip;
@@ -29,7 +30,6 @@ public class Interface {
 	private Asset asset;
 	@JsonIgnore private String networkTag;
 	@JsonIgnore private Set<NessusScan> scans;
-	@JsonIgnore private Set<InfrastructureVuln> vulns;
 	@JsonIgnore private Set<Service> services;
 	private RoutingDomain routingDomain;
 	@JsonIgnore private int hostid;
@@ -139,13 +139,6 @@ public class Interface {
 	}
 	public void setScans(Set<NessusScan> scans) {
 		this.scans = scans;
-	}
-	@OneToMany(mappedBy = "intf", cascade = CascadeType.REMOVE,orphanRemoval=true,fetch=FetchType.LAZY)
-	public Set<InfrastructureVuln> getVulns() {
-		return vulns;
-	}
-	public void setVulns(Set<InfrastructureVuln> vulns) {
-		this.vulns = vulns;
 	}
 	@ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "routingdomain_id", nullable = false)

@@ -1,13 +1,13 @@
 package io.mixeway.rest.project.model;
 
 import io.mixeway.db.entity.CodeProject;
-import io.mixeway.db.entity.SoftwarePacketVulnerability;
+import io.mixeway.db.entity.ProjectVulnerability;
 
 import java.io.Serializable;
 
 public class SoftVuln implements Serializable {
     CodeProject codeProject;
-    SoftwarePacketVulnerability softwarePacketVulnerability;
+    ProjectVulnerability softwarePacketVulnerability;
 
     public CodeProject getCodeProject() {
         return codeProject;
@@ -17,11 +17,11 @@ public class SoftVuln implements Serializable {
         this.codeProject = codeProject;
     }
 
-    public SoftwarePacketVulnerability getSoftwarePacketVulnerability() {
+    public ProjectVulnerability getSoftwarePacketVulnerability() {
         return softwarePacketVulnerability;
     }
 
-    public void setSoftwarePacketVulnerability(SoftwarePacketVulnerability softwarePacketVulnerability) {
+    public void setSoftwarePacketVulnerability(ProjectVulnerability softwarePacketVulnerability) {
         this.softwarePacketVulnerability = softwarePacketVulnerability;
     }
 }

@@ -2,6 +2,7 @@ package io.mixeway.scheduler;
 
 import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
+import io.mixeway.domain.service.vulnerability.VulnTemplate;
 import io.mixeway.integrations.opensourcescan.service.OpenSourceScanService;
 import io.mixeway.integrations.infrastructurescan.plugin.remotefirewall.apiclient.RfwApiClient;
 import io.mixeway.rest.utils.ProjectRiskAnalyzer;
@@ -39,27 +40,24 @@ public class CronScheduler {
     private final SettingsRepository settingsRepository;
     private final VulnHistoryRepository vulnHistoryRepository;
     private final ProjectRepository projectRepository;
-    private final WebAppVulnRepository webAppVulnRepository;
-    private final CodeVulnRepository codeVulnRepository;
     private final NodeAuditRepository nodeAuditRepository;
-    private final InfrastructureVulnRepository infrastructureVulnRepository;
     private final InterfaceRepository interfaceRepository;
     private final NessusScanRepository nessusScanRepository;
     private final JavaMailSender sender;
     private final CodeProjectRepository codeProjectRepository;
-    private final SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository;
     private final RfwApiClient rfwApiClient;
     private final ScanHelper scanHelper;
     private final OpenSourceScanService openSourceScanService;
     private final ProjectRiskAnalyzer projectRiskAnalyzer;
     private final WebAppRepository webAppRepository;
+    private final VulnTemplate vulnTemplate;
 
     @Autowired
     public CronScheduler(SettingsRepository settingsRepository, VulnHistoryRepository vulnHistoryRepository,
-            ProjectRepository projectRepository, WebAppVulnRepository webAppVulnRepository, OpenSourceScanService openSourceScanService,
-            CodeVulnRepository codeVulnRepository,  NodeAuditRepository nodeAuditRepository, InfrastructureVulnRepository infrastructureVulnRepository,
+            ProjectRepository projectRepository, VulnTemplate vulnTemplate,
+                         OpenSourceScanService openSourceScanService, NodeAuditRepository nodeAuditRepository,
             InterfaceRepository interfaceRepository, NessusScanRepository nessusScanRepository, JavaMailSender sender,
-            SoftwarePacketVulnerabilityRepository softwarePacketVulnerabilityRepository,RfwApiClient rfwApiClient,
+            RfwApiClient rfwApiClient,
             ScanHelper scanHelper, CodeProjectRepository codeProjectRepository, ProjectRiskAnalyzer projectRiskAnalyzer,
                          WebAppRepository webAppRepository) {
         this.settingsRepository = settingsRepository;
@@ -67,18 +65,15 @@ public class CronScheduler {
         this.webAppRepository = webAppRepository;
         this.projectRepository = projectRepository;
         this.vulnHistoryRepository = vulnHistoryRepository;
-        this.webAppVulnRepository = webAppVulnRepository;
-        this.codeVulnRepository = codeVulnRepository;
         this.nodeAuditRepository = nodeAuditRepository;
-        this.infrastructureVulnRepository = infrastructureVulnRepository;
         this.nessusScanRepository = nessusScanRepository;
         this.interfaceRepository = interfaceRepository;
-        this.softwarePacketVulnerabilityRepository = softwarePacketVulnerabilityRepository;
         this.rfwApiClient =rfwApiClient;
         this.sender = sender;
         this.scanHelper = scanHelper;
         this.openSourceScanService = openSourceScanService;
         this.projectRiskAnalyzer = projectRiskAnalyzer;
+        this.vulnTemplate = vulnTemplate;
     }
 
     private DOPMailTemplateBuilder templateBuilder = new DOPMailTemplateBuilder();
@@ -117,7 +112,7 @@ public class CronScheduler {
 
     private Long createSoftwarePacketHistory(Project project) {
 
-        return (Long) (long)softwarePacketVulnerabilityRepository.getSoftwareVulnsForProject(project.getId()).size();
+        return vulnTemplate.projectVulnerabilityRepository.findByProjectAndVulnerabilitySource(project,vulnTemplate.SOURCE_OPENSOURCE).count();
     }
     @Scheduled(initialDelay=1500000,fixedDelay = 1500000)
     public void getDepTrackVulns() {
@@ -219,15 +214,13 @@ public class CronScheduler {
     }
 
     private Long createWebAppVulnHistory(Project p){
-        return (long)webAppVulnRepository.findByWebAppInAndSeverityIn(p.getWebapps(),
-                severities).size();
+        return vulnTemplate.projectVulnerabilityRepository
+                .findByWebAppInAndVulnerabilitySourceAndSeverityIn(new ArrayList<>(p.getWebapps()),vulnTemplate.SOURCE_WEBAPP, severities).count();
 
     }
     @Transactional
     public Long createCodeVulnHistory(Project p){
-        try (Stream<CodeVuln> codeVulnStream = codeVulnRepository.findByCodeGroupInAndAnalysis(p.getCodes(), Constants.FORTIFY_ANALYSIS_EXPLOITABLE)){
-            return codeVulnStream.count();
-        }
+        return vulnTemplate.projectVulnerabilityRepository.findByProjectAndVulnerabilitySourceAndAnalysis(p,vulnTemplate.SOURCE_SOURCECODE, Constants.FORTIFY_ANALYSIS_EXPLOITABLE).count();
     }
     private Long createInfraVulnHistory(Project p){
         return getInfraVulnsForProject(p);
@@ -237,10 +230,7 @@ public class CronScheduler {
     }
 
     private long getInfraVulnsForProject(Project project){
-        long vulns;
-        vulns = infrastructureVulnRepository.findByIntfInAndSeverityIn(
-                interfaceRepository.findByAssetIn(new ArrayList<>(project.getAssets())), severities).size();
-        return vulns;
+        return vulnTemplate.projectVulnerabilityRepository.findByProjectAndVulnerabilitySourceAndSeverityIn(project, vulnTemplate.SOURCE_NETWORK, severities).size();
     }
 
    List<EmailVulnHelper> getTrend(Project project) throws Exception {

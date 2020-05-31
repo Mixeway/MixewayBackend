@@ -10,10 +10,10 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToMany;
-import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.mixeway.pojo.VulnSource;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
@@ -25,14 +25,13 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Table(name = "softwarepacket")
 @EntityListeners(AuditingEntityListener.class)
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-public class SoftwarePacket {
+public class SoftwarePacket implements VulnSource {
 	
 	@JsonIgnore private Long id;
 	private String name;
 	@JsonIgnore private Set<Asset> assets;
 	@JsonIgnore private Set<CodeProject> codeProjects;
 	@JsonIgnore private Boolean uptated;
-	@JsonIgnore private Set<SoftwarePacketVulnerability> vulns;
 	@ManyToMany(fetch = FetchType.LAZY,
 			cascade = {
 					CascadeType.PERSIST,
@@ -81,13 +80,4 @@ public class SoftwarePacket {
 	public void setUptated(Boolean uptated) {
 		this.uptated = uptated;
 	}
-	@OneToMany(mappedBy = "softwarepacket", cascade = CascadeType.REMOVE,orphanRemoval=true,fetch=FetchType.LAZY)
-	public Set<SoftwarePacketVulnerability> getVulns() {
-		return vulns;
-	}
-	public void setVulns(Set<SoftwarePacketVulnerability> vulns) {
-		this.vulns = vulns;
-	}
-	
-
 }

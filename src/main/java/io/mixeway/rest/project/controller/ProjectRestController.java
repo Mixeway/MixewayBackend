@@ -1,21 +1,19 @@
 package io.mixeway.rest.project.controller;
 
-import io.mixeway.db.entity.Proxies;
-import io.mixeway.db.entity.RoutingDomain;
-import io.mixeway.db.entity.ScannerType;
-import io.mixeway.db.entity.Status;
-import io.mixeway.rest.project.model.ContactList;
-import io.mixeway.rest.project.model.ProjectVulnTrendChart;
-import io.mixeway.rest.project.model.RiskCards;
-import org.springframework.beans.factory.annotation.Autowired;
+import io.mixeway.db.entity.*;
+import io.mixeway.rest.project.model.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import io.mixeway.rest.project.service.ProjectRestService;
 
-import java.security.Principal;
+import javax.validation.Valid;
+import java.io.IOException;
+import java.security.*;
+import java.security.cert.CertificateException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Stream;
 
 @RestController()
 @RequestMapping("/v2/api/show/project")
@@ -52,6 +50,22 @@ public class ProjectRestController {
     public ResponseEntity<HashMap<String,Long>> showSeverityChart(@PathVariable("id")Long id, Principal principal) {
         return projectService.showSeverityChart(id, principal);
     }
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @GetMapping(value = "/{id}/vulnerabilities")
+    public ResponseEntity<List<ProjectVulnerability>> showProjectVulnerabilities(@PathVariable("id")Long id, Principal principal) {
+        return projectService.showVulnerabilitiesForProject(id, principal);
+    }
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @GetMapping(value = "/{id}/vulnerabilities/{vulnId}")
+    public ResponseEntity<ProjectVulnerability> showVulnerability(@PathVariable("id")Long id,@PathVariable("vulnId")Long vulnId, Principal principal) {
+        return projectService.showVulnerability(id,vulnId, principal);
+    }
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @GetMapping(value = "/{id}/vulnerabilities/{vulnId}/grade/{grade}")
+    public ResponseEntity<io.mixeway.pojo.Status> setGradeForVulnerability(@PathVariable("id")Long id, @PathVariable("vulnId")Long vulnId,
+                                                                           @PathVariable("grade") int grade, Principal principal) {
+        return projectService.setGradeForVulnerability(id,vulnId,grade, principal);
+    }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @PatchMapping(value = "/{id}/contactlist")
     public ResponseEntity<Status> updateContactList(@PathVariable("id")Long id, @RequestBody ContactList contactList) {
@@ -62,7 +76,16 @@ public class ProjectRestController {
     public ResponseEntity<List<ScannerType>> scannersAvaliable() {
         return projectService.scannersAvaliable();
     }
-
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @GetMapping(value = "/{id}")
+    public ResponseEntity<Project> showProject(@PathVariable("id") Long id, Principal principal) {
+        return projectService.showProject(id, principal);
+    }
+    @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
+    @PostMapping(value = "/{id}/vulnauditor")
+    public ResponseEntity<Status> updateVulnAuditorSettings(@PathVariable("id")Long id, @Valid @RequestBody VulnAuditorSettings settings, Principal principal) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+        return projectService.updateVulnAuditorSettings(id, settings, principal);
+    }
     //endregion
 
 

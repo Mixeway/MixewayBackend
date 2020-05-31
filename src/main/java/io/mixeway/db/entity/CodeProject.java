@@ -4,6 +4,7 @@ import java.util.Set;
 
 import javax.persistence.*;
 
+import io.mixeway.pojo.VulnSource;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
@@ -15,13 +16,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 @EntityScan
 @Table(name = "codeproject")
 @EntityListeners(AuditingEntityListener.class)
-public class CodeProject {
+public class CodeProject implements VulnSource {
 	private Long id;
 	private CodeGroup codeGroup;
 	private String name;
 	private String dTrackUuid;
-	@JsonIgnore private Set<CodeVuln> vulns;
-	@JsonIgnore private Set<WebAppVuln> webAppVulns;
+	@JsonIgnore private Set<ProjectVulnerability> vulns;
 	@JsonIgnore private String commitid;
 	@JsonIgnore private String repoUrl;
 	@JsonIgnore private String repoUsername;
@@ -184,21 +184,13 @@ public class CodeProject {
 		this.name = name;
 	}
 	@OneToMany(mappedBy = "codeProject", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-	public Set<CodeVuln> getVulns() {
+	public Set<ProjectVulnerability> getVulns() {
 		return vulns;
 	}
-	public void setVulns(Set<CodeVuln> vulns) {
+	public void setVulns(Set<ProjectVulnerability> vulns) {
 		this.vulns = vulns;
 	}
 
-	@OneToMany(mappedBy = "codeProject", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-	public Set<WebAppVuln> getWebAppVulns() {
-		return webAppVulns;
-	}
-
-	public void setWebAppVulns(Set<WebAppVuln> webAppVulns) {
-		this.webAppVulns = webAppVulns;
-	}
 
 	@PreUpdate
 	void preUpdate(){

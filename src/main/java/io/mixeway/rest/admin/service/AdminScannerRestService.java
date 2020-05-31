@@ -66,7 +66,9 @@ public class AdminScannerRestService {
             if (verifyWebAppScannerService.canWebAppScannerBeAdded(scannerType)) {
                 for (SecurityScanner securityScanner : securityScanners) {
                     if (securityScanner.canProcessRequest(scannerType)) {
-                        securityScanner.saveScanner(scannerModel);
+                        Scanner scanner = securityScanner.saveScanner(scannerModel);
+                        if (scanner != null)
+                            securityScanner.initialize(scanner);
                     }
                 }
                 log.info("{} - Created new scanner of {} with apiurl {}", name, LogUtil.prepare(scannerModel.getScannerType()), LogUtil.prepare(scannerModel.getApiUrl()));

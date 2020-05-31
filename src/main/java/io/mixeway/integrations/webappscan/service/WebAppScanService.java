@@ -4,6 +4,7 @@ import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.*;
+import io.mixeway.domain.service.vulnerability.VulnTemplate;
 import io.mixeway.integrations.webappscan.model.CustomCookie;
 import io.mixeway.integrations.webappscan.model.RequestHeaders;
 import io.mixeway.integrations.webappscan.model.WebAppScanHelper;
@@ -31,6 +32,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * @author gsiewruk
@@ -48,12 +50,12 @@ public class WebAppScanService {
     private final CodeProjectRepository codeProjectRepository;
     private final WebAppCookieRepository webAppCookieRepository;
     private final List<WebAppScanClient> webAppScanClients;
-    private final WebAppVulnRepository webAppVulnRepository;
     private final RoutingDomainRepository routingDomainRepository;
     private final ProjectRiskAnalyzer projectRiskAnalyzer;
     private final VaultHelper vaultHelper;
+    private final VulnTemplate vulnTemplate;
 
-    public WebAppScanService(ProjectRepository projectRepository, WebAppRepository waRepository, WebAppVulnRepository webAppVulnRepository,
+    public WebAppScanService(ProjectRepository projectRepository, WebAppRepository waRepository, VulnTemplate vulnTemplate,
                              ScannerRepository scannerRepository, ScannerTypeRepository scannerTypeRepository,
                              CodeGroupRepository codeGroupRepository, CodeProjectRepository codeProjectRepository, WebAppCookieRepository webAppCookieRepository,
                              WebAppHeaderRepository webAppHeaderRepository, List<WebAppScanClient> webAppScanClients,
@@ -70,9 +72,9 @@ public class WebAppScanService {
         this.webAppCookieRepository = webAppCookieRepository;
         this.webAppHeaderRepository = webAppHeaderRepository;
         this.webAppScanClients = webAppScanClients;
-        this.webAppVulnRepository = webAppVulnRepository;
         this.webAppScanStrategyRepository = webAppScanStrategyRepository;
         this.routingDomainRepository = routingDomainRepository;
+        this.vulnTemplate = vulnTemplate;
     }
 
     private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -377,16 +379,20 @@ public class WebAppScanService {
                 if (scanner != null ) {
                     for (WebAppScanClient webAppScanClient : webAppScanClients) {
                         if (webAppScanClient.canProcessRequest(scanner) && webAppScanClient.isScanDone(scanner, app)) {
-                            List<WebAppVuln> tmpVulns = new ArrayList<>();
+                            List<ProjectVulnerability> tmpVulns = new ArrayList<>();
                             if (app.getVulns().size() > 0) {
-                                tmpVulns = webAppVulnRepository.findByWebApp(app);
-                                webAppVulnRepository.deleteByWebApp(app);
+                                tmpVulns = vulnTemplate.projectVulnerabilityRepository.findByWebApp(app);
+                                if (tmpVulns.size() > 0)
+                                    vulnTemplate.projectVulnerabilityRepository.updateVulnState(tmpVulns.stream().map(ProjectVulnerability::getId).collect(Collectors.toList()),
+                                            vulnTemplate.STATUS_REMOVED.getId());
+                                //vulnTemplate.projectVulnerabilityRepository.deleteByWebApp(app);
                                 app = waRepository.getOne(app.getId());
                             }
                             webAppScanClient.loadVulnerabilities(scanner,app, null, tmpVulns);
                             scanner.setRunningScans(scanner.getRunningScans() - 1);
                             scannerRepository.save(scanner);
                             app.setRisk(projectRiskAnalyzer.getWebAppRisk(app));
+                            vulnTemplate.projectVulnerabilityRepository.deleteByStatus(vulnTemplate.STATUS_REMOVED);
                             break;
                         }
                     }

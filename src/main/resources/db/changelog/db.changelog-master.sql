@@ -978,3 +978,89 @@ update webapp set priority=0;
 --changeset siewer:188
 alter table project add column enablevulnmanage boolean;
 update project set enablevulnmanage=true;
+
+--changeset siewer:189
+create table vulnerability(
+    id serial primary key,
+    name text,
+    description text,
+    refs text,
+    recommendation text,
+    impact text,
+    vector text
+);
+create table vulnerabilitysource(
+    id serial primary key,
+    name text
+);
+insert into vulnerabilitysource (name) values ('OpenSource'), ('SourceCode'), ('WebApplication'), ('Network');
+create table projectvulnerability(
+    id serial primary key,
+    vulnerability_id int references vulnerability(id),
+    project_id int references project(id) on delete cascade,
+    webapp_id int references webapp(id) on delete cascade,
+    codeproject_id int references codeproject(id) on delete cascade,
+    interface_id int references interface(id) on delete cascade,
+    softwarepacket_id int references softwarepacket(id) on delete cascade,
+    description text,
+    recommendation text,
+    severity text,
+    inserted text,
+    location text,
+    externalid int,
+    ticketid int,
+    status_id int references status(id),
+    analysis text,
+    port text,
+    grade int,
+    vulnerabilitysource_id int references vulnerabilitysource(id) on delete cascade
+);
+insert into vulnerability (name) select name from codevuln union select name from infrastructurevuln union select name from webappvuln union select name from softwarepacketvulnerability;
+
+insert into projectvulnerability (vulnerability_id,project_id,webapp_id, description, recommendation, severity, status_id, grade,vulnerabilitysource_id,inserted, location)
+    select vuln.id, webapp.project_id, webappvuln.webapp_id, webappvuln.description, webappvuln.recommendation, webappvuln.severity, webappvuln.status_id,
+           webappvuln.grade, source.id, webapp.lastexecuted, webappvuln.location from vulnerability vuln, webapp webapp, webappvuln webappvuln, vulnerabilitysource source where webapp.id=webappvuln.webapp_id
+            and source.name='WebApplication' and vuln.name=webappvuln.name;
+
+insert into projectvulnerability (vulnerability_id, project_id, interface_id, description, severity,inserted, status_id, grade,vulnerabilitysource_id, location,port)
+    select vuln.id, a.project_id, v.interface_id, v.description, v.threat, v.inserted, v.status_id, v.grade, source.id, a.name,v.port from vulnerability vuln, asset a, interface i,
+        infrastructurevuln v, vulnerabilitysource source where v.interface_id = i.id and i.asset_id=a.id and vuln.name=v.name and source.name='Network';
+
+insert into projectvulnerability (vulnerability_id, project_id, codeproject_id, location, severity, analysis, inserted, description, status_id, externalid, vulnerabilitysource_id)
+    select vuln.id, cg.project_id, v.codeproject_id, v.filepath, v.severity, v.analysis, v.inserted, v.description, v.status_id, v.externalid, source.id from
+        vulnerability vuln, codegroup cg, codevuln v, vulnerabilitysource source where v.codegroup_id=cg.id and vuln.name=v.name and source.name='SourceCode';
+
+insert into projectvulnerability (vulnerability_id, softwarepacket_id, severity, description, status_id, grade, inserted, project_id, vulnerabilitysource_id, location,codeproject_id)
+    select vuln.id, v.softwarepacket_id, v.severity, v.description, v.status_id, v.grade, v.inserted, cg.project_id, source.id, p.name, csp.codeproject_id from
+        softwarepacketvulnerability v, vulnerability vuln, vulnerabilitysource source, softwarepacket p, codeproject_softwarepacket csp, codeproject cp, codegroup cg
+        where p.id=v.softwarepacket_id and vuln.name=v.name and source.name='OpenSource' and csp.softwarepacket_id=p.id and cp.id=csp.codeproject_id and cg.id=cp.codegroup_id;
+
+--changeset siewer:190
+insert into vulnerabilitysource (name) values ('OSPackage');
+
+--changeset siewer:191
+update projectvulnerability set externalid=0 where externalid is null;
+update projectvulnerability set ticketid=0 where ticketid is null;
+
+--changeset siewer:192
+update projectvulnerability set grade=-1 where grade is null;
+
+--changeset siewer:193
+alter table project add column vulnauditorenable boolean;
+update project set vulnauditorenable=true;
+alter table project add column networkdc text;
+alter table codegroup add column appclient text;
+alter table webapp add column appclient text;
+
+--changeset siewer:194
+alter table project add column appclient text;
+alter table settings add column vulnauditorenable boolean;
+update settings set  vulnauditorenable=false;
+
+--changeset siewer:195
+insert into status (name) values ('REMOVED');
+alter table settings add column vulnauditorurl text;
+update settings set vulnauditorurl='https://localhost:8445';
+
+--changeset siewer:196
+update codeproject set skipallscan=true where skipallscan is null;

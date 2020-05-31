@@ -19,6 +19,8 @@ import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.*;
+import io.mixeway.domain.service.vulnerability.CreateOrGetVulnerabilityService;
+import io.mixeway.domain.service.vulnerability.VulnTemplate;
 import io.mixeway.integrations.infrastructurescan.plugin.openvas.model.RestRequestBody;
 import io.mixeway.integrations.infrastructurescan.plugin.openvas.model.User;
 import io.mixeway.integrations.infrastructurescan.service.NetworkScanClient;
@@ -64,20 +66,18 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 	private ScannerRepository nessusRepository;
 	private NessusScanRepository nessusScanRepository;
 	private InterfaceRepository interfaceRepository;
-	private InfrastructureVulnRepository infrastructureVulnRepository;
-	private SoftwareRepository softwareRepository;
 	private AssetRepository assetRepository;
-	private StatusRepository statusRepository;
 	private SecureRestTemplate secureRestTemplate;
 	private ScannerRepository scannerRepository;
 	private ScannerTypeRepository scannerTypeRepository;
 	private ProxiesRepository proxiesRepository;
 	private RoutingDomainRepository routingDomainRepository;
-
+	private VulnTemplate vulnTemplate;
 	OpenVasApiClient(VaultHelper vaultHelper, ScannerRepository nessusRepository, NessusScanRepository nessusScanRepository, InterfaceRepository interfaceRepository,
-					 InfrastructureVulnRepository infrastructureVulnRepository, SoftwareRepository softwareRepository, AssetRepository assetRepository,
-					 StatusRepository statusRepository, SecureRestTemplate secureRestTemplate, ScannerRepository scannerRepository,
-					 ScannerTypeRepository scannerTypeRepository, ProxiesRepository proxiesRepository, RoutingDomainRepository routingDomainRepository){
+					 AssetRepository assetRepository,
+					 SecureRestTemplate secureRestTemplate, ScannerRepository scannerRepository,
+					 ScannerTypeRepository scannerTypeRepository, ProxiesRepository proxiesRepository, RoutingDomainRepository routingDomainRepository,
+					 VulnTemplate vulnTemplate){
 		this.vaultHelper = vaultHelper;
 		this.nessusRepository = nessusRepository;
 		this.scannerRepository = scannerRepository;
@@ -86,11 +86,9 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 		this.routingDomainRepository = routingDomainRepository;
 		this.nessusScanRepository = nessusScanRepository;
 		this.interfaceRepository = interfaceRepository;
-		this.softwareRepository = softwareRepository;
 		this.secureRestTemplate = secureRestTemplate;
 		this.assetRepository = assetRepository;
-		this.statusRepository = statusRepository;
-		this.infrastructureVulnRepository = infrastructureVulnRepository;
+		this.vulnTemplate = vulnTemplate;
 	}
 
 
@@ -165,6 +163,7 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 			if (response.getStatusCode() == HttpStatus.OK) {
 				setVulnerabilities(nessusScan, response.getBody());
 			}
+			vulnTemplate.projectVulnerabilityRepository.deleteByStatus(vulnTemplate.STATUS_REMOVED);
 			nessusScan.setRunning(false);
 			nessusScanRepository.save(nessusScan);
 		} catch (HttpClientErrorException ex) {
@@ -231,7 +230,11 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 	}
 
 	private void setVulnerabilities(NessusScan ns, String body) throws JSONException  {
-		List<InfrastructureVuln> oldVulns = oldVulnDelete(ns);
+		List<ProjectVulnerability> oldVulns = getProjectVulnerabilititiesByScan(ns);
+		if (oldVulns.size() > 0)
+			vulnTemplate.projectVulnerabilityRepository.updateVulnState(oldVulns.stream().map(ProjectVulnerability::getId).collect(Collectors.toList()),
+					vulnTemplate.STATUS_REMOVED.getId());
+
 		List<Asset> assetsActive = assetRepository.findByProject(ns.getProject());
 		JSONObject vuln = new JSONObject(body);
 		JSONArray vulns = vuln.getJSONArray(Constants.IF_VULNS);
@@ -245,23 +248,13 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 				assetsActive.add(intfActive.getAsset());
 			}
 			if (intfActive != null) {
-				InfrastructureVuln iv = new InfrastructureVuln();
-				iv.setIntf(intfActive);
-				iv.setInserted(dateFormat.format(new Date()));
-				iv.setName(v.getString(Constants.IF_VULN_NAME));
-				iv.setDescription(v.getString(Constants.IF_VULN_DESC));
-				iv.setSeverity(v.getString(Constants.IF_VULN_THREAT));
-				iv.setPort(v.getString(Constants.IF_VULN_PORT));
-				if (oldVulns.stream().anyMatch(infrastructureVuln -> infrastructureVuln.getName().equals(iv.getName()) && infrastructureVuln.getDescription().equals(iv.getDescription())
-						&& infrastructureVuln.getSeverity().equals(iv.getSeverity()) && infrastructureVuln.getPort().equals(iv.getPort()))){
-					iv.setStatus(statusRepository.findByName(Constants.STATUS_EXISTING));
-					Optional<InfrastructureVuln> infrastructureVuln = oldVulns.stream().filter(vold -> vold.getName().equals(iv.getName()) && vold.getDescription().equals(iv.getDescription())
-							&& vold.getSeverity().equals(iv.getSeverity()) && vold.getPort().equals(iv.getPort())).findFirst();
-					infrastructureVuln.ifPresent(value -> iv.setGrade(value.getGrade()));
-				} else {
-					iv.setStatus(statusRepository.findByName(Constants.STATUS_NEW));
-				}
-				infrastructureVulnRepository.save(iv);
+				Vulnerability vulnerability = vulnTemplate.createOrGetVulnerabilityService.createOrGetVulnerability(v.getString(Constants.IF_VULN_NAME));
+				ProjectVulnerability projectVulnerability = new ProjectVulnerability(intfActive,null,vulnerability,v.getString(Constants.IF_VULN_DESC),null
+						,v.getString(Constants.IF_VULN_THREAT),v.getString(Constants.IF_VULN_PORT),null,null,vulnTemplate.SOURCE_NETWORK);
+				projectVulnerability.updateStatusAndGrade(oldVulns, vulnTemplate);
+
+				vulnTemplate.vulnerabilityPersist(oldVulns,projectVulnerability);
+				//vulnTemplate.projectVulnerabilityRepository.save(projectVulnerability);
 			} else  {
 				log.error("Report contains ip {} which is not found in assets for project {}",v.getString(Constants.IF_VULN_HOST), ns.getProject().getName());
 			}
@@ -311,9 +304,9 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 		return intf;
 	}
 
-	private List<InfrastructureVuln> oldVulnDelete(NessusScan ns) {
+	private List<ProjectVulnerability> getProjectVulnerabilititiesByScan(NessusScan ns) {
 		List<Interface> intfs = null;
-		List<InfrastructureVuln> tmpVulns = new ArrayList<>();
+		List<ProjectVulnerability> tmpVulns = new ArrayList<>();
 		Long deleted = (long)0;
 		if (ns.getIsAutomatic() && ns.getPublicip())
 			intfs = interfaceRepository.findByAssetInAndFloatingipNotNull(new ArrayList<>(ns.getProject().getAssets()));
@@ -323,18 +316,13 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 			intfs = new ArrayList<>(ns.getInterfaces());
 		}
 		assert intfs != null;
-		return getInfrastructureVulns(ns, intfs, tmpVulns, deleted, infrastructureVulnRepository, interfaceRepository, log);
+		return getInfrastructureVulns(ns, intfs, tmpVulns, deleted, interfaceRepository, log, vulnTemplate.projectVulnerabilityRepository);
 	}
 
-	private static List<InfrastructureVuln> getInfrastructureVulns(NessusScan ns, List<Interface> intfs, List<InfrastructureVuln> tmpVulns, Long deleted, InfrastructureVulnRepository infrastructureVulnRepository, InterfaceRepository interfaceRepository, Logger log) {
+	private static List<ProjectVulnerability> getInfrastructureVulns(NessusScan ns, List<Interface> intfs, List<ProjectVulnerability> tmpVulns, Long deleted, InterfaceRepository interfaceRepository, Logger log, ProjectVulnerabilityRepository projectVulnerabilityRepository) {
 		assert intfs != null;
 		for( Interface i : intfs) {
-			deleted += i.getVulns().size();
-			tmpVulns.addAll(infrastructureVulnRepository.findByIntf(i));
-			infrastructureVulnRepository.deleteVulnsForIntf(i);
-			infrastructureVulnRepository.deleteByIntf(i);
-			i.getVulns().clear();
-			interfaceRepository.save(i);
+			tmpVulns.addAll(projectVulnerabilityRepository.findByAnInterface(i));
 		}
 		return tmpVulns;
 	}
@@ -494,34 +482,6 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 		return user;
 	}
 
-	public void updateSoftware(NessusScan ns) {
-		List<InfrastructureVuln> infV = infrastructureVulnRepository.findByNameLikeIgnoreCaseAndIntfIn("%"+Constants.SOFTWARE_LOOKUP_UPDATE,
-				interfaceRepository.findByAssetIn(new ArrayList<>(ns.getProject().getAssets())));
-		for(InfrastructureVuln iv : infV) {
-			Pattern pattern = Pattern.compile(".*cpe:/.*", Pattern.DOTALL );
-			Matcher matcher = pattern.matcher(iv.getDescription());
-			if (matcher.matches()) {
-				Pattern patternForVersion = Pattern.compile(".*Version:(.*)$", Pattern.DOTALL );
-				Matcher matcherForVersion = patternForVersion.matcher(iv.getDescription());
-				String version =null;
-				if(matcherForVersion.matches()) {
-					version = matcherForVersion.group(1);
-				}
-				String name =iv.getName().replace(Constants.SOFTWARE_LOOKUP_UPDATE, "").trim();
-				Optional<Software> s = softwareRepository.findByAssetAndName(iv.getIntf().getAsset(), name);
-				if (!s.isPresent()) {
-					Software soft = new Software();
-					soft.setAsset(iv.getIntf().getAsset());
-					soft.setName(name);
-					soft.setVersion(version==null? "":version.trim().split("\n")[0]);
-					softwareRepository.save(soft);
-					log.debug("Saved new Software for {} - {} - {}", soft.getAsset().getName(), soft.getName(), soft.getVersion());
-				}
-			}
-
-		}
-
-	}
 	@Override
 	public boolean canProcessRequest(Scanner scanner) {
 		return scanner.getScannerType().getName().equals(Constants.SCANNER_TYPE_OPENVAS) && scanner.getStatus();
@@ -551,7 +511,7 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 	}
 
 	@Override
-	public void saveScanner(ScannerModel scannerModel) throws Exception {
+	public Scanner saveScanner(ScannerModel scannerModel) throws Exception {
 		ScannerType scannerType = scannerTypeRepository.findByNameIgnoreCase(scannerModel.getScannerType());
 		Proxies proxy = null;
 		if (scannerModel.getProxy() != 0)
@@ -567,8 +527,9 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 			} else {
 				nessus.setPassword(scannerModel.getPassword());
 			}
-			scannerRepository.save(nessus);
+			return scannerRepository.save(nessus);
 		}
+		return null;
 	}
 	private io.mixeway.db.entity.Scanner nessusOperations(Long domainId, Scanner nessus, Proxies proxy, String apiurl, ScannerType scannerType) throws Exception{
 		if(domainId == 0)

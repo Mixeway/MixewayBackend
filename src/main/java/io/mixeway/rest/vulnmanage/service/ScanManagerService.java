@@ -2,6 +2,7 @@ package io.mixeway.rest.vulnmanage.service;
 
 import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
+import io.mixeway.domain.service.vulnerability.VulnTemplate;
 import io.mixeway.rest.vulnmanage.model.CreateScanManageRequest;
 import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
@@ -36,40 +37,40 @@ import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class ScanManagerService {
     private static final Logger log = LoggerFactory.getLogger(ScanManagerService.class);
     private final AssetRepository assetRepository;
-    private final InfrastructureVulnRepository infrastructureVulnRepository;
     private final InterfaceRepository interfaceRepository;
     private final CodeProjectRepository codeProjectRepository;
     private final WebAppRepository webAppRepository;
-    private final WebAppVulnRepository webAppVulnRepository;
-    private final CodeVulnRepository codeVulnRepository;
     private final NetworkScanService networkScanService;
     private final ProjectRepository projectRepository;
     private final WebAppScanService acunetixService;
     private final CodeScanService codeScanService;
+    private final VulnTemplate vulnTemplate;
+    ArrayList<String> severitiesNot = new ArrayList<String>() {{
+        add("Log");
+        add("Info");
+    }};
 
-
-    public ScanManagerService(AssetRepository assetRepository,InfrastructureVulnRepository infrastructureVulnRepository,
+    public ScanManagerService(AssetRepository assetRepository,
                               InterfaceRepository interfaceRepository,CodeProjectRepository codeProjectRepository,
-                              WebAppRepository webAppRepository, WebAppVulnRepository webAppVulnRepository,
-                              CodeVulnRepository codeVulnRepository, NetworkScanService networkScanService,
+                              WebAppRepository webAppRepository, VulnTemplate vulnTemplate, NetworkScanService networkScanService,
                               ProjectRepository projectRepository, WebAppScanService acunetixService,
                               CodeScanService codeScanService){
         this.assetRepository = assetRepository;
-        this.infrastructureVulnRepository = infrastructureVulnRepository;
         this.interfaceRepository = interfaceRepository;
         this.webAppRepository = webAppRepository;
         this.codeProjectRepository = codeProjectRepository;
-        this.codeVulnRepository = codeVulnRepository;
-        this.webAppVulnRepository = webAppVulnRepository;
         this.networkScanService = networkScanService;
         this.projectRepository = projectRepository;
         this.acunetixService = acunetixService;
         this.codeScanService = codeScanService;
+        this.vulnTemplate = vulnTemplate;
     }
     public ResponseEntity<Status> createScanManageRequest(CreateScanManageRequest createScanManageRequest) throws Exception {
         if (createScanManageRequest.getTestType().equals(Constants.REQUEST_SCAN_NETWORK)){
@@ -170,119 +171,35 @@ public class ScanManagerService {
     }
 
     private List<Vuln> getWebAppVulns(List<Vuln> vulnList, List<WebApp> webApps) throws UnknownHostException {
-        List<WebAppVuln> webAppVulns = new ArrayList<>(webAppVulnRepository.findByWebAppIn(new HashSet<>(webApps)));
-        for (WebAppVuln wav : webAppVulns) {
-            Vuln v = new Vuln();
-            v.setVulnerabilityName(wav.getName());
-            v.setSeverity(wav.getSeverity());
-            v.setDescription(wav.getDescription() + "\n\n" + wav.getRecommendation());
-            v.setBaseURL(wav.getWebApp().getUrl());
-            v.setLocation(wav.getLocation());
-            String ipA = getIpAddressFromUrl(wav.getWebApp().getUrl());
-            String ipP = getPortFromUrl(wav.getWebApp().getUrl());
-            v.setIpAddress(ipA);
-            if (wav.getWebApp().getProject().getCiid() != null && !wav.getWebApp().getProject().getCiid().isEmpty())
-                v.setCiid(wav.getWebApp().getProject().getCiid());
-            //TODO
-            v.setDateCreated(wav.getWebApp().getLastExecuted());
-            v.setPort(ipP);
-            v.setType(Constants.API_SCANNER_WEBAPP);
+        List<ProjectVulnerability> webAppVulns = vulnTemplate.projectVulnerabilityRepository.findByWebAppInAndVulnerabilitySource(webApps, vulnTemplate.SOURCE_WEBAPP);
+        for (ProjectVulnerability wav : webAppVulns) {
+            String hostname, port;
+            Vuln v = new Vuln(wav,null,null, new WebApp(), Constants.API_SCANNER_WEBAPP);
             vulnList.add(v);
         }
         return vulnList;
     }
 
-    private List<Vuln> getCodeVulns(List<Vuln> vulnList, List<CodeProject> codeProjects) {
-        List<CodeVuln> codeVulns = codeVulnRepository.findByCodeProjectInAndAnalysisNot(codeProjects, Constants.FORTIFY_NOT_AN_ISSUE);
-        for (CodeVuln cv : codeVulns) {
-            Vuln v = new Vuln();
-            v.setVulnerabilityName(cv.getName());
-            v.setSeverity(cv.getSeverity());
-            //TODO: zrobienie opisu dla fortify
-            v.setDescription(cv.getDescription());
-            if (cv.getCodeProject() == null) {
-                v.setProject(cv.getCodeGroup().getName());
-                if (cv.getCodeGroup().getProject().getCiid() != null && !cv.getCodeGroup().getProject().getCiid().isEmpty())
-                    v.setCiid(cv.getCodeGroup().getProject().getCiid());
-            }
-            else {
-                v.setProject(cv.getCodeProject().getName());
-                if (cv.getCodeProject().getCodeGroup().getProject().getCiid() != null && !cv.getCodeProject().getCodeGroup().getProject().getCiid().isEmpty())
-                    v.setCiid(cv.getCodeProject().getCodeGroup().getProject().getCiid());
-            }
-            v.setLocation(cv.getFilePath());
-            v.setAnalysis(cv.getAnalysis());
-            v.setDateCreated(cv.getInserted());
-            v.setType(Constants.API_SCANNER_CODE);
+    private List<Vuln> getCodeVulns(List<Vuln> vulnList, List<CodeProject> codeProjects) throws UnknownHostException {
+        List<ProjectVulnerability> codeVulns = vulnTemplate.projectVulnerabilityRepository.findByCodeProjectInAndAnalysisNot(codeProjects, Constants.FORTIFY_NOT_AN_ISSUE);
+        for (ProjectVulnerability cv : codeVulns) {
+            Vuln v = new Vuln(cv,null,null,new CodeProject(),Constants.API_SCANNER_CODE);
             vulnList.add(v);
         }
         return vulnList;
     }
 
-    private List<Vuln> getInfrastructureVulnerabilities(List<Vuln> vulns, List<Asset> assets){
-        List<InfrastructureVuln> infraVulns = infrastructureVulnRepository
-                .findByIntfInAndSeverityNot(interfaceRepository.findByAssetIn(assets),Constants.LOG_SEVERITY);
+    private List<Vuln> getInfrastructureVulnerabilities(List<Vuln> vulns, List<Asset> assets) throws UnknownHostException {
+        List<ProjectVulnerability> projectVulnerabilities;
+        try (Stream<ProjectVulnerability> infraVulns = vulnTemplate.projectVulnerabilityRepository
+                .findByanInterfaceInAndSeverityNotIn(interfaceRepository.findByAssetIn(assets),severitiesNot)){
+            projectVulnerabilities = infraVulns.collect(Collectors.toList());
+        }
 
-        for (InfrastructureVuln iv : infraVulns) {
-            Vuln v = new Vuln();
-            v.setVulnerabilityName(iv.getName());
-            v.setSeverity(iv.getSeverity());
-            v.setDescription(iv.getDescription());
-            try {
-                if ( iv.getIntf().getPrivateip() == null && iv.getIntf().getPrivateip().equals("") )
-                    v.setIpAddress(iv.getIntf().getFloatingip());
-                else
-                    v.setIpAddress(iv.getIntf().getPrivateip());
-            } catch (NullPointerException e) {
-                v.setIpAddress("null ");
-            }
-            v.setDateCreated(iv.getInserted());
-            if (iv.getIntf().getAsset().getProject().getCiid() != null && !iv.getIntf().getAsset().getProject().getCiid().isEmpty())
-                v.setCiid(iv.getIntf().getAsset().getProject().getCiid());
-            v.setPort(iv.getPort().split("/")[0].trim().replace(" ",""));
-            v.setIpProtocol(iv.getPort().split("/")[1].trim().replace(" ",""));
-            v.setType(Constants.API_SCANNER_OPENVAS);
+        for (ProjectVulnerability iv : projectVulnerabilities) {
+            Vuln v = new Vuln(iv,null,null,iv.getAnInterface(),Constants.API_SCANNER_OPENVAS);
             vulns.add(v);
         }
         return vulns;
-    }
-    private String getPortFromUrl(String url){
-        String port = null;
-        try {
-            port = url.split(":")[2].split("/")[0];
-        } catch(Exception e){
-            log.debug("Port is not visible on {}", url);
-        }
-        if (port==null){
-            if (url.split(":")[0].equals("http")){
-                port="80";
-            } else{
-                port = "443";
-            }
-        }
-        return port;
-    }
-    private String getIpAddressFromUrl(String url) {
-        String ipA = null;
-        Pattern p = Pattern.compile("\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}(?:\\/\\d{2})?");
-        Matcher m = p.matcher(url);
-        try {
-            if (m.find())
-                ipA = m.group(0);
-            else {
-                String tmp;
-                if (url.split("://")[1].contains(":")) {
-                    tmp = url.split("://")[1].split(":")[0];
-                } else if (url.split("://")[1].contains("/")) {
-                    tmp = url.split("://")[1].split("/")[0];
-                } else
-                    tmp = url.split("://")[1];
-                InetAddress address = InetAddress.getByName(tmp);
-                ipA = address.getHostAddress();
-            }
-        }catch (Exception e){
-            log.debug("Exception during hostname resolution for {}",url);
-        }
-        return ipA;
     }
 }

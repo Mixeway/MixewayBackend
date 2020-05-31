@@ -1,9 +1,8 @@
 package io.mixeway.rest.admin.controller;
 
 import io.mixeway.db.entity.WebAppScanStrategy;
-import io.mixeway.rest.admin.model.CronSettings;
-import io.mixeway.rest.admin.model.SmtpSettingsModel;
-import io.mixeway.rest.admin.model.WebAppScanStrategyModel;
+import io.mixeway.rest.admin.model.*;
+import io.mixeway.rest.project.model.VulnAuditorSettings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -12,7 +11,6 @@ import io.mixeway.db.entity.Proxies;
 import io.mixeway.db.entity.RoutingDomain;
 import io.mixeway.db.entity.Settings;
 import io.mixeway.pojo.Status;
-import io.mixeway.rest.admin.model.AuthSettingsModel;
 import io.mixeway.rest.admin.service.AdminSettingsRestService;
 
 import javax.validation.Valid;
@@ -103,6 +101,17 @@ public class AdminSettingsRestController {
     @GetMapping(value = "/settings/webappscanstrategy")
     public ResponseEntity<WebAppScanStrategy> getWebAppStrategies(Principal principal)  {
         return adminSettingsRestService.getWebAppStrategies(principal.getName());
+    }
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PostMapping(value = "/settings/vulnauditor")
+    public ResponseEntity<Status> updateVulnAuditorSettings(@RequestBody @Valid VulnAuditorEditSettings vulnAuditorSettings, Principal principal)  {
+        return adminSettingsRestService.updateVulnAuditorSettings(vulnAuditorSettings, principal.getName());
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @GetMapping(value = "/settings/vulnauditor")
+    public ResponseEntity<VulnAuditorEditSettings> getVulnAuditorSettings(Principal principal)  {
+        return adminSettingsRestService.getVulnAuditorSettings(principal.getName());
     }
 
 }
