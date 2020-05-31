@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import io.mixeway.integrations.utils.CodeAccessVerifier;
 import io.mixeway.pojo.Status;
 import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 
@@ -277,7 +278,7 @@ public class CodeScanService {
     /**
      * Method executed by scheduler to load Vulnerabilities Reports for each entity within database
      */
-    @Transactional(isolation = Isolation.SERIALIZABLE)
+    @Transactional(isolation = Isolation.SERIALIZABLE, propagation = Propagation.REQUIRES_NEW)
     public void schedulerReportSynchro() throws CertificateException, ParseException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, UnrecoverableKeyException, IOException, URISyntaxException {
         List<CodeGroup> groups = codeGroupRepository.findByVersionIdAllGreaterThan(0);
         log.info("SAST Offline synchronization Started");
