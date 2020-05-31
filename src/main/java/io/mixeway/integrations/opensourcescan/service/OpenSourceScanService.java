@@ -3,10 +3,12 @@ package io.mixeway.integrations.opensourcescan.service;
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.CodeProject;
 import io.mixeway.db.entity.Project;
+import io.mixeway.db.entity.ProjectVulnerability;
 import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.ProjectRepository;
 import io.mixeway.db.repository.ScannerRepository;
 import io.mixeway.db.repository.ScannerTypeRepository;
+import io.mixeway.domain.service.vulnerability.VulnTemplate;
 import io.mixeway.integrations.opensourcescan.model.Projects;
 import io.mixeway.integrations.opensourcescan.plugins.mvndependencycheck.model.SASTRequestVerify;
 import io.mixeway.integrations.utils.CodeAccessVerifier;
@@ -28,6 +30,7 @@ import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Component
 public class OpenSourceScanService {
@@ -37,15 +40,18 @@ public class OpenSourceScanService {
     private final ScannerTypeRepository scannerTypeRepository;
     private final VaultHelper vaultHelper;
     private final List<OpenSourceScanClient> openSourceScanClients;
+    private final VulnTemplate vulnTemplate;
 
     OpenSourceScanService(ProjectRepository projectRepository, CodeAccessVerifier codeAccessVerifier, ScannerRepository scannerRepository,
-                          ScannerTypeRepository scannerTypeRepository, VaultHelper vaultHelper, List<OpenSourceScanClient> openSourceScanClients){
+                          ScannerTypeRepository scannerTypeRepository, VaultHelper vaultHelper, List<OpenSourceScanClient> openSourceScanClients,
+                          VulnTemplate vulnTemplate){
         this.projectRepository = projectRepository;
         this.codeAccessVerifier = codeAccessVerifier;
         this.scannerRepository = scannerRepository;
         this.scannerTypeRepository =scannerTypeRepository;
         this.vaultHelper = vaultHelper;
         this.openSourceScanClients = openSourceScanClients;
+        this.vulnTemplate = vulnTemplate;
     }
 
 
@@ -96,7 +102,11 @@ public class OpenSourceScanService {
     public void loadVulnerabilities(CodeProject codeProjectToVerify) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         for (OpenSourceScanClient openSourceScanClient : openSourceScanClients){
             if (openSourceScanClient.canProcessRequest(codeProjectToVerify)){
+                vulnTemplate.projectVulnerabilityRepository.updateVulnState(vulnTemplate.projectVulnerabilityRepository.
+                        findByCodeProjectAndVulnerabilitySource(codeProjectToVerify, vulnTemplate.SOURCE_OPENSOURCE).map(ProjectVulnerability::getId).collect(Collectors.toList()),
+                        vulnTemplate.STATUS_REMOVED.getId());
                 openSourceScanClient.loadVulnerabilities(codeProjectToVerify);
+                vulnTemplate.projectVulnerabilityRepository.deleteByStatus(vulnTemplate.STATUS_REMOVED);
                 break;
             }
         }

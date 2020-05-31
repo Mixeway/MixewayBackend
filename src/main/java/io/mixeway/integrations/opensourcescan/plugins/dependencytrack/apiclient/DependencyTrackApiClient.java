@@ -97,7 +97,6 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
                 if (response.getStatusCode() == HttpStatus.OK) {
                     createVulns(codeProject, Objects.requireNonNull(response.getBody()));
                     updateCiOperations(codeProject);
-                    vulnTemplate.projectVulnerabilityRepository.deleteByStatus(vulnTemplate.STATUS_REMOVED);
                 } else {
                     log.error("Unable to get Findings from Dependency Track for project {}", codeProject.getdTrackUuid());
                 }
@@ -178,9 +177,6 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
     public void createVulns(CodeProject codeProject, List<DTrackVuln> body) {
         List<ProjectVulnerability> oldVulns = vulnTemplate.projectVulnerabilityRepository
                 .findByCodeProjectAndVulnerabilitySource(codeProject, vulnTemplate.SOURCE_OPENSOURCE).collect(Collectors.toList());
-        if (oldVulns.size() > 0)
-            vulnTemplate.projectVulnerabilityRepository.updateVulnState(oldVulns.stream().map(ProjectVulnerability::getId).collect(Collectors.toList()),
-                    vulnTemplate.STATUS_REMOVED.getId());
         for(DTrackVuln dTrackVuln : body){
             List<SoftwarePacket> softwarePackets = new ArrayList<>();
             for(Component component : dTrackVuln.getComponents()){
@@ -206,6 +202,7 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
                         projectVulnerability.setStatus(vulnTemplate.STATUS_NEW);
                         vulnTemplate.vulnerabilityPersist(oldVulns, projectVulnerability);
                     } else {
+                        softwarePacketVulnerability.get().setCodeProject(codeProject);
                         softwarePacketVulnerability.get().setInserted(dateFormat.format(new Date()));
                         softwarePacketVulnerability.get().setStatus(vulnTemplate.STATUS_EXISTING);
                         vulnTemplate.vulnerabilityPersist(oldVulns, softwarePacketVulnerability.get());
