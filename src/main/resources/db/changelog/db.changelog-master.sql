@@ -1061,3 +1061,6 @@ update settings set  vulnauditorenable=false;
 insert into status (name) values ('REMOVED');
 alter table settings add column vulnauditorurl text;
 update settings set vulnauditorurl='https://localhost:8445';
+
+--changeset siewer:196
+update codeproject set skipallscan=true where skipallscan is null;

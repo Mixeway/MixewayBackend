@@ -10,6 +10,8 @@ import io.mixeway.integrations.vulnauditor.apiclient.MixewayVulnAuditorApiClient
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
@@ -36,6 +38,7 @@ public class MixewayVulnAuditorService {
         this.settingsRepository = settingsRepository;
     }
 
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public void perdictVulnerabilities() throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         Optional<Settings> settings = settingsRepository.findAll().stream().findFirst();
         for (Project project : projectRepository.findByVulnAuditorEnable(true)) {
@@ -43,6 +46,7 @@ public class MixewayVulnAuditorService {
             if (settings.isPresent() && settings.get().isVulnAuditorEnable() && projectVulnerabilities.size() > 0) {
                 mixewayVulnAuditorApiClient.perdict(projectVulnerabilities, settings.get().getVulnAuditorUrl());
             }
+
         }
     }
 }
