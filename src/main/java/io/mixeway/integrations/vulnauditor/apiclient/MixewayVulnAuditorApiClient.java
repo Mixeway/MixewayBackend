@@ -48,7 +48,6 @@ public class MixewayVulnAuditorApiClient {
      * @throws KeyStoreException
      * @throws KeyManagementException
      */
-    @Transactional
     public void perdict(List<ProjectVulnerability> projectVulnerability, String vulnAuditorUrl) throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         RestTemplate restTemplate = secureRestTemplate.noVerificationClient(null);
         VulnAuditorRequestModel vulnAuditorRequestModel = prepareRequestModel(projectVulnerability);
