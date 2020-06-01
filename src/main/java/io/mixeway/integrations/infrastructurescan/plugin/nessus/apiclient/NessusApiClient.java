@@ -62,13 +62,11 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 	private final ScannerTypeRepository scannerTypeRepository;
 	private final RoutingDomainRepository routingDomainRepository;
 	private final ProxiesRepository proxiesRepository;
-	private final NetworkScanService networkScanService;
 	private final VulnTemplate vulnTemplate;
 
-	@Lazy
 	NessusApiClient(VaultHelper vaultHelper, ScannerRepository scannerRepository, NessusScanTemplateRepository nessusScanTemplateRepository,
 					AssetRepository assetRepository, InterfaceRepository interfaceRepository, NessusScanRepository nessusScanRepository,
-					VulnTemplate vulnTemplate, ScanHelper scanHelper, NetworkScanService networkScanService,
+					VulnTemplate vulnTemplate, ScanHelper scanHelper,
 					SecureRestTemplate secureRestTemplate, ServiceRepository serviceRepository, StatusRepository statusRepository,
 					ScannerTypeRepository scannerTypeRepository, RoutingDomainRepository routingDomainRepository, ProxiesRepository proxiesRepository){
 		this.vaultHelper = vaultHelper;
@@ -77,7 +75,6 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 		this.assetRepository = assetRepository;
 		this.interfaceRepository = interfaceRepository;
 		this.nessusScanTemplateRepository = nessusScanTemplateRepository;
-		this.networkScanService = networkScanService;
 		this.scanHelper = scanHelper;
 		this.secureRestTemplate = secureRestTemplate;
 		this.serviceRepository = serviceRepository;
@@ -486,7 +483,6 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 			interfaceRepository.saveAndFlush(i);
 		} catch (NullPointerException e){
 			log.warn("Nullpoitnter during loading vuln for project {} asset {}", i.getAsset().getProject().getName(),i.getAsset().getName());
-			e.printStackTrace();
 		} catch (HttpClientErrorException e){
 			log.error("Client Exception - {} - during loading vulnerabilities for {}", e.getStatusCode(), ns.getNessus().getApiUrl() + "/scans/" + ns.getScanId() + "/hosts/" + i.getHostid());
 		}
