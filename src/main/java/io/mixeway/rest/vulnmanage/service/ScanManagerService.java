@@ -21,6 +21,7 @@ import io.mixeway.pojo.InfraScanMetadata;
 import io.mixeway.pojo.Status;
 import io.mixeway.rest.vulnmanage.model.Vuln;
 import io.mixeway.rest.vulnmanage.model.Vulnerabilities;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -121,6 +122,7 @@ public class ScanManagerService {
         return networkScanService.createAndRunNetworkScan(networkScanRequest);
     }
 
+    @Transactional
     public ResponseEntity<Status> checkStatusOfRequestedScan(String requestId) {
         List<Asset> assets = assetRepository.findByRequestId(requestId);
         List<Interface> interfaces = interfaceRepository.findByAssetIn(assets);
@@ -150,6 +152,7 @@ public class ScanManagerService {
         return null;
     }
 
+    @Transactional
     public ResponseEntity<Vulnerabilities> getVulnerabilitiesForScanByReqeustId(String requestId) throws UnknownHostException {
         List<Asset> assets = assetRepository.findByRequestId(requestId);
         List<CodeProject> codeProjects = codeProjectRepository.findByRequestId(requestId);
