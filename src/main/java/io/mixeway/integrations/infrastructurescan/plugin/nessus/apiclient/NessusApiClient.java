@@ -486,6 +486,7 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 			interfaceRepository.saveAndFlush(i);
 		} catch (NullPointerException e){
 			log.warn("Nullpoitnter during loading vuln for project {} asset {}", i.getAsset().getProject().getName(),i.getAsset().getName());
+			e.printStackTrace();
 		} catch (HttpClientErrorException e){
 			log.error("Client Exception - {} - during loading vulnerabilities for {}", e.getStatusCode(), ns.getNessus().getApiUrl() + "/scans/" + ns.getScanId() + "/hosts/" + i.getHostid());
 		}
