@@ -338,6 +338,7 @@ public class GetVulnerabilitiesService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Proper scanner type is: networkScanner,webApplicationScanner,codeScanner, audit,packageScan");
 
     }
+    @Transactional
     public ResponseEntity<CIVulnManageResponse> getCiScoreForCodeProject(String codeGroup, String codeProject, Long id) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         Optional<CodeProject> cp = codeProjectRepository.getCodeProjectByNameCodeGroupNameAndProjectId(codeProject,codeGroup,id);
         CIVulnManageResponse ciVulnManageResponse = new CIVulnManageResponse();
@@ -415,7 +416,7 @@ public class GetVulnerabilitiesService {
         vulns = setPackageVulns(vulns,project);
         return new ResponseEntity<>(vulns,HttpStatus.OK);
     }
-
+    @Transactional
     public ResponseEntity<InfraScanMetadata> getMetaDataForProject(String requestId) {
         List<ScannedAddress> scannedAddresses = new ArrayList<>();
         List<NetworkService> networkServices = new ArrayList<>();
@@ -446,7 +447,7 @@ public class GetVulnerabilitiesService {
         return new ResponseEntity<>(infraScanMetadata,HttpStatus.OK);
     }
 
-
+    @Transactional
     public ResponseEntity<Vulnerabilities> getNetworkVulnerabilitiesByRequestId(String requestId) {
         try {
             return new ResponseEntity<>(this.setInfrastructureVulnsForRequestId(new Vulnerabilities(), requestId), HttpStatus.OK);
