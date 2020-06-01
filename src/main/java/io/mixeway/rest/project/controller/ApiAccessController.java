@@ -19,7 +19,7 @@ public class ApiAccessController {
     ApiAccessController(ApiAccessService apiAccessService){
         this.apiAccessService = apiAccessService;
     }
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_EDITOR')")
     @PutMapping(value = "/{id}/apikey")
     public ResponseEntity<ApiKeyResponse> generateApiKey(@PathVariable("id")Long id, Principal principal) {
         return apiAccessService.generateApiKey(id, principal.getName());

@@ -375,7 +375,7 @@ public class GetVulnerabilitiesService {
     }
     private List<VulnManageResponse> createVulnManageResponseForCodeProject(CodeProject cp){
         List<VulnManageResponse> vulnManageResponses = new ArrayList<>();
-        List<ProjectVulnerability> codeVulns = null;
+        List<ProjectVulnerability> codeVulns = new ArrayList<>();
         try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository
                 .findByCodeProjectAndVulnerabilitySourceAndSeverityAndAnalysis(cp, vulnTemplate.SOURCE_SOURCECODE,
                         Constants.VULN_CRITICALITY_CRITICAL,
