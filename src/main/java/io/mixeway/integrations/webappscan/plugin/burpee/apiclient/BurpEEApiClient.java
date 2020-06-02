@@ -166,7 +166,7 @@ public class BurpEEApiClient implements SecurityScanner, WebAppScanClient {
             if (response.getStatusCode().equals(HttpStatus.OK)) {
                 for (IssueEvents issue : Objects.requireNonNull(response.getBody()).getIssue_events()) {
                     Vulnerability vulnerability = createOrGetVulnerabilityService.createOrGetVulnerability(issue.getIssue().getName());
-                    ProjectVulnerability vuln = new ProjectVulnerability(webApp, issue.getIssue(),vulnerability);
+                    ProjectVulnerability vuln = new ProjectVulnerability(webApp, issue.getIssue(),vulnerability, vulnTemplate.SOURCE_WEBAPP);
                     Optional<ProjectVulnerability> webAppVulnOptional = oldVulns.stream().filter(webAppVuln -> webAppVuln.getSeverity().equals(vuln.getSeverity()) &&
                             webAppVuln.getLocation().equals(vuln.getLocation()) && webAppVuln.getVulnerability().equals(vuln.getVulnerability())).findFirst();
                     if (webAppVulnOptional.isPresent()) {
