@@ -246,7 +246,7 @@ public class GetVulnerabilitiesService {
             throw new NullPointerException();
 
         try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository
-                .findByanInterfaceInAndSeverityNotIn(interfaceRepository.findByAssetIn(assetsWithRequestId),severitiesNot)) {
+                .findByanInterfaceIn(interfaceRepository.findByAssetIn(assetsWithRequestId))) {
             infraVulns = vulnsForProject.collect(Collectors.toList());
         }
         for (ProjectVulnerability iv : infraVulns) {
