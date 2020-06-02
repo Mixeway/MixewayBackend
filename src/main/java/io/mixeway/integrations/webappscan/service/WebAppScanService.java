@@ -379,15 +379,12 @@ public class WebAppScanService {
                 if (scanner != null ) {
                     for (WebAppScanClient webAppScanClient : webAppScanClients) {
                         if (webAppScanClient.canProcessRequest(scanner) && webAppScanClient.isScanDone(scanner, app)) {
-                            List<ProjectVulnerability> tmpVulns = new ArrayList<>();
-                            if (app.getVulns().size() > 0) {
-                                tmpVulns = vulnTemplate.projectVulnerabilityRepository.findByWebApp(app);
-                                if (tmpVulns.size() > 0)
-                                    vulnTemplate.projectVulnerabilityRepository.updateVulnState(tmpVulns.stream().map(ProjectVulnerability::getId).collect(Collectors.toList()),
-                                            vulnTemplate.STATUS_REMOVED.getId());
-                                //vulnTemplate.projectVulnerabilityRepository.deleteByWebApp(app);
-                                app = waRepository.getOne(app.getId());
-                            }
+                            List<ProjectVulnerability> tmpVulns = vulnTemplate.projectVulnerabilityRepository.findByWebApp(app);
+                            if (tmpVulns.size() > 0)
+                                vulnTemplate.projectVulnerabilityRepository.updateVulnState(tmpVulns.stream().map(ProjectVulnerability::getId).collect(Collectors.toList()),
+                                        vulnTemplate.STATUS_REMOVED.getId());
+                            //vulnTemplate.projectVulnerabilityRepository.deleteByWebApp(app);
+                            app = waRepository.getOne(app.getId());
                             webAppScanClient.loadVulnerabilities(scanner,app, null, tmpVulns);
                             scanner.setRunningScans(scanner.getRunningScans() - 1);
                             scannerRepository.save(scanner);
