@@ -195,7 +195,7 @@ public class ScanManagerService {
     private List<Vuln> getInfrastructureVulnerabilities(List<Vuln> vulns, List<Asset> assets) throws UnknownHostException {
         List<ProjectVulnerability> projectVulnerabilities;
         try (Stream<ProjectVulnerability> infraVulns = vulnTemplate.projectVulnerabilityRepository
-                .findByanInterfaceInAndSeverityNotIn(interfaceRepository.findByAssetIn(assets),severitiesNot)){
+                .findByanInterfaceIn(interfaceRepository.findByAssetIn(assets))){
             projectVulnerabilities = infraVulns.collect(Collectors.toList());
         }
 
