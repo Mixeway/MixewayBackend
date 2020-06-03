@@ -90,7 +90,7 @@ public class Vuln {
 			this.setDescription(projectVulnerability.getDescription()+"\n\n"+projectVulnerability.getRecommendation());
 			this.setBaseURL(projectVulnerability.getWebApp().getUrl());
 			this.setLocation(projectVulnerability.getLocation());
-			this.setRoutingDomainName(projectVulnerability.getWebApp().getPublicscan() ? "Internet":"Intranet");
+			this.setRoutingDomainName(projectVulnerability.getWebApp().getRoutingDomain().getName().equals("Internet") ? projectVulnerability.getWebApp().getRoutingDomain().getName() : "Intranet" );
 			String ipA = getIpAddressFromUrl(projectVulnerability.getWebApp().getUrl());
 			String ipP = getPortFromUrl(projectVulnerability.getWebApp().getUrl());
 			this.setIpAddress(ipA);
