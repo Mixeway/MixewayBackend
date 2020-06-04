@@ -176,6 +176,7 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
     public void createVulns(CodeProject codeProject, List<DTrackVuln> body) {
         List<ProjectVulnerability> oldVulns = vulnTemplate.projectVulnerabilityRepository
                 .findByCodeProjectAndVulnerabilitySource(codeProject, vulnTemplate.SOURCE_OPENSOURCE).collect(Collectors.toList());
+        List<ProjectVulnerability> vulnsToPersist = new ArrayList<>();
         for(DTrackVuln dTrackVuln : body){
             List<SoftwarePacket> softwarePackets = new ArrayList<>();
             for(Component component : dTrackVuln.getComponents()){
@@ -199,19 +200,20 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
                                 dTrackVuln.getSeverity(), null, null, null,vulnTemplate.SOURCE_OPENSOURCE);
                         projectVulnerability.setStatus(vulnTemplate.STATUS_NEW);
                         projectVulnerability.updateStatusAndGrade(oldVulns,vulnTemplate);
-                        vulnTemplate.vulnerabilityPersist(oldVulns, projectVulnerability);
+                        vulnsToPersist.add(projectVulnerability);
                     } else {
                         softwarePacketVulnerability.get().setCodeProject(codeProject);
                         softwarePacketVulnerability.get().setInserted(dateFormat.format(new Date()));
                         softwarePacketVulnerability.get().setStatus(vulnTemplate.STATUS_EXISTING);
                         softwarePacketVulnerability.get().updateStatusAndGrade(oldVulns,vulnTemplate);
-                        vulnTemplate.vulnerabilityPersist(oldVulns, softwarePacketVulnerability.get());
+                        vulnsToPersist.add(softwarePacketVulnerability.get()) ;
                     }
 
                 }
             }
             //codeProjectRepository.saveAndFlush(codeProject);
         }
+        vulnTemplate.vulnerabilityPersistList(oldVulns,vulnsToPersist);
     }
 
     private HttpHeaders prepareAuthHeader(Scanner scanner) {
