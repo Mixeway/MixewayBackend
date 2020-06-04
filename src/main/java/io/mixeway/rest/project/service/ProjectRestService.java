@@ -221,7 +221,7 @@ public class ProjectRestService {
         Optional<Project> project = projectRepository.findById(id);
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             List<ProjectVulnerability> vulns;
-            try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository.findByProjectAndSeverityIn(project.get(), severityList)) {
+            try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository.findByProject(project.get())) {
                 return new ResponseEntity<>(vulnsForProject.collect(Collectors.toList()),HttpStatus.OK);
             }
         } else {

@@ -114,10 +114,11 @@ public class CronScheduler {
 
         return vulnTemplate.projectVulnerabilityRepository.findByProjectAndVulnerabilitySource(project,vulnTemplate.SOURCE_OPENSOURCE).count();
     }
-    @Scheduled(initialDelay=1500000,fixedDelay = 1500000)
+    @Scheduled(initialDelay=0,fixedDelay = 1500000)
     public void getDepTrackVulns() {
         try {
             for (CodeProject cp : codeProjectRepository.getCodeProjectsWithOSIntegrationEnabled()){
+                log.info("Starting with OpenSource scanner");
                 openSourceScanService.loadVulnerabilities(cp);
             }
             log.info("Successfully synchronized with OpenSource scanner");

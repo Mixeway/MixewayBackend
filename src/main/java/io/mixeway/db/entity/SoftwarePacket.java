@@ -33,10 +33,6 @@ public class SoftwarePacket implements VulnSource {
 	@JsonIgnore private Set<CodeProject> codeProjects;
 	@JsonIgnore private Boolean uptated;
 	@ManyToMany(fetch = FetchType.LAZY,
-			cascade = {
-					CascadeType.PERSIST,
-					CascadeType.MERGE
-			},
 			mappedBy = "softwarePackets")
 	@OnDelete(action = OnDeleteAction.CASCADE)
 	public Set<CodeProject> getCodeProjects() {

@@ -81,7 +81,6 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
         return (openSourceScanners.size() == 1 );
     }
 
-    @Transactional
     @Override
     public void loadVulnerabilities(CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         List<Scanner> dTrack = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_DEPENDENCYTRACK));
@@ -182,13 +181,12 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
             for(Component component : dTrackVuln.getComponents()){
                 Optional<SoftwarePacket> softPacket = softwarePacketRepository.findByName(component.getName()+":"+component.getVersion());
                 if (softPacket.isPresent()){
-                    codeProject.getSoftwarePackets().add(softPacket.get());
+                    //codeProject.getSoftwarePackets().add(softPacket.get());
                     softwarePackets.add(softPacket.get());
                 } else {
                     SoftwarePacket softwarePacket = new SoftwarePacket();
                     softwarePacket.setName(component.getName()+":"+component.getVersion());
                     softwarePacketRepository.save(softwarePacket);
-                    codeProject.getSoftwarePackets().add(softwarePacket);
                     softwarePackets.add(softwarePacket);
                 }
                 for (SoftwarePacket sPacket : softwarePackets){
@@ -212,7 +210,7 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
 
                 }
             }
-            codeProjectRepository.saveAndFlush(codeProject);
+            //codeProjectRepository.saveAndFlush(codeProject);
         }
     }
 
@@ -223,6 +221,7 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
     }
 
     @Override
+    @Transactional
     public boolean initialize(Scanner scanner) throws JSONException, ParseException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, JAXBException, Exception {
         List<Scanner> dTrack = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_DEPENDENCYTRACK));
         //Multiple dTrack instances not yet supported
@@ -233,6 +232,7 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
             ResponseEntity<String> response = restTemplate.exchange(dTrack.get(0).getApiUrl() +
                     "/api/version", HttpMethod.GET, entity, String.class);
             if (response.getStatusCode() == HttpStatus.OK) {
+                scanner.setStatus(true);
                 return true;
             }
             else {
