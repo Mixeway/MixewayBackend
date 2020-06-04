@@ -14,8 +14,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @EntityScan
-@Table(name = "codeproject")
-@EntityListeners(AuditingEntityListener.class)
+@Table(
+		name = "codeproject",
+		indexes = {
+				@Index(columnList = "id",name="codeproject_index")
+		})@EntityListeners(AuditingEntityListener.class)
 public class CodeProject implements VulnSource {
 	private Long id;
 	private CodeGroup codeGroup;

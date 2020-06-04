@@ -278,7 +278,7 @@ public class CodeScanService {
     /**
      * Method executed by scheduler to load Vulnerabilities Reports for each entity within database
      */
-    @Transactional(isolation = Isolation.SERIALIZABLE, propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void schedulerReportSynchro() throws CertificateException, ParseException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, UnrecoverableKeyException, IOException, URISyntaxException {
         List<CodeGroup> groups = codeGroupRepository.findByVersionIdAllGreaterThan(0);
         log.info("SAST Offline synchronization Started");
