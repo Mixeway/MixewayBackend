@@ -23,6 +23,7 @@ public interface NessusScanRepository extends JpaRepository<NessusScan, Long>{
 	@Query(value="select ns.* from nessusscan ns inner join nessus n on n.id = ns.nessus_id where ns.running=true and n.rfwurl is not null", nativeQuery = true)
 	List<NessusScan> getRunningScansWithRfwConfigured();
 	Optional<NessusScan> findByProjectAndRequestId(Project project, String requestId);
-	
 
+	@Query(value="select * from nessusscan where running=true offset random() * (select count(*) from nessusscan where running=true) limit 5", nativeQuery = true)
+    List<NessusScan> getRandom5RunningScans();
 }
