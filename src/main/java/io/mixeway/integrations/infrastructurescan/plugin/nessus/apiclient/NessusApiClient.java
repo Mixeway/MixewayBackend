@@ -508,6 +508,7 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 
 	private void createVuln(JSONObject vuln, Interface i, String body, String pluginName, List<ProjectVulnerability> oldVulns) throws JSONException {
 		JSONObject bodyJ = new JSONObject(body);
+		List<ProjectVulnerability> projectVulnerabilities = new ArrayList<>();
 		try {
 			JSONArray outputs = bodyJ.getJSONArray(Constants.NESSUS_OUTPUTS);
 			for (int k = 0; k < outputs.length(); k++) {
@@ -542,9 +543,10 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 							.getJSONObject(Constants.NESSUS_PLUGINATTRIBUTES).getString(Constants.NESSUS_VULN_DESCRIPTION),null,threat, key,null,null, vulnTemplate.SOURCE_NETWORK);
 					projectVulnerability.updateStatusAndGrade(oldVulns, vulnTemplate);
 
-					vulnTemplate.vulnerabilityPersist(oldVulns, projectVulnerability);
+					projectVulnerabilities.add(projectVulnerability);
 				}
 			}
+			vulnTemplate.vulnerabilityPersistList(oldVulns, projectVulnerabilities);
 
 		} catch (JSONException ex) {
 			log.error("Exception for {} {} {}",i.getPrivateip(),i.getHostid(),ex.getLocalizedMessage());
