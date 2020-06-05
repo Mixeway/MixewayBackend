@@ -120,7 +120,6 @@ public class CronScheduler {
         try {
             log.info("Starting to synchronize with OpenSource Vulns scanner");
             for (CodeProject cp : codeProjectRepository.getCodeProjectsWithOSIntegrationEnabled()){
-                log.info("Loading data for {}", cp.getName());
                 CompletableFuture.runAsync(() -> {
                     try {
                         openSourceScanService.loadVulnerabilities(cp);
