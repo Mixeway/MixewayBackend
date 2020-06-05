@@ -41,6 +41,6 @@ public interface WebAppRepository extends JpaRepository<WebApp, Long> {
 	int deleteWebApsById(@Param("ids") List<Long> ids);
 	Optional<WebApp> findByUrl(String url);
 	List<WebApp> findByInQueue(boolean inQueue);
-	@Query(value="select * from webapp wa where (wa.url ilike %:urlSimiliar% or wa.url ~ :urlRegex) and project_id=:id", nativeQuery = true)
+	@Query(value="select * from webapp wa where (wa.url ilike :urlSimiliar or wa.url ~ :urlRegex) and project_id=:id", nativeQuery = true)
 	List<WebApp> getWebAppBySimiliarUrlOrRegexUrl(@Param("urlSimiliar") String urlSimiliar,@Param("urlRegex") String urlRegex, @Param("id") Long project_id);
 }
