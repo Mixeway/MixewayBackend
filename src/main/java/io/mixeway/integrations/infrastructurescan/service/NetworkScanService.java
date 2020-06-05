@@ -447,15 +447,16 @@ public class NetworkScanService {
                                 if (ns.getProject().getWebAppAutoDiscover() != null && ns.getProject().getWebAppAutoDiscover())
                                     webAppHelper.discoverWebAppFromInfrastructureVulns(ns.getProject(), ns);
                             }
-                            //Change state of interface which was not loaded for some reason
-                            if (nessusScanRepository.findByRunning(true).size() == 0 ){
-                                interfaceRepository.updateStateForNotRunningScan();
-                            }
+
                         }
                     } catch (CertificateException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyManagementException | KeyStoreException | IOException | JAXBException | JSONException e) {
                         log.error("Error {} during Network Scan Load Vulns for {} and domain {}", e.getLocalizedMessage(), ns.getProject().getName(), ns.getNessus().getRoutingDomain().getName());
                     }
                 });
+            }
+            //Change state of interface which was not loaded for some reason
+            if (nessusScanRepository.findByRunning(true).size() == 0 ){
+                interfaceRepository.updateStateForNotRunningScan();
             }
         } catch (UnexpectedRollbackException | ResourceAccessException ce ){
             log.warn("Exception during Network Scan synchro {}", ce.getLocalizedMessage());
