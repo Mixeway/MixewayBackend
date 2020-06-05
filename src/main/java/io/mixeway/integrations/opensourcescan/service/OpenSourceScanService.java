@@ -17,6 +17,7 @@ import io.mixeway.rest.project.model.OpenSourceConfig;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -31,6 +32,7 @@ import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Component
@@ -99,16 +101,19 @@ public class OpenSourceScanService {
      *
      * @param codeProjectToVerify CodeProject to load opensource vulnerabilities
      */
+    @Async
+    @Transactional
     public void loadVulnerabilities(CodeProject codeProjectToVerify) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         for (OpenSourceScanClient openSourceScanClient : openSourceScanClients){
             if (openSourceScanClient.canProcessRequest(codeProjectToVerify)){
-                List<Long> vulnsToUpdate = vulnTemplate.projectVulnerabilityRepository.
-                        findByCodeProjectAndVulnerabilitySource(codeProjectToVerify, vulnTemplate.SOURCE_OPENSOURCE).map(ProjectVulnerability::getId).collect(Collectors.toList());
+                List<ProjectVulnerability> oldVulns = vulnTemplate.projectVulnerabilityRepository.
+                        findByCodeProjectAndVulnerabilitySource(codeProjectToVerify, vulnTemplate.SOURCE_OPENSOURCE).collect(Collectors.toList());
+                List<Long> vulnsToUpdate = oldVulns.stream().map(ProjectVulnerability::getId).collect(Collectors.toList());
                 if (vulnsToUpdate.size() >  0)
                     vulnTemplate.projectVulnerabilityRepository.updateVulnState(vulnsToUpdate,
                             vulnTemplate.STATUS_REMOVED.getId());
                 openSourceScanClient.loadVulnerabilities(codeProjectToVerify);
-                vulnTemplate.projectVulnerabilityRepository.deleteByStatus(vulnTemplate.STATUS_REMOVED);
+                vulnTemplate.projectVulnerabilityRepository.deleteByStatusAndCodeProject(vulnTemplate.STATUS_REMOVED, codeProjectToVerify);
                 break;
             }
         }

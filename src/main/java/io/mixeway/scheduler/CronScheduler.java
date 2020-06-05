@@ -31,6 +31,7 @@ import java.text.DateFormat;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -120,7 +121,14 @@ public class CronScheduler {
             log.info("Starting to synchronize with OpenSource Vulns scanner");
             for (CodeProject cp : codeProjectRepository.getCodeProjectsWithOSIntegrationEnabled()){
                 log.info("Loading data for {}", cp.getName());
-                openSourceScanService.loadVulnerabilities(cp);
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        openSourceScanService.loadVulnerabilities(cp);
+                    } catch (CertificateException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyManagementException | KeyStoreException | IOException e) {
+                        log.error("Error {} during OpenSource Scan Synchro for {}", e.getLocalizedMessage(), cp.getName());
+                    }
+                });
+
             }
             log.info("Successfully synchronized with OpenSource scanner");
         } catch (Exception ignored) {
