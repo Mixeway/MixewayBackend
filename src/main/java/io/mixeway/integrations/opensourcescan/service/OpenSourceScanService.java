@@ -99,7 +99,6 @@ public class OpenSourceScanService {
      *
      * @param codeProjectToVerify CodeProject to load opensource vulnerabilities
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void loadVulnerabilities(CodeProject codeProjectToVerify) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         for (OpenSourceScanClient openSourceScanClient : openSourceScanClients){
             if (openSourceScanClient.canProcessRequest(codeProjectToVerify)){

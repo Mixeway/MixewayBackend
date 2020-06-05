@@ -38,15 +38,16 @@ public class MixewayVulnAuditorService {
         this.settingsRepository = settingsRepository;
     }
 
-    @Transactional(isolation = Isolation.READ_COMMITTED)
     public void perdictVulnerabilities() throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         Optional<Settings> settings = settingsRepository.findAll().stream().findFirst();
-        for (Project project : projectRepository.findByVulnAuditorEnable(true)) {
-            List<ProjectVulnerability> projectVulnerabilities = vulnTemplate.projectVulnerabilityRepository.findByGradeAndProject(-1, project);
-            if (settings.isPresent() && settings.get().isVulnAuditorEnable() && projectVulnerabilities.size() > 0) {
-                mixewayVulnAuditorApiClient.perdict(projectVulnerabilities, settings.get().getVulnAuditorUrl());
-            }
+        if (settings.isPresent() && settings.get().isVulnAuditorEnable()) {
+            for (Project project : projectRepository.findByVulnAuditorEnable(true)) {
+                List<ProjectVulnerability> projectVulnerabilities = vulnTemplate.projectVulnerabilityRepository.findByGradeAndProject(-1, project);
+                if (settings.isPresent() && settings.get().isVulnAuditorEnable() && projectVulnerabilities.size() > 0) {
+                    mixewayVulnAuditorApiClient.perdict(projectVulnerabilities, settings.get().getVulnAuditorUrl());
+                }
 
+            }
         }
     }
 }

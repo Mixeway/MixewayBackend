@@ -331,7 +331,8 @@ public class CodeScanService {
     public void getResultsForRunningScan() throws CertificateException, ParseException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, UnrecoverableKeyException, IOException, URISyntaxException {
         Optional<Scanner> sastScanner = scannerRepository.findByScannerTypeInAndStatus(scannerTypeRepository.getCodeScanners(), true).stream().findFirst();
         if (sastScanner.isPresent()) {
-            for (CodeProject codeProject : codeProjectRepository.findByRunning(true)) {
+            List<CodeProject> codeProjectsRunning =codeProjectRepository.findByRunning(true);
+            for (CodeProject codeProject : codeProjectsRunning) {
                 List<ProjectVulnerability> codeVulns = getOldVulnsForCodeProject(codeProject);
                 for (CodeScanClient codeScanClient : codeScanClients) {
                     if (codeScanClient.canProcessRequest(sastScanner.get()) && codeScanClient.isScanDone(null, codeProject)) {
@@ -349,7 +350,7 @@ public class CodeScanService {
                         codeProjectRepository.save(codeProject);
                     }
                 }
-
+                vulnTemplate.projectVulnerabilityRepository.deleteByStatus(vulnTemplate.STATUS_REMOVED);
             }
             List<CodeGroup> codeGroups = codeGroupRepository.findByRunning(true);
             for (CodeGroup codeGroup : codeGroups) {
@@ -363,9 +364,10 @@ public class CodeScanService {
                         codeGroupRepository.save(codeGroup);
                     }
                 }
+                vulnTemplate.projectVulnerabilityRepository.deleteByStatus(vulnTemplate.STATUS_REMOVED);
             }
         }
-        vulnTemplate.projectVulnerabilityRepository.deleteByStatus(vulnTemplate.STATUS_REMOVED);
+
     }
 
     /**
