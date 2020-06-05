@@ -18,7 +18,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.UnexpectedRollbackException;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -36,7 +35,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -426,39 +424,30 @@ public class NetworkScanService {
     /**
      * Method which is cheacking for running nessusscan test and then it download results
      */
-    @Transactional
-    @Async
     public void scheduledCheckStatusAndLoadVulns() {
         try {
             List<NessusScan> nsl = nessusScanRepository.getRandom5RunningScans();
             for (NessusScan ns : nsl) {
-                CompletableFuture.runAsync(() -> {
-                    try {
-                        if (ns.getNessus().getStatus()) {
-                            for (NetworkScanClient networkScanClient :networkScanClients) {
-                                if (networkScanClient.canProcessRequest(ns) && networkScanClient.isScanDone(ns)) {
-                                    networkScanClient.loadVulnerabilities(ns);
-                                    deleteRulsFromRfw(ns);
-                                    //updateRiskForInterfaces(ns);
-                                }
-                            }
-                            //For nessus create webapp linking
-                            if (ns.getNessus().getScannerType().equals(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_NESSUS))) {
-                                if (ns.getProject().getWebAppAutoDiscover() != null && ns.getProject().getWebAppAutoDiscover())
-                                    webAppHelper.discoverWebAppFromInfrastructureVulns(ns.getProject(), ns);
-                            }
-
+                if (ns.getNessus().getStatus()) {
+                    for (NetworkScanClient networkScanClient :networkScanClients) {
+                        if (networkScanClient.canProcessRequest(ns) && networkScanClient.isScanDone(ns)) {
+                            networkScanClient.loadVulnerabilities(ns);
+                            deleteRulsFromRfw(ns);
+                            //updateRiskForInterfaces(ns);
                         }
-                    } catch (CertificateException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyManagementException | KeyStoreException | IOException | JAXBException | JSONException e) {
-                        log.error("Error {} during Network Scan Load Vulns for {} and domain {}", e.getLocalizedMessage(), ns.getProject().getName(), ns.getNessus().getRoutingDomain().getName());
                     }
-                });
+                    //For nessus create webapp linking
+                    if (ns.getNessus().getScannerType().equals(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_NESSUS))) {
+                        if (ns.getProject().getWebAppAutoDiscover() != null && ns.getProject().getWebAppAutoDiscover())
+                            webAppHelper.discoverWebAppFromInfrastructureVulns(ns.getProject(), ns);
+                    }
+                    //Change state of interface which was not loaded for some reason
+                    if (nessusScanRepository.findByRunning(true).size() == 0 ){
+                        interfaceRepository.updateStateForNotRunningScan();
+                    }
+                }
             }
-            //Change state of interface which was not loaded for some reason
-            if (nessusScanRepository.findByRunning(true).size() == 0 ){
-                interfaceRepository.updateStateForNotRunningScan();
-            }
-        } catch (UnexpectedRollbackException | ResourceAccessException ce ){
+        } catch (UnexpectedRollbackException | JSONException | CertificateException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyManagementException | KeyStoreException | IOException | JAXBException | ResourceAccessException ce ){
             log.warn("Exception during Network Scan synchro {}", ce.getLocalizedMessage());
         }
     }
