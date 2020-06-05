@@ -21,6 +21,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.UnexpectedRollbackException;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
@@ -464,6 +466,7 @@ public class NetworkScanService {
     /**
      * Method which check for nessusscan.isautomatic and run scan
      */
+    @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.READ_COMMITTED)
     public void scheduledRunScans() {
         log.info("Starting Scheduled task for automatic test");
         List<Project> autoInfraProjectList = projectRepository.findByAutoInfraScan(true);

@@ -456,7 +456,8 @@ public class CodeScanService {
      * @param group codeGroup to delate vulns for
      * @return List of deleted vulns to set proper status
      */
-    private List<ProjectVulnerability> getOldVulnsForGroup(CodeGroup group) {
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public List<ProjectVulnerability> getOldVulnsForGroup(CodeGroup group) {
         List<ProjectVulnerability> tmpVulns = new ArrayList<>();
         if (group.getHasProjects()) {
             for (CodeProject cp : group.getProjects()) {
