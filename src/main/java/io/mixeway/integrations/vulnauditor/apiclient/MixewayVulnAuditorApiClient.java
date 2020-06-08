@@ -74,7 +74,7 @@ public class MixewayVulnAuditorApiClient {
         List<VulnAuditorRequest>vulnAuditorRequests = new ArrayList<>();
         for (ProjectVulnerability pv : projectVulnerability){
             String description, severity, vulnName, appName = null, appContext = null;
-            description = pv.getDescription();
+            description = StringUtils.isNotBlank(pv.getDescription()) ? pv.getDescription() : "empty";
             severity = pv.getSeverity();
             vulnName = pv.getVulnerability().getName();
             if (pv.getVulnerabilitySource().getName().equals(Constants.VULN_TYPE_SOURCECODE)){
