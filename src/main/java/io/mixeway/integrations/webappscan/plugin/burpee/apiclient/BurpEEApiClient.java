@@ -180,7 +180,7 @@ public class BurpEEApiClient implements SecurityScanner, WebAppScanClient {
                 webApp.setLastExecuted(sdf.format(new Date()));
                 webApp.setRunning(false);
                 webAppRepository.save(webApp);
-                log.info("Successfully loaded vulnerabilities for {}", webApp.getUrl());
+                log.info("Successfully loaded vulnerabilities for {}, saved {} vulnerabilities", webApp.getUrl(), response.getBody().getIssue_events().size());
                 return true;
             }
         } catch (HttpClientErrorException e){
