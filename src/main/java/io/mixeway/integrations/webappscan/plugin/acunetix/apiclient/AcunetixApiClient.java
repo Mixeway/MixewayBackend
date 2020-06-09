@@ -310,8 +310,8 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 					this.deleteTarget(scanner, webApp);
 					return false;
 				}
-			} catch (HttpServerErrorException | NullPointerException e) {
-				log.error("Error trying to load vulnerabilities using url {} with msg {}","/api/v1/vulnerabilities?q=target_id:" + webApp.getTargetId(), e.getLocalizedMessage());
+			} catch (HttpServerErrorException e) {
+				log.error("Error trying to load vulnerabilities using url {} with - {} - {}","/api/v1/vulnerabilities?q=target_id:" + webApp.getTargetId(), e.getStatusCode(), e.getResponseBodyAsString());
 				this.deleteTarget(scanner, webApp);
 				return false;
 			}
@@ -381,7 +381,6 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 					vuln.setDescription("Description: " + vulnDesc.getString(Constants.ACUNETIX_VULN_DESCRIPTION) + "\nImpact: " + vulnDesc.getString(Constants.ACUNETIX_IMPACT));
 				}
 				vuln.setRecommendation(vulnDesc.getString(Constants.ACUNETIX_VULN_RECOMMENDATION));
-				vuln = vulnTemplate.projectVulnerabilityRepository.save(vuln);
 				return vuln;
 			} else
 				log.error("Unable to get vuln details info for {}",vulnid);
