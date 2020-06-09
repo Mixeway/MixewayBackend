@@ -136,7 +136,7 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 			} else
 				throw new Exception("Scanner Not initialized");
 		} catch (HttpClientErrorException ex) {
-			log.error("Error during creation of taget for acunetix, malformed request");
+			log.error("Error during creation of taget for acunetix, malformed request - {} - {}", ex.getStatusCode(),ex.getResponseBodyAsString());
 		} catch (PSQLException ex){
 			log.error("PSQL Exception for webapp {}",webApp.getUrl());
 		} catch (Exception dve){
@@ -301,6 +301,8 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 					log.info("WebApp Scan - Successfully loaded vulns for project {} - target {} ", webApp.getProject().getName(), webApp.getUrl());
 					this.deleteTarget(scanner, webApp);
 					webApp.setLastExecuted(sdf.format(new Date()));
+					webApp.setRequestId(null);
+					webApp.setScanId(null);
 					webAppRepository.save(webApp);
 					return true;
 				} else {

@@ -126,10 +126,8 @@ public class WebAppScanService {
                             return new ResponseEntity<>(HttpStatus.PRECONDITION_FAILED);
                         }
                     } catch (NonUniqueResultException | IncorrectResultSizeDataAccessException | ParseException ex) {
-                        waRepository.flush();
                         return new ResponseEntity<>(HttpStatus.PRECONDITION_FAILED);
                     } catch (DataIntegrityViolationException e){
-                        waRepository.flush();
                         log.error("Cannot put {} into queue, error is dataintegrity violation", urlToCompareWithRegexx);
                         return new ResponseEntity<>(HttpStatus.PRECONDITION_FAILED);
                     }
