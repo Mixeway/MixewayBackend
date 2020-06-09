@@ -25,4 +25,5 @@ public interface ProjectRepository extends JpaRepository<Project, Long>{
 	@Query(value="select p from Project p where contactlist like CONCAT('%',:email,'%')")
 	List<Project> getUniqueContactListEmails(@Param("email") String email);
 	List<Project> findByVulnAuditorEnable(boolean vulnAuditorEnable);
+	List<Project> findByEnableVulnManage(boolean vulnManage);
 }

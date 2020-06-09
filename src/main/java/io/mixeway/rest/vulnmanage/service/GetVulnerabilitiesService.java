@@ -124,7 +124,8 @@ public class GetVulnerabilitiesService {
             }
         }
         else {
-            try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository.findByVulnerabilitySource(vulnTemplate.SOURCE_OPENSOURCE)) {
+            try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository
+                    .findByProjectInAndVulnerabilitySource(projectRepository.findByEnableVulnManage(true),vulnTemplate.SOURCE_OPENSOURCE)) {
                 softVuln = vulnsForProject.collect(Collectors.toList());
             }
         }
@@ -184,7 +185,7 @@ public class GetVulnerabilitiesService {
         }
         else {
             try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository
-                    .findByVulnerabilitySourceAndAnalysisNot(vulnTemplate.SOURCE_SOURCECODE, Constants.FORTIFY_NOT_AN_ISSUE)){
+                    .findByProjectInAndVulnerabilitySourceAndAnalysisNot(projectRepository.findByEnableVulnManage(true),vulnTemplate.SOURCE_SOURCECODE, Constants.FORTIFY_NOT_AN_ISSUE)){
                 codeVulns = vulnsForProject.collect(Collectors.toList());
             }
         }
@@ -206,7 +207,8 @@ public class GetVulnerabilitiesService {
             }
         }
         else {
-            try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository.findByVulnerabilitySource(vulnTemplate.SOURCE_WEBAPP)) {
+            try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository
+                    .findByProjectInAndVulnerabilitySource(projectRepository.findByEnableVulnManage(true),vulnTemplate.SOURCE_WEBAPP)) {
                 webAppVulns = vulnsForProject.collect(Collectors.toList());
             }
         }
@@ -227,7 +229,7 @@ public class GetVulnerabilitiesService {
             }
         } else {
             try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository
-                    .findByVulnerabilitySource(vulnTemplate.SOURCE_NETWORK)) {
+                    .findByProjectInAndVulnerabilitySource(projectRepository.findByEnableVulnManage(true),vulnTemplate.SOURCE_NETWORK)) {
                 infraVulns = vulnsForProject.collect(Collectors.toList());
             }
         }
