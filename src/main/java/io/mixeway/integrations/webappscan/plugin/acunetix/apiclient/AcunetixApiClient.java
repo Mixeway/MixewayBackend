@@ -322,8 +322,10 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 	private String prepareRefs(List<Reference> references) {
 		int i = 1;
 		String refs = "";
-		for (Reference ref : references) {
-			refs += "["+i+"] " + ref.getHref()+"\n";
+		if (references != null) {
+			for (Reference ref : references) {
+				refs += "[" + i + "] " + ref.getHref() + "\n";
+			}
 		}
 		return refs;
 	}
