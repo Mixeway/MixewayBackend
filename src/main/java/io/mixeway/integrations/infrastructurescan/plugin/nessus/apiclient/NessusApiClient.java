@@ -451,7 +451,7 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 		nessusScanRepository.saveAndFlush(ns);
 		log.info("Nessus - successfully loaded vulnerabilities for {}",ns.getProject().getName());
 		if (!ns.getIsAutomatic()){
-			this.deleteScan(ns);
+			//this.deleteScan(ns);
 		}
 		//scanHelper.updateInterfaceState(ns,false);
 	}
