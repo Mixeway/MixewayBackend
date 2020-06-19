@@ -128,7 +128,6 @@ public class LegacyController {
     public ResponseEntity<Status> checkNetworkScanTest(@PathVariable("ciid") String ciid) {
         return networkScanService.checkScanStatusForCiid(ciid);
     }
-    @Transactional
     @PreAuthorize("hasAuthority('ROLE_API')")
     @PostMapping(value = "/api/webapp/{projectId}")
     public ResponseEntity<Status> getWebApp(@PathVariable(value = "projectId") Long id, @RequestBody WebAppScanRequestModel req) throws InterruptedException {

@@ -15,7 +15,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 @Entity
 @EntityScan
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "webapp", uniqueConstraints={@UniqueConstraint(columnNames = "url")})
+@Table(name = "webapp", uniqueConstraints={@UniqueConstraint(columnNames = "url", "project_id ")})
 public class WebApp implements VulnSource {
 	
 	private Long id;
@@ -166,7 +166,6 @@ public class WebApp implements VulnSource {
 	public void setProject(Project project) {
 		this.project = project;
 	}
-	@Column(unique = true)
 	public String getUrl() {
 		return url;
 	}
