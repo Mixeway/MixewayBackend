@@ -64,6 +64,7 @@ public class MixewayVulnAuditorApiClient {
             for (VulnAuditorResponse vulnAuditorResponse : response.getBody()){
                 ProjectVulnerability vulnerability = vulnTemplate.projectVulnerabilityRepository.getOne(vulnAuditorResponse.getId());
                 vulnerability.setGrade(vulnAuditorResponse.getAudit());
+                vulnTemplate.projectVulnerabilityRepository.save(vulnerability);
                 projectVulnerabilities.add(vulnerability);
             }
         }
@@ -77,7 +78,7 @@ public class MixewayVulnAuditorApiClient {
                         .map(Project::getName)
                         .collect(Collectors.joining(",")),
                 projectVulnerabilities.stream().map(ProjectVulnerability::getVulnerabilitySource)
-                .map(VulnerabilitySource::getName)
+                .map(VulnerabilitySource::getName).distinct()
                 .collect(Collectors.joining(","))
         );
     }
