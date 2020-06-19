@@ -1,7 +1,9 @@
 package io.mixeway.integrations.vulnauditor.apiclient;
 
 import io.mixeway.config.Constants;
+import io.mixeway.db.entity.Project;
 import io.mixeway.db.entity.ProjectVulnerability;
+import io.mixeway.db.entity.VulnerabilitySource;
 import io.mixeway.domain.service.vulnerability.VulnTemplate;
 import io.mixeway.integrations.vulnauditor.model.VulnAuditorRequest;
 import io.mixeway.integrations.vulnauditor.model.VulnAuditorRequestModel;
@@ -24,6 +26,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author gsiewruk
@@ -48,6 +51,7 @@ public class MixewayVulnAuditorApiClient {
      * @throws KeyStoreException
      * @throws KeyManagementException
      */
+    @Transactional
     public void perdict(List<ProjectVulnerability> projectVulnerability, String vulnAuditorUrl) throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         RestTemplate restTemplate = secureRestTemplate.noVerificationClient(null);
         VulnAuditorRequestModel vulnAuditorRequestModel = prepareRequestModel(projectVulnerability);
@@ -55,13 +59,27 @@ public class MixewayVulnAuditorApiClient {
         System.setProperty("https.protocols", "TLSv1,TLSv1.1,TLSv1.2");
         ResponseEntity<VulnAuditorResponse[]> response = restTemplate.exchange(vulnAuditorUrl +
                 "/vuln/perdict", HttpMethod.POST, entity, VulnAuditorResponse[].class);
+        List<ProjectVulnerability> projectVulnerabilities = new ArrayList<>();
         if (response.getStatusCode().equals(HttpStatus.OK)){
             for (VulnAuditorResponse vulnAuditorResponse : response.getBody()){
                 ProjectVulnerability vulnerability = vulnTemplate.projectVulnerabilityRepository.getOne(vulnAuditorResponse.getId());
                 vulnerability.setGrade(vulnAuditorResponse.getAudit());
+                projectVulnerabilities.add(vulnerability);
             }
         }
-        log.info("Successfully loaded perdicted classification for {} Vulnerabilities", response.getBody().length);
+        log.info("Successfully loaded perdicted classification for {} Vulnerabilities Pojects({})  sources({})", response.getBody().length,
+                projectVulnerabilities
+                        .stream()
+                        .map(ProjectVulnerability::getProject)
+                        .distinct()
+                        .collect(Collectors.toList())
+                        .stream()
+                        .map(Project::getName)
+                        .collect(Collectors.joining(",")),
+                projectVulnerabilities.stream().map(ProjectVulnerability::getVulnerabilitySource)
+                .map(VulnerabilitySource::getName)
+                .collect(Collectors.joining(","))
+        );
     }
 
     /**

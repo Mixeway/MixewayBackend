@@ -312,5 +312,9 @@ public class Project implements Serializable{
 				+ ((name == null) ? 0 : name.hashCode());
 		return result;
 	}
+	@Override
+	public String toString(){
+		return name;
+	}
 
 }
