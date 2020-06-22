@@ -447,6 +447,7 @@ public class NetworkScanService {
                     if (nessusScanRepository.findByRunning(true).size() == 0 ){
                         interfaceRepository.updateStateForNotRunningScan();
                     }
+                    return;
                 }
             }
         } catch (UnexpectedRollbackException | JSONException | CertificateException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyManagementException | KeyStoreException | IOException | JAXBException | ResourceAccessException ce ){
