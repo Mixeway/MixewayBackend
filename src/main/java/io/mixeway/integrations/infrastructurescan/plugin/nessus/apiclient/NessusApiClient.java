@@ -497,6 +497,7 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 		HttpEntity<String> entity = new HttpEntity<>(prepareAuthHeaderForNessus(ns.getNessus()));
 		ResponseEntity<String> response = restTemplate.exchange(ns.getNessus().getApiUrl() + "/scans/"+ns.getScanId()+"/hosts/"+i.getHostid()+"/plugins/"+pluginid,
 				HttpMethod.GET, entity, String.class);
+		log.info("running {}",ns.getNessus().getApiUrl() + "/scans/"+ns.getScanId()+"/hosts/"+i.getHostid()+"/plugins/"+pluginid);
 		if (response.getStatusCode() == HttpStatus.OK) {
 			createVuln(vuln, i, response.getBody(), pluginName,oldVulns);
 		}
