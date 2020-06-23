@@ -493,18 +493,21 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 	private void createVulnerability(JSONObject vuln, NessusScan ns, Interface i, List<ProjectVulnerability> oldVulns) throws JSONException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
 		int pluginid = vuln.getInt(Constants.NESSUS_PLUGIN_ID);
 		String pluginName = vuln.getString(Constants.NESSUS_PLUGIN_NAME);
-		RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(ns.getNessus());
-		HttpEntity<String> entity = new HttpEntity<>(prepareAuthHeaderForNessus(ns.getNessus()));
-		ResponseEntity<String> response = restTemplate.exchange(ns.getNessus().getApiUrl() + "/scans/"+ns.getScanId()+"/hosts/"+i.getHostid()+"/plugins/"+pluginid,
-				HttpMethod.GET, entity, String.class);
-		log.info("running {}",ns.getNessus().getApiUrl() + "/scans/"+ns.getScanId()+"/hosts/"+i.getHostid()+"/plugins/"+pluginid);
-		if (response.getStatusCode() == HttpStatus.OK) {
-			createVuln(vuln, i, response.getBody(), pluginName,oldVulns);
+		Map<Integer,String> pluginVulns = new HashMap<>();
+		if (pluginVulns.containsKey(pluginid)) {
+			createVuln(vuln, i, pluginVulns.get(pluginid), pluginName, oldVulns);
+		} else {
+			RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(ns.getNessus());
+			HttpEntity<String> entity = new HttpEntity<>(prepareAuthHeaderForNessus(ns.getNessus()));
+			ResponseEntity<String> response = restTemplate.exchange(ns.getNessus().getApiUrl() + "/scans/" + ns.getScanId() + "/hosts/" + i.getHostid() + "/plugins/" + pluginid,
+					HttpMethod.GET, entity, String.class);
+			if (response.getStatusCode() == HttpStatus.OK) {
+				createVuln(vuln, i, response.getBody(), pluginName, oldVulns);
+				pluginVulns.put(pluginid, response.getBody());
+			} else {
+				log.error("Getting plugins {} failed return code is - {}", ns.getNessus().getApiUrl(), response.getStatusCode().toString());
+			}
 		}
-		else {
-			log.error("Getting plugins {} failed return code is - {}",ns.getNessus().getApiUrl(),response.getStatusCode().toString());
-		}
-		
 	}
 
 	private void createVuln(JSONObject vuln, Interface i, String body, String pluginName, List<ProjectVulnerability> oldVulns) throws JSONException {
