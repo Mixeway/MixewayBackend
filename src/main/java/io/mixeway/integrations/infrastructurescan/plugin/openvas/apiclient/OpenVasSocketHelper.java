@@ -147,10 +147,12 @@ public class OpenVasSocketHelper {
 
     public static String processRequest(String request, Scanner scanner) {
         try {
+            log.info("processing request: {}", request);
             OpenVasSocketHelper ws = new OpenVasSocketHelper(new URI(scanner.getApiUrl().trim()));
             ws.connect();
             ws.send(request);
             String res = ws.recv();
+            log.info("Got response: {}",res);
             return res;
 
         } catch (Exception e) {
