@@ -111,6 +111,8 @@ public class OpenVasSocketClient implements NetworkScanClient, SecurityScanner {
     }
 
     public boolean runOnceManualScan(NessusScan nessusScan) throws JAXBException {
+        createTargets(nessusScan);
+        createNewTask(nessusScan);
         String requestStartTask = XmlOperationBuilder.buildStartTask(getUserForScanner(nessusScan.getNessus()), nessusScan);
         JAXBContext jaxbContext = JAXBContext.newInstance(CommandResponseStartTask.class);
         Unmarshaller jaxbUnmarshallerScanners = jaxbContext.createUnmarshaller();
