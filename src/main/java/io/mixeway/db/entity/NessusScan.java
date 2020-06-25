@@ -46,6 +46,23 @@ public class NessusScan {
 	private String taskId;
 	private String targetId;
 	private String requestId;
+	private int retries;
+
+	public Boolean getAutomatic() {
+		return isAutomatic;
+	}
+
+	public void setAutomatic(Boolean automatic) {
+		isAutomatic = automatic;
+	}
+
+	public int getRetries() {
+		return retries;
+	}
+
+	public void setRetries(int retries) {
+		this.retries = retries;
+	}
 
 	@Column(name="requestid")
 	public String getRequestId() {

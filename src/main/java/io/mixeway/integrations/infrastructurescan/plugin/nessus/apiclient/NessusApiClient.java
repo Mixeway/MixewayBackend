@@ -441,16 +441,25 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 
 
 	@Override
-	@Transactional(propagation = Propagation.REQUIRES_NEW)
 	public void loadVulnerabilities(NessusScan ns) throws JSONException, CertificateException, UnrecoverableKeyException,
 			NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
 		List<Interface> intfs = interfaceRepository.getInterfaceForAssetsWithHostIdSet(assetRepository.findByProjectAndRoutingDomain(ns.getProject(),ns.getNessus().getRoutingDomain()));
+		List<ProjectVulnerability> oldVulns = vulnTemplate.projectVulnerabilityRepository.findByanInterfaceIn(intfs).collect(Collectors.toList());
 		for (Interface i : intfs) {
 			this.loadVulnForInterface(ns, i);
 		}
-		ns.setRunning(false);
+		List<ProjectVulnerability> newVulns = vulnTemplate.projectVulnerabilityRepository.findByanInterfaceIn(intfs).collect(Collectors.toList());
+		if (ns.getRetries() < 3 && oldVulns.size() > newVulns.size()){
+			ns.setRunning(true);
+			ns.setRetries(ns.getRetries() + 1);
+			log.info("Possible problem with Scan for {} - vulnerability count is lower, setting retries to {}", ns.getProject().getName(), ns.getRetries());
+		} else {
+			ns.setRunning(false);
+			ns.setRetries(0);
+			log.info("Nessus - successfully loaded vulnerabilities for {}",ns.getProject().getName());
+		}
 		nessusScanRepository.saveAndFlush(ns);
-		log.info("Nessus - successfully loaded vulnerabilities for {}",ns.getProject().getName());
+
 		if (!ns.getIsAutomatic()){
 			//this.deleteScan(ns);
 		}

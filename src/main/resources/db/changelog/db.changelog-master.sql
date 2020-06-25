@@ -1064,3 +1064,7 @@ update settings set vulnauditorurl='https://localhost:8445';
 
 --changeset siewer:196
 update codeproject set skipallscan=true where skipallscan is null;
+
+--changeset siewer:197
+alter table nessusscan add column retries int;
+update nessusscan set retries=0;
