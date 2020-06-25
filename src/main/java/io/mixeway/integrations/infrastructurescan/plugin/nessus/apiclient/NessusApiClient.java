@@ -63,7 +63,7 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 	private final RoutingDomainRepository routingDomainRepository;
 	private final ProxiesRepository proxiesRepository;
 	private final VulnTemplate vulnTemplate;
-
+	List<Status> statusesNotRemoved;
 	NessusApiClient(VaultHelper vaultHelper, ScannerRepository scannerRepository, NessusScanTemplateRepository nessusScanTemplateRepository,
 					AssetRepository assetRepository, InterfaceRepository interfaceRepository, NessusScanRepository nessusScanRepository,
 					VulnTemplate vulnTemplate, ScanHelper scanHelper,
@@ -83,6 +83,7 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 		this.scannerTypeRepository = scannerTypeRepository;
 		this.proxiesRepository = proxiesRepository;
 		this.vulnTemplate = vulnTemplate;
+		statusesNotRemoved = Arrays.asList(new Status[]{vulnTemplate.STATUS_EXISTING, vulnTemplate.STATUS_NEW});
 	}
 	@Override
 	public boolean initialize(io.mixeway.db.entity.Scanner scanner) throws JSONException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
@@ -448,7 +449,7 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 		for (Interface i : intfs) {
 			this.loadVulnForInterface(ns, i);
 		}
-		List<ProjectVulnerability> newVulns = vulnTemplate.projectVulnerabilityRepository.findByanInterfaceIn(intfs).collect(Collectors.toList());
+		List<ProjectVulnerability> newVulns = vulnTemplate.projectVulnerabilityRepository.findByanInterfaceInAndStatusIn(intfs, statusesNotRemoved);
 		if (ns.getRetries() < 3 && oldVulns.size() > newVulns.size()){
 			ns.setRunning(true);
 			ns.setRetries(ns.getRetries() + 1);
