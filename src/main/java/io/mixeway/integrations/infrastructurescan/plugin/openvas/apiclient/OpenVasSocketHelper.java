@@ -6,9 +6,15 @@ import java.io.*;
 import java.net.URI;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.X509Certificate;
 
 import javax.net.SocketFactory;
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 public class OpenVasSocketHelper {
     /** The url. */
@@ -46,7 +52,7 @@ public class OpenVasSocketHelper {
     /**
      * Establishes the connection.
      */
-    public void connect() throws java.io.IOException {
+    public void connect() throws java.io.IOException, KeyManagementException, NoSuchAlgorithmException {
         mSocket = createSocket();
         if (mSocket != null) {
 
@@ -60,8 +66,27 @@ public class OpenVasSocketHelper {
         }
     }
 
-    private Socket createSocket() {
-        SocketFactory factory = SSLSocketFactory.getDefault();
+    private Socket createSocket() throws NoSuchAlgorithmException, KeyManagementException {
+        TrustManager[] trustAllCerts = new TrustManager[] {new X509TrustManager() {
+            public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                return null;
+            }
+
+            @Override
+            public void checkClientTrusted(X509Certificate[] certs, String authType) {
+            }
+
+            @Override
+            public void checkServerTrusted(X509Certificate[] certs, String authType) {
+            }
+        }};
+
+// Install the all-trusting trust manager
+        SSLContext sc = SSLContext.getInstance("SSL");
+        sc.init(null, trustAllCerts, new java.security.SecureRandom());
+
+        SSLSocketFactory sslsocketfactory = sc.getSocketFactory();
+        SocketFactory factory = sslsocketfactory.getDefault();
         try {
             return factory.createSocket(mUrl.getHost(), mUrl.getPort());
         } catch (IOException ce){

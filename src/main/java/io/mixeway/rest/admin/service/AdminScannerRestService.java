@@ -78,7 +78,7 @@ public class AdminScannerRestService {
                 return new ResponseEntity<>(new Status("not ok"), HttpStatus.CONFLICT);
             }
         } catch(Exception e){
-            log.error("Cannot add scanner {} ",LogUtil.prepare(scannerModel.getApiUrl()));
+            log.error("Cannot add scanner {} - {}",LogUtil.prepare(scannerModel.getApiUrl()), e.getLocalizedMessage());
             return new ResponseEntity<>(new Status("not ok"), HttpStatus.PRECONDITION_FAILED);
         }
     }
