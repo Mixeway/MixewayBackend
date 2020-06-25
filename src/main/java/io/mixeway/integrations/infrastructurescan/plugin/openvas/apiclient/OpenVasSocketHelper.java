@@ -1,6 +1,8 @@
 package io.mixeway.integrations.infrastructurescan.plugin.openvas.apiclient;
 
 import io.mixeway.db.entity.Scanner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.URI;
@@ -17,6 +19,8 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 public class OpenVasSocketHelper {
+    private final static Logger log = LoggerFactory.getLogger(OpenVasSocketHelper.class);
+
     /** The url. */
     private URI mUrl;
     /** The socket. */
@@ -150,6 +154,7 @@ public class OpenVasSocketHelper {
             return res;
 
         } catch (Exception e) {
+            log.error("Error during executing Socket {}",e.getLocalizedMessage());
             return null;
         }
     }
