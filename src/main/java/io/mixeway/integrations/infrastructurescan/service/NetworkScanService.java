@@ -453,6 +453,7 @@ public class NetworkScanService {
             }
         } catch (UnexpectedRollbackException | JSONException | CertificateException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyManagementException | KeyStoreException | IOException | JAXBException | ResourceAccessException ce ){
             log.warn("Exception during Network Scan synchro {}", ce.getLocalizedMessage());
+            ce.printStackTrace();
         }
     }
 
