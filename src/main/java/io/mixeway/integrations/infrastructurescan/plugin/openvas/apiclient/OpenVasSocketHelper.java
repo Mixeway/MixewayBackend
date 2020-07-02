@@ -123,7 +123,8 @@ public class OpenVasSocketHelper {
     public String recv() throws java.io.IOException {
         int nRead;
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        byte[] data = new byte[102400];
+        int size = Integer.MAX_VALUE;
+        byte[] data = new byte[size];
         while ((nRead = mInput.read(data, 0, data.length)) != -1) {
             buffer.write(data, 0, nRead);
         }
