@@ -22,7 +22,8 @@ import io.mixeway.rest.model.ScannerModel;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
-import java.io.*;
+import java.io.IOException;
+import java.io.StringReader;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -282,19 +283,6 @@ public class OpenVasSocketClient implements NetworkScanClient, SecurityScanner {
     public void loadVulnerabilities(NessusScan nessusScan) throws JAXBException, JSONException {
         String report = XmlOperationBuilder.buildGetReport(getUserForScanner(nessusScan.getNessus()), nessusScan);
         String response = OpenVasSocketHelper.processRequest(report,nessusScan.getNessus());
-        File temp = null;
-        try {
-            temp = File.createTempFile("tempfile", ".tmp");
-            //write it
-            BufferedWriter bw = new BufferedWriter(new FileWriter(temp));
-            bw.write(response);
-            bw.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-
-
         JAXBContext jaxbContext = JAXBContext.newInstance(ComandResponseGetReport.class);
         Unmarshaller jaxbUnmarshallerScanners = jaxbContext.createUnmarshaller();
         assert response != null;
