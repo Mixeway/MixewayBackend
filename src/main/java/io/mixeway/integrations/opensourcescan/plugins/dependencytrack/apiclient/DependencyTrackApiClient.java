@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
@@ -175,7 +176,7 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
         return null;
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.READ_COMMITTED)
     public void createVulns(CodeProject codeProject, List<DTrackVuln> body) {
         List<ProjectVulnerability> oldVulns = vulnTemplate.projectVulnerabilityRepository
                 .findByCodeProjectAndVulnerabilitySource(codeProject, vulnTemplate.SOURCE_OPENSOURCE).collect(Collectors.toList());
@@ -193,6 +194,7 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
                     softwarePacketRepository.save(softwarePacket);
                     softwarePackets.add(softwarePacket);
                 }
+
                 for (SoftwarePacket sPacket : softwarePackets){
                     Vulnerability vuln = vulnTemplate.createOrGetVulnerabilityService.createOrGetVulnerabilityWithDescAndReferences(dTrackVuln.getVulnId(), dTrackVuln.getDescription(),
                             dTrackVuln.getReferences(), dTrackVuln.getRecommendation());
@@ -202,7 +204,7 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
                         ProjectVulnerability projectVulnerability = new ProjectVulnerability(sPacket,codeProject,vuln,dTrackVuln.getDescription(),dTrackVuln.getRecommendation(),
                                 dTrackVuln.getSeverity(), null, null, null,vulnTemplate.SOURCE_OPENSOURCE);
                         projectVulnerability.setStatus(vulnTemplate.STATUS_NEW);
-                        projectVulnerability.updateStatusAndGrade(oldVulns,vulnTemplate);
+                        projectVulnerability.setGrade(-1);
                         vulnsToPersist.add(projectVulnerability);
                     } else {
                         softwarePacketVulnerability.get().setCodeProject(codeProject);
