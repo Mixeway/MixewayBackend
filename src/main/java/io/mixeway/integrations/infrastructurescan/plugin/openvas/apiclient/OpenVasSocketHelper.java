@@ -123,19 +123,27 @@ public class OpenVasSocketHelper {
      * @throws java.io.IOException
      */
     public String recv() throws java.io.IOException {
+        byte[] messageByte = new byte[100000];
+        boolean end = false;
         String dataString = "";
         StringBuffer inputLine = new StringBuffer();
             DataInputStream in = new DataInputStream(mInput);
+            int bytesRead = 0;
+
+            messageByte[0] = in.readByte();
+            messageByte[1] = in.readByte();
+            ByteBuffer byteBuffer = ByteBuffer.wrap(messageByte, 0, 2);
+
+            int bytesToRead = byteBuffer.getShort();
 
             if (in.available() > 0) {
                 inputLine.append(in.readLine());
 
             }
             dataString = inputLine.toString();
-            System.out.println("MESSAGE: " + dataString);
 
 
-        return dataString;
+        return "<c"+dataString;
     }
 
     /**
