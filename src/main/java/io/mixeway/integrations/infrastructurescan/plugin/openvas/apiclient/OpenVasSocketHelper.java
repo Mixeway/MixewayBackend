@@ -132,6 +132,7 @@ public class OpenVasSocketHelper {
             int bytesRead = 0;
 
             messageByte[0] = in.readByte();
+            messageByte[1] = in.readByte();
             ByteBuffer byteBuffer = ByteBuffer.wrap(messageByte, 0, 2);
 
             int bytesToRead = byteBuffer.getShort();
