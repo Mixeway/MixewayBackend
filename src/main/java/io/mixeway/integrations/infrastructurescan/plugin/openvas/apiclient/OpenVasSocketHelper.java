@@ -135,7 +135,6 @@ public class OpenVasSocketHelper {
             ByteBuffer byteBuffer = ByteBuffer.wrap(messageByte, 0, 2);
 
             int bytesToRead = byteBuffer.getShort();
-            System.out.println("About to read " + bytesToRead + " octets");
 
             //The following code shows in detail how to read from a TCP socket
 
@@ -159,7 +158,7 @@ public class OpenVasSocketHelper {
             System.out.println("MESSAGE: " + dataString);
             return dataString;
         }
-        catch (Exception e)
+        catch (IOException e)
         {
             e.printStackTrace();
         }
