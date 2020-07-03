@@ -139,18 +139,8 @@ public class OpenVasSocketHelper {
 
             //The following code shows in detail how to read from a TCP socket
 
-            while(!end)
-            {
-                bytesRead = in.read(messageByte);
-                try {
-                    dataString += new String(messageByte, 0, bytesRead);
-                } catch(StringIndexOutOfBoundsException ignored) {
-
-                }
-                if (dataString.length() == bytesToRead) {
-                    end = true;
-                }
-            }
+            in.readFully(messageByte, 0, bytesToRead);
+            dataString = new String(messageByte, 0, bytesToRead);
 
             //All the code in the loop can be replaced by these two lines
             //in.readFully(messageByte, 0, bytesToRead);
