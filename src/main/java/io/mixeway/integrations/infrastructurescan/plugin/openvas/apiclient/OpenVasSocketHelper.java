@@ -126,7 +126,7 @@ public class OpenVasSocketHelper {
         byte[] messageByte = new byte[100000];
         boolean end = false;
         String dataString = "";
-
+        StringBuffer inputLine = new StringBuffer();
             DataInputStream in = new DataInputStream(mInput);
             int bytesRead = 0;
 
@@ -138,11 +138,11 @@ public class OpenVasSocketHelper {
             System.out.println("About to read " + bytesToRead + " octets");
             System.out.println("messagebyte " + messageByte );
 
-            if (bytesToRead > 0) {
-                in.readFully(messageByte);
-                dataString = Arrays.toString(messageByte);
+            if (in.available() > 0) {
+                inputLine.append(in.readLine());
 
             }
+            dataString = inputLine.toString();
             System.out.println("MESSAGE: " + dataString);
 
 
