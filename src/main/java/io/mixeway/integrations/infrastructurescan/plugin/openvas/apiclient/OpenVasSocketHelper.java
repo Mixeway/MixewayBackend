@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.net.URI;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
@@ -121,18 +122,47 @@ public class OpenVasSocketHelper {
      * @throws java.io.IOException
      */
     public String recv() throws java.io.IOException {
-        int nRead;
-        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        byte[] data = new byte[10240];
-        while ((nRead = mInput.read(data, 0, data.length)) != -1) {
-            buffer.write(data, 0, nRead);
+//        int nRead;
+//        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+//        byte[] data = new byte[10240];
+//        while ((nRead = mInput.read(data, 0, data.length)) != -1) {
+//            buffer.write(data, 0, nRead);
+//        }
+//
+//        buffer.flush();
+//        byte[] byteArray = buffer.toByteArray();
+        byte[] messageByte = new byte[10000];
+        boolean end = false;
+        String dataString = "";
+        DataInputStream in = new DataInputStream(mInput);
+        int bytesRead = 0;
+
+        messageByte[0] = in.readByte();
+        messageByte[1] = in.readByte();
+        ByteBuffer byteBuffer = ByteBuffer.wrap(messageByte, 0, 2);
+
+        int bytesToRead = byteBuffer.getShort();
+        System.out.println("About to read " + bytesToRead + " octets");
+
+        //The following code shows in detail how to read from a TCP socket
+
+        while(!end)
+        {
+            bytesRead = in.read(messageByte);
+            dataString += new String(messageByte, 0, bytesRead);
+            if (dataString.length() == bytesToRead )
+            {
+                end = true;
+            }
         }
 
-        buffer.flush();
-        byte[] byteArray = buffer.toByteArray();
+        //All the code in the loop can be replaced by these two lines
+        //in.readFully(messageByte, 0, bytesToRead);
+        //dataString = new String(messageByte, 0, bytesToRead);
 
-        String text = new String(byteArray, StandardCharsets.UTF_8);
-        return text;
+        System.out.println("MESSAGE: " + dataString);
+        //String text = new String(dataString, StandardCharsets.UTF_8);
+        return dataString;
     }
 
     /**
