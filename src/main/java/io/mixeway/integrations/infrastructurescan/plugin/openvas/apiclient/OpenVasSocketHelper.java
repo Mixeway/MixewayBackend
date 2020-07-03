@@ -142,10 +142,12 @@ public class OpenVasSocketHelper {
             while(!end)
             {
                 bytesRead = in.read(messageByte);
-                System.out.println(new String(messageByte, 0, bytesRead));
-                dataString += new String(messageByte, 0, bytesRead);
-                if (dataString.length() == bytesToRead )
-                {
+                try {
+                    dataString += new String(messageByte, 0, bytesRead);
+                } catch(StringIndexOutOfBoundsException ignored) {
+
+                }
+                if (dataString.length() == bytesToRead) {
                     end = true;
                 }
             }
