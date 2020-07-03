@@ -126,9 +126,6 @@ public class OpenVasSocketHelper {
         boolean end = false;
         String dataString = "";
 
-        try
-        {
-
             DataInputStream in = new DataInputStream(mInput);
             int bytesRead = 0;
 
@@ -144,7 +141,11 @@ public class OpenVasSocketHelper {
             while(!end)
             {
                 bytesRead = in.read(messageByte);
-                dataString += new String(messageByte, 0, bytesRead);
+                try {
+                    dataString += new String(messageByte, 0, bytesRead);
+                } catch (StringIndexOutOfBoundsException ignored){
+
+                }
                 if (dataString.length() == bytesToRead )
                 {
                     end = true;
@@ -156,11 +157,8 @@ public class OpenVasSocketHelper {
             //dataString = new String(messageByte, 0, bytesToRead);
 
             System.out.println("MESSAGE: " + dataString);
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
+
+
         return dataString;
     }
 
