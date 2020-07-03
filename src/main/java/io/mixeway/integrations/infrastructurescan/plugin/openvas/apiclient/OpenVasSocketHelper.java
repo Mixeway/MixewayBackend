@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
 
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLContext;
@@ -135,11 +136,11 @@ public class OpenVasSocketHelper {
 
             int bytesToRead = byteBuffer.getShort();
             System.out.println("About to read " + bytesToRead + " octets");
-
+            System.out.println("messagebyte " + messageByte );
 
             if (bytesToRead > 0) {
-                in.readFully(messageByte, 0, bytesToRead);
-                dataString = new String(messageByte, 0, bytesToRead);
+                in.readFully(messageByte);
+                dataString = Arrays.toString(messageByte);
 
             }
             System.out.println("MESSAGE: " + dataString);
