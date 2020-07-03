@@ -142,7 +142,7 @@ public class OpenVasSocketHelper {
             }
             dataString = inputLine.toString();
 
-
+        System.out.println("msg: "+"<c"+dataString);
         return "<c"+dataString;
     }
 
