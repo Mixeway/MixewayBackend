@@ -122,16 +122,46 @@ public class OpenVasSocketHelper {
      * @throws java.io.IOException
      */
     public String recv() throws java.io.IOException {
-        String out="";
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(mInput))){
-            String line = null;
-            while((line = reader.readLine()) != null) {
-                out += line;
+        byte[] messageByte = new byte[100000];
+        boolean end = false;
+        String dataString = "";
+
+        try
+        {
+
+            DataInputStream in = new DataInputStream(mInput);
+            int bytesRead = 0;
+
+            messageByte[0] = in.readByte();
+            messageByte[1] = in.readByte();
+            ByteBuffer byteBuffer = ByteBuffer.wrap(messageByte, 0, 2);
+
+            int bytesToRead = byteBuffer.getShort();
+            System.out.println("About to read " + bytesToRead + " octets");
+
+            //The following code shows in detail how to read from a TCP socket
+
+            while(!end)
+            {
+                bytesRead = in.read(messageByte);
+                dataString += new String(messageByte, 0, bytesRead);
+                if (dataString.length() == bytesToRead )
+                {
+                    end = true;
+                }
             }
-        } catch(IOException e) {
+
+            //All the code in the loop can be replaced by these two lines
+            //in.readFully(messageByte, 0, bytesToRead);
+            //dataString = new String(messageByte, 0, bytesToRead);
+
+            System.out.println("MESSAGE: " + dataString);
+        }
+        catch (Exception e)
+        {
             e.printStackTrace();
         }
-        return out;
+        return dataString;
     }
 
     /**
