@@ -137,9 +137,11 @@ public class OpenVasSocketHelper {
             System.out.println("About to read " + bytesToRead + " octets");
 
 
-            in.readFully(messageByte, 0, bytesToRead);
-            dataString = new String(messageByte, 0, bytesToRead);
+            if (bytesToRead > 0) {
+                in.readFully(messageByte, 0, bytesToRead);
+                dataString = new String(messageByte, 0, bytesToRead);
 
+            }
             System.out.println("MESSAGE: " + dataString);
 
 
