@@ -166,6 +166,7 @@ public class OpenVasSocketHelper {
 
         } catch (Exception e) {
             log.error("Error during executing Socket {}",e.getLocalizedMessage());
+            e.printStackTrace();
             return null;
         }
     }
