@@ -1068,3 +1068,14 @@ update codeproject set skipallscan=true where skipallscan is null;
 --changeset siewer:197
 alter table nessusscan add column retries int;
 update nessusscan set retries=0;
+
+--changeset siewer:grade_based_gateway
+create table securitygatway (
+    id serial primary key,
+    grade boolean,
+    high int,
+    critical int,
+    medium int,
+    vuln int
+);
+insert into securitygatway (grade, high, critical, medium, vuln) values (false,5,3,100,2);
