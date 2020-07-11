@@ -1,5 +1,6 @@
 package io.mixeway.rest.project.controller;
 
+import io.mixeway.db.entity.IaasApiType;
 import io.mixeway.rest.project.model.IaasApiPutModel;
 import io.mixeway.rest.project.model.IaasModel;
 import org.codehaus.jettison.json.JSONException;
@@ -14,6 +15,7 @@ import io.mixeway.rest.project.service.IaasApiService;
 import javax.validation.Valid;
 import java.security.Principal;
 import java.text.ParseException;
+import java.util.List;
 
 @Controller
 @RequestMapping("/v2/api/show/project")
@@ -53,6 +55,11 @@ public class IaasApiController {
     @DeleteMapping(value = "/{id}/iaasapi")
     public ResponseEntity<Status> iaasApiDelete(@PathVariable("id")Long id, Principal principal) {
         return iaasApiService.iaasApiDelete(id, principal.getName());
+    }
+    @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
+    @GetMapping(value = "/iaasapitype")
+    public ResponseEntity<List<IaasApiType>> getIaasApiTypes(Principal principal) {
+        return iaasApiService.getIaasApiTypes(principal.getName());
     }
 
 }

@@ -1,7 +1,8 @@
 package io.mixeway.rest.project.service;
 
+import io.mixeway.db.entity.IaasApiType;
 import io.mixeway.db.entity.Project;
-import io.mixeway.pojo.VaultHelper;
+import io.mixeway.db.repository.IaasApiTypeRepisotory;
 import io.mixeway.rest.project.model.IaasApiPutModel;
 import io.mixeway.rest.project.model.IaasModel;
 import org.slf4j.Logger;
@@ -12,26 +13,26 @@ import org.springframework.stereotype.Service;
 import io.mixeway.db.entity.IaasApi;
 import io.mixeway.db.repository.IaasApiRepository;
 import io.mixeway.db.repository.ProjectRepository;
-import io.mixeway.db.repository.RoutingDomainRepository;
-import io.mixeway.integrations.servicediscovery.plugin.openstack.apiclient.OpenStackApiClient;
 import io.mixeway.pojo.Status;
 
 import javax.transaction.Transactional;
+import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 public class IaasApiService {
     private static final Logger log = LoggerFactory.getLogger(IaasApiService.class);
     private final ProjectRepository projectRepository;
     private final IaasApiRepository iaasApiRepository;
-    private final io.mixeway.integrations.servicediscovery.service.IaasApiService iaasApiService;
+    private final IaasApiTypeRepisotory iaasApiTypeRepisotory;
+    private final io.mixeway.integrations.servicediscovery.service.IaasService iaasApiService;
 
 
-    IaasApiService(ProjectRepository projectRepository,
-                   IaasApiRepository iaasApiRepository, io.mixeway.integrations.servicediscovery.service.IaasApiService iaasApiService){
+    IaasApiService(ProjectRepository projectRepository, IaasApiTypeRepisotory iaasApiTypeRepisotory,
+                   IaasApiRepository iaasApiRepository, io.mixeway.integrations.servicediscovery.service.IaasService iaasApiService){
         this.projectRepository = projectRepository;
         this.iaasApiRepository = iaasApiRepository;
+        this.iaasApiTypeRepisotory = iaasApiTypeRepisotory;
         this.iaasApiService = iaasApiService;
     }
 
@@ -138,4 +139,7 @@ public class IaasApiService {
         return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
     }
 
+    public ResponseEntity<List<IaasApiType>> getIaasApiTypes(String name) {
+        return new ResponseEntity<>(iaasApiTypeRepisotory.findAll(),HttpStatus.OK);
+    }
 }

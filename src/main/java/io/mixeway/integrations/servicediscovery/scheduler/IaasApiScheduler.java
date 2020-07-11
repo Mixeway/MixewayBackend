@@ -1,6 +1,6 @@
 package io.mixeway.integrations.servicediscovery.scheduler;
 
-import io.mixeway.integrations.servicediscovery.service.IaasApiService;
+import io.mixeway.integrations.servicediscovery.service.IaasService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -11,9 +11,9 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class IaasApiScheduler {
-    IaasApiService iaasApiService;
+    IaasService iaasApiService;
 
-    IaasApiScheduler(IaasApiService iaasApiService){
+    IaasApiScheduler(IaasService iaasApiService){
         this.iaasApiService = iaasApiService;
     }
 

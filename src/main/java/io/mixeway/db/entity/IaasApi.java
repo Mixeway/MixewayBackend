@@ -32,9 +32,6 @@ public class IaasApi implements Serializable{
     private Boolean status;
     private Boolean external;
     private RoutingDomain routingDomain;
-	@ManyToOne(fetch = FetchType.EAGER, optional = false)
-	@JoinColumn(name = "iaasapitype_id", nullable = false)
-	@OnDelete(action = OnDeleteAction.CASCADE)
     private IaasApiType iaasApiType;
 	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -175,6 +172,9 @@ public class IaasApi implements Serializable{
 		this.routingDomain = routingDomain;
 	}
 
+	@ManyToOne(fetch = FetchType.EAGER, optional = false)
+	@JoinColumn(name = "iaasapitype_id", nullable = false)
+	@OnDelete(action = OnDeleteAction.CASCADE)
 	public IaasApiType getIaasApiType() {
 		return iaasApiType;
 	}

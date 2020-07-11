@@ -25,15 +25,15 @@ import java.util.List;
  * Service which handle operations with IAAS Platform REST APIs
  */
 @Service
-public class IaasApiService {
+public class IaasService {
 
-    private static final Logger log = LoggerFactory.getLogger(IaasApiService.class);
+    private static final Logger log = LoggerFactory.getLogger(IaasService.class);
     private IaasApiRepository iaasApiRepository;
     private List<IaasApiClient> iaasApiClients;
 
-    IaasApiService(IaasApiRepository iaasApiRepository, AssetRepository assetRepository, InterfaceRepository interfaceRepository,
-                          OpenStackApiClient apiClient, SecurityGroupRepository securityGroupRepository, List<IaasApiClient> iaasApiClients,
-                          SecurityGroupRuleRepository securityGroupRuleRepository, ActivityRepository activityRepository, RoutingDomainRepository routingDomainRepository){
+    IaasService(IaasApiRepository iaasApiRepository, AssetRepository assetRepository, InterfaceRepository interfaceRepository,
+                OpenStackApiClient apiClient, SecurityGroupRepository securityGroupRepository, List<IaasApiClient> iaasApiClients,
+                SecurityGroupRuleRepository securityGroupRuleRepository, ActivityRepository activityRepository, RoutingDomainRepository routingDomainRepository){
         this.iaasApiRepository = iaasApiRepository;
         this.iaasApiClients = iaasApiClients;
     }

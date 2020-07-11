@@ -56,7 +56,6 @@ public class OpenStackApiClient implements IaasApiClient {
 	private SecureRestTemplate secureRestTemplate;
 	private AssetRepository assetRepository;
 	private InterfaceRepository interfaceRepository;
-	private OpenStackApiClient apiClient;
 	private SecurityGroupRepository securityGroupRepository;
 	private SecurityGroupRuleRepository securityGroupRuleRepository;
 	private ActivityRepository activityRepository;
@@ -64,14 +63,13 @@ public class OpenStackApiClient implements IaasApiClient {
 
 	OpenStackApiClient(IaasApiRepository iaasApiRepository, VaultHelper vaultHelper, SecureRestTemplate secureRestTemplate,
 					   AssetRepository assetRepository, InterfaceRepository interfaceRepository,
-					   OpenStackApiClient apiClient, SecurityGroupRepository securityGroupRepository,
+					   SecurityGroupRepository securityGroupRepository,
 					   SecurityGroupRuleRepository securityGroupRuleRepository, ActivityRepository activityRepository, RoutingDomainRepository routingDomainRepository){
 		this.vaultHelper = vaultHelper;
 		this.secureRestTemplate = secureRestTemplate;
 		this.iaasApiRepository = iaasApiRepository;
 		this.assetRepository = assetRepository;
 		this.interfaceRepository = interfaceRepository;
-		this.apiClient = apiClient;
 		this.securityGroupRepository = securityGroupRepository;
 		this.activityRepository = activityRepository;
 		this.routingDomainRepository = routingDomainRepository;
@@ -223,11 +221,11 @@ public class OpenStackApiClient implements IaasApiClient {
 		deactivateInterfaces(api);
 		//Pobranie listy floting ip = publiczne interfejsy
 		try {
-			JSONArray floatingIps = apiClient.getFloatingIps(api);
+			JSONArray floatingIps = this.getFloatingIps(api);
 			createOrUpdateAssetsWithPublicIp(api,floatingIps);
 			// Robienie nowych serwerow ECS
 			int newServers = 0;
-			JSONArray serverList = apiClient.getServerInfo(api);
+			JSONArray serverList = this.getServerInfo(api);
 			for (int i = 0; i < serverList.length(); i++) {
 				String assetName = serverList.getJSONObject(i).get("name").toString();
 				String assetId = serverList.getJSONObject(i).get("id").toString();
@@ -325,7 +323,7 @@ public class OpenStackApiClient implements IaasApiClient {
 
 	private void loadSecurityGroups(IaasApi api, Asset asset) throws ParseException, JSONException, UnknownHostException {
 		try {
-			JSONArray groups = apiClient.getSecurityGroups(api, asset);
+			JSONArray groups = this.getSecurityGroups(api, asset);
 			// Interacja po grupach w tablicy
 			for (int i = 0; i < groups.length(); i++) {
 				SecurityGroup securityGroup = securityGroupRepository.findBySecuritygroupid(groups.getJSONObject(i).getString("id"));
@@ -407,7 +405,7 @@ public class OpenStackApiClient implements IaasApiClient {
 	}
 	public void loadInterfaces(IaasApi api, Asset asset, JSONArray floatingIps) throws JSONException, ParseException, UnknownHostException {
 		try{
-			JSONArray interfaces = apiClient.getInterfaces(api, asset);
+			JSONArray interfaces = this.getInterfaces(api, asset);
 			for (int i = 0; i < interfaces.length(); i++) {
 				String state = interfaces.getJSONObject(i).getString("port_state");
 				String macAddr = interfaces.getJSONObject(i).getString("mac_addr");
