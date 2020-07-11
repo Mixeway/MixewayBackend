@@ -17,6 +17,7 @@ public class IaasApiPutModel {
     @NotBlank private String projectid;
     @NotBlank private String username;
     @NotBlank private String password;
+    @NotBlank private String apiType;
     @NotNull
     @Min(1) private Long routingDomainForIaasApi;
 
@@ -74,5 +75,13 @@ public class IaasApiPutModel {
 
     public void setRoutingDomainForIaasApi(Long routingDomainForIaasApi) {
         this.routingDomainForIaasApi = routingDomainForIaasApi;
+    }
+
+    public String getApiType() {
+        return apiType;
+    }
+
+    public void setApiType(String apiType) {
+        this.apiType = apiType;
     }
 }

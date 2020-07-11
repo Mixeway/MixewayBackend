@@ -24,18 +24,15 @@ import java.util.UUID;
 public class IaasApiService {
     private static final Logger log = LoggerFactory.getLogger(IaasApiService.class);
     private final ProjectRepository projectRepository;
-    private final RoutingDomainRepository routingDomainRepository;
     private final IaasApiRepository iaasApiRepository;
-    private final VaultHelper vaultHelper;
-    private final OpenStackApiClient openStackApiClient;
+    private final io.mixeway.integrations.servicediscovery.service.IaasApiService iaasApiService;
 
-    IaasApiService(ProjectRepository projectRepository, RoutingDomainRepository routingDomainRepository,
-                   IaasApiRepository iaasApiRepository, VaultHelper vaultHelper, OpenStackApiClient openStackApiClient){
+
+    IaasApiService(ProjectRepository projectRepository,
+                   IaasApiRepository iaasApiRepository, io.mixeway.integrations.servicediscovery.service.IaasApiService iaasApiService){
         this.projectRepository = projectRepository;
-        this.routingDomainRepository = routingDomainRepository;
         this.iaasApiRepository = iaasApiRepository;
-        this.openStackApiClient = openStackApiClient;
-        this.vaultHelper = vaultHelper;
+        this.iaasApiService = iaasApiService;
     }
 
     public ResponseEntity<IaasModel> showIaasApi(Long id) {
@@ -66,24 +63,7 @@ public class IaasApiService {
             if (project.get().getIaasApis().size() >0){
                 return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
             } else {
-                IaasApi iaasApi = new IaasApi();
-                iaasApi.setIamUrl(iaasApiPutModel.getIamApi());
-                iaasApi.setServiceUrl(iaasApiPutModel.getServiceApi());
-                iaasApi.setNetworkUrl(iaasApiPutModel.getNetworkApi());
-                iaasApi.setTenantId(iaasApiPutModel.getProjectid());
-                iaasApi.setUsername(iaasApiPutModel.getUsername());
-                iaasApi.setRoutingDomain(routingDomainRepository.getOne(iaasApiPutModel.getRoutingDomainForIaasApi()));
-                iaasApi.setProject(project.get());
-                iaasApi.setEnabled(false);
-                iaasApi.setStatus(false);
-                iaasApi.setExternal(false);
-                iaasApiRepository.save(iaasApi);
-                String uuidToken = UUID.randomUUID().toString();
-                if (vaultHelper.savePassword(iaasApiPutModel.getPassword(), uuidToken)){
-                    iaasApi.setPassword(uuidToken);
-                } else {
-                    iaasApi.setPassword(iaasApiPutModel.getPassword());
-                }
+               iaasApiService.saveApi(iaasApiPutModel,project.get());
                 log.info("{} - Saved new IaasApi for project {}", username, project.get().getName());
                 return new ResponseEntity<>(new Status("ok"), HttpStatus.CREATED);
             }
@@ -99,7 +79,7 @@ public class IaasApiService {
             Optional<IaasApi> api = project.get().getIaasApis().stream().findFirst();
             if (api.isPresent() && api.get().getProject() == project.get()) {
                 try {
-                    openStackApiClient.sendAuthRequest(api.get());
+                    iaasApiService.testApi(api.get());
                 } catch (Exception e) {
                     return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
                 }
