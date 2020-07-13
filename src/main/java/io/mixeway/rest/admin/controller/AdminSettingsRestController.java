@@ -1,19 +1,17 @@
 package io.mixeway.rest.admin.controller;
 
-import io.mixeway.db.entity.WebAppScanStrategy;
+import io.mixeway.db.entity.*;
 import io.mixeway.rest.admin.model.*;
 import io.mixeway.rest.project.model.VulnAuditorSettings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import io.mixeway.db.entity.Proxies;
-import io.mixeway.db.entity.RoutingDomain;
-import io.mixeway.db.entity.Settings;
 import io.mixeway.pojo.Status;
 import io.mixeway.rest.admin.service.AdminSettingsRestService;
 
 import javax.validation.Valid;
+import javax.ws.rs.POST;
 import java.security.Principal;
 
 @RestController()
@@ -113,5 +111,16 @@ public class AdminSettingsRestController {
     public ResponseEntity<VulnAuditorEditSettings> getVulnAuditorSettings(Principal principal)  {
         return adminSettingsRestService.getVulnAuditorSettings(principal.getName());
     }
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PostMapping(value = "/settings/securitygateway")
+    public ResponseEntity<Status> updateSecurityGatewaySettings(Principal principal, @Valid @RequestBody SecurityGateway securityGateway)  {
+        return adminSettingsRestService.updateSecurityGatewaySettings(principal.getName(), securityGateway);
+    }
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @GetMapping(value = "/settings/securitygateway")
+    public ResponseEntity<SecurityGateway> getSecurityGatewaySettings(Principal principal)  {
+        return adminSettingsRestService.getSecurityGatewaySettings(principal.getName());
+    }
+
 
 }

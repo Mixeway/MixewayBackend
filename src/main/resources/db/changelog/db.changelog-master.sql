@@ -1077,3 +1077,13 @@ create table iaasapitype (
 insert into iaasapitype (name) values ('OpenStack'), ('AWS EC2');
 alter table iaasapi add column iaasapitype_id int references iaasapitype(id) on delete cascade ;
 update iaasapi set iaasapitype_id = 1;
+--changeset siewer:grade_based_gateway
+create table securitygatway (
+    id serial primary key,
+    grade boolean,
+    high int,
+    critical int,
+    medium int,
+    vuln int
+);
+insert into securitygatway (grade, high, critical, medium, vuln) values (false,5,3,100,2);

@@ -37,14 +37,16 @@ public class AdminSettingsRestService {
     private final WebAppScanStrategyRepository webAppScanStrategyRepository;
     private final ScannerTypeRepository scannerTypeRepository;
     private final VerifyWebAppScannerService verifyWebAppScannerService;
+    private final SecurityGatewayRepository securityGatewayRepository;
     private static final Logger log = LoggerFactory.getLogger(AdminSettingsRestService.class);
 
 
     public AdminSettingsRestService(SettingsRepository settingsRepository, VaultHelper vaultHelper, WebAppScanStrategyRepository webAppScanStrategyRepository,
-                                    RoutingDomainRepository routingDomainRepository, ProxiesRepository proxiesRepository,
+                                    RoutingDomainRepository routingDomainRepository, ProxiesRepository proxiesRepository, SecurityGatewayRepository securityGatewayRepository,
                                     ScannerTypeRepository scannerTypeRepository, VerifyWebAppScannerService verifyWebAppScannerService){
         this.settingsRepository = settingsRepository;
         this.vaultHelper = vaultHelper;
+        this.securityGatewayRepository = securityGatewayRepository;
         this.scannerTypeRepository = scannerTypeRepository;
         this.proxiesRepository = proxiesRepository;
         this.webAppScanStrategyRepository = webAppScanStrategyRepository;
@@ -309,5 +311,30 @@ public class AdminSettingsRestService {
             return new ResponseEntity<>(vulnAuditorEditSettings, HttpStatus.OK);
         }
         return new ResponseEntity<>( HttpStatus.PRECONDITION_FAILED);
+    }
+
+    @Transactional
+    public ResponseEntity<Status> updateSecurityGatewaySettings(String name, SecurityGateway securityGatewayToUpdate) {
+        SecurityGateway securityGateway = securityGatewayRepository.findAll().stream().findFirst().orElse(null);
+        if (securityGateway != null){
+            securityGateway.setGrade(securityGatewayToUpdate.isGrade());
+            securityGateway.setCritical(securityGatewayToUpdate.getCritical());
+            securityGateway.setHigh(securityGatewayToUpdate.getHigh());
+            securityGateway.setMedium(securityGatewayToUpdate.getMedium());
+            securityGateway.setVuln(securityGatewayToUpdate.getVuln());
+            log.info("{} - Updated settings for Security Quality Gateway", LogUtil.prepare(name));
+            return new ResponseEntity<>(HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
+    public ResponseEntity<SecurityGateway> getSecurityGatewaySettings(String name) {
+        SecurityGateway securityGateway = securityGatewayRepository.findAll().stream().findFirst().orElse(null);
+        if (securityGateway != null){
+            return new ResponseEntity<>(securityGateway, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 }
