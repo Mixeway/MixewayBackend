@@ -86,6 +86,8 @@ public class GetVulnerabilitiesService {
     OpenSourceScanService openSourceScanService;
     @Autowired
     VulnTemplate vulnTemplate;
+    @Autowired
+    SecurityGatewayRepository securityGatewayRepository;
 
     ArrayList<String> severitiesNot = new ArrayList<String>() {{
         add("Log");
@@ -343,18 +345,15 @@ public class GetVulnerabilitiesService {
     @Transactional
     public ResponseEntity<CIVulnManageResponse> getCiScoreForCodeProject(String codeGroup, String codeProject, Long id) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         Optional<CodeProject> cp = codeProjectRepository.getCodeProjectByNameCodeGroupNameAndProjectId(codeProject,codeGroup,id);
+        SecurityGateway securityGateway = securityGatewayRepository.findAll().stream().findFirst().orElse(null);
         CIVulnManageResponse ciVulnManageResponse = new CIVulnManageResponse();
-        if (cp.isPresent()){
+        if (securityGateway !=null && cp.isPresent()){
             if (StringUtils.isNotBlank(cp.get().getdTrackUuid())){
                 openSourceScanService.loadVulnerabilities(cp.get());
             }
             List<VulnManageResponse> vmr = createVulnManageResponseForCodeProject(cp.get());
             ciVulnManageResponse.setVulnManageResponseList(vmr);
-            if (vmr.size()>3){
-                ciVulnManageResponse.setResult("Not Ok");
-            } else {
-                ciVulnManageResponse.setResult("Ok");
-            }
+            ciVulnManageResponse.setResult(calculateResultForCI(securityGateway, vmr));
             ciVulnManageResponse.setInQueue(cp.get().getInQueue() != null ? cp.get().getInQueue() : false);
             ciVulnManageResponse.setRunning(cp.get().getRunning() != null ? cp.get().getRunning() : false);
             ciVulnManageResponse.setCommitId(cp.get().getCommitid());
@@ -362,6 +361,20 @@ public class GetVulnerabilitiesService {
             return new ResponseEntity<>(ciVulnManageResponse,HttpStatus.OK);
         } else {
             return new ResponseEntity<>(null,HttpStatus.NOT_FOUND);
+        }
+    }
+
+    private String calculateResultForCI(SecurityGateway securityGateway, List<VulnManageResponse> vmr) {
+        if (securityGateway.isGrade() && vmr.stream().filter(vuln -> vuln.getGrade()==1).count() >= securityGateway.getVuln()){
+            return "Not OK - limit exceeded";
+        } else if (securityGateway.isGrade() && vmr.stream().filter(vuln -> vuln.getGrade()==1).count() < securityGateway.getVuln()){
+            return "OK";
+        } else if (!securityGateway.isGrade() && (
+                vmr.stream().filter(vuln -> vuln.getSeverity().equals(Constants.API_SEVERITY_CRITICAL)).count() < securityGateway.getCritical()
+                && vmr.stream().filter(vuln -> vuln.getSeverity().equals(Constants.API_SEVERITY_HIGH)).count() < securityGateway.getHigh())){
+            return "OK";
+        } else {
+            return "Not OK - limit exceeded";
         }
     }
 
@@ -399,6 +412,7 @@ public class GetVulnerabilitiesService {
             VulnManageResponse vmr = new VulnManageResponse();
             vmr.setVulnerabilityName(spv.getVulnerability().getName());
             vmr.setSeverity(spv.getSeverity());
+            vmr.setGrade(spv.getGrade());
             vmr.setDateDiscovered(spv.getInserted());
             vulnManageResponses.add(vmr);
         }
