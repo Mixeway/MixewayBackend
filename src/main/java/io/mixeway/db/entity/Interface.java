@@ -4,6 +4,8 @@ import java.util.Set;
 
 import javax.persistence.*;
 
+import com.amazonaws.services.ec2.model.Instance;
+import io.mixeway.config.Constants;
 import io.mixeway.pojo.VulnSource;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.OnDelete;
@@ -15,7 +17,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @EntityScan
-@Table(name = "interface")
+@Table(name = "interface",uniqueConstraints={@UniqueConstraint(columnNames = {"asset_id", "privateip"})})
 @EntityListeners(AuditingEntityListener.class)
 @Cacheable
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
@@ -37,6 +39,18 @@ public class Interface implements VulnSource {
 	@JsonIgnore private Boolean autoCreated;
 	@JsonIgnore private boolean scanRunning;
 	private int risk;
+	public Interface(){}
+	public Interface(Instance instance, Asset asset, RoutingDomain routingDomain, boolean isPublic) {
+		this.setActive(instance.getState().getName().equals(Constants.AWS_STATE_RUNNING));
+		if (isPublic){
+			this.setPrivateip(instance.getPublicIpAddress());
+		} else {
+			this.setPrivateip(instance.getPrivateIpAddress());
+		}
+		this.setAsset(asset);
+		this.setRoutingDomain(routingDomain);
+		this.setAutoCreated(true);
+	}
 
 	public int getRisk() {
 		return risk;

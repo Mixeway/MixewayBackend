@@ -78,10 +78,11 @@ public class IaasApiService {
         Optional<Project> project = projectRepository.findById(id);
         if (project.isPresent()){
             Optional<IaasApi> api = project.get().getIaasApis().stream().findFirst();
-            if (api.isPresent() && api.get().getProject() == project.get()) {
+            if (api.isPresent() && api.get().getProject().getId().equals(project.get().getId())) {
                 try {
                     iaasApiService.testApi(api.get());
                 } catch (Exception e) {
+                    log.error("Testing IAAS API of Type {} failed reason: {}", api.get().getIaasApiType().getName(), e.getLocalizedMessage());
                     return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
                 }
                 return new ResponseEntity<>(new Status("ok"), HttpStatus.OK);
@@ -96,7 +97,7 @@ public class IaasApiService {
         Optional<Project> project = projectRepository.findById(id);
         if (project.isPresent()){
             Optional<IaasApi> api = project.get().getIaasApis().stream().findFirst();
-            if (api.isPresent() && api.get().getProject() == project.get()) {
+            if (api.isPresent() && api.get().getProject().getId().equals(project.get().getId()) && api.get().getStatus()) {
                 api.get().setEnabled(true);
                 iaasApiRepository.save(api.get());
                 log.info("{} - Enabled auto synchro of IaasApi for project {}", username, project.get().getName());
@@ -112,7 +113,7 @@ public class IaasApiService {
         Optional<Project> project = projectRepository.findById(id);
         if (project.isPresent()){
             Optional<IaasApi> api = project.get().getIaasApis().stream().findFirst();
-            if (api.isPresent() && api.get().getProject() == project.get()) {
+            if (api.isPresent() && api.get().getProject().getId().equals(project.get().getId())) {
                 api.get().setEnabled(false);
                 iaasApiRepository.save(api.get());
                 log.info("{} - Disabled auto synchro of IaasApi for project {}", username, project.get().getName());

@@ -33,6 +33,25 @@ public class IaasApi implements Serializable{
     private Boolean external;
     private RoutingDomain routingDomain;
     private IaasApiType iaasApiType;
+    private String vpcid;
+    private String region;
+
+	public String getVpcid() {
+		return vpcid;
+	}
+
+	public void setVpcid(String vpcid) {
+		this.vpcid = vpcid;
+	}
+
+	public String getRegion() {
+		return region;
+	}
+
+	public void setRegion(String region) {
+		this.region = region;
+	}
+
 	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
 	public Long getId() {

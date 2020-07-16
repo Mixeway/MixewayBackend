@@ -60,12 +60,14 @@ public class OpenStackApiClient implements IaasApiClient {
 	private SecurityGroupRuleRepository securityGroupRuleRepository;
 	private ActivityRepository activityRepository;
 	private RoutingDomainRepository routingDomainRepository;
+	private IaasApiTypeRepisotory iaasApiTypeRepisotory;
 
 	OpenStackApiClient(IaasApiRepository iaasApiRepository, VaultHelper vaultHelper, SecureRestTemplate secureRestTemplate,
 					   AssetRepository assetRepository, InterfaceRepository interfaceRepository,
-					   SecurityGroupRepository securityGroupRepository,
+					   SecurityGroupRepository securityGroupRepository, IaasApiTypeRepisotory iaasApiTypeRepisotory,
 					   SecurityGroupRuleRepository securityGroupRuleRepository, ActivityRepository activityRepository, RoutingDomainRepository routingDomainRepository){
 		this.vaultHelper = vaultHelper;
+		this.iaasApiTypeRepisotory = iaasApiTypeRepisotory;
 		this.secureRestTemplate = secureRestTemplate;
 		this.iaasApiRepository = iaasApiRepository;
 		this.assetRepository = assetRepository;
@@ -279,6 +281,7 @@ public class OpenStackApiClient implements IaasApiClient {
 		iaasApi.setEnabled(false);
 		iaasApi.setStatus(false);
 		iaasApi.setExternal(false);
+		iaasApi.setIaasApiType(iaasApiTypeRepisotory.findByName(Constants.IAAS_API_TYPE_OPENSTACK));
 		iaasApiRepository.save(iaasApi);
 		String uuidToken = UUID.randomUUID().toString();
 		if (vaultHelper.savePassword(iaasApiPutModel.getPassword(), uuidToken)){
@@ -286,6 +289,7 @@ public class OpenStackApiClient implements IaasApiClient {
 		} else {
 			iaasApi.setPassword(iaasApiPutModel.getPassword());
 		}
+		iaasApiRepository.save(iaasApi);
 	}
 
 	@Override

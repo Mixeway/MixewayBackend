@@ -17,7 +17,7 @@ public class IaasApiScheduler {
         this.iaasApiService = iaasApiService;
     }
 
-    @Scheduled(fixedDelay = 300000)
+    @Scheduled(fixedDelay = 150000)
     public void synchronizeWithIaas() {
         iaasApiService.loadDataFromIaas();
     }

@@ -1087,3 +1087,7 @@ create table securitygatway (
     vuln int
 );
 insert into securitygatway (grade, high, critical, medium, vuln) values (false,5,3,100,2);
+
+--changeset siewer:aws_ec2_integration
+alter table iaasapi add column region text;
+alter table iaasapi add column vpcid text;

@@ -271,4 +271,6 @@ public class Constants {
     public static final String STATUS_REMOVED = "REMOVED";
     public static final String IAAS_API_TYPE_AWS_EC2 = "AWS EC2";
 	public static final String IAAS_API_TYPE_OPENSTACK = "OpenStack";
+    public static final String AWS_VPC_ID = "vpc-id";
+	public static final String AWS_STATE_RUNNING = "running";
 }

@@ -4,6 +4,8 @@ import java.util.Set;
 
 import javax.persistence.*;
 
+import com.amazonaws.services.ec2.model.Instance;
+import io.mixeway.config.Constants;
 import io.mixeway.pojo.VulnSource;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.OnDelete;
@@ -37,6 +39,15 @@ public class Asset implements VulnSource {
 	@JsonIgnore private String fix;
 	@JsonIgnore private String assetType;
 	@JsonIgnore private String requestId;
+	public Asset(){}
+
+	public Asset(Instance instance, IaasApi iaasApi){
+		this.setName(instance.getTags().stream().filter(p -> p.getKey().equals("Name")).findFirst().orElse(null).getValue());
+		this.setActive(instance.getState().getName().equals(Constants.AWS_STATE_RUNNING));
+		this.setProject(iaasApi.getProject());
+		this.setRoutingDomain(iaasApi.getRoutingDomain());
+		this.setOrigin(Constants.ORIGIN_API);
+	}
 
 	@Column(name = "requestid")
 	public String getRequestId() {

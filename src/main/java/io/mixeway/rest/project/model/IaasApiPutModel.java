@@ -10,14 +10,24 @@ import javax.validation.constraints.NotNull;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class IaasApiPutModel {
-    @NotEmpty
+
     private String iamApi;
-    @NotBlank private String networkApi;
-    @NotBlank private String serviceApi;
-    @NotBlank private String projectid;
-    @NotBlank private String username;
-    @NotBlank private String password;
+    private String networkApi;
+    private String serviceApi;
+    private String projectid;
+    private String username;
+    private String password;
     @NotBlank private String apiType;
+    private String region;
+
+    public String getRegion() {
+        return region;
+    }
+
+    public void setRegion(String region) {
+        this.region = region;
+    }
+
     @NotNull
     @Min(1) private Long routingDomainForIaasApi;
 
