@@ -32,6 +32,26 @@ public class IaasApi implements Serializable{
     private Boolean status;
     private Boolean external;
     private RoutingDomain routingDomain;
+    private IaasApiType iaasApiType;
+    private String vpcid;
+    private String region;
+
+	public String getVpcid() {
+		return vpcid;
+	}
+
+	public void setVpcid(String vpcid) {
+		this.vpcid = vpcid;
+	}
+
+	public String getRegion() {
+		return region;
+	}
+
+	public void setRegion(String region) {
+		this.region = region;
+	}
+
 	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
 	public Long getId() {
@@ -169,6 +189,17 @@ public class IaasApi implements Serializable{
 
 	public void setRoutingDomain(RoutingDomain routingDomain) {
 		this.routingDomain = routingDomain;
+	}
+
+	@ManyToOne(fetch = FetchType.EAGER, optional = false)
+	@JoinColumn(name = "iaasapitype_id", nullable = false)
+	@OnDelete(action = OnDeleteAction.CASCADE)
+	public IaasApiType getIaasApiType() {
+		return iaasApiType;
+	}
+
+	public void setIaasApiType(IaasApiType iaasApiType) {
+		this.iaasApiType = iaasApiType;
 	}
 
 	@PreRemove

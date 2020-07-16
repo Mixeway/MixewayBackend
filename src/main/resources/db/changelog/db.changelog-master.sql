@@ -1069,6 +1069,14 @@ update codeproject set skipallscan=true where skipallscan is null;
 alter table nessusscan add column retries int;
 update nessusscan set retries=0;
 
+--changeset siewer:198
+create table iaasapitype (
+    id serial primary key,
+    name text
+);
+insert into iaasapitype (name) values ('OpenStack'), ('AWS EC2');
+alter table iaasapi add column iaasapitype_id int references iaasapitype(id) on delete cascade ;
+update iaasapi set iaasapitype_id = 1;
 --changeset siewer:grade_based_gateway
 create table securitygatway (
     id serial primary key,
@@ -1079,3 +1087,7 @@ create table securitygatway (
     vuln int
 );
 insert into securitygatway (grade, high, critical, medium, vuln) values (false,5,3,100,2);
+
+--changeset siewer:aws_ec2_integration
+alter table iaasapi add column region text;
+alter table iaasapi add column vpcid text;

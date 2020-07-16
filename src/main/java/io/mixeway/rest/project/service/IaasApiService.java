@@ -1,7 +1,8 @@
 package io.mixeway.rest.project.service;
 
+import io.mixeway.db.entity.IaasApiType;
 import io.mixeway.db.entity.Project;
-import io.mixeway.pojo.VaultHelper;
+import io.mixeway.db.repository.IaasApiTypeRepisotory;
 import io.mixeway.rest.project.model.IaasApiPutModel;
 import io.mixeway.rest.project.model.IaasModel;
 import org.slf4j.Logger;
@@ -12,30 +13,27 @@ import org.springframework.stereotype.Service;
 import io.mixeway.db.entity.IaasApi;
 import io.mixeway.db.repository.IaasApiRepository;
 import io.mixeway.db.repository.ProjectRepository;
-import io.mixeway.db.repository.RoutingDomainRepository;
-import io.mixeway.integrations.servicediscovery.plugin.openstack.apiclient.OpenStackApiClient;
 import io.mixeway.pojo.Status;
 
 import javax.transaction.Transactional;
+import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 public class IaasApiService {
     private static final Logger log = LoggerFactory.getLogger(IaasApiService.class);
     private final ProjectRepository projectRepository;
-    private final RoutingDomainRepository routingDomainRepository;
     private final IaasApiRepository iaasApiRepository;
-    private final VaultHelper vaultHelper;
-    private final OpenStackApiClient openStackApiClient;
+    private final IaasApiTypeRepisotory iaasApiTypeRepisotory;
+    private final io.mixeway.integrations.servicediscovery.service.IaasService iaasApiService;
 
-    IaasApiService(ProjectRepository projectRepository, RoutingDomainRepository routingDomainRepository,
-                   IaasApiRepository iaasApiRepository, VaultHelper vaultHelper, OpenStackApiClient openStackApiClient){
+
+    IaasApiService(ProjectRepository projectRepository, IaasApiTypeRepisotory iaasApiTypeRepisotory,
+                   IaasApiRepository iaasApiRepository, io.mixeway.integrations.servicediscovery.service.IaasService iaasApiService){
         this.projectRepository = projectRepository;
-        this.routingDomainRepository = routingDomainRepository;
         this.iaasApiRepository = iaasApiRepository;
-        this.openStackApiClient = openStackApiClient;
-        this.vaultHelper = vaultHelper;
+        this.iaasApiTypeRepisotory = iaasApiTypeRepisotory;
+        this.iaasApiService = iaasApiService;
     }
 
     public ResponseEntity<IaasModel> showIaasApi(Long id) {
@@ -66,24 +64,7 @@ public class IaasApiService {
             if (project.get().getIaasApis().size() >0){
                 return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
             } else {
-                IaasApi iaasApi = new IaasApi();
-                iaasApi.setIamUrl(iaasApiPutModel.getIamApi());
-                iaasApi.setServiceUrl(iaasApiPutModel.getServiceApi());
-                iaasApi.setNetworkUrl(iaasApiPutModel.getNetworkApi());
-                iaasApi.setTenantId(iaasApiPutModel.getProjectid());
-                iaasApi.setUsername(iaasApiPutModel.getUsername());
-                iaasApi.setRoutingDomain(routingDomainRepository.getOne(iaasApiPutModel.getRoutingDomainForIaasApi()));
-                iaasApi.setProject(project.get());
-                iaasApi.setEnabled(false);
-                iaasApi.setStatus(false);
-                iaasApi.setExternal(false);
-                iaasApiRepository.save(iaasApi);
-                String uuidToken = UUID.randomUUID().toString();
-                if (vaultHelper.savePassword(iaasApiPutModel.getPassword(), uuidToken)){
-                    iaasApi.setPassword(uuidToken);
-                } else {
-                    iaasApi.setPassword(iaasApiPutModel.getPassword());
-                }
+               iaasApiService.saveApi(iaasApiPutModel,project.get());
                 log.info("{} - Saved new IaasApi for project {}", username, project.get().getName());
                 return new ResponseEntity<>(new Status("ok"), HttpStatus.CREATED);
             }
@@ -97,10 +78,11 @@ public class IaasApiService {
         Optional<Project> project = projectRepository.findById(id);
         if (project.isPresent()){
             Optional<IaasApi> api = project.get().getIaasApis().stream().findFirst();
-            if (api.isPresent() && api.get().getProject() == project.get()) {
+            if (api.isPresent() && api.get().getProject().getId().equals(project.get().getId())) {
                 try {
-                    openStackApiClient.sendAuthRequest(api.get());
+                    iaasApiService.testApi(api.get());
                 } catch (Exception e) {
+                    log.error("Testing IAAS API of Type {} failed reason: {}", api.get().getIaasApiType().getName(), e.getLocalizedMessage());
                     return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
                 }
                 return new ResponseEntity<>(new Status("ok"), HttpStatus.OK);
@@ -115,7 +97,7 @@ public class IaasApiService {
         Optional<Project> project = projectRepository.findById(id);
         if (project.isPresent()){
             Optional<IaasApi> api = project.get().getIaasApis().stream().findFirst();
-            if (api.isPresent() && api.get().getProject() == project.get()) {
+            if (api.isPresent() && api.get().getProject().getId().equals(project.get().getId()) && api.get().getStatus()) {
                 api.get().setEnabled(true);
                 iaasApiRepository.save(api.get());
                 log.info("{} - Enabled auto synchro of IaasApi for project {}", username, project.get().getName());
@@ -131,7 +113,7 @@ public class IaasApiService {
         Optional<Project> project = projectRepository.findById(id);
         if (project.isPresent()){
             Optional<IaasApi> api = project.get().getIaasApis().stream().findFirst();
-            if (api.isPresent() && api.get().getProject() == project.get()) {
+            if (api.isPresent() && api.get().getProject().getId().equals(project.get().getId())) {
                 api.get().setEnabled(false);
                 iaasApiRepository.save(api.get());
                 log.info("{} - Disabled auto synchro of IaasApi for project {}", username, project.get().getName());
@@ -158,4 +140,7 @@ public class IaasApiService {
         return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
     }
 
+    public ResponseEntity<List<IaasApiType>> getIaasApiTypes(String name) {
+        return new ResponseEntity<>(iaasApiTypeRepisotory.findAll(),HttpStatus.OK);
+    }
 }
