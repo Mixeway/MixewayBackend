@@ -47,6 +47,7 @@ public class Vuln {
 			this.setSeverity(projectVulnerability.getSeverity());
 			this.setDescription(projectVulnerability.getDescription());
 			this.setHostname(hostname);
+			this.setLocation(((Asset) target).getName());
 			this.setProject(projectVulnerability.getProject().getName());
 			this.setCiid(projectVulnerability.getProject().getCiid());
 			this.setDateCreated(projectVulnerability.getInserted());
@@ -54,6 +55,7 @@ public class Vuln {
 		} else if ((target instanceof CodeProject) && projectVulnerability.getVulnerabilitySource().getName().equals(Constants.VULN_TYPE_OPENSOURCE)){
 			CodeProject cp = (CodeProject)target;
 			this.setId(projectVulnerability.getId());
+			this.setLocation(cp.getName());
 			this.setType(Constants.API_SCANNER_PACKAGE);
 			this.setVulnerabilityName(projectVulnerability.getVulnerability().getName());
 			this.setSeverity(projectVulnerability.getSeverity());
