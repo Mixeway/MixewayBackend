@@ -301,7 +301,7 @@ public class GetVulnerabilitiesService {
             List<SoftVuln> softVulns = new ArrayList<>();
             for (CodeProject cp : codeProjectRepository.findByCodeGroupIn(project.getCodes())){
                 try (Stream<ProjectVulnerability> softwarePacketVulnerabilities = vulnTemplate.projectVulnerabilityRepository
-                        .findByCodeProjectAndVulnerabilitySource(cp, vulnTemplate.SOURCE_SOURCECODE)) {
+                        .findByCodeProjectAndVulnerabilitySource(cp, vulnTemplate.SOURCE_OPENSOURCE)) {
                     for (ProjectVulnerability spv : softwarePacketVulnerabilities.collect(Collectors.toList())){
                         Vuln v = new Vuln(spv, null, null,cp, Constants.API_SCANNER_PACKAGE);
                         tmpVulns.add(v);
