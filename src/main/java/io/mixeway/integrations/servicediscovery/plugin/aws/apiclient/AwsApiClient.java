@@ -38,6 +38,8 @@ public class AwsApiClient implements IaasApiClient {
 
     @Value("${HTTPS_PROXY}")
     String httpsProxy;
+    @Value("${NO_PROXY}")
+    String nonProxyHosts;
     private static final Logger log = LoggerFactory.getLogger(AwsApiClient.class);
     private final IaasApiRepository iaasApiRepository;
     private final IaasApiTypeRepisotory iaasApiTypeRepisotory;
@@ -81,7 +83,12 @@ public class AwsApiClient implements IaasApiClient {
     private void setProxy() {
         try {
             URL proxy = new URL(httpsProxy);
-            System.setProperty("java.net.useSystemProxies", "true");
+            System.setProperty("https.proxyHost",proxy.getHost());
+            System.setProperty("https.proxyPort", String.valueOf(proxy.getPort()));
+            System.setProperty("http.proxyHost",proxy.getHost());
+            System.setProperty("http.proxyPort", String.valueOf(proxy.getPort()));
+            System.setProperty("https.nonProxyHosts", nonProxyHosts);
+            System.setProperty("http.nonProxyHosts", nonProxyHosts);
         } catch (MalformedURLException e) {
             log.debug("Cannot set proxy {}",e.getLocalizedMessage());
         }
@@ -90,7 +97,12 @@ public class AwsApiClient implements IaasApiClient {
     private void unsetProxy() {
         try {
             URL proxy = new URL(httpsProxy);
-            System.setProperty("java.net.useSystemProxies", "false");
+            System.setProperty("https.proxyHost","");
+            System.setProperty("https.proxyPort","");
+            System.setProperty("http.proxyHost","");
+            System.setProperty("http.proxyPort","");
+            System.setProperty("https.nonProxyHosts", "");
+            System.setProperty("http.nonProxyHosts", "");
         } catch (MalformedURLException e) {
             log.debug("Cannot set proxy {}",e.getLocalizedMessage());
         }
