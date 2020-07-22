@@ -23,6 +23,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.validation.Valid;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -77,20 +79,26 @@ public class AwsApiClient implements IaasApiClient {
     }
 
     private void setProxy() {
-        if (StringUtils.isNotBlank(httpsProxy) && httpsProxy.contains(":")){
-            System.setProperty("https.proxyHost",httpsProxy.split("://")[0].split(":")[0]);
-            System.setProperty("https.proxyPort",httpsProxy.split("://")[0].split(":")[1]);
-            System.setProperty("http.proxyHost",httpsProxy.split("://")[0].split(":")[0]);
-            System.setProperty("http.proxyPort",httpsProxy.split("://")[0].split(":")[1]);
+        try {
+            URL proxy = new URL(httpsProxy);
+            System.setProperty("https.proxyHost",proxy.getHost());
+            System.setProperty("https.proxyPort", String.valueOf(proxy.getPort()));
+            System.setProperty("http.proxyHost",proxy.getHost());
+            System.setProperty("http.proxyPort", String.valueOf(proxy.getPort()));
+        } catch (MalformedURLException e) {
+            log.debug("Cannot set proxy {}",e.getLocalizedMessage());
         }
     }
 
     private void unsetProxy() {
-        if (StringUtils.isNotBlank(httpsProxy) && httpsProxy.contains(":")){
+        try {
+            URL proxy = new URL(httpsProxy);
             System.setProperty("https.proxyHost","");
             System.setProperty("https.proxyPort","");
             System.setProperty("http.proxyHost","");
             System.setProperty("http.proxyPort","");
+        } catch (MalformedURLException e) {
+            log.debug("Cannot set proxy {}",e.getLocalizedMessage());
         }
     }
 
