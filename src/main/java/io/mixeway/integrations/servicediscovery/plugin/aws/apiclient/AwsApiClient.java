@@ -123,6 +123,7 @@ public class AwsApiClient implements IaasApiClient {
     @Transactional
     public void synchronize(IaasApi iaasApi) {
         AWSCredentials credentials = new BasicAWSCredentials(iaasApi.getUsername(),vaultHelper.getPassword(iaasApi.getPassword()));
+        setProxy();
         AmazonEC2 client = AmazonEC2ClientBuilder.standard()
                 .withCredentials(new AWSStaticCredentialsProvider(credentials))
                 .withRegion(iaasApi.getRegion())
@@ -132,6 +133,7 @@ public class AwsApiClient implements IaasApiClient {
                 .withFilters(new Filter().withName(Constants.AWS_VPC_ID)
                         .withValues(iaasApi.getTenantId()));
         DescribeInstancesResult response = client.describeInstances(req1);
+        unsetProxy();
         for(Reservation reservation : response.getReservations()) {
             for (Instance instance : reservation.getInstances()) {
                 createOrUpdateAssetPrivate(instance,iaasApi);
