@@ -81,10 +81,7 @@ public class AwsApiClient implements IaasApiClient {
     private void setProxy() {
         try {
             URL proxy = new URL(httpsProxy);
-            System.setProperty("https.proxyHost",proxy.getHost());
-            System.setProperty("https.proxyPort", String.valueOf(proxy.getPort()));
-            System.setProperty("http.proxyHost",proxy.getHost());
-            System.setProperty("http.proxyPort", String.valueOf(proxy.getPort()));
+            System.setProperty("java.net.useSystemProxies", "true");
         } catch (MalformedURLException e) {
             log.debug("Cannot set proxy {}",e.getLocalizedMessage());
         }
@@ -93,10 +90,7 @@ public class AwsApiClient implements IaasApiClient {
     private void unsetProxy() {
         try {
             URL proxy = new URL(httpsProxy);
-            System.setProperty("https.proxyHost","");
-            System.setProperty("https.proxyPort","");
-            System.setProperty("http.proxyHost","");
-            System.setProperty("http.proxyPort","");
+            System.setProperty("java.net.useSystemProxies", "false");
         } catch (MalformedURLException e) {
             log.debug("Cannot set proxy {}",e.getLocalizedMessage());
         }
