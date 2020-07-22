@@ -8,6 +8,7 @@ import io.mixeway.db.entity.RoutingDomain;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import io.mixeway.db.entity.Asset;
@@ -46,5 +47,7 @@ public interface AssetRepository extends JpaRepository<Asset,Long> {
 	List<Asset> findByRequestId(String requestId);
 	@Query(value="select * from asset where project_id=?1",nativeQuery=true)
 	List<Asset> getAssetForProjectByNativeQuery(Long project_id);
-
+	@Modifying
+	@Query(value = "update Asset a set a.active=:status where a.project=:project")
+    void updateStatusOfAssetByProject(@Param("project") Project project,@Param("status") boolean status);
 }

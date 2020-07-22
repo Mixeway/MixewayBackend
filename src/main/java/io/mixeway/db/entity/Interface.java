@@ -5,6 +5,7 @@ import java.util.Set;
 import javax.persistence.*;
 
 import com.amazonaws.services.ec2.model.Instance;
+import com.amazonaws.services.ec2.model.NetworkInterface;
 import io.mixeway.config.Constants;
 import io.mixeway.pojo.VulnSource;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -52,7 +53,19 @@ public class Interface implements VulnSource {
 		this.setAutoCreated(true);
 	}
 
-	public int getRisk() {
+    public Interface(NetworkInterface networkInterface, Asset asset, RoutingDomain routingDomain, boolean isPublic) {
+		this.setActive(networkInterface.getStatus().equals(Constants.AWS_STATE_INUSE));
+		if (isPublic){
+			this.setPrivateip(networkInterface.getAssociation().getPublicIp());
+		} else {
+			this.setPrivateip(networkInterface.getPrivateIpAddress());
+		}
+		this.setAsset(asset);
+		this.setRoutingDomain(routingDomain);
+		this.setAutoCreated(true);
+    }
+
+    public int getRisk() {
 		return risk;
 	}
 
