@@ -65,8 +65,8 @@ public class AwsApiClient implements IaasApiClient {
     @Override
     @Transactional
     public void testApiClient(IaasApi iaasApi) {
-        setProxy();
         AWSCredentials credentials = new BasicAWSCredentials(iaasApi.getUsername(),vaultHelper.getPassword(iaasApi.getPassword()));
+        setProxy();
         AmazonEC2 client = AmazonEC2ClientBuilder.standard()
                 .withCredentials(new AWSStaticCredentialsProvider(credentials))
                 .withRegion(iaasApi.getRegion())
