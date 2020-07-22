@@ -18,9 +18,11 @@ import io.mixeway.rest.project.model.IaasApiPutModel;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.validation.Valid;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -32,6 +34,8 @@ import java.util.UUID;
 @Component
 public class AwsApiClient implements IaasApiClient {
 
+    @Value("${HTTPS_PROXY}")
+    String httpsProxy;
     private static final Logger log = LoggerFactory.getLogger(AwsApiClient.class);
     private final IaasApiRepository iaasApiRepository;
     private final IaasApiTypeRepisotory iaasApiTypeRepisotory;
@@ -59,6 +63,7 @@ public class AwsApiClient implements IaasApiClient {
     @Override
     @Transactional
     public void testApiClient(IaasApi iaasApi) {
+        setProxy();
         AWSCredentials credentials = new BasicAWSCredentials(iaasApi.getUsername(),vaultHelper.getPassword(iaasApi.getPassword()));
         AmazonEC2 client = AmazonEC2ClientBuilder.standard()
                 .withCredentials(new AWSStaticCredentialsProvider(credentials))
@@ -68,7 +73,25 @@ public class AwsApiClient implements IaasApiClient {
         DescribeInstancesResult response = client.describeInstances(request);
         iaasApi.setStatus(true);
         iaasApiRepository.save(iaasApi);
+        unsetProxy();
+    }
 
+    private void setProxy() {
+        if (StringUtils.isNotBlank(httpsProxy) && httpsProxy.contains(":")){
+            System.setProperty("https.proxyHost",httpsProxy.split("://")[0].split(":")[0]);
+            System.setProperty("https.proxyPort",httpsProxy.split("://")[0].split(":")[1]);
+            System.setProperty("http.proxyHost",httpsProxy.split("://")[0].split(":")[0]);
+            System.setProperty("http.proxyPort",httpsProxy.split("://")[0].split(":")[1]);
+        }
+    }
+
+    private void unsetProxy() {
+        if (StringUtils.isNotBlank(httpsProxy) && httpsProxy.contains(":")){
+            System.setProperty("https.proxyHost","");
+            System.setProperty("https.proxyPort","");
+            System.setProperty("http.proxyHost","");
+            System.setProperty("http.proxyPort","");
+        }
     }
 
     /**
