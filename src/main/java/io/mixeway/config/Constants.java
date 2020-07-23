@@ -273,4 +273,5 @@ public class Constants {
 	public static final String IAAS_API_TYPE_OPENSTACK = "OpenStack";
     public static final String AWS_VPC_ID = "vpc-id";
 	public static final String AWS_STATE_RUNNING = "running";
+    public static final String AWS_STATE_INUSE = "in-use";
 }

@@ -5,6 +5,7 @@ import java.util.Set;
 import javax.persistence.*;
 
 import com.amazonaws.services.ec2.model.Instance;
+import com.amazonaws.services.ec2.model.NetworkInterface;
 import io.mixeway.config.Constants;
 import io.mixeway.pojo.VulnSource;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -46,6 +47,14 @@ public class Asset implements VulnSource {
 		this.setActive(instance.getState().getName().equals(Constants.AWS_STATE_RUNNING));
 		this.setProject(iaasApi.getProject());
 		this.setRoutingDomain(iaasApi.getRoutingDomain());
+		this.setOrigin(Constants.ORIGIN_API);
+	}
+
+	public Asset(NetworkInterface networkInterface, IaasApi iaasApi, RoutingDomain routingDomain) {
+		this.setName(networkInterface.getPrivateDnsName());
+		this.setActive(networkInterface.getStatus().equals(Constants.AWS_STATE_INUSE));
+		this.setProject(iaasApi.getProject());
+		this.setRoutingDomain(routingDomain);
 		this.setOrigin(Constants.ORIGIN_API);
 	}
 
