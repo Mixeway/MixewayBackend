@@ -99,10 +99,16 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 
 	@Override
 	public boolean runScan(NessusScan ns) throws JSONException, KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, CertificateException, IOException {
-		if (ns.getIsAutomatic())
+		if (ns.getIsAutomatic()) {
 			return runAutomaticScan(ns);
-		else
+		}
+		else if (ns.getTaskId() == null) {
+			runScanManual(ns);
+		}
+		else {
 			return runOnceManualScan(ns);
+		}
+		return false;
 	}
 
 	@Override
@@ -136,8 +142,11 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 			if (response.getStatusCode() == HttpStatus.OK) {
 				String statusStr = new JSONObject(response.getBody()).getString(Constants.STATUS);
 				boolean status = statusStr.equals(Constants.STATUS_DONE);
-				nessusScan.setRunning(status);
-				nessusScanRepository.save(nessusScan);
+				if (!statusStr.equals(Constants.STATUS_DONE) && !statusStr.equals(Constants.STATUS_RUNNING)){
+					nessusScan.setRunning(false);
+					nessusScan.setTaskId(null);
+					nessusScanRepository.save(nessusScan);
+				}
 				if (new JSONObject(response.getBody()).getString(Constants.STATUS).equals(Constants.STATUS_DONE))
 					log.debug("Checking status for task {} status is: {}", nessusScan.getTaskId(),new JSONObject(response.getBody()).getString(Constants.STATUS));
 				return status;
@@ -168,10 +177,11 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 			ResponseEntity<String> response = restTemplate.exchange(nessusScan.getNessus().getApiUrl() + "/getreport", HttpMethod.POST, entity, String.class);
 			if (response.getStatusCode() == HttpStatus.OK) {
 				setVulnerabilities(nessusScan, response.getBody());
+				vulnTemplate.projectVulnerabilityRepository.deleteByStatus(vulnTemplate.STATUS_REMOVED);
+				nessusScan.setRunning(false);
+				nessusScan.setTaskId(null);
+				nessusScanRepository.save(nessusScan);
 			}
-			vulnTemplate.projectVulnerabilityRepository.deleteByStatus(vulnTemplate.STATUS_REMOVED);
-			nessusScan.setRunning(false);
-			nessusScanRepository.save(nessusScan);
 		} catch (HttpClientErrorException ex) {
 			log.error("GetReport HTTP exception {} for {}", ex.getRawStatusCode(), nessusScan.getProject().getName());
 		} catch (HttpServerErrorException e) {
