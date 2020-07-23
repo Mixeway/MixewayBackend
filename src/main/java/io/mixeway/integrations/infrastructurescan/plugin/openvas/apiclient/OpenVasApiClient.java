@@ -24,6 +24,7 @@ import io.mixeway.domain.service.vulnerability.VulnTemplate;
 import io.mixeway.integrations.infrastructurescan.plugin.openvas.model.RestRequestBody;
 import io.mixeway.integrations.infrastructurescan.plugin.openvas.model.User;
 import io.mixeway.integrations.infrastructurescan.service.NetworkScanClient;
+import io.mixeway.pojo.ScanHelper;
 import io.mixeway.pojo.SecureRestTemplate;
 import io.mixeway.pojo.SecurityScanner;
 import io.mixeway.pojo.VaultHelper;
@@ -49,6 +50,8 @@ import org.springframework.web.client.RestTemplate;
 
 import com.google.gson.Gson;
 
+import javax.ws.rs.core.MediaType;
+
 
 @Component
 public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
@@ -62,23 +65,25 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 	private String trustStorePassword;
 	private final static Logger log = LoggerFactory.getLogger(OpenVasApiClient.class);
 	private DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-	private VaultHelper vaultHelper;
-	private ScannerRepository nessusRepository;
-	private NessusScanRepository nessusScanRepository;
-	private InterfaceRepository interfaceRepository;
-	private AssetRepository assetRepository;
-	private SecureRestTemplate secureRestTemplate;
-	private ScannerRepository scannerRepository;
-	private ScannerTypeRepository scannerTypeRepository;
-	private ProxiesRepository proxiesRepository;
-	private RoutingDomainRepository routingDomainRepository;
-	private VulnTemplate vulnTemplate;
+	private final VaultHelper vaultHelper;
+	private final ScanHelper scanHelper;
+	private final ScannerRepository nessusRepository;
+	private final NessusScanRepository nessusScanRepository;
+	private final InterfaceRepository interfaceRepository;
+	private final AssetRepository assetRepository;
+	private final SecureRestTemplate secureRestTemplate;
+	private final ScannerRepository scannerRepository;
+	private final ScannerTypeRepository scannerTypeRepository;
+	private final ProxiesRepository proxiesRepository;
+	private final RoutingDomainRepository routingDomainRepository;
+	private final VulnTemplate vulnTemplate;
 	OpenVasApiClient(VaultHelper vaultHelper, ScannerRepository nessusRepository, NessusScanRepository nessusScanRepository, InterfaceRepository interfaceRepository,
-					 AssetRepository assetRepository,
+					 AssetRepository assetRepository, ScanHelper scanHelper,
 					 SecureRestTemplate secureRestTemplate, ScannerRepository scannerRepository,
 					 ScannerTypeRepository scannerTypeRepository, ProxiesRepository proxiesRepository, RoutingDomainRepository routingDomainRepository,
 					 VulnTemplate vulnTemplate){
 		this.vaultHelper = vaultHelper;
+		this.scanHelper = scanHelper;
 		this.nessusRepository = nessusRepository;
 		this.scannerRepository = scannerRepository;
 		this.scannerTypeRepository = scannerTypeRepository;
@@ -125,12 +130,12 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 			rrb.setParams(params);
 			RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(null);
 			HttpHeaders headers = new HttpHeaders();
-			headers.set("Content-Type", "application/json");
+			headers.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
 			HttpEntity<String> entity = new HttpEntity<>(new Gson().toJson(rrb),headers);
 			ResponseEntity<String> response = restTemplate.exchange(nessusScan.getNessus().getApiUrl() + "/checktask", HttpMethod.POST, entity, String.class);
 			if (response.getStatusCode() == HttpStatus.OK) {
 				String statusStr = new JSONObject(response.getBody()).getString(Constants.STATUS);
-				Boolean status = statusStr.equals(Constants.STATUS_DONE);
+				boolean status = statusStr.equals(Constants.STATUS_DONE);
 				nessusScan.setRunning(status);
 				nessusScanRepository.save(nessusScan);
 				if (new JSONObject(response.getBody()).getString(Constants.STATUS).equals(Constants.STATUS_DONE))
@@ -138,6 +143,7 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 				return status;
 			}
 		} catch (HttpClientErrorException e) {
+			nessusScan.setRunning(true);
 			log.error("CheckStatus HTTP exception {} for {}", e.getRawStatusCode(), nessusScan.getProject().getName());
 		} catch (HttpServerErrorException e) {
 			log.warn("Exception during checkStatus httpCode: {}",e.getStatusCode().toString());
@@ -417,35 +423,9 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 	// ips = private + floating ips
 	private HashMap<String, String> prepareCreateTarget(NessusScan ns) {
 		HashMap<String,String> createTarget = new HashMap<>();
-		List<String> ips;
-		List<Asset> activeAssetsInProject = assetRepository.findByProjectAndActive(ns.getProject(), true);
-		List<Interface> ifsWithFloating = interfaceRepository.findByAssetInAndFloatingipNotNull(activeAssetsInProject);
-		List<Interface> ifsAll = interfaceRepository.findByAssetIn(activeAssetsInProject);
-		if (ns.getIsAutomatic()) {
-			if(ns.getNessus().getUsePublic()) {
-				ips = ifsWithFloating.stream().filter(n -> n.getFloatingip() != null && !n.getAutoCreated()).map(Interface::getFloatingip).collect(Collectors.toList());
-				ips.addAll(ifsAll.stream().filter(n -> n.getPrivateip() != null && !n.getAutoCreated()).map(Interface::getPrivateip).collect(Collectors.toList()));
-				ips.addAll(ifsAll.stream().filter(n -> n.getPool() != null && !n.getAutoCreated()).map(Interface::getPool).collect(Collectors.toList()));
-			} else {
-				ips = ifsAll.stream().filter(n -> n.getPrivateip() != null && !n.getAutoCreated()).map(Interface::getPrivateip).collect(Collectors.toList());
-				ips.addAll(ifsAll.stream().filter(n -> n.getPool() != null && !n.getAutoCreated()).map(Interface::getPool).collect(Collectors.toList()));
-			}
-		} else {
-			if (ns.getNessus().getUsePublic()) {
-				ips = ns.getInterfaces().stream().filter(n -> n.getFloatingip() != null && !n.getAutoCreated()).map(Interface::getFloatingip).collect(Collectors.toList());
-				ips.addAll(ns.getInterfaces().stream().filter(n -> n.getPrivateip() != null && !n.getAutoCreated()).map(Interface::getPrivateip).collect(Collectors.toList()));
-				ips.addAll(ifsAll.stream().filter(n -> n.getPool() != null && !n.getAutoCreated()).map(Interface::getPool).collect(Collectors.toList()));
-			}
-			else {
-				ips = ns.getInterfaces().stream().filter(n -> n.getPrivateip() != null && !n.getAutoCreated()).map(Interface::getPrivateip).collect(Collectors.toList());
-				ips.addAll(ifsAll.stream().filter(n -> n.getPool() != null && !n.getAutoCreated()).map(Interface::getPool).collect(Collectors.toList()));
-			}
-		}
-		log.info("Scope of scan is [{}]: {}",ns.getNessus().getRoutingDomain().getName(), StringUtils.join(ips, ","));
 		createTarget.put(Constants.TARGET_NAME, ns.getProject().getName()+"-"+(ns.getIsAutomatic()? Constants.SCAN_MODE_AUTO : Constants.SCAN_MODE_MANUAL)+"-"+UUID.randomUUID());
-		createTarget.put(Constants.HOSTS, StringUtils.join(ips, ","));
-		//TODO: Why doesnt work?
-		//createTarget.put(Constants.HOSTS, StringUtils.join(scanHelper.prepareTargetsForScan(ns,true), ","));
+		//createTarget.put(Constants.HOSTS, StringUtils.join(ips, ","));
+		createTarget.put(Constants.HOSTS, StringUtils.join(scanHelper.prepareTargetsForScan(ns,true), ","));
 		return createTarget;
 	}
 	public RestRequestBody bodyPrepare(NessusScan ns) {

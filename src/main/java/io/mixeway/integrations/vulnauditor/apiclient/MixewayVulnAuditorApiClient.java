@@ -105,7 +105,9 @@ public class MixewayVulnAuditorApiClient {
                 appContext = "type network location " + (StringUtils.isNotBlank(pv.getProject().getNetworkdc())? pv.getProject().getNetworkdc() : "empty")+" domain "+ pv.getAnInterface().getRoutingDomain().getName();
             } else if (pv.getVulnerabilitySource().getName().equals(Constants.VULN_TYPE_WEBAPP)){
                 appName = pv.getLocation();
-                appContext = "type webapp client "+ (StringUtils.isNotBlank(pv.getProject().getAppClient()) ? pv.getProject().getAppClient() : "empty")+ " domain "+ pv.getWebApp().getRoutingDomain().getName();
+                String routingDomainName = pv.getWebApp().getRoutingDomain()!=null? pv.getWebApp().getRoutingDomain().getName() : Constants.DOMAIN_INTERNET;
+                String appClient = (StringUtils.isNotBlank(pv.getProject().getAppClient()) ? pv.getProject().getAppClient() : "empty");
+                appContext = "type webapp client "+ appClient + " domain "+routingDomainName;
             } else if (pv.getVulnerabilitySource().getName().equals(Constants.VULN_TYPE_OPENSOURCE)){
                 appName = pv.getCodeProject().getName();
                 appContext = "type opensource";
