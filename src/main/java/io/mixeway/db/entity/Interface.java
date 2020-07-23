@@ -50,7 +50,7 @@ public class Interface implements VulnSource {
 		}
 		this.setAsset(asset);
 		this.setRoutingDomain(routingDomain);
-		this.setAutoCreated(true);
+		this.setAutoCreated(false);
 	}
 
     public Interface(NetworkInterface networkInterface, Asset asset, RoutingDomain routingDomain, boolean isPublic) {
@@ -62,7 +62,7 @@ public class Interface implements VulnSource {
 		}
 		this.setAsset(asset);
 		this.setRoutingDomain(routingDomain);
-		this.setAutoCreated(true);
+		this.setAutoCreated(false);
     }
 
     public int getRisk() {
