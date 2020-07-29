@@ -369,7 +369,7 @@ public class WebAppScanService {
      *
      * @throws Exception
      */
-    @Transactional(isolation = Isolation.REPEATABLE_READ)
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public void scheduledCheckAndDownloadResults() throws Exception {
         List<WebApp> apps = waRepository.findByRunning(true);
         for (WebApp app : apps) {

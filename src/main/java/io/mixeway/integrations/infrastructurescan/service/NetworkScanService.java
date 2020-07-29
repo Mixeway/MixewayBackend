@@ -426,7 +426,7 @@ public class NetworkScanService {
     /**
      * Method which is cheacking for running nessusscan test and then it download results
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.REPEATABLE_READ)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.READ_COMMITTED)
     public void scheduledCheckStatusAndLoadVulns() {
         try {
             List<NessusScan> nsl = nessusScanRepository.getRandom5RunningScans();

@@ -31,7 +31,7 @@ public class CodeScheduler {
 	
 	
 	@Transactional
-	@Scheduled(cron="0 45 7,22 * * ?")
+	@Scheduled(cron="0 55 7,22 * * ?")
 	//@Scheduled(initialDelay=0,fixedDelay = 1500000)
 	public void getReportForAllGroups() throws JSONException, ParseException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, URISyntaxException {
 		codeScanService.schedulerReportSynchro();
