@@ -22,6 +22,7 @@ import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
@@ -368,7 +369,7 @@ public class WebAppScanService {
      *
      * @throws Exception
      */
-    @Transactional
+    @Transactional(isolation = Isolation.REPEATABLE_READ)
     public void scheduledCheckAndDownloadResults() throws Exception {
         List<WebApp> apps = waRepository.findByRunning(true);
         for (WebApp app : apps) {
