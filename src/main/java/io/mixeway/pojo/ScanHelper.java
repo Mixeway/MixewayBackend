@@ -36,24 +36,15 @@ public class ScanHelper {
         List<String> interfacesToScan;
         if (nessusScan.getIsAutomatic()) {
             List<Asset> assets = assetRepository.findByProjectAndActive(nessusScan.getProject(), true);
-            if (nessusScan.getNessus().getUsePublic()) {
-                List<Interface> intfs = interfaceRepository.findByAssetInAndFloatingipNotNull(assets);
-                interfacesToScan = intfs.stream()
-                        .filter(n -> n.getFloatingip() != null && !n.getAutoCreated() && n.getAsset().getActive())
-                        .map(Interface::getFloatingip)
-                        .collect(Collectors.toList());
-                interfacesToScan.addAll(intfs.stream().filter(n -> n.getPool() != null && !n.getAutoCreated()).map(Interface::getPool).collect(Collectors.toList()));
-            } else {
-                Set<Interface> intfs = interfaceRepository.findByAssetInAndRoutingDomainAndActive(nessusScan.getProject().getAssets(), nessusScan.getNessus().getRoutingDomain(), true);
-                interfacesToScan = intfs.stream()
-                        .filter(n -> n.getPrivateip() != null && !n.getAutoCreated())
-                        .map(Interface::getPrivateip)
-                        .collect(Collectors.toList());
-                interfacesToScan.addAll(intfs.stream()
-                        .filter(n -> n.getPool() != null && !n.getAutoCreated()  )
-                        .map(Interface::getPool)
-                        .collect(Collectors.toList()));
-            }
+            List<Interface> interfaces = interfaceRepository.findByAssetInAndRoutingDomain(assets,nessusScan.getNessus().getRoutingDomain());
+            interfacesToScan = interfaces.stream()
+                    .filter(n -> n.getPrivateip() != null && !n.getAutoCreated())
+                    .map(Interface::getPrivateip)
+                    .collect(Collectors.toList());
+            interfacesToScan.addAll(interfaces.stream()
+                    .filter(n -> n.getPool() != null && !n.getAutoCreated()  )
+                    .map(Interface::getPool)
+                    .collect(Collectors.toList()));
         } else {
             if (nessusScan.getNessus().getUsePublic()) {
                 interfacesToScan = nessusScan.getInterfaces().stream()
