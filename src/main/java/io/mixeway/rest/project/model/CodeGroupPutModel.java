@@ -13,6 +13,15 @@ public class CodeGroupPutModel {
     private String dTrackUuid;
     private String appClient;
 
+    public CodeGroupPutModel(){}
+
+    public CodeGroupPutModel(String codeGroupName, String giturl, boolean autoScan, boolean childs){
+        this.codeGroupName = codeGroupName;
+        this.giturl = giturl;
+        this.autoScan = autoScan;
+        this.childs = childs;
+    }
+
     public String getAppClient() {
         return appClient;
     }

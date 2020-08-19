@@ -274,4 +274,6 @@ public class Constants {
     public static final String AWS_VPC_ID = "vpc-id";
 	public static final String AWS_STATE_RUNNING = "running";
     public static final String AWS_STATE_INUSE = "in-use";
+    public static final String CI_SCOPE_OPENSOURCE = "opensource";
+	public static final String CI_SCOPE_SAST = "sast";
 }

@@ -3,6 +3,8 @@ package io.mixeway.rest.cioperations.controller;
 import io.mixeway.pojo.CIVulnManageResponse;
 import io.mixeway.pojo.Status;
 import io.mixeway.rest.cioperations.model.CiResultModel;
+import io.mixeway.rest.cioperations.model.GetInfoRequest;
+import io.mixeway.rest.cioperations.model.PrepareCIOperation;
 import io.mixeway.rest.cioperations.service.CiOperationsService;
 import io.mixeway.rest.model.OverAllVulnTrendChartData;
 import org.codehaus.jettison.json.JSONException;
@@ -72,6 +74,17 @@ public class CiOperationsController {
                                                                    @PathVariable(value = "projectId") Long id,
                                                                     @PathVariable("commitid") String commitid) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         return ciOperationsService.codeVerify(codeGroup, codeProject, id, commitid);
+    }
+
+    /**
+     *
+
+     * @return
+     */
+    @PreAuthorize("hasAuthority('ROLE_API')")
+    @PostMapping(value = "/getscannerinfo",produces = "application/json")
+    public ResponseEntity<PrepareCIOperation> getInfoForCI(@RequestBody GetInfoRequest getInfoRequest) throws Exception {
+        return ciOperationsService.getInfoForCI(getInfoRequest);
     }
 
 }

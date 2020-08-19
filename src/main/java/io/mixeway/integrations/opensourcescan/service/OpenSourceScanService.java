@@ -5,6 +5,7 @@ import io.mixeway.db.entity.CodeProject;
 import io.mixeway.db.entity.Project;
 import io.mixeway.db.entity.ProjectVulnerability;
 import io.mixeway.db.entity.Scanner;
+import io.mixeway.db.repository.CodeProjectRepository;
 import io.mixeway.db.repository.ProjectRepository;
 import io.mixeway.db.repository.ScannerRepository;
 import io.mixeway.db.repository.ScannerTypeRepository;
@@ -13,8 +14,14 @@ import io.mixeway.integrations.opensourcescan.model.Projects;
 import io.mixeway.integrations.opensourcescan.plugins.mvndependencycheck.model.SASTRequestVerify;
 import io.mixeway.integrations.utils.CodeAccessVerifier;
 import io.mixeway.pojo.VaultHelper;
+import io.mixeway.rest.cioperations.service.CiOperationsService;
+import io.mixeway.rest.project.model.CodeGroupPutModel;
 import io.mixeway.rest.project.model.OpenSourceConfig;
+import io.mixeway.rest.project.service.CodeService;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
@@ -24,6 +31,8 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -44,10 +53,12 @@ public class OpenSourceScanService {
     private final VaultHelper vaultHelper;
     private final List<OpenSourceScanClient> openSourceScanClients;
     private final VulnTemplate vulnTemplate;
-
+    private final CodeProjectRepository codeProjectRepository;
+    private final CodeService codeService;
+    private static final Logger log = LoggerFactory.getLogger(OpenSourceScanService.class);
     OpenSourceScanService(ProjectRepository projectRepository, CodeAccessVerifier codeAccessVerifier, ScannerRepository scannerRepository,
                           ScannerTypeRepository scannerTypeRepository, VaultHelper vaultHelper, List<OpenSourceScanClient> openSourceScanClients,
-                          VulnTemplate vulnTemplate){
+                          VulnTemplate vulnTemplate,CodeProjectRepository codeProjectRepository, @Lazy CodeService codeService){
         this.projectRepository = projectRepository;
         this.codeAccessVerifier = codeAccessVerifier;
         this.scannerRepository = scannerRepository;
@@ -55,6 +66,8 @@ public class OpenSourceScanService {
         this.vaultHelper = vaultHelper;
         this.openSourceScanClients = openSourceScanClients;
         this.vulnTemplate = vulnTemplate;
+        this.codeProjectRepository = codeProjectRepository;
+        this.codeService = codeService;
     }
 
 
@@ -94,6 +107,98 @@ public class OpenSourceScanService {
             return new ResponseEntity<>(openSourceConfig, HttpStatus.OK);
         }
         return new ResponseEntity<>(HttpStatus.PRECONDITION_FAILED);
+    }
+
+    /**
+     * Based on Repo URL create project, codeproject or return already existing
+     *
+     * @param url repo url
+     * @return codeproject
+     */
+    public CodeProject getCodeProjectByRepoUrl(String url) throws Exception {
+        URL repoUrl = new URL(url.split(".git")[0]);
+        String projectName, codeProjectName = null;
+        String[] repoUrlParts = repoUrl.getPath().split("/");
+        // If url contains both Organization and Project Name
+        if (repoUrlParts.length == 2){
+            projectName = repoUrlParts[0];
+            codeProjectName = repoUrlParts[1];
+            Optional<CodeProject> codeProject = codeProjectRepository.findByName(codeProjectName);
+            //If CodeProject with name already exists
+            if (codeProject.isPresent()){
+                return codeProject.get();
+            }
+            // else Create CodeProject and possibliy project
+            else {
+                Optional<Project> project = projectRepository.getProjectByName(projectName);
+                // If project exist only add codeproject to it
+                if (project.isPresent() ){
+                    codeService.saveCodeGroup(
+                            project.get().getId(),
+                            new CodeGroupPutModel(codeProjectName, url, false, false),
+                            "CIOperations");
+                    Optional<CodeProject> justCreatedCodeProject = codeProjectRepository.findByName(codeProjectName);
+                    if (justCreatedCodeProject.isPresent()){
+                        log.info("CICD job - Project present, CodeProject just created");
+                        return justCreatedCodeProject.get();
+                    } else{
+                        throw new Exception("Just created codeProject is not present");
+                    }
+
+                } else {
+                    Project projectToCreate = projectRepository.save(new Project(projectName, "Project created by CICD", false, "none"));
+                    codeService.saveCodeGroup(
+                            projectToCreate.getId(),
+                            new CodeGroupPutModel(codeProjectName, url, false, false),
+                            "CIOperations");
+                    Optional<CodeProject> justCreatedCodeProject = codeProjectRepository.findByName(codeProjectName);
+                    if (justCreatedCodeProject.isPresent()){
+                        log.info("CICD job - Project just created, CodeProject just created");
+                        return justCreatedCodeProject.get();
+                    } else{
+                        throw new Exception("Just created codeProject is not present");
+                    }
+                }
+            }
+
+        } else if (repoUrlParts.length == 1){
+            codeProjectName = repoUrlParts[0];
+            Optional<CodeProject> codeProject = codeProjectRepository.findByName(codeProjectName);
+            if (codeProject.isPresent()) {
+                return codeProject.get();
+            } else {
+                Optional<Project> project = projectRepository.getProjectByName("unknown");
+                if (project.isPresent()){
+                    codeService.saveCodeGroup(
+                            project.get().getId(),
+                            new CodeGroupPutModel(codeProjectName, url, false, false),
+                            "CIOperations");
+                    Optional<CodeProject> justCreatedCodeProject = codeProjectRepository.findByName(codeProjectName);
+                    if (justCreatedCodeProject.isPresent()){
+                        log.info("CICD job - Project present (unknown), CodeProject just created");
+                        return justCreatedCodeProject.get();
+                    } else{
+                        throw new Exception("Just created codeProject is not present");
+                    }
+                } else {
+                    Project projectToCreate = projectRepository.save(new Project("unknown", "unknown project (created by CICD)", false, "none"));
+                    codeService.saveCodeGroup(
+                            projectToCreate.getId(),
+                            new CodeGroupPutModel(codeProjectName, url, false, false),
+                            "CIOperations");
+                    Optional<CodeProject> justCreatedCodeProject = codeProjectRepository.findByName(codeProjectName);
+                    if (justCreatedCodeProject.isPresent()){
+                        log.info("CICD job - Project just created, CodeProject just created");
+                        return justCreatedCodeProject.get();
+                    } else{
+                        throw new Exception("Just created codeProject is not present");
+                    }
+                }
+            }
+
+        } else {
+            throw new Exception("Unknown Repo Url format " + url);
+        }
     }
 
     /**
