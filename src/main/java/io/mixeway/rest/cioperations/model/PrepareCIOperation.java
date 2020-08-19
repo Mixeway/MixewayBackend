@@ -50,6 +50,6 @@ public class PrepareCIOperation {
         this.dTrackApiKey = openSourceConfig.getOpenSourceScannerCredentials();
         this.dTrackUrl = openSourceConfig.getOpenSourceScannerApiUrl();
         this.dTrackUuid = openSourceConfig.getOpenSourceScannerProjectId();
-        this.projectId = codeProject.getCodeGroup().getProject().getId();
+        this.projectId = codeProject.getId();
     }
 }

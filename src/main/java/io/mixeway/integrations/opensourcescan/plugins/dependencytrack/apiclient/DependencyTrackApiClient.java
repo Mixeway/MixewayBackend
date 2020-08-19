@@ -120,6 +120,7 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
             int critVulns = (int) vulnsForCp.stream().filter(v -> v.getSeverity().equals(Constants.VULN_CRITICALITY_CRITICAL)).count();
             operation.setOpenSourceCrit(critVulns);
             operation.setOpenSourceHigh(highVulns);
+            operation.setResult((critVulns > 3 || highVulns > 10) ? "Not Ok" : "Ok");
             ciOperationsRepository.save(operation);
         }
     }

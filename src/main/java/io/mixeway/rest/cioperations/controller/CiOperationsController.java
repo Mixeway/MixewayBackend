@@ -4,6 +4,7 @@ import io.mixeway.pojo.CIVulnManageResponse;
 import io.mixeway.pojo.Status;
 import io.mixeway.rest.cioperations.model.CiResultModel;
 import io.mixeway.rest.cioperations.model.GetInfoRequest;
+import io.mixeway.rest.cioperations.model.InfoScanPerformed;
 import io.mixeway.rest.cioperations.model.PrepareCIOperation;
 import io.mixeway.rest.cioperations.service.CiOperationsService;
 import io.mixeway.rest.model.OverAllVulnTrendChartData;
@@ -78,13 +79,18 @@ public class CiOperationsController {
 
     /**
      *
-
      * @return
      */
     @PreAuthorize("hasAuthority('ROLE_API')")
     @PostMapping(value = "/getscannerinfo",produces = "application/json")
     public ResponseEntity<PrepareCIOperation> getInfoForCI(@RequestBody GetInfoRequest getInfoRequest) throws Exception {
         return ciOperationsService.getInfoForCI(getInfoRequest);
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_API')")
+    @PostMapping(value = "/infoscanperformed",produces = "application/json")
+    public ResponseEntity<Status> infoScanPerformed(@RequestBody InfoScanPerformed infoScanPerformed) throws Exception {
+        return ciOperationsService.infoScanPerformed(infoScanPerformed);
     }
 
 }

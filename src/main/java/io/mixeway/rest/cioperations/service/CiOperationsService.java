@@ -13,6 +13,7 @@ import io.mixeway.pojo.*;
 import io.mixeway.pojo.Status;
 import io.mixeway.rest.cioperations.model.CiResultModel;
 import io.mixeway.rest.cioperations.model.GetInfoRequest;
+import io.mixeway.rest.cioperations.model.InfoScanPerformed;
 import io.mixeway.rest.cioperations.model.PrepareCIOperation;
 import io.mixeway.rest.model.OverAllVulnTrendChartData;
 import io.mixeway.rest.project.model.OpenSourceConfig;
@@ -213,5 +214,21 @@ public class CiOperationsService {
                 return new ResponseEntity<>(new PrepareCIOperation(openSourceConfig, codeProject), HttpStatus.OK);
         }
         return null;
+    }
+
+    public ResponseEntity<Status> infoScanPerformed(InfoScanPerformed infoScanPerformed) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+        Optional<CodeProject> codeProject = codeProjectRepository.findById(infoScanPerformed.getCodeProjectId());
+        if (codeProject.isPresent() && infoScanPerformed.getScope().equals(Constants.CI_SCOPE_OPENSOURCE)){
+            Optional<CiOperations> ciOperations = ciOperationsRepository.findByCodeProjectAndCommitId(codeProject.get(), infoScanPerformed.getCommitId());
+            if (!ciOperations.isPresent()){
+                ciOperationsRepository.save(new CiOperations(codeProject.get(), infoScanPerformed));
+            }
+            codeProject.get().setCommitid(infoScanPerformed.getCommitId());
+            codeProjectRepository.save(codeProject.get());
+            openSourceScanService.loadVulnerabilities(codeProject.get());
+            return new ResponseEntity<>(HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 }
