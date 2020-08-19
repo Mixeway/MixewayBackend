@@ -116,13 +116,13 @@ public class OpenSourceScanService {
      * @return codeproject
      */
     public CodeProject getCodeProjectByRepoUrl(String url) throws Exception {
-        URL repoUrl = new URL(url.split(".git")[0]);
+        URL repoUrl = new URL(url.split("\\.git")[0]);
         String projectName, codeProjectName = null;
         String[] repoUrlParts = repoUrl.getPath().split("/");
         // If url contains both Organization and Project Name
-        if (repoUrlParts.length == 2){
-            projectName = repoUrlParts[0];
-            codeProjectName = repoUrlParts[1];
+        if (repoUrlParts.length == 3){
+            projectName = repoUrlParts[1];
+            codeProjectName = repoUrlParts[2];
             Optional<CodeProject> codeProject = codeProjectRepository.findByName(codeProjectName);
             //If CodeProject with name already exists
             if (codeProject.isPresent()){
@@ -161,8 +161,8 @@ public class OpenSourceScanService {
                 }
             }
 
-        } else if (repoUrlParts.length == 1){
-            codeProjectName = repoUrlParts[0];
+        } else if (repoUrlParts.length == 2){
+            codeProjectName = repoUrlParts[1];
             Optional<CodeProject> codeProject = codeProjectRepository.findByName(codeProjectName);
             if (codeProject.isPresent()) {
                 return codeProject.get();

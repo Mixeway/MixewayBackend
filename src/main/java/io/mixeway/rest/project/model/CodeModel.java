@@ -8,6 +8,33 @@ public class CodeModel {
     String dTrackUuid;
     String branch;
     int versionId;
+    String repoUrl;
+    String repoUsername;
+    String repoPassword;
+
+    public String getRepoUrl() {
+        return repoUrl;
+    }
+
+    public void setRepoUrl(String repoUrl) {
+        this.repoUrl = repoUrl;
+    }
+
+    public String getRepoUsername() {
+        return repoUsername;
+    }
+
+    public void setRepoUsername(String repoUsername) {
+        this.repoUsername = repoUsername;
+    }
+
+    public String getRepoPassword() {
+        return repoPassword;
+    }
+
+    public void setRepoPassword(String repoPassword) {
+        this.repoPassword = repoPassword;
+    }
 
     public String getBranch() {
         return branch;
