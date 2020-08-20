@@ -130,7 +130,7 @@ public class OpenSourceScanService {
             }
             // else Create CodeProject and possibliy project
             else {
-                Optional<Project> project = projectRepository.getProjectByName(projectName);
+                Optional<Project> project = projectRepository.getProjectByName(projectName+ "_" + branch);
                 // If project exist only add codeproject to it
                 if (project.isPresent() ){
                     codeService.saveCodeGroup(
