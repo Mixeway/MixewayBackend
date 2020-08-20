@@ -277,4 +277,5 @@ public class Constants {
     public static final String CI_SCOPE_OPENSOURCE = "opensource";
 	public static final String CI_SCOPE_SAST = "sast";
     public static final String DUMMY_PASSWORD = "thisisdummypassword";
+    public static final String CICD = "CICD";
 }

@@ -128,7 +128,7 @@ public class CodeService {
         CodeProject cp = new CodeProject();
         cp.setName(codeGroup.getName());
         cp.setCodeGroup(codeGroup);
-        cp.setBranch(Constants.CODE_DEFAULT_BRANCH);
+        cp.setBranch(codeGroupPutModel.getBranch()!=null ?  codeGroupPutModel.getBranch() : Constants.CODE_DEFAULT_BRANCH);
         cp.setRepoUrl(codeGroup.getRepoUrl());
         cp.setRepoPassword(codeGroup.getRepoPassword());
         cp.setRepoUsername(codeGroup.getRepoUsername());

@@ -10,9 +10,9 @@ import io.mixeway.rest.project.model.OpenSourceConfig;
 
 public class PrepareCIOperation {
     Long projectId;
-    String dTrackUuid;
-    String dTrackApiKey;
-    String dTrackUrl;
+    String openSourceScannerProjectId;
+    String openSourceScannerCredentials;
+    String openSourceScannerApiUrl;
 
     public Long getProjectId() {
         return projectId;
@@ -22,34 +22,34 @@ public class PrepareCIOperation {
         this.projectId = projectId;
     }
 
-    public String getdTrackUuid() {
-        return dTrackUuid;
+    public String getOpenSourceScannerProjectId() {
+        return openSourceScannerProjectId;
     }
 
-    public void setdTrackUuid(String dTrackUuid) {
-        this.dTrackUuid = dTrackUuid;
+    public void setOpenSourceScannerProjectId(String openSourceScannerProjectId) {
+        this.openSourceScannerProjectId = openSourceScannerProjectId;
     }
 
-    public String getdTrackApiKey() {
-        return dTrackApiKey;
+    public String getOpenSourceScannerCredentials() {
+        return openSourceScannerCredentials;
     }
 
-    public void setdTrackApiKey(String dTrackApiKey) {
-        this.dTrackApiKey = dTrackApiKey;
+    public void setOpenSourceScannerCredentials(String openSourceScannerCredentials) {
+        this.openSourceScannerCredentials = openSourceScannerCredentials;
     }
 
-    public String getdTrackUrl() {
-        return dTrackUrl;
+    public String getOpenSourceScannerApiUrl() {
+        return openSourceScannerApiUrl;
     }
 
-    public void setdTrackUrl(String dTrackUrl) {
-        this.dTrackUrl = dTrackUrl;
+    public void setOpenSourceScannerApiUrl(String openSourceScannerApiUrl) {
+        this.openSourceScannerApiUrl = openSourceScannerApiUrl;
     }
 
     public PrepareCIOperation(OpenSourceConfig openSourceConfig, CodeProject codeProject) {
-        this.dTrackApiKey = openSourceConfig.getOpenSourceScannerCredentials();
-        this.dTrackUrl = openSourceConfig.getOpenSourceScannerApiUrl();
-        this.dTrackUuid = openSourceConfig.getOpenSourceScannerProjectId();
+        this.openSourceScannerCredentials = openSourceConfig.getOpenSourceScannerCredentials();
+        this.openSourceScannerApiUrl = openSourceConfig.getOpenSourceScannerApiUrl();
+        this.openSourceScannerProjectId = openSourceConfig.getOpenSourceScannerProjectId();
         this.projectId = codeProject.getId();
     }
 }

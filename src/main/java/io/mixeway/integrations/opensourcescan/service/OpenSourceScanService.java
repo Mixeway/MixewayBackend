@@ -115,15 +115,15 @@ public class OpenSourceScanService {
      * @param url repo url
      * @return codeproject
      */
-    public CodeProject getCodeProjectByRepoUrl(String url) throws Exception {
+    public CodeProject getCodeProjectByRepoUrl(String url, String branch) throws Exception {
         URL repoUrl = new URL(url.split("\\.git")[0]);
         String projectName, codeProjectName = null;
         String[] repoUrlParts = repoUrl.getPath().split("/");
         // If url contains both Organization and Project Name
         if (repoUrlParts.length == 3){
             projectName = repoUrlParts[1];
-            codeProjectName = repoUrlParts[2];
-            Optional<CodeProject> codeProject = codeProjectRepository.findByName(codeProjectName);
+            codeProjectName = repoUrlParts[2] +"_"+branch;
+            Optional<CodeProject> codeProject = codeProjectRepository.findByNameAndBranch(codeProjectName, branch);
             //If CodeProject with name already exists
             if (codeProject.isPresent()){
                 return codeProject.get();
@@ -135,9 +135,9 @@ public class OpenSourceScanService {
                 if (project.isPresent() ){
                     codeService.saveCodeGroup(
                             project.get().getId(),
-                            new CodeGroupPutModel(codeProjectName, url, false, false),
-                            "CIOperations");
-                    Optional<CodeProject> justCreatedCodeProject = codeProjectRepository.findByName(codeProjectName);
+                            new CodeGroupPutModel(codeProjectName, url, false, false, branch),
+                            Constants.CICD);
+                    Optional<CodeProject> justCreatedCodeProject = codeProjectRepository.findByNameAndBranch(codeProjectName, branch);
                     if (justCreatedCodeProject.isPresent()){
                         log.info("CICD job - Project present, CodeProject just created");
                         return justCreatedCodeProject.get();
@@ -146,12 +146,17 @@ public class OpenSourceScanService {
                     }
 
                 } else {
-                    Project projectToCreate = projectRepository.save(new Project(projectName, "Project created by CICD", false, "none"));
+                    Project projectToCreate = projectRepository
+                            .save(new Project(
+                                    projectName + "_" + branch,
+                                    "Project created by CICD, branch: "+branch,
+                                    false,
+                                    "none"));
                     codeService.saveCodeGroup(
                             projectToCreate.getId(),
-                            new CodeGroupPutModel(codeProjectName, url, false, false),
-                            "CIOperations");
-                    Optional<CodeProject> justCreatedCodeProject = codeProjectRepository.findByName(codeProjectName);
+                            new CodeGroupPutModel(codeProjectName, url, false, false, branch),
+                            Constants.CICD);
+                    Optional<CodeProject> justCreatedCodeProject = codeProjectRepository.findByNameAndBranch(codeProjectName, branch);
                     if (justCreatedCodeProject.isPresent()){
                         log.info("CICD job - Project just created, CodeProject just created");
                         return justCreatedCodeProject.get();
@@ -162,8 +167,8 @@ public class OpenSourceScanService {
             }
 
         } else if (repoUrlParts.length == 2){
-            codeProjectName = repoUrlParts[1];
-            Optional<CodeProject> codeProject = codeProjectRepository.findByName(codeProjectName);
+            codeProjectName = repoUrlParts[1] + "_" + branch;
+            Optional<CodeProject> codeProject = codeProjectRepository.findByNameAndBranch(codeProjectName, branch);
             if (codeProject.isPresent()) {
                 return codeProject.get();
             } else {
@@ -171,9 +176,9 @@ public class OpenSourceScanService {
                 if (project.isPresent()){
                     codeService.saveCodeGroup(
                             project.get().getId(),
-                            new CodeGroupPutModel(codeProjectName, url, false, false),
-                            "CIOperations");
-                    Optional<CodeProject> justCreatedCodeProject = codeProjectRepository.findByName(codeProjectName);
+                            new CodeGroupPutModel(codeProjectName, url, false, false,branch),
+                            Constants.CICD);
+                    Optional<CodeProject> justCreatedCodeProject = codeProjectRepository.findByNameAndBranch(codeProjectName, branch);
                     if (justCreatedCodeProject.isPresent()){
                         log.info("CICD job - Project present (unknown), CodeProject just created");
                         return justCreatedCodeProject.get();
@@ -181,12 +186,17 @@ public class OpenSourceScanService {
                         throw new Exception("Just created codeProject is not present");
                     }
                 } else {
-                    Project projectToCreate = projectRepository.save(new Project("unknown", "unknown project (created by CICD)", false, "none"));
+                    Project projectToCreate = projectRepository
+                            .save(new Project(
+                                    "unknown",
+                                    "unknown project (created by CICD)",
+                                    false,
+                                    "none"));
                     codeService.saveCodeGroup(
                             projectToCreate.getId(),
-                            new CodeGroupPutModel(codeProjectName, url, false, false),
-                            "CIOperations");
-                    Optional<CodeProject> justCreatedCodeProject = codeProjectRepository.findByName(codeProjectName);
+                            new CodeGroupPutModel(codeProjectName, url, false, false,branch),
+                            Constants.CICD);
+                    Optional<CodeProject> justCreatedCodeProject = codeProjectRepository.findByNameAndBranch(codeProjectName,branch);
                     if (justCreatedCodeProject.isPresent()){
                         log.info("CICD job - Project just created, CodeProject just created");
                         return justCreatedCodeProject.get();

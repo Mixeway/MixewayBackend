@@ -5,9 +5,20 @@
  */
 package io.mixeway.rest.cioperations.model;
 
+import javax.validation.constraints.NotNull;
+
 public class GetInfoRequest {
-    String repoUrl;
-    String scope;
+    @NotNull String repoUrl;
+    @NotNull String branch;
+    @NotNull String scope;
+
+    public String getBranch() {
+        return branch;
+    }
+
+    public void setBranch(String branch) {
+        this.branch = branch;
+    }
 
     public String getRepoUrl() {
         return repoUrl;

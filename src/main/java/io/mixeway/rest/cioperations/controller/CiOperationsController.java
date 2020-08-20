@@ -16,6 +16,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import io.mixeway.db.entity.CiOperations;
 
+import javax.validation.Valid;
 import java.io.IOException;
 import java.security.*;
 import java.security.cert.CertificateException;
@@ -83,7 +84,7 @@ public class CiOperationsController {
      */
     @PreAuthorize("hasAuthority('ROLE_API')")
     @PostMapping(value = "/getscannerinfo",produces = "application/json")
-    public ResponseEntity<PrepareCIOperation> getInfoForCI(@RequestBody GetInfoRequest getInfoRequest) throws Exception {
+    public ResponseEntity<PrepareCIOperation> getInfoForCI(@Valid @RequestBody GetInfoRequest getInfoRequest) throws Exception {
         return ciOperationsService.getInfoForCI(getInfoRequest);
     }
 
