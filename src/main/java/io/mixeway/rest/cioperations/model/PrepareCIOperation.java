@@ -13,6 +13,15 @@ public class PrepareCIOperation {
     String openSourceScannerProjectId;
     String openSourceScannerCredentials;
     String openSourceScannerApiUrl;
+    boolean openSourceScannerIntegration;
+
+    public boolean isOpenSourceScannerIntegration() {
+        return openSourceScannerIntegration;
+    }
+
+    public void setOpenSourceScannerIntegration(boolean openSourceScannerIntegration) {
+        this.openSourceScannerIntegration = openSourceScannerIntegration;
+    }
 
     public Long getProjectId() {
         return projectId;
@@ -50,6 +59,11 @@ public class PrepareCIOperation {
         this.openSourceScannerCredentials = openSourceConfig.getOpenSourceScannerCredentials();
         this.openSourceScannerApiUrl = openSourceConfig.getOpenSourceScannerApiUrl();
         this.openSourceScannerProjectId = openSourceConfig.getOpenSourceScannerProjectId();
+        if (this.openSourceScannerApiUrl !=null && this.openSourceScannerCredentials!=null){
+            this.openSourceScannerIntegration = true;
+        } else {
+            this.openSourceScannerIntegration = false;
+        }
         this.projectId = codeProject.getId();
     }
 }
