@@ -120,9 +120,9 @@ public class OpenSourceScanService {
         String projectName, codeProjectName = null;
         String[] repoUrlParts = repoUrl.getPath().split("/");
         // If url contains both Organization and Project Name
-        if (repoUrlParts.length == 3){
+        if (repoUrlParts.length == 3 || repoUrlParts.length == 4){
             projectName = repoUrlParts[1];
-            codeProjectName = repoUrlParts[2] +"_"+branch;
+            codeProjectName = repoUrlParts.length==3 ? repoUrlParts[2] +"_"+branch : repoUrlParts[3] +"_"+branch;
             Optional<CodeProject> codeProject = codeProjectRepository.findByNameAndBranch(codeProjectName, branch);
             //If CodeProject with name already exists
             if (codeProject.isPresent()){
