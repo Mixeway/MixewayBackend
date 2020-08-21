@@ -5,19 +5,15 @@
  */
 package io.mixeway.rest.profile.controller;
 
-import io.mixeway.db.entity.Project;
-import io.mixeway.db.entity.Status;
+import io.mixeway.pojo.Status;
+import io.mixeway.rest.profile.model.UpdateProfileModel;
 import io.mixeway.rest.profile.model.UserProfile;
 import io.mixeway.rest.profile.service.ProfileService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.util.List;
 
 @RestController()
 @RequestMapping("/v2/api")
@@ -44,8 +40,8 @@ public class ProfileController {
      * @return status
      */
     @PatchMapping(value = "/profile")
-    public ResponseEntity<Status> editProfile(Principal principal) {
-        return profileService.editProfile(principal);
+    public ResponseEntity<Status> editProfile(@RequestBody UpdateProfileModel updateProfileModel, Principal principal) {
+        return profileService.editProfile(updateProfileModel, principal);
     }
 
     /**

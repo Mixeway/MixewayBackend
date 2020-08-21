@@ -11,13 +11,24 @@ public class UserProfile {
     private int vulns;
     private String password;
     private boolean passwordAuthEnabled;
+    private String role;
 
-    public UserProfile(String username, int projects, int vulns, String password, boolean passwordAuthEnabled) {
+    public UserProfile(String username, int projects, int vulns, String password, boolean passwordAuthEnabled, String role) {
         this.username = username;
         this.projects = projects;
+        this.role = role;
         this.vulns = vulns;
         this.password = password;
         this.passwordAuthEnabled = passwordAuthEnabled;
+    }
+
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 
     public boolean isPasswordAuthEnabled() {
