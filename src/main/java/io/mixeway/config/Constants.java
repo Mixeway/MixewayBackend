@@ -278,4 +278,5 @@ public class Constants {
 	public static final String CI_SCOPE_SAST = "sast";
     public static final String DUMMY_PASSWORD = "thisisdummypassword";
     public static final String CICD = "CICD";
+    public static final String ROLE_API_CICD = "ROLE_API_CICD";
 }

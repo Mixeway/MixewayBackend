@@ -82,13 +82,13 @@ public class CiOperationsController {
      *
      * @return
      */
-    @PreAuthorize("hasAuthority('ROLE_API')")
+    @PreAuthorize("hasAuthority('ROLE_API_CICD')")
     @PostMapping(value = "/getscannerinfo",produces = "application/json")
     public ResponseEntity<PrepareCIOperation> getInfoForCI(@Valid @RequestBody GetInfoRequest getInfoRequest) throws Exception {
         return ciOperationsService.getInfoForCI(getInfoRequest);
     }
 
-    @PreAuthorize("hasAuthority('ROLE_API')")
+    @PreAuthorize("hasAuthority('ROLE_API_CICD')")
     @PostMapping(value = "/infoscanperformed",produces = "application/json")
     public ResponseEntity<Status> infoScanPerformed(@RequestBody InfoScanPerformed infoScanPerformed) throws Exception {
         return ciOperationsService.infoScanPerformed(infoScanPerformed);

@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import io.mixeway.db.entity.VulnHistory;
 import io.mixeway.rest.model.OverAllVulnTrendChartData;
 import io.mixeway.rest.model.SourceDetectionChartData;
+import org.springframework.data.repository.query.Param;
 
 public interface VulnHistoryRepository extends JpaRepository<VulnHistory, Long>{
 	List<VulnHistory> findByName(String name);
@@ -22,6 +23,12 @@ public interface VulnHistoryRepository extends JpaRepository<VulnHistory, Long>{
 			"sum(webappvulnnumber) as webapp,sum(auditvulnnumber) as audit,sum(softwarepacketvulnnumber) as soft, " +
 			"split_part(inserted, ' ', 1) as ins from vulnhistory group by ins order by ins desc limit 1;", nativeQuery = true)
 	SourceDetectionChartData getSourceTrendChart();
+	@Query(value="select * from vulnhistory where inserted like (select substring(inserted,1,10) || '%' as i " +
+			"from vulnhistory order by i desc limit 1 ) order by inserted desc", nativeQuery = true)
+	List<VulnHistory> recentHistoryForAllProjects();
+	@Query(value="select * from vulnhistory where project_id in :projects and inserted like (select substring(inserted,1,10) || '%' as i " +
+			"from vulnhistory order by i desc limit 1 ) order by inserted desc", nativeQuery = true)
+	List<VulnHistory> recentHistoryForProjects(@Param("projects") List<Long> projectIds);
 
 
 }

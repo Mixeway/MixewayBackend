@@ -1,4 +1,5 @@
 package io.mixeway.rest.admin.service;
+import io.mixeway.config.Constants;
 import io.mixeway.db.entity.Project;
 import io.mixeway.db.repository.ProjectRepository;
 import io.mixeway.db.repository.UserRepository;
@@ -25,6 +26,8 @@ public class AdminUserRestService {
         add("ROLE_USER");
         add("ROLE_ADMIN");
         add("ROLE_EDITOR_RUNNER");
+        add("ROLE_API");
+        add("ROLE_API_CICD");
     }};
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
@@ -51,6 +54,9 @@ public class AdminUserRestService {
             userToCreate.setEnabled(true);
             userToCreate.setCommonName(userModel.getUserCN());
             userToCreate.setPermisions(userModel.getUserRole());
+            if (userModel.getUserRole().equals(Constants.ROLE_API_CICD)){
+                userToCreate.setApiKey(UUID.randomUUID().toString());
+            }
             userToCreate.setUsername(userModel.getUserUsername());
             if ( userModel.getPasswordAuth())
                 userToCreate.setPassword(bCryptPasswordEncoder.encode(userModel.getUserPassword()));
@@ -58,7 +64,7 @@ public class AdminUserRestService {
             if (userModel.getProjects().isPresent() && userModel.getProjects().get().size()>0)
                 loadProjectPermissionsForUser(userModel.getProjects().get(),userToCreate);
             log.info("{} - Created new user {} with role {}", name, LogUtil.prepare(userToCreate.getCommonName()), LogUtil.prepare(userToCreate.getPermisions()));
-            return new ResponseEntity<>(new Status("ok"), HttpStatus.CREATED);
+            return new ResponseEntity<>(new Status("ok",userToCreate.getApiKey()), HttpStatus.CREATED);
         }
     }
 

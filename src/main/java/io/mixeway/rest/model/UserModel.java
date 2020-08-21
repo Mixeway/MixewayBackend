@@ -11,7 +11,16 @@ public class UserModel {
     Boolean passwordAuth;
     String userPassword;
     String userUsername;
+    String apiKey;
     Optional<List<Long>> projects;
+
+    public String getApiKey() {
+        return apiKey;
+    }
+
+    public void setApiKey(String apiKey) {
+        this.apiKey = apiKey;
+    }
 
     public Optional<List<Long>> getProjects() {
         return projects;

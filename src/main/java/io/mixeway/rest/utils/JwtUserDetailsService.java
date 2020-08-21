@@ -62,10 +62,12 @@ public class JwtUserDetailsService implements UserDetailsService {
             Settings settings = settingsRepository.findAll().stream().findFirst().orElse(null);
             assert settings != null;
             if ( settings.getMasterApiKey() != null && username.equals(settings.getMasterApiKey()))
-                return new User(username, "", AuthorityUtils.commaSeparatedStringToAuthorityList("ROLE_API"
-                                + "," +Constants.ROLE_USER
+                return new User(username, "", AuthorityUtils.commaSeparatedStringToAuthorityList(
+                                "," +Constants.ROLE_USER
                                 + "," +Constants.ROLE_EDITOR_RUNNER
-                                + "," +Constants.ROLE_ADMIN ));
+                                + "," +Constants.ROLE_API_CICD
+                                + "," +Constants.ROLE_API
+                                + "," +Constants.ROLE_ADMIN  ));
             if (locations.length > 0 && (locations[1].equals(Constants.API_URL) || locations[1].equals("v2"))) {
                 if (locations[2].equals(Constants.KOORDYNATOR_API_URL) || locations[3].equals(Constants.SCANMANAGE_API)) {
                     if (settings.getMasterApiKey() != null && username.equals(settings.getMasterApiKey()))
@@ -90,6 +92,10 @@ public class JwtUserDetailsService implements UserDetailsService {
                         throw new UsernameNotFoundException("No permisions");
                     }
                 }
+            }
+            Optional<io.mixeway.db.entity.User> cicdUser = userRepository.findByApiKey(username);
+            if (cicdUser.isPresent()){
+                return new User(username, "", AuthorityUtils.commaSeparatedStringToAuthorityList("ROLE_API_CICD"));
             }
             throw new UsernameNotFoundException("User not found");
         } catch (NumberFormatException | ArrayIndexOutOfBoundsException ex) {
