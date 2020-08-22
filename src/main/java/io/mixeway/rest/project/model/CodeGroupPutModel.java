@@ -12,6 +12,25 @@ public class CodeGroupPutModel {
     private boolean childs;
     private String dTrackUuid;
     private String appClient;
+    private String branch;
+
+    public String getBranch() {
+        return branch;
+    }
+
+    public void setBranch(String branch) {
+        this.branch = branch;
+    }
+
+    public CodeGroupPutModel(){}
+
+    public CodeGroupPutModel(String codeGroupName, String giturl, boolean autoScan, boolean childs, String branch){
+        this.codeGroupName = codeGroupName;
+        this.giturl = giturl;
+        this.autoScan = autoScan;
+        this.childs = childs;
+        this.branch = branch;
+    }
 
     public String getAppClient() {
         return appClient;

@@ -24,6 +24,16 @@ public class User {
 	private int logins;
 	private int failedLogins;
 	private Set<Project> projects;
+	private String apiKey;
+
+	@Column(name = "apikey")
+	public String getApiKey() {
+		return apiKey;
+	}
+
+	public void setApiKey(String apiKey) {
+		this.apiKey = apiKey;
+	}
 
 	@ManyToMany(cascade = { CascadeType.ALL })
 	@JoinTable(

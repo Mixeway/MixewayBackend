@@ -3,6 +3,9 @@ package io.mixeway.rest.cioperations.controller;
 import io.mixeway.pojo.CIVulnManageResponse;
 import io.mixeway.pojo.Status;
 import io.mixeway.rest.cioperations.model.CiResultModel;
+import io.mixeway.rest.cioperations.model.GetInfoRequest;
+import io.mixeway.rest.cioperations.model.InfoScanPerformed;
+import io.mixeway.rest.cioperations.model.PrepareCIOperation;
 import io.mixeway.rest.cioperations.service.CiOperationsService;
 import io.mixeway.rest.model.OverAllVulnTrendChartData;
 import org.codehaus.jettison.json.JSONException;
@@ -13,6 +16,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import io.mixeway.db.entity.CiOperations;
 
+import javax.validation.Valid;
 import java.io.IOException;
 import java.security.*;
 import java.security.cert.CertificateException;
@@ -72,6 +76,22 @@ public class CiOperationsController {
                                                                    @PathVariable(value = "projectId") Long id,
                                                                     @PathVariable("commitid") String commitid) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         return ciOperationsService.codeVerify(codeGroup, codeProject, id, commitid);
+    }
+
+    /**
+     *
+     * @return
+     */
+    @PreAuthorize("hasAuthority('ROLE_API_CICD')")
+    @PostMapping(value = "/getscannerinfo",produces = "application/json")
+    public ResponseEntity<PrepareCIOperation> getInfoForCI(@Valid @RequestBody GetInfoRequest getInfoRequest) throws Exception {
+        return ciOperationsService.getInfoForCI(getInfoRequest);
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_API_CICD')")
+    @PostMapping(value = "/infoscanperformed",produces = "application/json")
+    public ResponseEntity<Status> infoScanPerformed(@RequestBody InfoScanPerformed infoScanPerformed) throws Exception {
+        return ciOperationsService.infoScanPerformed(infoScanPerformed);
     }
 
 }

@@ -54,7 +54,15 @@ public class Project implements Serializable{
 	private String networkdc;
 	private String appClient;
 
-	@Column(name="appclient")
+	public Project(){}
+    public Project(String projectName, String description, boolean vulnAuditorEnable, String ciid) {
+		this.name = projectName;
+		this.description = description;
+		this.vulnAuditorEnable = vulnAuditorEnable;
+		this.ciid = ciid;
+    }
+
+    @Column(name="appclient")
 	public String getAppClient() {
 		return appClient;
 	}

@@ -1091,3 +1091,6 @@ insert into securitygatway (grade, high, critical, medium, vuln) values (false,5
 --changeset siewer:aws_ec2_integration
 alter table iaasapi add column region text;
 alter table iaasapi add column vpcid text;
+
+--changeset siewer:api_key_cicd_user
+alter table users add column apikey text;

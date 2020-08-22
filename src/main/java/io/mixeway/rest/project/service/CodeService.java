@@ -12,6 +12,7 @@ import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.PermissionFactory;
 import io.mixeway.pojo.VaultHelper;
 import io.mixeway.rest.project.model.*;
+import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,6 +73,9 @@ public class CodeService {
                 codeModel.setdTrackUuid(cp.getdTrackUuid());
                 codeModel.setRunning(cp.getCodeGroup().isRunning());
                 codeModel.setRisk(cp.getRisk());
+                codeModel.setRepoUrl(cp.getRepoUrl());
+                codeModel.setRepoUsername(cp.getRepoUsername());
+                codeModel.setRepoPassword(StringUtils.isNoneBlank(cp.getRepoPassword()) ? Constants.DUMMY_PASSWORD : "");
                 codeModels.add(codeModel);
             }
             codeCard.setCodeModels(codeModels);
@@ -124,7 +128,7 @@ public class CodeService {
         CodeProject cp = new CodeProject();
         cp.setName(codeGroup.getName());
         cp.setCodeGroup(codeGroup);
-        cp.setBranch(Constants.CODE_DEFAULT_BRANCH);
+        cp.setBranch(codeGroupPutModel.getBranch()!=null ?  codeGroupPutModel.getBranch() : Constants.CODE_DEFAULT_BRANCH);
         cp.setRepoUrl(codeGroup.getRepoUrl());
         cp.setRepoPassword(codeGroup.getRepoPassword());
         cp.setRepoUsername(codeGroup.getRepoUsername());
@@ -249,6 +253,16 @@ public class CodeService {
                 } else {
                     codeProject.get().setBranch(editCodeProjectModel.getBranch());
                     log.info("{} Setting branch for {} - {}", name, codeProject.get().getName(), LogUtil.prepare(editCodeProjectModel.getBranch()));
+                }
+                codeProject.get().setRepoUrl(editCodeProjectModel.getRepoUrl());
+                codeProject.get().setRepoUsername(editCodeProjectModel.getRepoUsername());
+                if (!editCodeProjectModel.getRepoPassword().equals(Constants.DUMMY_PASSWORD)){
+                    String uuidToken = UUID.randomUUID().toString();
+                    if (vaultHelper.savePassword(editCodeProjectModel.getRepoPassword(), uuidToken)) {
+                        codeProject.get().setRepoPassword(uuidToken);
+                    } else {
+                        codeProject.get().setRepoPassword(editCodeProjectModel.getRepoPassword());
+                    }
                 }
                 codeProjectRepository.save(codeProject.get());
                 return new ResponseEntity<>(HttpStatus.OK);

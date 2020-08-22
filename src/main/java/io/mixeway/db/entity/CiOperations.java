@@ -2,6 +2,7 @@ package io.mixeway.db.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.mixeway.rest.cioperations.model.InfoScanPerformed;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
@@ -9,6 +10,7 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import javax.persistence.*;
+import java.rmi.ConnectIOException;
 import java.util.Date;
 @Entity
 @EntityScan
@@ -34,6 +36,16 @@ public class CiOperations {
     Boolean sastScan;
     Boolean openSourceScan;
     Boolean imageScan;
+
+    public CiOperations(){}
+
+    public CiOperations(CodeProject codeProject, InfoScanPerformed infoScanPerformed) {
+        this.codeProject = codeProject;
+        this.codeGroup = codeProject.getCodeGroup();
+        this.project = codeProject.getCodeGroup().getProject();
+        this.commitId = infoScanPerformed.getCommitId();
+        this.openSourceScan = true;
+    }
 
 
     public Date getEnded() {

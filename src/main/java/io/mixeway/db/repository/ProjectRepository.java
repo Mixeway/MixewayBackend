@@ -22,6 +22,8 @@ public interface ProjectRepository extends JpaRepository<Project, Long>{
 	List<Project> findByContactListNotNull();
 	@Query(value="SELECT distinct(regexp_split_to_table(contactlist, E',')) FROM project",nativeQuery = true)
 	List<String> getUniqueContactListEmails();
+	@Query(value = "select p from Project p where name = :name")
+	Optional<Project> getProjectByName(@Param("name") String name);
 	@Query(value="select p from Project p where contactlist like CONCAT('%',:email,'%')")
 	List<Project> getUniqueContactListEmails(@Param("email") String email);
 	List<Project> findByVulnAuditorEnable(boolean vulnAuditorEnable);

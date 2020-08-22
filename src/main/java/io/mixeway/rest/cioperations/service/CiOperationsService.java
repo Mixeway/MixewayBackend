@@ -12,7 +12,11 @@ import io.mixeway.integrations.utils.CodeAccessVerifier;
 import io.mixeway.pojo.*;
 import io.mixeway.pojo.Status;
 import io.mixeway.rest.cioperations.model.CiResultModel;
+import io.mixeway.rest.cioperations.model.GetInfoRequest;
+import io.mixeway.rest.cioperations.model.InfoScanPerformed;
+import io.mixeway.rest.cioperations.model.PrepareCIOperation;
 import io.mixeway.rest.model.OverAllVulnTrendChartData;
+import io.mixeway.rest.project.model.OpenSourceConfig;
 import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
@@ -185,5 +189,47 @@ public class CiOperationsService {
             return new ResponseEntity<>(ciOperationsRepository.findTop20ByProjectOrderByIdDesc(project.get()), HttpStatus.OK);
         } else
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
+
+    /**
+     * Get Request and based on repoURL, check of CodeProject with given name exists. If not it create system and CodeProject
+     * and then it create project on DTrack
+     * only DTrack
+     * @param getInfoRequest request with url
+     * @return info about scanners
+     */
+    public ResponseEntity<PrepareCIOperation> getInfoForCI(GetInfoRequest getInfoRequest) throws Exception {
+        switch (getInfoRequest.getScope()){
+            case Constants.CI_SCOPE_OPENSOURCE:
+                CodeProject codeProject = openSourceScanService.getCodeProjectByRepoUrl(getInfoRequest.getRepoUrl(), getInfoRequest.getBranch());
+                if (StringUtils.isBlank(codeProject.getdTrackUuid())){
+                    openSourceScanService.createProjectOnOpenSourceScanner(codeProject);
+                }
+                OpenSourceConfig openSourceConfig = openSourceScanService
+                        .getOpenSourceScannerConfiguration(
+                                codeProject.getCodeGroup().getProject().getId(),
+                                codeProject.getName(),
+                                codeProject.getName())
+                        .getBody();
+                // FOR NOW owasp dtrack hardcoded
+                return new ResponseEntity<>(new PrepareCIOperation(openSourceConfig, codeProject,"OWASP Dependency Track"), HttpStatus.OK);
+        }
+        return null;
+    }
+
+    public ResponseEntity<Status> infoScanPerformed(InfoScanPerformed infoScanPerformed) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+        Optional<CodeProject> codeProject = codeProjectRepository.findById(infoScanPerformed.getCodeProjectId());
+        if (codeProject.isPresent() && infoScanPerformed.getScope().equals(Constants.CI_SCOPE_OPENSOURCE)){
+            Optional<CiOperations> ciOperations = ciOperationsRepository.findByCodeProjectAndCommitId(codeProject.get(), infoScanPerformed.getCommitId());
+            if (!ciOperations.isPresent()){
+                ciOperationsRepository.save(new CiOperations(codeProject.get(), infoScanPerformed));
+            }
+            codeProject.get().setCommitid(infoScanPerformed.getCommitId());
+            codeProjectRepository.save(codeProject.get());
+            openSourceScanService.loadVulnerabilities(codeProject.get());
+            return new ResponseEntity<>(HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 }
