@@ -109,7 +109,7 @@ public class AdminScannerRestService {
                 return new ResponseEntity<>(new Status("not ok"), HttpStatus.PRECONDITION_FAILED);
             }
         } catch (Exception e){
-            log.error("Error during scanner testing");
+            log.error("Error during scanner testing {}", e.getLocalizedMessage());
             return new ResponseEntity<>(new Status(e.getLocalizedMessage()), HttpStatus.PRECONDITION_FAILED);
         }
     }
