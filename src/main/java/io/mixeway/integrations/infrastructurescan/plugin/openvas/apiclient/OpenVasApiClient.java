@@ -189,8 +189,8 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 		}
 	}
 
-	ResponseEntity<String> createRequest(String url, HttpHeaders httpHeaders, String body, HttpMethod method) throws KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, CertificateException, IOException{
-		RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(null);
+	ResponseEntity<String> createRequest(String url, HttpHeaders httpHeaders, String body, HttpMethod method, Scanner scanner) throws KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, CertificateException, IOException{
+		RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(scanner);
 		if (httpHeaders == null)
 			httpHeaders = new HttpHeaders();
 		httpHeaders.set("Content-Type", "application/json");
@@ -202,7 +202,7 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 		ResponseEntity<String> response;
 		try {
 			String userString = new JSONObject(createUser(nessus.getUsername(), vaultHelper.getPassword(nessus.getPassword()))).toString();
-			response = createRequest(nessus.getApiUrl() + "/initialize",null,userString,HttpMethod.POST);
+			response = createRequest(nessus.getApiUrl() + "/initialize",null,userString,HttpMethod.POST, nessus);
 
 			if (response.getStatusCode() == HttpStatus.OK) {
 				updateScannerInfo(nessus, response.getBody());
