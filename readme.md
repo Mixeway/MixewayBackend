@@ -20,7 +20,7 @@ With number of plugins for Vulnerability Scanners :
 <img src="https://mixeway.github.io/img/jenkins.jpg" height="50px">
 <img src="https://mixeway.github.io/img/jira.jpg" height="50px">
 
-With all this available, Mixeway provides functionalities to:
+With all this available, Mixeway  provides functionalities to:
 - Automatic service discovery (IaaS Plugin for assets and network scans for services)
 - Automatic Vulnerability Scan Configuration (Based on most recent configuration) - hands-free!
 - Automatic and on-demand Vulnerability scan execution (based on policy and executed via a REST API call)
