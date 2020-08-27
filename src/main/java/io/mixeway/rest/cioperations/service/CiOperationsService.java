@@ -48,6 +48,7 @@ public class CiOperationsService {
     private final CodeScanService codeScanService;
     private final VulnTemplate vulnTemplate;
     private final CodeGroupRepository codeGroupRepository;
+    private final SecurityQualityGateway securityQualityGateway;
     ArrayList<String> severitiesHigh = new ArrayList<String>() {{
         add("Critical");
         add("High");
@@ -57,7 +58,7 @@ public class CiOperationsService {
                         ProjectRepository projectRepository, CodeAccessVerifier codeAccessVerifier,
                         CodeProjectRepository codeProjectRepository, VulnTemplate vulnTemplate,
                         OpenSourceScanService openSourceScanService, CodeScanService codeScanService,
-                        CodeGroupRepository codeGroupRepository){
+                        CodeGroupRepository codeGroupRepository, SecurityQualityGateway securityQualityGateway){
         this.ciOperationsRepository = ciOperationsRepository;
         this.permissionFactory = permissionFactory;
         this.codeGroupRepository = codeGroupRepository;
@@ -67,6 +68,7 @@ public class CiOperationsService {
         this.codeScanService = codeScanService;
         this.codeAccessVerifier = codeAccessVerifier;
         this.vulnTemplate = vulnTemplate;
+        this.securityQualityGateway = securityQualityGateway;
     }
 
     public ResponseEntity<List<OverAllVulnTrendChartData>> getVulnTrendData(Principal principal) {
@@ -235,9 +237,11 @@ public class CiOperationsService {
         }
     }
 
-    public ResponseEntity<Status> loadVulnerabilitiesFromCICDToProject(List<VulnerabilityModel> vulns, Long projectId, String codeProjectName, String branch, String commitId) {
+    public ResponseEntity<Status> loadVulnerabilitiesFromCICDToProject(List<VulnerabilityModel> vulns, Long projectId,
+                                                                       String codeProjectName, String branch,
+                                                                       String commitId, Principal principal) {
         Optional<Project> project = projectRepository.findById(projectId);
-        if (project.isPresent()){
+        if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             Optional<CodeProject> codeProject = codeProjectRepository.getCodeProjectByProjectNameAndBranch(project.get().getId(), codeProjectName, branch);
             CodeProject codeProjectToLoad;
             if (codeProject.isPresent()){
@@ -262,9 +266,70 @@ public class CiOperationsService {
             if (openSourceVulns.size() > 0){
                 openSourceScanService.loadVulnsFromCICDToCodeProject(codeProjectToLoad, openSourceVulns);
             }
+            createCIOperationsForCICDRequest(codeProjectToLoad);
             return new ResponseEntity<>(HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
+    }
+
+    public ResponseEntity<Status> loadVulnerabilitiesForAnonymousProject(List<VulnerabilityModel> vulns, String codeProjectName) {
+        Optional<List<Project>> findUnknownProject = projectRepository.findByName(Constants.PROJECT_UNKNOWN);
+        Project unknownProject = null;
+        // Get unknown project
+        if (findUnknownProject.isPresent() && findUnknownProject.get().size() == 1){
+            unknownProject = findUnknownProject.get().get(0);
+        } else if (!findUnknownProject.isPresent() || (findUnknownProject.get().isEmpty())) {
+            unknownProject = projectRepository.save(new Project(Constants.PROJECT_UNKNOWN,
+                    "unknown project created for anynomous CICD",
+                    false,
+                    "none"));
+        }
+        // Get CodeProject to load vulns to
+        if (unknownProject != null){
+            Optional<CodeProject> codeProjectToCheck = codeProjectRepository.getCodeProjectByProjectName(unknownProject.getId(),codeProjectName);
+            CodeProject codeProject = null;
+            if (codeProjectToCheck.isPresent()){
+                codeProject = codeProjectToCheck.get();
+            } else {
+                CodeGroup codeGroup = codeGroupRepository.save(new CodeGroup(unknownProject,codeProjectName));
+                codeProject = codeProjectRepository.save(new CodeProject(codeProjectName,"unknown", codeGroup, "unknown"));
+            }
+            List<VulnerabilityModel> sastVulns = vulns.stream().filter(v -> v.getScannerType().equals(ScannerType.SAST)).collect(Collectors.toList());
+            if (sastVulns.size() > 0 ){
+                codeScanService.loadVulnsFromCICDToCodeProject(codeProject, sastVulns);
+            }
+            List<VulnerabilityModel> openSourceVulns = vulns.stream().filter(v -> v.getScannerType().equals(ScannerType.OPENSOURCE)).collect(Collectors.toList());
+            if (openSourceVulns.size() > 0){
+                openSourceScanService.loadVulnsFromCICDToCodeProject(codeProject, openSourceVulns);
+            }
+            createCIOperationsForCICDRequest(codeProject);
+            return new ResponseEntity<>(HttpStatus.OK);
+        }else {
+            return new ResponseEntity<>(HttpStatus.PRECONDITION_FAILED);
+        }
+    }
+
+    /**
+     * Create CICD Operations based on CICD response
+     */
+    private void createCIOperationsForCICDRequest(CodeProject codeProject){
+        SecurityGatewayEntry securityGatewayEntry = securityQualityGateway.buildGatewayResponse(vulnTemplate.projectVulnerabilityRepository.findByCodeProject(codeProject));
+        Optional<CiOperations> optionalCiOperations = ciOperationsRepository.findByCodeProjectAndCommitId(codeProject, codeProject.getCommitid());
+        CiOperations ciOperations = null;
+        ciOperations = optionalCiOperations.orElseGet(CiOperations::new);
+        ciOperations.setResult(securityGatewayEntry.isPassed() ? "Ok" : "Not Ok");
+        ciOperations.setCodeGroup(codeProject.getCodeGroup());
+        ciOperations.setCodeProject(codeProject);
+        ciOperations.setInserted(new Date());
+        ciOperations.setEnded(new Date());
+        ciOperations.setProject(codeProject.getCodeGroup().getProject());
+        ciOperations.setCommitId(codeProject.getCommitid()!=null? codeProject.getCommitid() : "unknown");
+        ciOperations.setSastHigh(securityGatewayEntry.getSastHigh());
+        ciOperations.setSastCrit(securityGatewayEntry.getSastCritical());
+        ciOperations.setOpenSourceCrit(securityGatewayEntry.getOsCritical());
+        ciOperations.setOpenSourceHigh(securityGatewayEntry.getOsHigh());
+        ciOperationsRepository.save(ciOperations);
+
     }
 }

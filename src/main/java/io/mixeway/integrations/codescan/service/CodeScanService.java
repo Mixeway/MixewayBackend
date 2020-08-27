@@ -688,9 +688,6 @@ public class CodeScanService {
         List<ProjectVulnerability> test = vulnTemplate.projectVulnerabilityRepository.findByCodeProjectAndVulnerabilitySource(codeProject, vulnTemplate.SOURCE_SOURCECODE).collect(Collectors.toList());
 
         vulnTemplate.projectVulnerabilityRepository.flush();
-        log.warn("new: {}", test.stream().filter(pv->pv.getStatus().getId().equals(1L)).count());
-        log.warn("Existing: {}", test.stream().filter(pv->pv.getStatus().getId().equals(2L)).count());
-        log.warn("removed: {}", test.stream().filter(pv->pv.getStatus().getId().equals(3L)).count());
         log.info("[CICD] SourceCode - Loading Vulns for {} completed", codeProject.getName());
     }
 
@@ -698,9 +695,5 @@ public class CodeScanService {
     void removeOldVulns(CodeProject codeProject) {
         List<ProjectVulnerability> toRemove = vulnTemplate.projectVulnerabilityRepository.findByCodeProjectAndVulnerabilitySource(codeProject, vulnTemplate.SOURCE_SOURCECODE).filter(v -> v.getStatus().getId().equals(vulnTemplate.STATUS_REMOVED.getId())).collect(Collectors.toList());
         vulnTemplate.projectVulnerabilityRepository.deleteAll(toRemove);
-        //int removed =0;
-        //if (toRemove.size() > 0) {
-        //    removed = vulnTemplate.projectVulnerabilityRepository.deleteProjectVulnerabilityIn(toRemove);
-       // }
     }
 }

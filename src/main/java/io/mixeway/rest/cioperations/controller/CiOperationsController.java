@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import io.mixeway.db.entity.CiOperations;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
 import java.io.IOException;
 import java.security.*;
 import java.security.cert.CertificateException;
@@ -95,8 +96,14 @@ public class CiOperationsController {
     public ResponseEntity<Status> loadVulnerabilitiesFromCICDToProject(@RequestBody List<VulnerabilityModel> vulns, @PathVariable(value = "projectId") Long projectId,
                                                                        @PathVariable(value = "codeProjectName") String codeProjectName,
                                                                        @PathVariable(value = "branch") String branch,
-                                                                       @PathVariable(value = "commitId") String commitId) throws Exception {
-        return ciOperationsService.loadVulnerabilitiesFromCICDToProject(vulns, projectId, codeProjectName, branch, commitId);
+                                                                       @PathVariable(value = "commitId") String commitId, Principal principal) throws Exception {
+        return ciOperationsService.loadVulnerabilitiesFromCICDToProject(vulns, projectId, codeProjectName, branch, commitId, principal);
+    }
+    @PreAuthorize("hasAuthority('ROLE_API_CICD')")
+    @PostMapping(value="/loadvulnerabilities/{codeProjectName}")
+    public ResponseEntity<Status> loadVulnerabilitiesForAnonymousProject (@RequestBody List<VulnerabilityModel> vulns,
+                                                                          @NotEmpty @PathVariable(value = "codeProjectName") String codeProjectName) {
+        return ciOperationsService.loadVulnerabilitiesForAnonymousProject(vulns, codeProjectName);
     }
 
 }
