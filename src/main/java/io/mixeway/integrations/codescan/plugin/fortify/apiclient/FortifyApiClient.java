@@ -215,6 +215,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 		}
 	}
 	private void saveVulnerabilities(CodeGroup codeGroup, List<FortifyVuln> fortifyVulns, CodeProject cp, io.mixeway.db.entity.Scanner scanner, List<ProjectVulnerability> oldVulns) throws JSONException, CertificateException, ParseException, NoSuchAlgorithmException, KeyManagementException, UnrecoverableKeyException, KeyStoreException, IOException, URISyntaxException {
+		List<ProjectVulnerability> vulnsToPersist = new ArrayList<>();
 		for (FortifyVuln fortifyVuln: fortifyVulns) {
 			if (cp == null){
 				cp = setCodeProjectForScan(codeGroup,cp,fortifyVuln);
@@ -227,8 +228,10 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 
 			projectVulnerability = createDescriptionAndState(fortifyVuln.getIssueInstanceId(),fortifyVuln.getId(),
 					codeGroup.getVersionIdAll(), scanner, projectVulnerability);
-			vulnTemplate.vulnerabilityPersist(oldVulns, projectVulnerability);
+			vulnsToPersist.add(projectVulnerability);
+			//vulnTemplate.vulnerabilityPersist(oldVulns, projectVulnerability);
 		}
+		vulnTemplate.vulnerabilityPersistList(oldVulns, vulnsToPersist);
 
 	}
 

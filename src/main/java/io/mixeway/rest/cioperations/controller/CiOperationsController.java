@@ -2,10 +2,7 @@ package io.mixeway.rest.cioperations.controller;
 
 import io.mixeway.pojo.CIVulnManageResponse;
 import io.mixeway.pojo.Status;
-import io.mixeway.rest.cioperations.model.CiResultModel;
-import io.mixeway.rest.cioperations.model.GetInfoRequest;
-import io.mixeway.rest.cioperations.model.InfoScanPerformed;
-import io.mixeway.rest.cioperations.model.PrepareCIOperation;
+import io.mixeway.rest.cioperations.model.*;
 import io.mixeway.rest.cioperations.service.CiOperationsService;
 import io.mixeway.rest.model.OverAllVulnTrendChartData;
 import org.codehaus.jettison.json.JSONException;
@@ -92,6 +89,14 @@ public class CiOperationsController {
     @PostMapping(value = "/infoscanperformed",produces = "application/json")
     public ResponseEntity<Status> infoScanPerformed(@RequestBody InfoScanPerformed infoScanPerformed) throws Exception {
         return ciOperationsService.infoScanPerformed(infoScanPerformed);
+    }
+    @PreAuthorize("hasAuthority('ROLE_API_CICD')")
+    @PostMapping(value = "/loadvulnerabilities/{projectId}/{codeProjectName}/{branch}/{commitId}",produces = "application/json")
+    public ResponseEntity<Status> loadVulnerabilitiesFromCICDToProject(@RequestBody List<VulnerabilityModel> vulns, @PathVariable(value = "projectId") Long projectId,
+                                                                       @PathVariable(value = "codeProjectName") String codeProjectName,
+                                                                       @PathVariable(value = "branch") String branch,
+                                                                       @PathVariable(value = "commitId") String commitId) throws Exception {
+        return ciOperationsService.loadVulnerabilitiesFromCICDToProject(vulns, projectId, codeProjectName, branch, commitId);
     }
 
 }

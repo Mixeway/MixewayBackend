@@ -1094,3 +1094,6 @@ alter table iaasapi add column vpcid text;
 
 --changeset siewer:api_key_cicd_user
 alter table users add column apikey text;
+
+--changeset siewer:feature_scanner
+delete from scannertype where name='OpenVAS Socket';

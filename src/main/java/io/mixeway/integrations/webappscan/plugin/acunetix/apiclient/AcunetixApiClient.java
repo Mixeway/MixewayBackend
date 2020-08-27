@@ -280,6 +280,7 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 					coursor = "&c=" + paginator;
 				ResponseEntity<LoadVlnerabilitiesModel> response = restTemplate.exchange(scanner.getApiUrl() + "/api/v1/vulnerabilities?q=target_id:" + webApp.getTargetId() + coursor, HttpMethod.GET, entity, LoadVlnerabilitiesModel.class);
 				if (response.getStatusCode() == HttpStatus.OK) {
+					List<ProjectVulnerability> vulnsToPersist = new ArrayList<>();
 					for (VulnerabilityModel vulnFromAcu : response.getBody().getVulnerabilities()){
 						Vulnerability vulnerability = vulnTemplate.createOrGetVulnerabilityService.createOrGetVulnerabilityWithRecommendationAndReferences(vulnFromAcu.getVt_name(),vulnFromAcu.getRecommendation(),prepareRefs(vulnFromAcu.getReferences()));
 						ProjectVulnerability vuln = new ProjectVulnerability(webApp,null,vulnerability,null,
@@ -290,11 +291,13 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 						}
 						vuln = loadVulnDetails(vuln, scanner, vulnFromAcu.getVuln_id());
 						vuln.updateStatusAndGrade(oldVulns,vulnTemplate);
-						vulnTemplate.vulnerabilityPersist(oldVulns, vuln);
+						vulnsToPersist.add((vuln));
+						//vulnTemplate.vulnerabilityPersist(oldVulns, vuln);
 						//vulnTemplate.projectVulnerabilityRepository.save(vuln);
 						//TODO JIRA CREATION
 
 					}
+					vulnTemplate.vulnerabilityPersistList(oldVulns,vulnsToPersist);
 					if (response.getBody().getPagination().getNext_cursor() != null) {
 						loadVulnerabilities(scanner, webApp,response.getBody().getPagination().getNext_cursor(), oldVulns);
 					}

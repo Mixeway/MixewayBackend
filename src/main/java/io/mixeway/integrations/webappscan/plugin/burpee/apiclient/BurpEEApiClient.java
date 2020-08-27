@@ -164,6 +164,7 @@ public class BurpEEApiClient implements SecurityScanner, WebAppScanClient {
             ResponseEntity<ScanResults> response = restTemplate.exchange(scanner.getApiUrl() + "/api/"+ vaultHelper.getPassword(scanner.getApiKey()) + "/v0.1/scan/"+ webApp.getScanId(),
                     HttpMethod.GET, null, ScanResults.class);
             if (response.getStatusCode().equals(HttpStatus.OK)) {
+                List<ProjectVulnerability> vulnsToPersist = new ArrayList<>();
                 for (IssueEvents issue : Objects.requireNonNull(response.getBody()).getIssue_events()) {
                     Vulnerability vulnerability = createOrGetVulnerabilityService.createOrGetVulnerability(issue.getIssue().getName());
                     ProjectVulnerability vuln = new ProjectVulnerability(webApp, issue.getIssue(),vulnerability, vulnTemplate.SOURCE_WEBAPP);
@@ -175,8 +176,10 @@ public class BurpEEApiClient implements SecurityScanner, WebAppScanClient {
                     }
                     else
                         vuln.setStatus(vulnTemplate.STATUS_NEW);
-                    vulnTemplate.vulnerabilityPersist(oldVulns, vuln);
+                    vulnsToPersist.add(vuln);
+                    //vulnTemplate.vulnerabilityPersist(oldVulns, vuln);
                 }
+                vulnTemplate.vulnerabilityPersistList(oldVulns,vulnsToPersist);
                 webApp.setLastExecuted(sdf.format(new Date()));
                 webApp.setRunning(false);
                 webAppRepository.save(webApp);

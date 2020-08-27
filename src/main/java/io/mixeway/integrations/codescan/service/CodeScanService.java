@@ -10,6 +10,7 @@ import io.mixeway.integrations.codescan.model.CodeScanRequestModel;
 import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.VaultHelper;
 import io.mixeway.pojo.Vulnerability;
+import io.mixeway.rest.cioperations.model.VulnerabilityModel;
 import io.mixeway.rest.project.model.RunScanForCodeProject;
 import io.mixeway.rest.project.model.SASTProject;
 import io.mixeway.rest.utils.ProjectRiskAnalyzer;
@@ -17,6 +18,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -56,12 +58,15 @@ public class CodeScanService {
     private final CiOperationsRepository ciOperationsRepository;
     private final ProjectRiskAnalyzer projectRiskAnalyzer;
     private final VulnTemplate vulnTemplate;
+    private final ProjectVulnerabilityRepository projectVulnerabilityRepository;
 
     CodeScanService(ProjectRepository projectRepository, CodeGroupRepository codeGroupRepository, CodeProjectRepository codeProjectRepository,
                     VulnTemplate vulnTemplate, CodeAccessVerifier codeAccessVerifier, VaultHelper vaultHelper,
                     List<CodeScanClient> codeScanClients, ScannerRepository scannerRepository, ScannerTypeRepository scannerTypeRepository,
-                    CiOperationsRepository ciOperationsRepository, ProjectRiskAnalyzer projectRiskAnalyzer){
+                    CiOperationsRepository ciOperationsRepository, ProjectRiskAnalyzer projectRiskAnalyzer,
+                    ProjectVulnerabilityRepository projectVulnerabilityRepository){
         this.projectRepository = projectRepository;
+        this.projectVulnerabilityRepository = projectVulnerabilityRepository;
         this.codeGroupRepository = codeGroupRepository;
         this.codeProjectRepository = codeProjectRepository;
         this.codeAccessVerifier = codeAccessVerifier;
@@ -295,10 +300,16 @@ public class CodeScanService {
                         }
                     }
                 }
-
+                List<Long> toRemove = vulnTemplate.projectVulnerabilityRepository.findByProjectAndVulnerabilitySource(group.getProject(), vulnTemplate.SOURCE_SOURCECODE).filter(v -> v.getStatus().getId() == vulnTemplate.STATUS_REMOVED.getId()).map(ProjectVulnerability::getId).collect(Collectors.toList());
+                int removed =0;
+                if (toRemove !=null && toRemove.size() > 0) {
+                    removed = vulnTemplate.projectVulnerabilityRepository.deleteProjectVulnerabilityIn(toRemove);
+                    log.info("Removed {} source code vulns for project {}", removed,group.getProject());
+                }
             }
         }
-        vulnTemplate.projectVulnerabilityRepository.deleteByStatus(vulnTemplate.STATUS_REMOVED);
+
+        //vulnTemplate.projectVulnerabilityRepository.deleteByStatus(vulnTemplate.STATUS_REMOVED);
         log.info("SAST Offline synchronization completed");
     }
 
@@ -478,11 +489,15 @@ public class CodeScanService {
      * @param codeProject CodeProject to delate vulns for
      * @return List of deleted vulns to set proper status
      */
-    private List<ProjectVulnerability> getOldVulnsForCodeProject(CodeProject codeProject){
-        List<ProjectVulnerability> codeVulns = vulnTemplate.projectVulnerabilityRepository.findByCodeProject(codeProject);
-        if (codeVulns.size() > 0)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    List<ProjectVulnerability> getOldVulnsForCodeProject(CodeProject codeProject){
+        List<ProjectVulnerability> codeVulns = vulnTemplate.projectVulnerabilityRepository.findByCodeProjectAndVulnerabilitySource(codeProject, vulnTemplate.SOURCE_SOURCECODE).collect(Collectors.toList());
+        if (codeVulns.size() > 0) {
             vulnTemplate.projectVulnerabilityRepository.updateVulnState(codeVulns.stream().map(ProjectVulnerability::getId).collect(Collectors.toList()),
                     vulnTemplate.STATUS_REMOVED.getId());
+            codeVulns.forEach(pv -> pv.setStatus(vulnTemplate.STATUS_REMOVED));
+        }
+
         return codeVulns;
     }
 
@@ -646,5 +661,46 @@ public class CodeScanService {
             }
         }
         return new ResponseEntity<>(HttpStatus.PRECONDITION_FAILED);
+    }
+
+    /**
+     * Loading vulns from Mixeway scanner push to db
+     * @param codeProject project with vulns
+     * @param sastVulns list of vulns
+     */
+    @Transactional
+    @Modifying
+    public void loadVulnsFromCICDToCodeProject(CodeProject codeProject, List<VulnerabilityModel> sastVulns) {
+        List<ProjectVulnerability> oldVulnsForCodeProject = getOldVulnsForCodeProject(codeProject);
+        List<ProjectVulnerability> vulnToPersist = new ArrayList<>();
+        for (VulnerabilityModel vulnerabilityModel : sastVulns){
+            io.mixeway.db.entity.Vulnerability vulnerability = vulnTemplate.createOrGetVulnerabilityService.createOrGetVulnerability(vulnerabilityModel.getName());
+
+            ProjectVulnerability projectVulnerability = new ProjectVulnerability(codeProject,codeProject,vulnerability, vulnerabilityModel.getDescription(),null,
+                    vulnerabilityModel.getSeverity(),null,vulnerabilityModel.getFilename()+":"+vulnerabilityModel.getLine(),
+                    "", vulnTemplate.SOURCE_SOURCECODE );
+
+            vulnToPersist.add(projectVulnerability);
+        }
+        vulnTemplate.vulnerabilityPersistList(oldVulnsForCodeProject, vulnToPersist);
+
+        removeOldVulns(codeProject);
+        List<ProjectVulnerability> test = vulnTemplate.projectVulnerabilityRepository.findByCodeProjectAndVulnerabilitySource(codeProject, vulnTemplate.SOURCE_SOURCECODE).collect(Collectors.toList());
+
+        vulnTemplate.projectVulnerabilityRepository.flush();
+        log.warn("new: {}", test.stream().filter(pv->pv.getStatus().getId().equals(1L)).count());
+        log.warn("Existing: {}", test.stream().filter(pv->pv.getStatus().getId().equals(2L)).count());
+        log.warn("removed: {}", test.stream().filter(pv->pv.getStatus().getId().equals(3L)).count());
+        log.info("[CICD] SourceCode - Loading Vulns for {} completed", codeProject.getName());
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    void removeOldVulns(CodeProject codeProject) {
+        List<ProjectVulnerability> toRemove = vulnTemplate.projectVulnerabilityRepository.findByCodeProjectAndVulnerabilitySource(codeProject, vulnTemplate.SOURCE_SOURCECODE).filter(v -> v.getStatus().getId().equals(vulnTemplate.STATUS_REMOVED.getId())).collect(Collectors.toList());
+        vulnTemplate.projectVulnerabilityRepository.deleteAll(toRemove);
+        //int removed =0;
+        //if (toRemove.size() > 0) {
+        //    removed = vulnTemplate.projectVulnerabilityRepository.deleteProjectVulnerabilityIn(toRemove);
+       // }
     }
 }

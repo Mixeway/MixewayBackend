@@ -2,6 +2,7 @@ package io.mixeway.rest.cioperations.service;
 
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
+import io.mixeway.db.repository.CodeGroupRepository;
 import io.mixeway.db.repository.CodeProjectRepository;
 import io.mixeway.db.repository.ProjectRepository;
 import io.mixeway.domain.service.vulnerability.VulnTemplate;
@@ -11,10 +12,8 @@ import io.mixeway.integrations.opensourcescan.service.OpenSourceScanService;
 import io.mixeway.integrations.utils.CodeAccessVerifier;
 import io.mixeway.pojo.*;
 import io.mixeway.pojo.Status;
-import io.mixeway.rest.cioperations.model.CiResultModel;
-import io.mixeway.rest.cioperations.model.GetInfoRequest;
-import io.mixeway.rest.cioperations.model.InfoScanPerformed;
-import io.mixeway.rest.cioperations.model.PrepareCIOperation;
+import io.mixeway.rest.cioperations.model.*;
+import io.mixeway.rest.cioperations.model.ScannerType;
 import io.mixeway.rest.model.OverAllVulnTrendChartData;
 import io.mixeway.rest.project.model.OpenSourceConfig;
 import org.apache.commons.lang3.StringUtils;
@@ -48,6 +47,7 @@ public class CiOperationsService {
     private final OpenSourceScanService openSourceScanService;
     private final CodeScanService codeScanService;
     private final VulnTemplate vulnTemplate;
+    private final CodeGroupRepository codeGroupRepository;
     ArrayList<String> severitiesHigh = new ArrayList<String>() {{
         add("Critical");
         add("High");
@@ -56,9 +56,11 @@ public class CiOperationsService {
     CiOperationsService(CiOperationsRepository ciOperationsRepository, PermissionFactory permissionFactory,
                         ProjectRepository projectRepository, CodeAccessVerifier codeAccessVerifier,
                         CodeProjectRepository codeProjectRepository, VulnTemplate vulnTemplate,
-                        OpenSourceScanService openSourceScanService, CodeScanService codeScanService){
+                        OpenSourceScanService openSourceScanService, CodeScanService codeScanService,
+                        CodeGroupRepository codeGroupRepository){
         this.ciOperationsRepository = ciOperationsRepository;
         this.permissionFactory = permissionFactory;
+        this.codeGroupRepository = codeGroupRepository;
         this.projectRepository = projectRepository;
         this.codeProjectRepository = codeProjectRepository;
         this.openSourceScanService = openSourceScanService;
@@ -227,6 +229,39 @@ public class CiOperationsService {
             codeProject.get().setCommitid(infoScanPerformed.getCommitId());
             codeProjectRepository.save(codeProject.get());
             openSourceScanService.loadVulnerabilities(codeProject.get());
+            return new ResponseEntity<>(HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
+    public ResponseEntity<Status> loadVulnerabilitiesFromCICDToProject(List<VulnerabilityModel> vulns, Long projectId, String codeProjectName, String branch, String commitId) {
+        Optional<Project> project = projectRepository.findById(projectId);
+        if (project.isPresent()){
+            Optional<CodeProject> codeProject = codeProjectRepository.getCodeProjectByProjectNameAndBranch(project.get().getId(), codeProjectName, branch);
+            CodeProject codeProjectToLoad;
+            if (codeProject.isPresent()){
+                log.info("[CICD] Get results for {}, proceeding with load", codeProject.get().getName());
+                codeProjectToLoad = codeProject.get();
+
+            } else {
+                log.info("[CICD] Get results for unknown codeproject, creating new with name {}", codeProjectName);
+                Optional<CodeGroup> codeGroup = codeGroupRepository.findByProjectAndName(project.get(), codeProjectName);
+                if (codeGroup.isPresent()){
+                    codeProjectToLoad = codeProjectRepository.save(new CodeProject(codeProjectName,branch,codeGroup.get(),commitId));
+                } else {
+                    CodeGroup newCodeGroup = codeGroupRepository.save(new CodeGroup(project.get(), codeProjectName));
+                    codeProjectToLoad = codeProjectRepository.save(new CodeProject(codeProjectName,branch,newCodeGroup,commitId));
+                }
+            }
+            List<VulnerabilityModel> sastVulns = vulns.stream().filter(v -> v.getScannerType().equals(ScannerType.SAST)).collect(Collectors.toList());
+            if (sastVulns.size() > 0 ){
+                codeScanService.loadVulnsFromCICDToCodeProject(codeProjectToLoad, sastVulns);
+            }
+            List<VulnerabilityModel> openSourceVulns = vulns.stream().filter(v -> v.getScannerType().equals(ScannerType.OPENSOURCE)).collect(Collectors.toList());
+            if (openSourceVulns.size() > 0){
+                openSourceScanService.loadVulnsFromCICDToCodeProject(codeProjectToLoad, openSourceVulns);
+            }
             return new ResponseEntity<>(HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
