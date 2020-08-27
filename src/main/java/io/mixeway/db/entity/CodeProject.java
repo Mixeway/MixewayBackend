@@ -38,6 +38,23 @@ public class CodeProject implements VulnSource {
 	@JsonIgnore private String requestId;
 	private int risk;
 
+	/**
+	 * For CICD
+	 */
+	public CodeProject(String projectName, String branch, CodeGroup codeGroup, String commitid) {
+		this.name = projectName;
+		this.branch = branch;
+		this.codeGroup = codeGroup;
+		this.commitid = commitid;
+		this.skipAllScan = true;
+		this.inQueue = false;
+
+	}
+
+	public CodeProject() {
+
+	}
+
 	public int getRisk() {
 		return risk;
 	}

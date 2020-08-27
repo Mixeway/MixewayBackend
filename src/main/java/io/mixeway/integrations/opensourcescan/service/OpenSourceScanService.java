@@ -1,19 +1,14 @@
 package io.mixeway.integrations.opensourcescan.service;
 
 import io.mixeway.config.Constants;
-import io.mixeway.db.entity.CodeProject;
-import io.mixeway.db.entity.Project;
-import io.mixeway.db.entity.ProjectVulnerability;
-import io.mixeway.db.entity.Scanner;
-import io.mixeway.db.repository.CodeProjectRepository;
-import io.mixeway.db.repository.ProjectRepository;
-import io.mixeway.db.repository.ScannerRepository;
-import io.mixeway.db.repository.ScannerTypeRepository;
+import io.mixeway.db.entity.*;
+import io.mixeway.db.repository.*;
 import io.mixeway.domain.service.vulnerability.VulnTemplate;
 import io.mixeway.integrations.opensourcescan.model.Projects;
 import io.mixeway.integrations.opensourcescan.plugins.mvndependencycheck.model.SASTRequestVerify;
 import io.mixeway.integrations.utils.CodeAccessVerifier;
 import io.mixeway.pojo.VaultHelper;
+import io.mixeway.rest.cioperations.model.VulnerabilityModel;
 import io.mixeway.rest.cioperations.service.CiOperationsService;
 import io.mixeway.rest.project.model.CodeGroupPutModel;
 import io.mixeway.rest.project.model.OpenSourceConfig;
@@ -38,7 +33,10 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -46,6 +44,7 @@ import java.util.stream.Collectors;
 
 @Component
 public class OpenSourceScanService {
+    private DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private final ProjectRepository projectRepository;
     private final CodeAccessVerifier codeAccessVerifier;
     private final ScannerRepository scannerRepository;
@@ -55,10 +54,12 @@ public class OpenSourceScanService {
     private final VulnTemplate vulnTemplate;
     private final CodeProjectRepository codeProjectRepository;
     private final CodeService codeService;
+    private final SoftwarePacketRepository softwarePacketRepository;
     private static final Logger log = LoggerFactory.getLogger(OpenSourceScanService.class);
     OpenSourceScanService(ProjectRepository projectRepository, CodeAccessVerifier codeAccessVerifier, ScannerRepository scannerRepository,
                           ScannerTypeRepository scannerTypeRepository, VaultHelper vaultHelper, List<OpenSourceScanClient> openSourceScanClients,
-                          VulnTemplate vulnTemplate,CodeProjectRepository codeProjectRepository, @Lazy CodeService codeService){
+                          VulnTemplate vulnTemplate,CodeProjectRepository codeProjectRepository, @Lazy CodeService codeService,
+                          SoftwarePacketRepository softwarePacketRepository){
         this.projectRepository = projectRepository;
         this.codeAccessVerifier = codeAccessVerifier;
         this.scannerRepository = scannerRepository;
@@ -68,6 +69,7 @@ public class OpenSourceScanService {
         this.vulnTemplate = vulnTemplate;
         this.codeProjectRepository = codeProjectRepository;
         this.codeService = codeService;
+        this.softwarePacketRepository = softwarePacketRepository;
     }
 
 
@@ -228,7 +230,7 @@ public class OpenSourceScanService {
                     vulnTemplate.projectVulnerabilityRepository.updateVulnState(vulnsToUpdate,
                             vulnTemplate.STATUS_REMOVED.getId());
                 openSourceScanClient.loadVulnerabilities(codeProjectToVerify);
-                vulnTemplate.projectVulnerabilityRepository.deleteByStatusAndCodeProject(vulnTemplate.STATUS_REMOVED, codeProjectToVerify);
+                vulnTemplate.projectVulnerabilityRepository.deleteByStatusAndCodeProjectAndVulnerabilitySource(vulnTemplate.STATUS_REMOVED, codeProjectToVerify, vulnTemplate.SOURCE_OPENSOURCE);
                 break;
             }
         }
@@ -261,5 +263,59 @@ public class OpenSourceScanService {
         }
         return false;
     }
+    /**
+     * Getting old vulnerabilities for CodeProject, and set status to removed
+     *
+     * @param codeProject CodeProject to delate vulns for
+     * @return List of deleted vulns to set proper status
+     */
+    private List<ProjectVulnerability> getOldVulnsForCodeProject(CodeProject codeProject){
+        List<ProjectVulnerability> codeVulns = vulnTemplate.projectVulnerabilityRepository.findByCodeProjectAndVulnerabilitySource(codeProject, vulnTemplate.SOURCE_OPENSOURCE).collect(Collectors.toList());
+        if (codeVulns.size() > 0) {
+            vulnTemplate.projectVulnerabilityRepository.updateVulnState(codeVulns.stream().map(ProjectVulnerability::getId).collect(Collectors.toList()),
+                    vulnTemplate.STATUS_REMOVED.getId());
+            codeVulns.forEach(cv -> cv.setStatus(vulnTemplate.STATUS_REMOVED));
+        }
+        return codeVulns;
+    }
 
+    /**
+     * Loading vulns from Mixeway scanner push to db
+     * @param codeProject project with vulns
+     * @param openSourceVulns list of vulns
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void loadVulnsFromCICDToCodeProject(CodeProject codeProject, List<VulnerabilityModel> openSourceVulns) {
+        List<ProjectVulnerability> oldVulns = getOldVulnsForCodeProject(codeProject);
+        List<ProjectVulnerability> vulnToPersist = new ArrayList<>();
+        for (VulnerabilityModel vulnerabilityModel : openSourceVulns){
+            SoftwarePacket softwarePacketVuln;
+            Optional<SoftwarePacket> softPacket = softwarePacketRepository.findByName(vulnerabilityModel.getPackageName()+":"+vulnerabilityModel.getPackageVersion());
+            if (softPacket.isPresent()){
+                softwarePacketVuln = softPacket.get();
+            } else {
+                SoftwarePacket softwarePacket = new SoftwarePacket();
+                softwarePacket.setName(vulnerabilityModel.getPackageName()+":"+vulnerabilityModel.getPackageVersion());
+                softwarePacketVuln = softwarePacketRepository.save(softwarePacket);
+            }
+
+            Vulnerability vuln = vulnTemplate.createOrGetVulnerabilityService.createOrGetVulnerabilityWithDescAndReferences(
+                    vulnerabilityModel.getName(), vulnerabilityModel.getDescription(),
+                    vulnerabilityModel.getReferences(), vulnerabilityModel.getRecomendations());
+
+            ProjectVulnerability projectVulnerability = new ProjectVulnerability(codeProject, vuln, vulnerabilityModel, softwarePacketVuln, vulnTemplate.SOURCE_OPENSOURCE);
+            vulnToPersist.add(projectVulnerability);
+            //vulnTemplate.vulnerabilityPersist(oldVulns, projectVulnerability);
+        }
+        vulnTemplate.vulnerabilityPersistList(oldVulns,vulnToPersist);
+        removeOldVulns(codeProject);
+        log.info("[CICD] OpenSource Loading vulns for {} completed", codeProject.getName());
+    }
+
+    public void removeOldVulns(CodeProject codeProject){
+        List<Long> toRemove = vulnTemplate.projectVulnerabilityRepository.findByCodeProjectAndVulnerabilitySource(codeProject, vulnTemplate.SOURCE_OPENSOURCE).filter(v -> v.getStatus().getId().equals(vulnTemplate.STATUS_REMOVED.getId())).map(ProjectVulnerability::getId).collect(Collectors.toList());
+        if (toRemove.size() > 0) {
+            vulnTemplate.projectVulnerabilityRepository.deleteProjectVulnerabilityIn(toRemove);
+        }
+    }
 }

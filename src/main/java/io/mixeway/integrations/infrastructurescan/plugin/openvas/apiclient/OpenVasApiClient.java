@@ -247,9 +247,12 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 
 	private void setVulnerabilities(NessusScan ns, String body) throws JSONException  {
 		List<ProjectVulnerability> oldVulns = getProjectVulnerabilititiesByScan(ns);
-		if (oldVulns.size() > 0)
+		List<ProjectVulnerability> vulnsToPersist = new ArrayList<>();
+		if (oldVulns.size() > 0) {
 			vulnTemplate.projectVulnerabilityRepository.updateVulnState(oldVulns.stream().map(ProjectVulnerability::getId).collect(Collectors.toList()),
 					vulnTemplate.STATUS_REMOVED.getId());
+			oldVulns.forEach(o -> o.setStatus(vulnTemplate.STATUS_REMOVED));
+		}
 
 		List<Asset> assetsActive = assetRepository.findByProject(ns.getProject());
 		JSONObject vuln = new JSONObject(body);
@@ -268,12 +271,13 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 				ProjectVulnerability projectVulnerability = new ProjectVulnerability(intfActive,null,vulnerability,v.getString(Constants.IF_VULN_DESC),null
 						,v.getString(Constants.IF_VULN_THREAT),v.getString(Constants.IF_VULN_PORT),null,null,vulnTemplate.SOURCE_NETWORK);
 				projectVulnerability.updateStatusAndGrade(oldVulns, vulnTemplate);
-
-				vulnTemplate.vulnerabilityPersist(oldVulns,projectVulnerability);
+				vulnsToPersist.add(projectVulnerability);
+				//vulnTemplate.vulnerabilityPersist(oldVulns,projectVulnerability);
 				//vulnTemplate.projectVulnerabilityRepository.save(projectVulnerability);
 			} else  {
 				log.error("Report contains ip {} which is not found in assets for project {}",v.getString(Constants.IF_VULN_HOST), ns.getProject().getName());
 			}
+			vulnTemplate.vulnerabilityPersistList(oldVulns, vulnsToPersist);
 		}
 		log.debug("Successfully loaded report results - {}", vulns.length());
 

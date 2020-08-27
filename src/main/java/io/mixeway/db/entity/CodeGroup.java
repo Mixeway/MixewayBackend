@@ -38,6 +38,22 @@ public class CodeGroup {
 	@JsonIgnore private String scope;
 	private String appClient;
 
+	public CodeGroup(){}
+	/**
+	 * For CICD
+	 * @param project
+	 * @param codeProjectName
+	 */
+	public CodeGroup(Project project, String codeProjectName) {
+		this.project = project;
+		this.name = codeProjectName;
+		this.versionIdAll = 0;
+		this.versionIdsingle = 0;
+		this.running = false;
+		this.inQueue = false;
+		this.auto = false;
+	}
+
 	@Column(name="appclient")
 	public String getAppClient() {
 		return appClient;

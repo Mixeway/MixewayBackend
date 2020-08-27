@@ -2,10 +2,7 @@ package io.mixeway.rest.cioperations.controller;
 
 import io.mixeway.pojo.CIVulnManageResponse;
 import io.mixeway.pojo.Status;
-import io.mixeway.rest.cioperations.model.CiResultModel;
-import io.mixeway.rest.cioperations.model.GetInfoRequest;
-import io.mixeway.rest.cioperations.model.InfoScanPerformed;
-import io.mixeway.rest.cioperations.model.PrepareCIOperation;
+import io.mixeway.rest.cioperations.model.*;
 import io.mixeway.rest.cioperations.service.CiOperationsService;
 import io.mixeway.rest.model.OverAllVulnTrendChartData;
 import org.codehaus.jettison.json.JSONException;
@@ -17,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import io.mixeway.db.entity.CiOperations;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
 import java.io.IOException;
 import java.security.*;
 import java.security.cert.CertificateException;
@@ -92,6 +90,20 @@ public class CiOperationsController {
     @PostMapping(value = "/infoscanperformed",produces = "application/json")
     public ResponseEntity<Status> infoScanPerformed(@RequestBody InfoScanPerformed infoScanPerformed) throws Exception {
         return ciOperationsService.infoScanPerformed(infoScanPerformed);
+    }
+    @PreAuthorize("hasAuthority('ROLE_API_CICD')")
+    @PostMapping(value = "/loadvulnerabilities/{projectId}/{codeProjectName}/{branch}/{commitId}",produces = "application/json")
+    public ResponseEntity<Status> loadVulnerabilitiesFromCICDToProject(@RequestBody List<VulnerabilityModel> vulns, @PathVariable(value = "projectId") Long projectId,
+                                                                       @PathVariable(value = "codeProjectName") String codeProjectName,
+                                                                       @PathVariable(value = "branch") String branch,
+                                                                       @PathVariable(value = "commitId") String commitId, Principal principal) throws Exception {
+        return ciOperationsService.loadVulnerabilitiesFromCICDToProject(vulns, projectId, codeProjectName, branch, commitId, principal);
+    }
+    @PreAuthorize("hasAuthority('ROLE_API_CICD')")
+    @PostMapping(value="/loadvulnerabilities/{codeProjectName}")
+    public ResponseEntity<Status> loadVulnerabilitiesForAnonymousProject (@RequestBody List<VulnerabilityModel> vulns,
+                                                                          @NotEmpty @PathVariable(value = "codeProjectName") String codeProjectName) {
+        return ciOperationsService.loadVulnerabilitiesForAnonymousProject(vulns, codeProjectName);
     }
 
 }
