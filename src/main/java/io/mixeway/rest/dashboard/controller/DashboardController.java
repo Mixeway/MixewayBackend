@@ -42,15 +42,15 @@ public class DashboardController {
     }
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping(value = "/getvulntrenddata")
-    public List<OverAllVulnTrendChartData> getVulnTrendData() throws IOException {
-        return dashboardService.getVulnTrendData();
+    public List<OverAllVulnTrendChartData> getVulnTrendData(Principal principal) throws IOException {
+        return dashboardService.getVulnTrendData(principal);
     }
 
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping(value = "/getsourcetrenddata")
-    public SourceDetectionChartData getSourceTrendData() throws IOException {
+    public SourceDetectionChartData getSourceTrendData(Principal principal) throws IOException {
 
-        return dashboardService.getSourceTrendData();
+        return dashboardService.getSourceTrendData(principal);
     }
 
     @PreAuthorize("hasAuthority('ROLE_USER')")
@@ -59,24 +59,24 @@ public class DashboardController {
         return dashboardService.getProjects(principal);
     }
 
-    @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
+    @PreAuthorize("hasAuthority('ROLE_USER')")
     @PutMapping(value = "/projects/{projectName}/{projectDescription}/{ciid}/{enableVulnManage}")
     public ResponseEntity putProject(@PathVariable(value = "projectName") String projectName,
                                      @PathVariable(value="projectDescription") String projectDescription,
                                      @PathVariable(value="ciid") String ciid,
                                      @PathVariable(value="enableVulnManage") int enableVulnManage, Principal principal)  {
-        return dashboardService.putProject(projectName, projectDescription, ciid, enableVulnManage, principal.getName());
+        return dashboardService.putProject(projectName, projectDescription, ciid, enableVulnManage, principal);
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @PatchMapping(value = "/projects/{projectId}")
     public ResponseEntity editProject(@PathVariable(value = "projectId") Long projectId,
                                       @RequestBody Projects projectObject, Principal principal) {
-        return dashboardService.patchProject(projectId,projectObject,principal.getName());
+        return dashboardService.patchProject(projectId,projectObject,principal);
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @DeleteMapping(value = "/projects/{projectId}")
     public ResponseEntity deleteProject(@PathVariable(value = "projectId") Long projectId, Principal principal) {
-        return dashboardService.deleteProject(projectId,principal.getName());
+        return dashboardService.deleteProject(projectId,principal);
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @PostMapping(value = "/search")

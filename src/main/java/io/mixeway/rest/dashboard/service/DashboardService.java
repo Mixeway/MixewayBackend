@@ -26,6 +26,7 @@ import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,13 +58,13 @@ public class DashboardService {
     }
 
     private static final Logger log = LoggerFactory.getLogger(DashboardService.class);
-    public List<OverAllVulnTrendChartData> getVulnTrendData() {
+    public List<OverAllVulnTrendChartData> getVulnTrendData(Principal principal) {
 
-        return vulnHistoryRepository.getOverallVulnTrendData();
+        return vulnHistoryRepository.getOverallVulnTrendData(permissionFactory.getProjectForPrincipal(principal).stream().map(Project::getId).collect(Collectors.toList()));
     }
-    public SourceDetectionChartData getSourceTrendData() {
+    public SourceDetectionChartData getSourceTrendData(Principal principal) {
 
-        return vulnHistoryRepository.getSourceTrendChart();
+        return vulnHistoryRepository.getSourceTrendChart(permissionFactory.getProjectForPrincipal(principal).stream().map(Project::getId).collect(Collectors.toList()));
     }
     public List<Projects> getProjects(Principal principal) {
         List<Projects> projects = new ArrayList<>();
@@ -80,24 +81,24 @@ public class DashboardService {
         return projects;
     }
 
-    public ResponseEntity putProject(String projectName, String projectDescription, String ciid, int enableVulnManage, String user) {
-        if (!projectRepository.findByName(projectName).isPresent() && createProjectService.putProject(projectName,projectDescription,ciid, enableVulnManage)){
-            log.info("{} - Created new project {}", user, LogUtil.prepare(projectName));
+    public ResponseEntity putProject(String projectName, String projectDescription, String ciid, int enableVulnManage, Principal principal) {
+        if (!projectRepository.findByName(projectName).isPresent() && createProjectService.putProject(projectName,projectDescription,ciid, enableVulnManage, principal)){
+            log.info("{} - Created new project {}",principal.getName(), LogUtil.prepare(projectName));
             return new ResponseEntity(HttpStatus.CREATED);
         } else {
             return new ResponseEntity(HttpStatus.EXPECTATION_FAILED);
         }
     }
 
-    public ResponseEntity patchProject(Long projectId, Projects projectObject, String user) {
+    public ResponseEntity patchProject(Long projectId, Projects projectObject, Principal principal) {
         Optional<Project> project = projectRepository.findById(projectId);
-        if (project.isPresent() && ( project.get().getName().equals(projectObject.getName()) || !projectRepository.findByName(projectObject.getName()).isPresent())){
+        if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get()) && ( project.get().getName().equals(projectObject.getName()) || !projectRepository.findByName(projectObject.getName()).isPresent())){
             String oldName = project.get().getName();
             project.get().setName(projectObject.getName());
             project.get().setDescription(projectObject.getDescription());
             project.get().setCiid(projectObject.getCiid());
             project.get().setEnableVulnManage(projectObject.getEnableVulnManage() == 1);
-            log.info("{} - Updated project {}, new name is {}", user, oldName,project.get().getName());
+            log.info("{} - Updated project {}, new name is {}", principal.getName(), oldName,project.get().getName());
             projectRepository.save(project.get());
         } else {
             return new ResponseEntity(HttpStatus.EXPECTATION_FAILED);
@@ -105,12 +106,12 @@ public class DashboardService {
         return new ResponseEntity(HttpStatus.OK);
     }
 
-    public ResponseEntity deleteProject(Long projectId, String user) {
+    public ResponseEntity deleteProject(Long projectId, Principal principal) {
         Optional<Project> project = projectRepository.findById(projectId);
-        if (project.isPresent())
+        if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get()))
             try {
                 projectRepository.delete(project.get());
-                log.info("{} - Deleted project {}", user, project.get().getName());
+                log.info("{} - Deleted project {}", principal.getName(), project.get().getName());
                 return new ResponseEntity(HttpStatus.OK);
             } catch (Exception e){
                 log.warn("Exception during delete project try, error is {}", e.getLocalizedMessage());
@@ -127,14 +128,15 @@ public class DashboardService {
         }
     }
 
+    // TODO Permission handling
     public ResponseEntity<SearchResponse> search(SearchRequest searchRequest) {
         if ( searchRequest.getSearch().length() >5 ) {
-            SearchResponse searchResponse = new SearchResponse();
-            searchResponse.setAssets(interfaceRepository.searchForIp(searchRequest.getSearch()));
-            searchResponse.setCodeProjects(codeProjectRepository.searchForName(searchRequest.getSearch()));
-            searchResponse.setWebApps(webAppRepository.searchForUrl(searchRequest.getSearch()));
-            searchResponse.setVulns(setVulnsForVulnName(searchRequest.getSearch()));
-            return new ResponseEntity<>(searchResponse, HttpStatus.OK);
+            //SearchResponse searchResponse = new SearchResponse();
+            //searchResponse.setAssets(interfaceRepository.searchForIp(searchRequest.getSearch()));
+            //searchResponse.setCodeProjects(codeProjectRepository.searchForName(searchRequest.getSearch()));
+            //searchResponse.setWebApps(webAppRepository.searchForUrl(searchRequest.getSearch()));
+            //searchResponse.setVulns(setVulnsForVulnName(searchRequest.getSearch()));
+            return new ResponseEntity<>(null, HttpStatus.OK);
         } else {
             return new ResponseEntity<>(null, HttpStatus.OK);
         }
