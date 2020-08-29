@@ -76,10 +76,7 @@ public class CiOperationsController {
         return ciOperationsService.codeVerify(codeGroup, codeProject, id, commitid);
     }
 
-    /**
-     *
-     * @return
-     */
+
     @PreAuthorize("hasAuthority('ROLE_API_CICD')")
     @PostMapping(value = "/getscannerinfo",produces = "application/json")
     public ResponseEntity<PrepareCIOperation> getInfoForCI(@Valid @RequestBody GetInfoRequest getInfoRequest) throws Exception {
@@ -102,7 +99,7 @@ public class CiOperationsController {
     @PreAuthorize("hasAuthority('ROLE_API_CICD')")
     @PostMapping(value="/loadvulnerabilities/{codeProjectName}")
     public ResponseEntity<Status> loadVulnerabilitiesForAnonymousProject (@RequestBody List<VulnerabilityModel> vulns,
-                                                                          @NotEmpty @PathVariable(value = "codeProjectName") String codeProjectName) {
+                                                                          @PathVariable(value = "codeProjectName") String codeProjectName) {
         return ciOperationsService.loadVulnerabilitiesForAnonymousProject(vulns, codeProjectName);
     }
 

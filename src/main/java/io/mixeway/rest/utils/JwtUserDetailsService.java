@@ -83,7 +83,12 @@ public class JwtUserDetailsService implements UserDetailsService {
                         throw new UsernameNotFoundException("No permisions");
                     }
 
-                } else {
+                } else if (locations[3].equals("cicd")) {
+                    Optional<io.mixeway.db.entity.User> cicdUser = userRepository.findByApiKey(username);
+                    if (cicdUser.isPresent()){
+                        return new User(username, "", AuthorityUtils.commaSeparatedStringToAuthorityList("ROLE_API_CICD"));
+                    }
+                }else {
                     int loc = Arrays.asList(locations).indexOf(Constants.PROJECT_KEYWORD) + 1;
                     Optional<Project> project = projectRepository.findByIdAndApiKey(Long.valueOf(locations[loc]),username);
                     if (project.isPresent() || (settings.getMasterApiKey() != null && username.equals(settings.getMasterApiKey()))) {
@@ -93,10 +98,7 @@ public class JwtUserDetailsService implements UserDetailsService {
                     }
                 }
             }
-            Optional<io.mixeway.db.entity.User> cicdUser = userRepository.findByApiKey(username);
-            if (cicdUser.isPresent()){
-                return new User(username, "", AuthorityUtils.commaSeparatedStringToAuthorityList("ROLE_API_CICD"));
-            }
+
             throw new UsernameNotFoundException("User not found");
         } catch (NumberFormatException | ArrayIndexOutOfBoundsException ex) {
             throw new UsernameNotFoundException("User not found");
