@@ -1,5 +1,6 @@
 package io.mixeway.rest.project.controller;
 
+import io.mixeway.db.entity.Project;
 import io.mixeway.rest.project.model.ApiKeyResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -19,19 +20,19 @@ public class ApiAccessController {
     ApiAccessController(ApiAccessService apiAccessService){
         this.apiAccessService = apiAccessService;
     }
-    @PreAuthorize("hasAuthority('ROLE_EDITOR')")
+    @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @PutMapping(value = "/{id}/apikey")
     public ResponseEntity<ApiKeyResponse> generateApiKey(@PathVariable("id")Long id, Principal principal) {
-        return apiAccessService.generateApiKey(id, principal.getName());
+        return apiAccessService.generateApiKey(id, principal);
     }
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @DeleteMapping(value = "/{id}/apikey")
     public ResponseEntity<Status> deleteApiKey(@PathVariable("id")Long id, Principal principal)  {
-        return apiAccessService.deleteApiKey(id, principal.getName());
+        return apiAccessService.deleteApiKey(id, principal);
     }
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @GetMapping(value = "/{id}/apikey")
-    public ResponseEntity<ApiKeyResponse> getApiKey(@PathVariable("id")Long id) {
-        return apiAccessService.getApiKey(id);
+    public ResponseEntity<ApiKeyResponse> getApiKey(@PathVariable("id")Long id, Principal principal) {
+        return apiAccessService.getApiKey(id, principal);
     }
 }
