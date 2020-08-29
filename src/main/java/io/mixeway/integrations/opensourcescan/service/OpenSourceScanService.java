@@ -7,6 +7,7 @@ import io.mixeway.domain.service.vulnerability.VulnTemplate;
 import io.mixeway.integrations.opensourcescan.model.Projects;
 import io.mixeway.integrations.opensourcescan.plugins.mvndependencycheck.model.SASTRequestVerify;
 import io.mixeway.integrations.utils.CodeAccessVerifier;
+import io.mixeway.pojo.PermissionFactory;
 import io.mixeway.pojo.VaultHelper;
 import io.mixeway.rest.cioperations.model.VulnerabilityModel;
 import io.mixeway.rest.cioperations.service.CiOperationsService;
@@ -28,10 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
+import java.security.*;
 import java.security.cert.CertificateException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -55,11 +53,12 @@ public class OpenSourceScanService {
     private final CodeProjectRepository codeProjectRepository;
     private final CodeService codeService;
     private final SoftwarePacketRepository softwarePacketRepository;
+    private final PermissionFactory permissionFactory;
     private static final Logger log = LoggerFactory.getLogger(OpenSourceScanService.class);
     OpenSourceScanService(ProjectRepository projectRepository, CodeAccessVerifier codeAccessVerifier, ScannerRepository scannerRepository,
                           ScannerTypeRepository scannerTypeRepository, VaultHelper vaultHelper, List<OpenSourceScanClient> openSourceScanClients,
                           VulnTemplate vulnTemplate,CodeProjectRepository codeProjectRepository, @Lazy CodeService codeService,
-                          SoftwarePacketRepository softwarePacketRepository){
+                          SoftwarePacketRepository softwarePacketRepository, PermissionFactory permissionFactory){
         this.projectRepository = projectRepository;
         this.codeAccessVerifier = codeAccessVerifier;
         this.scannerRepository = scannerRepository;
@@ -70,6 +69,7 @@ public class OpenSourceScanService {
         this.codeProjectRepository = codeProjectRepository;
         this.codeService = codeService;
         this.softwarePacketRepository = softwarePacketRepository;
+        this.permissionFactory = permissionFactory;
     }
 
 
@@ -117,7 +117,7 @@ public class OpenSourceScanService {
      * @param url repo url
      * @return codeproject
      */
-    public CodeProject getCodeProjectByRepoUrl(String url, String branch) throws Exception {
+    public CodeProject getCodeProjectByRepoUrl(String url, String branch, Principal principal) throws Exception {
         URL repoUrl = new URL(url.split("\\.git")[0]);
         String projectName, codeProjectName = null;
         String[] repoUrlParts = repoUrl.getPath().split("/");
@@ -153,7 +153,8 @@ public class OpenSourceScanService {
                                     projectName + "_" + branch,
                                     "Project created by CICD, branch: "+branch,
                                     false,
-                                    "none"));
+                                    "none",
+                                    permissionFactory.getUserFromPrincipal(principal)));
                     codeService.saveCodeGroup(
                             projectToCreate.getId(),
                             new CodeGroupPutModel(codeProjectName, url, false, false, branch),
@@ -193,7 +194,8 @@ public class OpenSourceScanService {
                                     "unknown",
                                     "unknown project (created by CICD)",
                                     false,
-                                    "none"));
+                                    "none",
+                                    permissionFactory.getUserFromPrincipal(principal)));
                     codeService.saveCodeGroup(
                             projectToCreate.getId(),
                             new CodeGroupPutModel(codeProjectName, url, false, false,branch),
