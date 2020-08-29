@@ -24,6 +24,7 @@ public class AdminUserRestService {
     private static final Logger log = LoggerFactory.getLogger(AdminUserRestService.class);
     ArrayList<String> roles = new ArrayList<String>() {{
         add("ROLE_USER");
+        add("ROLE_AUDITOR");
         add("ROLE_ADMIN");
         add("ROLE_EDITOR_RUNNER");
         add("ROLE_API");

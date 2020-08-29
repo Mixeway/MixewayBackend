@@ -7,6 +7,8 @@ import java.util.Set;
 import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import org.hibernate.annotations.Proxy;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -53,13 +55,25 @@ public class Project implements Serializable{
 	private boolean vulnAuditorEnable;
 	private String networkdc;
 	private String appClient;
+	private User owner;
+
+	@ManyToOne(fetch = FetchType.LAZY, optional = false)
+	@JoinColumn(name = "owner_id", nullable = false)
+	public User getOwner() {
+		return owner;
+	}
+
+	public void setOwner(User owner) {
+		this.owner = owner;
+	}
 
 	public Project(){}
-    public Project(String projectName, String description, boolean vulnAuditorEnable, String ciid) {
+    public Project(String projectName, String description, boolean vulnAuditorEnable, String ciid, User user) {
 		this.name = projectName;
 		this.description = description;
 		this.vulnAuditorEnable = vulnAuditorEnable;
 		this.ciid = ciid;
+		this.owner = user;
     }
 
     @Column(name="appclient")

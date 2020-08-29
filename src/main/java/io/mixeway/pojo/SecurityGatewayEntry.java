@@ -28,6 +28,22 @@ public class SecurityGatewayEntry {
     private int webLow;
     private boolean passed;
 
+    public int getSastCritical() {
+        return sastCritical;
+    }
+
+    public void setSastCritical(int sastCritical) {
+        this.sastCritical = sastCritical;
+    }
+
+    public int getOsCritical() {
+        return osCritical;
+    }
+
+    public void setOsCritical(int osCritical) {
+        this.osCritical = osCritical;
+    }
+
     public int getSastHigh() {
         return sastHigh;
     }
