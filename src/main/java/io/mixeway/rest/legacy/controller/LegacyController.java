@@ -133,13 +133,13 @@ public class LegacyController {
 
     @PreAuthorize("hasAuthority('ROLE_API')")
     @GetMapping("/api/sast/show/{projectId}/{groupName}/{projectNane}")
-    public ResponseEntity<List<Vulnerability>> getResultsForProjectScan(@PathVariable(value = "projectId") Long id,
+    public ResponseEntity<List<io.mixeway.db.entity.Vulnerability>> getResultsForProjectScan(@PathVariable(value = "projectId") Long id,
                                                                         @PathVariable(value="groupName") String groupName,
                                                                         @PathVariable(value="projectNane") String projectName,
                                                                         Principal principal)  {
         Optional<Project> project = projectRepository.findById(id);
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal,project.get())) {
-            return codeScanService.getResultsForProject(id, groupName, projectName);
+            return codeScanService.getResultsForProject(id, groupName, projectName, principal);
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }

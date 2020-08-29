@@ -214,7 +214,8 @@ public class CiOperationsService {
                         .getOpenSourceScannerConfiguration(
                                 codeProject.getCodeGroup().getProject().getId(),
                                 codeProject.getName(),
-                                codeProject.getName())
+                                codeProject.getName(),
+                                principal)
                         .getBody();
                 // FOR NOW owasp dtrack hardcoded
                 return new ResponseEntity<>(new PrepareCIOperation(openSourceConfig, codeProject,"OWASP Dependency Track"), HttpStatus.OK);

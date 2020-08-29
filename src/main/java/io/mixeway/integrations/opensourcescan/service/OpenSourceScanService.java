@@ -85,10 +85,10 @@ public class OpenSourceScanService {
      * @param codeProject name of CodeProject ot be Checked
      * @return
      */
-    public ResponseEntity<OpenSourceConfig> getOpenSourceScannerConfiguration(Long id, String codeGroup, String codeProject) {
+    public ResponseEntity<OpenSourceConfig> getOpenSourceScannerConfiguration(Long id, String codeGroup, String codeProject, Principal principal) {
         Optional<Project> project = projectRepository.findById(id);
         SASTRequestVerify sastRequestVerify = codeAccessVerifier.verifyPermissions(id,codeGroup,codeProject,true);
-        if (project.isPresent() && sastRequestVerify.getValid()) {
+        if (project.isPresent() && permissionFactory.canUserAccessProject(principal,project.get()) && sastRequestVerify.getValid()) {
             //TODO Fix it so it can be flexible ATM works only for dTrack
             Scanner openSourceScanner = scannerRepository
                     .findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_DEPENDENCYTRACK))
@@ -138,7 +138,7 @@ public class OpenSourceScanService {
                     codeService.saveCodeGroup(
                             project.get().getId(),
                             new CodeGroupPutModel(codeProjectName, url, false, false, branch),
-                            Constants.CICD);
+                            principal);
                     Optional<CodeProject> justCreatedCodeProject = codeProjectRepository.findByNameAndBranch(codeProjectName, branch);
                     if (justCreatedCodeProject.isPresent()){
                         log.info("CICD job - Project present, CodeProject just created");
@@ -158,7 +158,7 @@ public class OpenSourceScanService {
                     codeService.saveCodeGroup(
                             projectToCreate.getId(),
                             new CodeGroupPutModel(codeProjectName, url, false, false, branch),
-                            Constants.CICD);
+                            principal);
                     Optional<CodeProject> justCreatedCodeProject = codeProjectRepository.findByNameAndBranch(codeProjectName, branch);
                     if (justCreatedCodeProject.isPresent()){
                         log.info("CICD job - Project just created, CodeProject just created");
@@ -180,7 +180,7 @@ public class OpenSourceScanService {
                     codeService.saveCodeGroup(
                             project.get().getId(),
                             new CodeGroupPutModel(codeProjectName, url, false, false,branch),
-                            Constants.CICD);
+                            principal);
                     Optional<CodeProject> justCreatedCodeProject = codeProjectRepository.findByNameAndBranch(codeProjectName, branch);
                     if (justCreatedCodeProject.isPresent()){
                         log.info("CICD job - Project present (unknown), CodeProject just created");
@@ -199,7 +199,7 @@ public class OpenSourceScanService {
                     codeService.saveCodeGroup(
                             projectToCreate.getId(),
                             new CodeGroupPutModel(codeProjectName, url, false, false,branch),
-                            Constants.CICD);
+                            principal);
                     Optional<CodeProject> justCreatedCodeProject = codeProjectRepository.findByNameAndBranch(codeProjectName,branch);
                     if (justCreatedCodeProject.isPresent()){
                         log.info("CICD job - Project just created, CodeProject just created");

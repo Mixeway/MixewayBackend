@@ -1,5 +1,6 @@
 package io.mixeway.rest.project.service;
 
+import com.amazonaws.services.ec2.model.PriceSchedule;
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.Project;
 import io.mixeway.db.entity.ProjectVulnerability;
@@ -92,9 +93,9 @@ public class CodeService {
             return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
         }
     }
-    public ResponseEntity<Status> saveCodeGroup(Long id, CodeGroupPutModel codeGroupPutModel, String username) {
+    public ResponseEntity<Status> saveCodeGroup(Long id, CodeGroupPutModel codeGroupPutModel, Principal principal) {
         Optional<Project> project = projectRepository.findById(id);
-        if (project.isPresent()){
+        if (project.isPresent() && permissionFactory.canUserAccessProject(principal,project.get())){
             CodeGroup codeGroup = new CodeGroup();
             codeGroup.setBasePath("");
             codeGroup.setName(codeGroupPutModel.getCodeGroupName());
@@ -117,7 +118,7 @@ public class CodeService {
                 codeGroup.setRepoPassword(codeGroupPutModel.getGitpassword());
             }
             codeGroupRepository.save(codeGroup);
-            log.info("{} - Created new CodeGroup [{}] {}", username, project.get().getName(), codeGroup.getName());
+            log.info("{} - Created new CodeGroup [{}] {}", principal.getName(), project.get().getName(), codeGroup.getName());
             return new ResponseEntity<>(null,HttpStatus.CREATED);
         } else {
             return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
@@ -138,10 +139,13 @@ public class CodeService {
         codeProjectRepository.save(cp);
     }
 
-    public ResponseEntity<Status> saveCodeProject(Long id, CodeProjectPutModel codeProjectPutModel, String username) {
+    public ResponseEntity<Status> saveCodeProject(Long id, CodeProjectPutModel codeProjectPutModel, Principal principal) {
         Optional<Project> project = projectRepository.findById(id);
         Optional<CodeGroup> codeGroup = codeGroupRepository.findById(codeProjectPutModel.getCodeGroup());
-        if (project.isPresent() && codeGroup.isPresent() && codeGroup.get().getProject().getId().equals(project.get().getId())){
+        if (project.isPresent() &&
+                permissionFactory.canUserAccessProject(principal,project.get()) &&
+                codeGroup.isPresent() &&
+                codeGroup.get().getProject().getId().equals(project.get().getId())){
             CodeProject codeProject = new CodeProject();
             codeProject.setCodeGroup(codeGroup.get());
             codeProject.setName(codeProjectPutModel.getCodeProjectName());
@@ -152,48 +156,48 @@ public class CodeService {
             codeProject.setRepoUrl(codeProjectPutModel.getProjectGiturl());
             codeProject.setTechnique(codeProjectPutModel.getProjectTech());
             codeProjectRepository.save(codeProject);
-            log.info("{} - Created new CodeProject [{} / {} ] {}", username, project.get().getName(), codeGroup.get().getName(), codeProject.getName());
+            log.info("{} - Created new CodeProject [{} / {} ] {}", principal.getName(), project.get().getName(), codeGroup.get().getName(), codeProject.getName());
             return new ResponseEntity<>(null,HttpStatus.CREATED);
         } else {
             return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
         }
     }
 
-    public ResponseEntity<Status> runSelectedCodeProjects(Long id, List<RunScanForCodeProject> runScanForCodeProjects, String username) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
-        return codeScanService.codescanrunSelectedCodeProjectsScan(id, runScanForCodeProjects, username);
+    public ResponseEntity<Status> runSelectedCodeProjects(Long id, List<RunScanForCodeProject> runScanForCodeProjects, Principal principal) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+        return codeScanService.codescanrunSelectedCodeProjectsScan(id, runScanForCodeProjects, principal);
     }
 
-    public ResponseEntity<Status> enableAutoScanForCodeProjects(Long id, String username) {
+    public ResponseEntity<Status> enableAutoScanForCodeProjects(Long id, Principal principal) {
         Optional<Project> project = projectRepository.findById(id);
-        if (project.isPresent()){
+        if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())) {
             for (CodeGroup codeGroup : project.get().getCodes()){
                 codeGroup.setAuto(true);
                 codeGroupRepository.save(codeGroup);
             }
             project.get().setAutoCodeScan(true);
             projectRepository.save(project.get());
-            log.info("{} - Enabled auto SAST scan for {}", username, project.get().getName());
+            log.info("{} - Enabled auto SAST scan for {}", principal.getName(), project.get().getName());
             return new ResponseEntity<>(null,HttpStatus.OK);
         } else {
             return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
         }
     }
 
-    public ResponseEntity<Status> runSingleCodeProjectScan(Long codeProjectId, String username) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
-        boolean putToQueue = codeScanService.putCodeProjectToQueue(codeProjectId);
+    public ResponseEntity<Status> runSingleCodeProjectScan(Long codeProjectId, Principal principal) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+        boolean putToQueue = codeScanService.putCodeProjectToQueue(codeProjectId, principal);
         if (putToQueue){
-            log.info("{} - Run SAST scan for {} - scope single", LogUtil.prepare(username), LogUtil.prepare(codeProjectId.toString()));
+            log.info("{} - Run SAST scan for {} - scope single", LogUtil.prepare(principal.getName()), LogUtil.prepare(codeProjectId.toString()));
             return new ResponseEntity<>(null, HttpStatus.OK);
         } else {
             return new ResponseEntity<>(null, HttpStatus.EXPECTATION_FAILED);
         } }
 
     @Transactional
-    public ResponseEntity<Status> deleteCodeProject(Long codeProjectId, String name) {
+    public ResponseEntity<Status> deleteCodeProject(Long codeProjectId, Principal principal) {
         Optional<CodeProject> codeProject = codeProjectRepository.findById(codeProjectId);
-        if (codeProject.isPresent()){
+        if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getCodeGroup().getProject())){
             codeProjectRepository.removeCodeGroup(codeProject.get().getId());
-            log.info("{} - Deleted codeproject [{}] {}", name, codeProject.get().getCodeGroup().getProject().getName(), codeProject.get().getName());
+            log.info("{} - Deleted codeproject [{}] {}", principal.getName(), codeProject.get().getCodeGroup().getProject().getName(), codeProject.get().getName());
             return new ResponseEntity<>(null,HttpStatus.OK);
         }
         return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
@@ -213,31 +217,31 @@ public class CodeService {
         }
     }
 
-    public ResponseEntity<Status> disableAutoScanForCodeProjects(Long id, String name) {
+    public ResponseEntity<Status> disableAutoScanForCodeProjects(Long id, Principal principal) {
         Optional<Project> project = projectRepository.findById(id);
-        if (project.isPresent()){
+        if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             for (CodeGroup codeGroup : project.get().getCodes()){
                 codeGroup.setAuto(false);
                 codeGroupRepository.save(codeGroup);
             }
             project.get().setAutoCodeScan(false);
             projectRepository.save(project.get());
-            log.info("{} - Disabled auto SAST scan for {}", name, project.get().getName());
+            log.info("{} - Disabled auto SAST scan for {}", principal.getName(), project.get().getName());
             return new ResponseEntity<>(null,HttpStatus.OK);
         } else {
             return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
         }
     }
 
-    public ResponseEntity<Status> editCodeProject(Long id, EditCodeProjectModel editCodeProjectModel, String name) {
+    public ResponseEntity<Status> editCodeProject(Long id, EditCodeProjectModel editCodeProjectModel, Principal principal) {
         Optional<CodeProject> codeProject = codeProjectRepository.findById(id);
         try{
-            if (codeProject.isPresent() ){
+            if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getCodeGroup().getProject())){
                 if ((editCodeProjectModel.getdTrackUuid() != null && !editCodeProjectModel.getdTrackUuid().equals(""))) {
                     UUID uuid = UUID.fromString(editCodeProjectModel.getdTrackUuid());
                     codeProject.get().setdTrackUuid(editCodeProjectModel.getdTrackUuid());
                     codeProjectRepository.save(codeProject.get());
-                    log.info("{} Successfully Edited codeProject {}", name, codeProject.get().getName());
+                    log.info("{} Successfully Edited codeProject {}", principal.getName(), codeProject.get().getName());
                 }
                 if (editCodeProjectModel.getSastProject() > 0) {
                     codeProject.get().getCodeGroup().setVersionIdAll(editCodeProjectModel.getSastProject());
@@ -245,14 +249,14 @@ public class CodeService {
                         codeProject.get().getCodeGroup().setVersionIdsingle(editCodeProjectModel.getSastProject());
                     }
                     codeGroupRepository.save(codeProject.get().getCodeGroup());
-                    log.info("{} Successfully Edited codeProject {}", name, codeProject.get().getName());
+                    log.info("{} Successfully Edited codeProject {}", principal.getName(), codeProject.get().getName());
                 }
                 if (editCodeProjectModel.getBranch().equals("") || editCodeProjectModel.getBranch() == null){
                     codeProject.get().setBranch(Constants.CODE_PROJECT_DEFAULT_BRANCH);
-                    log.warn("{} passed null branch for {}, setting to default {}", name, codeProject.get().getName(), Constants.CODE_PROJECT_DEFAULT_BRANCH);
+                    log.warn("{} passed null branch for {}, setting to default {}", principal.getName(), codeProject.get().getName(), Constants.CODE_PROJECT_DEFAULT_BRANCH);
                 } else {
                     codeProject.get().setBranch(editCodeProjectModel.getBranch());
-                    log.info("{} Setting branch for {} - {}", name, codeProject.get().getName(), LogUtil.prepare(editCodeProjectModel.getBranch()));
+                    log.info("{} Setting branch for {} - {}", principal.getName(), codeProject.get().getName(), LogUtil.prepare(editCodeProjectModel.getBranch()));
                 }
                 codeProject.get().setRepoUrl(editCodeProjectModel.getRepoUrl());
                 codeProject.get().setRepoUsername(editCodeProjectModel.getRepoUsername());
@@ -269,22 +273,24 @@ public class CodeService {
             }
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         } catch (IllegalArgumentException | NullPointerException exception){
-            log.warn("{} failed to edit codeProject {} due to wrong UUID format", name, id);
+            log.warn("{} failed to edit codeProject {} due to wrong UUID format", principal.getName(), id);
         }
         return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
 
-    public ResponseEntity<Status> createDTrackProject(Long id, String name) {
+    public ResponseEntity<Status> createDTrackProject(Long id, Principal principal) {
         Optional<CodeProject> codeProject = codeProjectRepository.findById(id);
         try{
-            if (codeProject.isPresent() && openSourceScanService.createProjectOnOpenSourceScanner(codeProject.get()) ) {
+            if (codeProject.isPresent() &&
+                    permissionFactory.canUserAccessProject(principal, codeProject.get().getCodeGroup().getProject()) &&
+                    openSourceScanService.createProjectOnOpenSourceScanner(codeProject.get()) ) {
 
-                log.info("{} Successfully Created dTrack Project {}", name, codeProject.get().getName());
+                log.info("{} Successfully Created dTrack Project {}", principal.getName(), codeProject.get().getName());
                 return new ResponseEntity<>(HttpStatus.OK);
 
             }
         } catch (IllegalArgumentException |IOException | CertificateException | NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException | KeyManagementException exception){
-            log.warn("{} failed to create dTrackProject {} due to wrong UUID format", name, id);
+            log.warn("{} failed to create dTrackProject {} due to wrong UUID format", principal.getName(), id);
         }
         return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
@@ -297,11 +303,11 @@ public class CodeService {
        return codeScanService.getProjectFromSASTScanner();
     }
 
-    public ResponseEntity<Status> createRemoteProject(Long id, Long projectId) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
-        return codeScanService.createProjectOnSASTScanner(id, projectId);
+    public ResponseEntity<Status> createRemoteProject(Long id, Long projectId, Principal principal) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
+        return codeScanService.createProjectOnSASTScanner(id, projectId, principal);
     }
 
-    public ResponseEntity<OpenSourceConfig> getOpenSourceConfig(Long id, String codeGroup, String codeProject) {
-        return openSourceScanService.getOpenSourceScannerConfiguration(id, codeGroup, codeProject);
+    public ResponseEntity<OpenSourceConfig> getOpenSourceConfig(Long id, String codeGroup, String codeProject, Principal principal) {
+        return openSourceScanService.getOpenSourceScannerConfiguration(id, codeGroup, codeProject, principal);
     }
 }
