@@ -39,37 +39,37 @@ public class WebAppController {
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @PutMapping(value = "/{id}/add/webapp")
     public ResponseEntity<Status> saveWebApp(@PathVariable("id")Long id, @RequestBody @Valid WebAppPutModel webAppPutModel, Principal principal) {
-        return webAppService.saveWebApp(id, webAppPutModel, principal.getName());
+        return webAppService.saveWebApp(id, webAppPutModel, principal);
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @PutMapping(value = "/{id}/webapp/webappautoscan")
     public ResponseEntity<Status> enableWebAppAutoScan(@PathVariable("id")Long id, Principal principal) {
-        return webAppService.enableWebAppAutoScan(id, principal.getName());
+        return webAppService.enableWebAppAutoScan(id, principal);
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @PutMapping(value = "/{id}/webapp/webappautoscan/disable")
     public ResponseEntity<Status> disableWebAppAutoScan(@PathVariable("id")Long id, Principal principal) {
-        return webAppService.disableWebAppAutoScan(id, principal.getName());
+        return webAppService.disableWebAppAutoScan(id, principal);
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @PutMapping(value = "/{id}/webapp/runall")
     public ResponseEntity<Status> runAllScanForWebApp(@PathVariable("id")Long id, Principal principal) {
-        return webAppService.runAllScanForWebApp(id, principal.getName());
+        return webAppService.runAllScanForWebApp(id, principal);
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @PutMapping(value = "/{id}/webapp/runselected")
     public ResponseEntity<Status> runSelectedWebApps(@PathVariable("id")Long id, @RequestBody List<RunScanForWebApps> runScanForWebApps, Principal principal) {
-        return webAppService.runSelectedWebApps(id, runScanForWebApps, principal.getName());
+        return webAppService.runSelectedWebApps(id, runScanForWebApps, principal);
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @PutMapping(value = "/webapp/{webAppId}/run")
     public ResponseEntity<Status> runSingleWebApp(@PathVariable("webAppId") Long webAppId, Principal principal) {
-        return webAppService.runSingleWebApp(webAppId,principal.getName());
+        return webAppService.runSingleWebApp(webAppId,principal);
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @DeleteMapping(value = "/webapp/{webAppId}")
     public ResponseEntity<Status> deleteWebApp(@PathVariable("webAppId") Long webAppId, Principal principal) {
-        return webAppService.deleteWebApp(webAppId, principal.getName());
+        return webAppService.deleteWebApp(webAppId, principal);
     }
 
 }

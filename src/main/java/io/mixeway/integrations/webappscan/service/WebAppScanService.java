@@ -10,6 +10,7 @@ import io.mixeway.integrations.webappscan.model.RequestHeaders;
 import io.mixeway.integrations.webappscan.model.WebAppScanHelper;
 import io.mixeway.integrations.webappscan.model.WebAppScanModel;
 import io.mixeway.pojo.LogUtil;
+import io.mixeway.pojo.PermissionFactory;
 import io.mixeway.pojo.Status;
 import io.mixeway.pojo.VaultHelper;
 import io.mixeway.rest.project.model.RunScanForWebApps;
@@ -28,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 
 import javax.persistence.NonUniqueResultException;
+import java.security.Principal;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -55,13 +57,14 @@ public class WebAppScanService {
     private final ProjectRiskAnalyzer projectRiskAnalyzer;
     private final VaultHelper vaultHelper;
     private final VulnTemplate vulnTemplate;
+    private final PermissionFactory permissionFactory;
 
     public WebAppScanService(ProjectRepository projectRepository, WebAppRepository waRepository, VulnTemplate vulnTemplate,
                              ScannerRepository scannerRepository, ScannerTypeRepository scannerTypeRepository,
                              CodeGroupRepository codeGroupRepository, CodeProjectRepository codeProjectRepository, WebAppCookieRepository webAppCookieRepository,
                              WebAppHeaderRepository webAppHeaderRepository, List<WebAppScanClient> webAppScanClients,
                              WebAppScanStrategyRepository webAppScanStrategyRepository, RoutingDomainRepository routingDomainRepository,
-                             ProjectRiskAnalyzer projectRiskAnalyzer, VaultHelper vaultHelper) {
+                             ProjectRiskAnalyzer projectRiskAnalyzer, VaultHelper vaultHelper, PermissionFactory permissionFactory) {
         this.projectRepository = projectRepository;
         this.projectRiskAnalyzer = projectRiskAnalyzer;
         this.vaultHelper = vaultHelper;
@@ -76,6 +79,7 @@ public class WebAppScanService {
         this.webAppScanStrategyRepository = webAppScanStrategyRepository;
         this.routingDomainRepository = routingDomainRepository;
         this.vulnTemplate = vulnTemplate;
+        this.permissionFactory = permissionFactory;
     }
 
     private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -453,19 +457,19 @@ public class WebAppScanService {
         for (Project p : projects) {
             for (WebApp webApp : p.getWebapps()) {
                 if (webApp.getPriority() == priority) {
-                    this.putSingleWebAppToQueue(webApp.getId(), Constants.STRATEGY_SCHEDULER);
+                    this.putSingleWebAppToQueue(webApp.getId(), () -> Constants.STRATEGY_SCHEDULER);
                 }
             }
         }
     }
 
-    public ResponseEntity<Status> putSingleWebAppToQueue(Long webAppId, String username) {
+    public ResponseEntity<Status> putSingleWebAppToQueue(Long webAppId, Principal principal) {
         try {
             Optional<WebApp> webApp = waRepository.findById(webAppId);
-            if (webApp.isPresent() && getScannerForWebApp(webApp.get()) != null) {
+            if (webApp.isPresent() && permissionFactory.canUserAccessProject(principal,webApp.get().getProject()) && getScannerForWebApp(webApp.get()) != null) {
                 webApp.ifPresent(app -> app.setInQueue(true));
                 waRepository.save(webApp.get());
-                log.info("{} - Put in queue scan of webapps - scope single", LogUtil.prepare(username));
+                log.info("{} - Put in queue scan of webapps - scope single", LogUtil.prepare(principal.getName()));
                 return new ResponseEntity<>(null,HttpStatus.CREATED);
             }
         } catch (Exception e){
@@ -474,16 +478,16 @@ public class WebAppScanService {
         return new ResponseEntity<>(new Status("No Scanner for given resource"), HttpStatus.EXPECTATION_FAILED);
     }
 
-    public ResponseEntity<Status> putSelectedWebAppsToQueue(Long id, List<RunScanForWebApps> runScanForWebApps, String username) {
+    public ResponseEntity<Status> putSelectedWebAppsToQueue(Long id, List<RunScanForWebApps> runScanForWebApps, Principal principal) {
         Optional<Project> project = projectRepository.findById(id);
-        if (project.isPresent()){
+        if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             for (RunScanForWebApps selectedApp : runScanForWebApps){
                 try{
                     Optional<WebApp> webApp = waRepository.findById(selectedApp.getWebAppId());
                     if (webApp.isPresent() && webApp.get().getProject() == project.get() && getScannerForWebApp(webApp.get())!=null){
                         webApp.get().setInQueue(true);
                         waRepository.save(webApp.get());
-                        log.info("{} - Put to queue scan of webapps for project {} - scope partial", LogUtil.prepare(username), LogUtil.prepare(project.get().getName()));
+                        log.info("{} - Put to queue scan of webapps for project {} - scope partial", LogUtil.prepare(principal.getName()), LogUtil.prepare(project.get().getName()));
                         return new ResponseEntity<>(null,HttpStatus.CREATED);
                     }
                 } catch (Exception e){

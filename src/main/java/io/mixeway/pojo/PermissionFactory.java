@@ -37,7 +37,9 @@ public class PermissionFactory {
             return true;
         } else if ( user != null && (user.getPermisions().equals(Constants.ROLE_USER) || user.getPermisions().equals(Constants.ROLE_EDITOR_RUNNER))){
             return user.getProjects().stream().map(Project::getId).collect(Collectors.toList()).contains(project.getId());
-        } else
+        } else if (principal.getName().equals(Constants.STRATEGY_SCHEDULER)) {
+            return true;
+        }else
             return false;
     }
 
