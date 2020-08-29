@@ -17,6 +17,7 @@ import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
+import java.security.Principal;
 import java.util.*;
 
 @Configuration
@@ -49,6 +50,7 @@ public class SwaggerConfig implements WebMvcConfigurer {
                 .apis(RequestHandlerSelectors.any())
                 .paths(PathSelectors.any())
                 .build()
+                .ignoredParameterTypes(Principal.class)
                 .apiInfo(apiInfo)
                 .globalOperationParameters(Collections.singletonList(headerParam));
     }
