@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import io.mixeway.integrations.infrastructurescan.service.NetworkScanService;
 import io.mixeway.pojo.Status;
@@ -83,9 +84,9 @@ public class AssetService {
     }
 
     @Transactional
-    public ResponseEntity<Status> saveAsset(Long id, AssetPutModel assetPutModel, String username) {
+    public ResponseEntity<Status> saveAsset(Long id, AssetPutModel assetPutModel, Principal principal) {
         Optional<Project> project = projectRepository.findById(id);
-        if (project.isPresent()){
+        if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             Asset asset = new Asset();
             asset.setProject(project.get());
             asset.setRoutingDomain(routingDomainRepository.getOne(assetPutModel.getRoutingDomainForAsset()));
@@ -93,7 +94,7 @@ public class AssetService {
             asset.setOrigin("manual");
             asset.setActive(true);
             assetRepository.save(asset);
-            for(String ip : assetPutModel.getIpAddresses().split(",")){
+            for(String ip : assetPutModel.getIpAddresses().trim().split(",")){
                 if (IpAddressUtils.validate(ip)){
                     Interface inf = new Interface();
                     inf.setActive(true);
@@ -125,19 +126,19 @@ public class AssetService {
                 }
             }
             //asset = assetRepository.findById(asset.getId()).get();
-            log.info("{} - Created new asset [{}]{} ", username, project.get().getName(), asset.getName());
+            log.info("{} - Created new asset [{}]{} ", principal.getName(), project.get().getName(), asset.getName());
             return new ResponseEntity<>(new Status("created"), HttpStatus.CREATED);
         } else {
             return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
         }
     }
-    public ResponseEntity<Status> runScanForAssets(Long id, List<RunScanForAssets> runScanForAssets, String username) throws Exception {
+    public ResponseEntity<Status> runScanForAssets(Long id, List<RunScanForAssets> runScanForAssets, Principal principal) throws Exception {
         Optional<Project> project = projectRepository.findById(id);
-        if (project.isPresent()){
+        if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             Set<Interface> intfs =  scanHelper.prepareInterfacesToScan(runScanForAssets, project.get());
             List<NessusScan> scans = networkScanService.configureAndRunManualScanForScope(project.get(), new ArrayList(intfs));
             if (scans.stream().allMatch(NessusScan::getRunning)) {
-                log.info("{} - Started scan for project {} - scope partial", username, project.get().getName());
+                log.info("{} - Started scan for project {} - scope partial", principal.getName(), project.get().getName());
                 return new ResponseEntity<>(null, HttpStatus.CREATED);
             } else {
                 return new ResponseEntity<>(null, HttpStatus.EXPECTATION_FAILED);
@@ -146,13 +147,13 @@ public class AssetService {
             return new ResponseEntity<>(null,HttpStatus.NOT_FOUND);
         }
     }
-    public ResponseEntity<Status> runAllAssetScan(Long id, String username) throws Exception {
+    public ResponseEntity<Status> runAllAssetScan(Long id, Principal principal) throws Exception {
         Optional<Project> project = projectRepository.findById(id);
-        if (project.isPresent()){
+        if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             List<Interface> intfs =  interfaceRepository.findByAssetIn(new ArrayList<>(project.get().getAssets())).stream().filter(i -> !i.isScanRunning()).collect(Collectors.toList());
             List<NessusScan> scans = networkScanService.configureAndRunManualScanForScope(project.get(), new ArrayList(intfs));
             if (scans.stream().allMatch(NessusScan::getRunning)) {
-                log.info("{} - Started scan for project {} - scope full", username, project.get().getName());
+                log.info("{} - Started scan for project {} - scope full", principal.getName(), project.get().getName());
                 return new ResponseEntity<>(null, HttpStatus.CREATED);
             } else {
                 return new ResponseEntity<>(null, HttpStatus.EXPECTATION_FAILED);
@@ -161,14 +162,14 @@ public class AssetService {
             return new ResponseEntity<>(null,HttpStatus.NOT_FOUND);
         }
     }
-    public ResponseEntity<Status> runSingleAssetScan( Long assetId, String username) throws Exception {
+    public ResponseEntity<Status> runSingleAssetScan( Long assetId, Principal principal) throws Exception {
         List<Interface> i = new ArrayList<>();
         Optional<Interface> intf = interfaceRepository.findById(assetId);
-        if (intf.isPresent()) {
+        if (intf.isPresent() && permissionFactory.canUserAccessProject(principal, intf.get().getAsset().getProject())) {
             i.add(intf.get());
             List<NessusScan> scans = networkScanService.configureAndRunManualScanForScope(intf.get().getAsset().getProject(), i);
             if (scans.size() >0 && scans.stream().allMatch(NessusScan::getRunning)) {
-                log.info("{} - Started scan for project {} - scope single", username, intf.get().getAsset().getProject().getName());
+                log.info("{} - Started scan for project {} - scope single", principal.getName(), intf.get().getAsset().getProject().getName());
                 return new ResponseEntity<>(null, HttpStatus.CREATED);
             } else {
                 return new ResponseEntity<>(null, HttpStatus.EXPECTATION_FAILED);
@@ -177,16 +178,19 @@ public class AssetService {
             return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
     }
 
-    //TO JEST INTERFEJS DELETE
     @Transactional
-    public ResponseEntity<Status> deleteAsset(Long assetId, String name) {
+    public ResponseEntity<Status> deleteAsset(Long assetId, Principal principal) {
         Optional<Interface> interf = interfaceRepository.findById(assetId);
-        String assetName = interf.isPresent() ? interf.get().getAsset().getName() : "";
-        String projectName = interf.isPresent() ? interf.get().getAsset().getProject().getName() : "";
-        String ip = interf.isPresent() ? interf.get().getPrivateip() : "";
-        interf.ifPresent(interfaceRepository::delete);
-        log.info("{} - Deleted interface [{}] {} - {}", name, projectName, assetName,ip);
-        return new ResponseEntity<>(null,HttpStatus.OK);
+        if (interf.isPresent() && permissionFactory.canUserAccessProject(principal, interf.get().getAsset().getProject())) {
+            String assetName = interf.get().getAsset().getName();
+            String projectName = interf.get().getAsset().getProject().getName();
+            String ip = interf.get().getPrivateip();
+            interf.ifPresent(interfaceRepository::delete);
+            log.info("{} - Deleted interface [{}] {} - {}", principal.getName(), projectName, assetName, ip);
+            return new ResponseEntity<>(null, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 
     public ResponseEntity<List<ProjectVulnerability>> showInfraVulns(Long id, Principal principal) {
@@ -199,25 +203,25 @@ public class AssetService {
             return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
         }
     }
-    public ResponseEntity<Status> enableInfraAutoScan(Long id, String username) {
+    public ResponseEntity<Status> enableInfraAutoScan(Long id, Principal principal) {
         Optional<Project> project = projectRepository.findById(id);
-        if (project.isPresent()){
+        if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             project.get().setAutoInfraScan(true);
             projectRepository.save(project.get());
             networkScanService.configureAutomaticScanForProject(project.get());
-            log.info("{} - Enabled auto infrastructure scan for project {} - scope single", username, project.get().getName());
+            log.info("{} - Enabled auto infrastructure scan for project {} - scope single", principal.getName(), project.get().getName());
             return new ResponseEntity<>(null, HttpStatus.CREATED);
         } else {
             return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
         }
     }
 
-    public ResponseEntity<Status> disableInfraAutoScan(Long id, String name) {
+    public ResponseEntity<Status> disableInfraAutoScan(Long id, Principal principal) {
         Optional<Project> project = projectRepository.findById(id);
-        if (project.isPresent()){
+        if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             project.get().setAutoInfraScan(false);
             projectRepository.save(project.get());
-            log.info("{} - Disabled auto infrastructure scan for project {} - scope single", name, project.get().getName());
+            log.info("{} - Disabled auto infrastructure scan for project {} - scope single", principal.getName(), project.get().getName());
             return new ResponseEntity<>(null, HttpStatus.OK);
         } else {
             return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
