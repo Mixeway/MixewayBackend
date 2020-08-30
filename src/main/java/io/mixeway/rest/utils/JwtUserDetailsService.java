@@ -1,7 +1,6 @@
 package io.mixeway.rest.utils;
 
 import io.mixeway.db.entity.Project;
-import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
@@ -11,7 +10,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import io.mixeway.config.Constants;
-import io.mixeway.db.entity.Settings;
 import io.mixeway.db.repository.ProjectRepository;
 import io.mixeway.db.repository.SettingsRepository;
 import io.mixeway.db.repository.UserRepository;
@@ -20,9 +18,9 @@ import java.util.*;
 
 @Service
 public class JwtUserDetailsService implements UserDetailsService {
-    private UserRepository userRepository;
-    private ProjectRepository projectRepository;
-    private SettingsRepository settingsRepository;
+    private final UserRepository userRepository;
+    private final ProjectRepository projectRepository;
+    private final SettingsRepository settingsRepository;
 
     @Autowired
     public JwtUserDetailsService(SettingsRepository settingsRepository, UserRepository userRepository, ProjectRepository projectRepository){
@@ -31,6 +29,13 @@ public class JwtUserDetailsService implements UserDetailsService {
         this.projectRepository = projectRepository;
     }
 
+    /**
+     * Loading user by username when used password
+     *
+     * @param username to load
+     * @return userDetails entity
+     * @throws UsernameNotFoundException
+     */
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Optional<io.mixeway.db.entity.User> user = userRepository.findByCommonName(username);
@@ -45,61 +50,62 @@ public class JwtUserDetailsService implements UserDetailsService {
 
     }
 
+    /**
+     * Handle permission granting
+     *
+     * @param role
+     * @return
+     */
     private List<GrantedAuthority> getAuthoritiesForUser(String role){
-        if (role.equals(Constants.ROLE_ADMIN))
-            return AuthorityUtils.commaSeparatedStringToAuthorityList(Constants.ROLE_USER + "," + Constants.ROLE_EDITOR_RUNNER + "," + Constants.ROLE_ADMIN+ "," + Constants.ROLE_API);
-        else if (role.equals(Constants.ROLE_EDITOR_RUNNER))
-            return AuthorityUtils.commaSeparatedStringToAuthorityList(Constants.ROLE_USER + "," + Constants.ROLE_EDITOR_RUNNER);
-        else
-            return AuthorityUtils.commaSeparatedStringToAuthorityList(Constants.ROLE_USER );
+        switch (role) {
+            case Constants.ROLE_ADMIN:
+                return AuthorityUtils.commaSeparatedStringToAuthorityList(
+                        Constants.ROLE_USER + "," +
+                                Constants.ROLE_EDITOR_RUNNER + "," +
+                                Constants.ROLE_ADMIN + "," +
+                                Constants.ROLE_AUDITOR + "," +
+                                Constants.ROLE_API);
+            case Constants.ROLE_AUDITOR:
+                return AuthorityUtils.commaSeparatedStringToAuthorityList(
+                        Constants.ROLE_USER + "," +
+                                Constants.ROLE_AUDITOR + "," +
+                                Constants.ROLE_EDITOR_RUNNER);
+            case Constants.ROLE_EDITOR_RUNNER:
+                return AuthorityUtils.commaSeparatedStringToAuthorityList(Constants.ROLE_USER + "," + Constants.ROLE_EDITOR_RUNNER + "," + Constants.ROLE_API);
+            case Constants.ROLE_API:
+                return AuthorityUtils.commaSeparatedStringToAuthorityList(Constants.ROLE_API + "," + Constants.ROLE_USER);
+            default:
+                return AuthorityUtils.commaSeparatedStringToAuthorityList(Constants.ROLE_USER);
+        }
 
 
     }
 
+    /**
+     * Return User Details for API Key Access
+     * @param username
+     * @param requestURI
+     * @return
+     */
     UserDetails loadUserByApiKeyAndRequestUri(String username, String requestURI) {
         try {
-            String[] locations = requestURI.split("/");
-            Settings settings = settingsRepository.findAll().stream().findFirst().orElse(null);
-            assert settings != null;
-            if ( settings.getMasterApiKey() != null && username.equals(settings.getMasterApiKey()))
-                return new User(username, "", AuthorityUtils.commaSeparatedStringToAuthorityList(
-                                "," +Constants.ROLE_USER
+            boolean isMasterKeyUsed = settingsRepository.findAll().stream().findFirst().orElse(null).getMasterApiKey().equals(username);
+            Optional<io.mixeway.db.entity.User> userApiKey = userRepository.findByApiKey(username);
+            Optional<Project> projectApiKey = projectRepository.findByApiKey(username);
+            if (isMasterKeyUsed){
+                return new User("admin", "", AuthorityUtils.commaSeparatedStringToAuthorityList(
+                        "," +Constants.ROLE_USER
                                 + "," +Constants.ROLE_EDITOR_RUNNER
-                                + "," +Constants.ROLE_API_CICD
                                 + "," +Constants.ROLE_API
+                                + "," +Constants.ROLE_AUDITOR
                                 + "," +Constants.ROLE_ADMIN  ));
-            if (locations.length > 0 && (locations[1].equals(Constants.API_URL) || locations[1].equals("v2"))) {
-                if (locations[2].equals(Constants.KOORDYNATOR_API_URL) || locations[3].equals(Constants.SCANMANAGE_API)) {
-                    if (settings.getMasterApiKey() != null && username.equals(settings.getMasterApiKey()))
-                        return new User(username, "", AuthorityUtils.commaSeparatedStringToAuthorityList("ROLE_API"));
-                    else
-                        throw new UsernameNotFoundException("Tried to access vulnerabilities API with " + username);
-                } else if (locations[3].matches("-?\\d+")) {
-                    Long projectId = Long.valueOf(locations[3]);
-                    Optional<Project> project = projectRepository.findByIdAndApiKey(projectId,username);
-                    if (project.isPresent() || (settings.getMasterApiKey() != null && username.equals(settings.getMasterApiKey()))) {
-                        return new User(username, "", AuthorityUtils.commaSeparatedStringToAuthorityList("ROLE_API"+ "," +Constants.ROLE_USER));
-                    } else {
-                        throw new UsernameNotFoundException("No permisions");
-                    }
-
-                } else if (locations[3].equals("cicd")) {
-                    Optional<io.mixeway.db.entity.User> cicdUser = userRepository.findByApiKey(username);
-                    if (cicdUser.isPresent()){
-                        return new User(username, "", AuthorityUtils.commaSeparatedStringToAuthorityList("ROLE_API_CICD"));
-                    }
-                }else {
-                    int loc = Arrays.asList(locations).indexOf(Constants.PROJECT_KEYWORD) + 1;
-                    Optional<Project> project = projectRepository.findByIdAndApiKey(Long.valueOf(locations[loc]),username);
-                    if (project.isPresent() || (settings.getMasterApiKey() != null && username.equals(settings.getMasterApiKey()))) {
-                        return new User(username, "", AuthorityUtils.commaSeparatedStringToAuthorityList("ROLE_API"+ "," +Constants.ROLE_USER));
-                    } else {
-                        throw new UsernameNotFoundException("No permisions");
-                    }
-                }
+            } else if (userApiKey.isPresent()){
+                return new User(userApiKey.get().getApiKey(),"",getAuthoritiesForUser(userApiKey.get().getPermisions()));
+            } else if (projectApiKey.isPresent()) {
+                return new User(username,"",getAuthoritiesForUser(Constants.ROLE_EDITOR_RUNNER));
+            } else {
+                throw new UsernameNotFoundException("No permisions");
             }
-
-            throw new UsernameNotFoundException("User not found");
         } catch (NumberFormatException | ArrayIndexOutOfBoundsException ex) {
             throw new UsernameNotFoundException("User not found");
         }

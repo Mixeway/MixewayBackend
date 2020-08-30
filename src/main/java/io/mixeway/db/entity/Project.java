@@ -55,10 +55,10 @@ public class Project implements Serializable{
 	private boolean vulnAuditorEnable;
 	private String networkdc;
 	private String appClient;
-	private User owner;
+	@JsonIgnore private User owner;
 
-	@ManyToOne(fetch = FetchType.LAZY, optional = false)
-	@JoinColumn(name = "owner_id", nullable = false)
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "owner_id")
 	public User getOwner() {
 		return owner;
 	}

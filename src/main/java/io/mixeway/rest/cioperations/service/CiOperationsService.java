@@ -282,7 +282,7 @@ public class CiOperationsService {
         if (findUnknownProject.isPresent() && findUnknownProject.get().size() == 1){
             unknownProject = findUnknownProject.get().get(0);
         } else if (!findUnknownProject.isPresent() || (findUnknownProject.get().isEmpty())) {
-            unknownProject = projectRepository.save(new Project(Constants.PROJECT_UNKNOWN,
+            unknownProject = projectRepository.saveAndFlush(new Project(Constants.PROJECT_UNKNOWN,
                     "unknown project created for anynomous CICD",
                     false,
                     "none",

@@ -1,16 +1,27 @@
 package io.mixeway.rest.auth.service;
 
-import io.mixeway.integrations.infrastructurescan.plugin.openvas.apiclient.OpenVasSocketHelper;
+import io.mixeway.config.Constants;
 import io.mixeway.rest.auth.model.StatusEntity;
 import io.mixeway.rest.model.PasswordAuthModel;
 import io.mixeway.rest.utils.JwtUserDetailsService;
 import io.mixeway.rest.utils.JwtUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.social.connect.Connection;
+import org.springframework.social.facebook.api.Facebook;
+import org.springframework.social.facebook.connect.FacebookConnectionFactory;
+import org.springframework.social.github.api.GitHub;
+import org.springframework.social.github.api.GitHubUserProfile;
+import org.springframework.social.github.connect.GitHubConnectionFactory;
+import org.springframework.social.oauth2.AccessGrant;
+import org.springframework.social.oauth2.OAuth2Operations;
+import org.springframework.social.oauth2.OAuth2Parameters;
 import org.springframework.stereotype.Service;
 import io.mixeway.db.entity.Settings;
 import io.mixeway.db.entity.User;
@@ -18,7 +29,9 @@ import io.mixeway.db.repository.SettingsRepository;
 import io.mixeway.db.repository.UserRepository;
 import io.mixeway.rest.model.Password;
 
+import javax.annotation.PostConstruct;
 import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URI;
@@ -29,26 +42,46 @@ import java.util.Optional;
 @Service
 public class AuthService {
 
+    @Value("${facebook.client.id}")
+    String facebookClientId;
+    @Value("${facebook.secret}")
+    String facebookSecret;
+    @Value("${github.client.id}")
+    String gitHubClientId;
+    @Value("${github.secret}")
+    String gitHubSecret;
+    private boolean isFacebookEnabled = false;
+    private boolean isGitHubEnabled = false;
+    private GitHubConnectionFactory gitHubFactory;
+    private FacebookConnectionFactory facebookFactory;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final JwtUserDetailsService userDetailsService;
     private final JwtUtils jwtUtils;
     private final UserRepository userRepository;
     private final SettingsRepository settingsRepository;
-    private OpenVasSocketHelper openVasSocketClient = new OpenVasSocketHelper(new URI("wss://localhost:9390"));
-
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     AuthService(BCryptPasswordEncoder bCryptPasswordEncoder, JwtUserDetailsService jwtUserDetailsService,
                 JwtUtils jwtUtils, UserRepository userRepository, SettingsRepository settingsRepository
-                ) throws URISyntaxException {
+                ) {
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
         this.jwtUtils = jwtUtils;
         this.userDetailsService = jwtUserDetailsService;
         this.userRepository = userRepository;
         this.settingsRepository = settingsRepository;
     }
+    @PostConstruct
+    public void init(){
+        if (StringUtils.isNotBlank(gitHubClientId) && StringUtils.isNotBlank(gitHubSecret)){
+            gitHubFactory = new GitHubConnectionFactory(gitHubClientId, gitHubSecret);
+            isGitHubEnabled = true;
+        }
+        if (StringUtils.isNotBlank(facebookClientId) && StringUtils.isNotBlank(facebookSecret)){
+            facebookFactory = new FacebookConnectionFactory(facebookClientId, facebookClientId);
+            isFacebookEnabled = true;
+        }
+    }
     
-    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
-
 
     public void generateJWTTokenForUser(String commonName, HttpServletResponse httpServletResponse) throws IOException {
 
@@ -154,12 +187,104 @@ public class AuthService {
     public ResponseEntity<StatusEntity> getStatus() {
         Settings settings = settingsRepository.findAll().stream().findFirst().orElse(null);
         assert settings != null;
-        return new ResponseEntity<>(new StatusEntity(settings.getInitialized(), settings.getCertificateAuth(),settings.getPasswordAuth()), HttpStatus.OK);
+        return new ResponseEntity<>(new StatusEntity(settings.getInitialized(), settings.getCertificateAuth(),settings.getPasswordAuth(), isFacebookEnabled, isGitHubEnabled), HttpStatus.OK);
 
     }
 
     public ResponseEntity<StatusEntity> getStatus2() {
         //this.openVasSocketClient.processRequest(null,null,null);
         return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    public void proceedWithSocialLogin(String email, HttpServletResponse httpServletResponse) throws IOException {
+        User user = getUserByUsername(email);
+        final UserDetails userDetails = userDetailsService
+                .loadUserByUsername(user.getUsername());
+        final String token = jwtUtils.generateToken(userDetails);
+        Cookie role = new Cookie("role", user.getPermisions());
+        role.setPath("/");
+        role.setMaxAge(3600);
+        Cookie jwt = new Cookie("token", token);
+        jwt.setPath("/");
+        jwt.setMaxAge(3600);
+        jwt.setSecure(true);
+        jwt.setHttpOnly(true);
+        log.info("User is successfuly logged {}", user.getUsername());
+        user.setLogins(user.getLogins()+1);
+        userRepository.save(user);
+        httpServletResponse.addCookie(jwt);
+        httpServletResponse.addCookie(role);
+        httpServletResponse.setHeader("Location", "/pages/dashboard");
+        httpServletResponse.setStatus(302);
+        httpServletResponse.flushBuffer();
+    }
+
+    private User getUserByUsername(String email) {
+        Optional<User> user = userRepository.findByUsername(email);
+        if (user.isPresent()){
+            return user.get();
+        } else {
+            User userToCreate = new User();
+            userToCreate.setUsername(email);
+            userToCreate.setCommonName(email);
+            userToCreate.setEnabled(true);
+            userToCreate.setPermisions(Constants.ROLE_USER);
+            log.info("Created user - {}", email);
+            return userRepository.save(userToCreate);
+        }
+    }
+
+    public void processFbLogin(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws IOException {
+        OAuth2Operations operations = facebookFactory.getOAuthOperations();
+        OAuth2Parameters params = new OAuth2Parameters();
+
+        params.setRedirectUri(httpServletRequest.getRequestURL() + "/forward");
+        params.setScope("profile email");
+
+        String url = operations.buildAuthenticateUrl(params);
+        httpServletResponse.setHeader("Location", url);
+        httpServletResponse.setStatus(302);
+        httpServletResponse.flushBuffer();
+    }
+
+    public void processGitHubLogin(HttpServletResponse httpServletResponse, HttpServletRequest httpServletRequest) throws IOException {
+        OAuth2Operations operations = gitHubFactory.getOAuthOperations();
+        OAuth2Parameters params = new OAuth2Parameters();
+
+        params.setRedirectUri(httpServletRequest.getRequestURL() + "/forward");
+        gitHubFactory.setScope("user:email");
+        params.setScope("user:email");
+
+        String url = operations.buildAuthenticateUrl(params);
+        httpServletResponse.setHeader("Location", url);
+        httpServletResponse.setStatus(302);
+        httpServletResponse.flushBuffer();
+    }
+
+    public void authenticateFBUser(String authorizationCode, HttpServletResponse httpServletResponse, HttpServletRequest httpServletRequest) throws IOException {
+        OAuth2Operations operations = facebookFactory.getOAuthOperations();
+
+
+        AccessGrant accessToken = operations.exchangeForAccess(authorizationCode, httpServletRequest.getRequestURL()+"" ,
+                null);
+
+        Connection<Facebook> connection = facebookFactory.createConnection(accessToken);
+        Facebook facebook = connection.getApi();
+        String[] fields = {"email"};
+        org.springframework.social.facebook.api.User userProfile = facebook.fetchObject("me", org.springframework.social.facebook.api.User.class, fields);
+        proceedWithSocialLogin(userProfile.getEmail(), httpServletResponse);
+    }
+
+
+    public void authenticateGitHubUser(String authorizationCode, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws IOException {
+        OAuth2Operations operations = gitHubFactory.getOAuthOperations();
+        AccessGrant accessToken = operations.exchangeForAccess(authorizationCode, httpServletRequest.getRequestURL()+"" ,
+                null);
+
+        Connection<GitHub> connection = gitHubFactory.createConnection(accessToken);
+        GitHub github = connection.getApi();
+        GitHubUserProfile profile = github.userOperations().getUserProfile();
+
+        proceedWithSocialLogin(profile.getUsername(), httpServletResponse);
     }
 }

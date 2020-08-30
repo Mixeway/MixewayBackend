@@ -1104,3 +1104,6 @@ insert into user_project (select u.id, p.id from project p, users u where u.perm
 --changeset siewer:project_owner
 alter table project add column owner_id int references users(id);
 update project set owner_id = (select id from users where name='admin');
+
+--changeset siewer:project_owner_fix
+update project set owner_id = (select id from users where name='username');
