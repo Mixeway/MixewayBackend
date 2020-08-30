@@ -2,6 +2,7 @@ package io.mixeway.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.validation.Errors;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -51,6 +52,7 @@ public class SwaggerConfig implements WebMvcConfigurer {
                 .paths(PathSelectors.any())
                 .build()
                 .ignoredParameterTypes(Principal.class)
+                .ignoredParameterTypes(Errors.class)
                 .apiInfo(apiInfo)
                 .globalOperationParameters(Collections.singletonList(headerParam));
     }

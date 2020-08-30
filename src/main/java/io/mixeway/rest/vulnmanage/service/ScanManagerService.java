@@ -155,17 +155,17 @@ public class ScanManagerService {
     }
 
     @Transactional
-    public ResponseEntity<Vulnerabilities> getVulnerabilitiesForScanByReqeustId(String requestId) throws UnknownHostException {
+    public ResponseEntity<Vulnerabilities> getVulnerabilitiesForScanByReqeustId(String requestId, Principal principal) throws UnknownHostException {
         List<Asset> assets = assetRepository.findByRequestId(requestId);
         List<CodeProject> codeProjects = codeProjectRepository.findByRequestId(requestId);
         List<WebApp> webApps = webAppRepository.findByRequestId(requestId);
         Vulnerabilities vulnerabilities = new Vulnerabilities();
         List<Vuln> vulnList = new ArrayList<>();
-        if (assets.size()>0)
+        if (assets.size()>0 && permissionFactory.canUserAccessProject(principal, assets.get(0).getProject()))
             vulnList = getInfrastructureVulnerabilities(vulnList, assets);
-        else if (codeProjects.size() >0)
+        else if (codeProjects.size() >0 && permissionFactory.canUserAccessProject(principal, codeProjects.get(0).getCodeGroup().getProject()))
             vulnList = getCodeVulns(vulnList, codeProjects);
-        else if (webApps.size()>0)
+        else if (webApps.size()>0 && permissionFactory.canUserAccessProject(principal, webApps.get(0).getProject()))
             vulnList=getWebAppVulns(vulnList, webApps);
         else
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);

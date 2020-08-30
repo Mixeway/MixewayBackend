@@ -4,7 +4,9 @@ import io.mixeway.config.Constants;
 import io.mixeway.db.entity.Project;
 import io.mixeway.db.entity.User;
 import io.mixeway.db.repository.ProjectRepository;
+import io.mixeway.db.repository.SettingsRepository;
 import io.mixeway.db.repository.UserRepository;
+import io.mixeway.integrations.infrastructurescan.plugin.nessus.model.Settings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Component;
@@ -18,12 +20,22 @@ import java.util.stream.Collectors;
 public class PermissionFactory {
     private final UserRepository userRepository;
     private final ProjectRepository projectRepository;
+    private final SettingsRepository settingsRepository;
     @Autowired
-    public PermissionFactory(UserRepository userRepository, ProjectRepository projectRepository){
+    public PermissionFactory(UserRepository userRepository, ProjectRepository projectRepository,
+                             SettingsRepository settingsRepository){
         this.userRepository = userRepository;
         this.projectRepository = projectRepository;
+        this.settingsRepository = settingsRepository;
     }
 
+    /**
+     * Verification if given Principal has authority to access project details
+     *
+     * @param principal to check
+     * @param project to check access
+     * @return boolean
+     */
     public boolean canUserAccessProject(Principal principal, Project project){
         User user = getUserFromPrincipal(principal);
         if (apiKeyAccessProject(principal,project)){
@@ -41,6 +53,17 @@ public class PermissionFactory {
             return false;
     }
 
+    /**
+     * Get User entity based on principal name, take care of both username and apikey
+     * 1. If Principal.username = user.username return user
+     * 2. If Principal.username = user.apikey return user
+     * 3. if Principal.username = settings.apikey retrurn Admin
+     * 4. if Principal.username = Constants.SCHEDULER return ROLE_API
+     * 5. if Principal.username is valid UUID grant ROLE_API - should not happen
+     *
+     * @param principal to check
+     * @return user entity
+     */
     public User getUserFromPrincipal(Principal principal) {
         try {
             Optional<User> userOptional = userRepository.findByUsername(principal.getName());
@@ -49,6 +72,8 @@ public class PermissionFactory {
                 return userOptional.get();
             else if (userApiKey.isPresent()){
                 return userApiKey.get();
+            } else if (settingsRepository.findAll().stream().findFirst().orElse(null).getMasterApiKey().equals(principal.getName())) {
+                return userRepository.findByUsername("admin").orElse(null);
             } else if (principal.getName().equals(Constants.ORIGIN_SCHEDULER)){
                 User u = new User();
                 u.setUsername(Constants.API_URL);
@@ -65,6 +90,17 @@ public class PermissionFactory {
             return null;
         }
     }
+
+    /**
+     * Verify if given api key can access project
+     * 1. check if apikey's is user's
+     * 2. check if apikey's is project's
+     * 3. check if apikey is master api key
+     *
+     * @param principal
+     * @param project
+     * @return
+     */
     private boolean apiKeyAccessProject(Principal principal, Project project){
         try {
             UUID test = UUID.fromString(principal.getName());
@@ -78,11 +114,21 @@ public class PermissionFactory {
             if (optionalProject.isPresent()){
                 return true;
             }
+            if (settingsRepository.findAll().stream().findFirst().orElse(null).getMasterApiKey().equals(principal.getName())){
+                return true;
+            }
         } catch (Exception e){
             return false;
         }
         return false;
     }
+
+    /**
+     * return list of project given principal is authorized to see
+     *
+     * @param principal
+     * @return
+     */
     public List<Project> getProjectForPrincipal(Principal principal){
         Optional<User> userOptional = userRepository.findByUsername(principal.getName());
         if (userOptional.isPresent() && (userOptional.get().getPermisions().equals(Constants.ROLE_USER) ||
@@ -96,6 +142,12 @@ public class PermissionFactory {
         }
     }
 
+    /**
+     * Update user permissions
+     *
+     * @param projectToCreate
+     * @param principal
+     */
     @Transactional
     public void grantPermissionToProjectForUser(Project projectToCreate, Principal principal) {
         User user = getUserFromPrincipal(principal);
