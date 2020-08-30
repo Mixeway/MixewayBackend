@@ -135,7 +135,7 @@ public class CodeScanService {
      * @param codeScanRequest object passed from REST API
      * @return Status entity with proper HTTPStatus. CREATED when everytihng is ok and BAD_REQUEST if it is not
      */
-    public ResponseEntity<Status> performScanFromScanManager(CodeScanRequestModel codeScanRequest) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, JSONException, ParseException {
+    public ResponseEntity<Status> performScanFromScanManager(CodeScanRequestModel codeScanRequest, Principal principal) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, JSONException, ParseException {
         if (codeScanRequest.getCiid() != null && !codeScanRequest.getCiid().equals("")){
             Optional<List<Project>> projects = projectRepository.findByCiid(codeScanRequest.getCiid());
             Project project;
@@ -146,7 +146,9 @@ public class CodeScanService {
                 project.setName(codeScanRequest.getProjectName());
                 project.setCiid(codeScanRequest.getCiid());
                 project.setEnableVulnManage(codeScanRequest.getEnableVulnManage().isPresent() ? codeScanRequest.getEnableVulnManage().get() : true);
+                project.setOwner(permissionFactory.getUserFromPrincipal(() -> Constants.ORIGIN_SCHEDULER));
                 project = projectRepository.save(project);
+                permissionFactory.grantPermissionToProjectForUser(project, principal);
             }
 
             String requestId = verifyAndCreateOrUpdateCodeProjectInformations(codeScanRequest,project);

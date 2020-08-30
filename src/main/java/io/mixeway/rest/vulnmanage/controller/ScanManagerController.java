@@ -22,10 +22,7 @@ import javax.validation.Valid;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.net.UnknownHostException;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
+import java.security.*;
 import java.security.cert.CertificateException;
 import java.text.ParseException;
 
@@ -42,12 +39,12 @@ public class ScanManagerController {
 
     @PreAuthorize("hasAuthority('ROLE_API')")
     @PutMapping(value = "/create",produces = "application/json")
-    public ResponseEntity<Status> createScanManageRequest(@Valid @RequestBody CreateScanManageRequest createScanManageRequest,
+    public ResponseEntity<Status> createScanManageRequest(@Valid @RequestBody CreateScanManageRequest createScanManageRequest, Principal principal,
                                                            Errors errors) throws Exception {
         if (errors.hasErrors() || !createScanManageRequest.isValid()){
             return new ResponseEntity<>(new Status("Allowed testTypes are: `network`,`webApp`,`code`"), HttpStatus.BAD_REQUEST);
         } else {
-            return scanManagerService.createScanManageRequest(createScanManageRequest);
+            return scanManagerService.createScanManageRequest(createScanManageRequest, principal);
         }
     }
 

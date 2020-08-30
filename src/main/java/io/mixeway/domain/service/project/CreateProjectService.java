@@ -22,11 +22,14 @@ public class CreateProjectService {
     }
 
     @Transactional
-    public Long createProject(String projectName, String ciid) {
+    public Long createProject(String projectName, String ciid, Principal principal) {
         Project project = new Project();
         project.setName(projectName);
         project.setCiid(ciid);
-        return projectRepository.save(project).getId();
+        project.setOwner(permissionFactory.getUserFromPrincipal(principal));
+        project = projectRepository.save(project);
+        permissionFactory.grantPermissionToProjectForUser(project,principal);
+        return project.getId();
     }
 
     @Transactional
@@ -38,7 +41,8 @@ public class CreateProjectService {
             p.setEnableVulnManage(enableVulnManage == 1);
             p.setCiid(ciid);
             p.setOwner(permissionFactory.getUserFromPrincipal(principal));
-            projectRepository.save(p);
+            p = projectRepository.save(p);
+            permissionFactory.grantPermissionToProjectForUser(p, principal);
             return true;
         } catch (Exception e) {
             return false;

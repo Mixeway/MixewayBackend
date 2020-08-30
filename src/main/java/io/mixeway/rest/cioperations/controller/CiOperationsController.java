@@ -80,18 +80,18 @@ public class CiOperationsController {
     }
 
 
-    @PreAuthorize("hasAuthority('ROLE_API_CICD')")
+    @PreAuthorize("hasAuthority('ROLE_API')")
     @PostMapping(value = "/getscannerinfo",produces = "application/json")
     public ResponseEntity<PrepareCIOperation> getInfoForCI(@Valid @RequestBody GetInfoRequest getInfoRequest, Principal principal) throws Exception {
         return ciOperationsService.getInfoForCI(getInfoRequest, principal);
     }
 
-    @PreAuthorize("hasAuthority('ROLE_API_CICD')")
+    @PreAuthorize("hasAuthority('ROLE_API')")
     @PostMapping(value = "/infoscanperformed",produces = "application/json")
     public ResponseEntity<Status> infoScanPerformed(@RequestBody InfoScanPerformed infoScanPerformed, Principal principal) throws Exception {
         return ciOperationsService.infoScanPerformed(infoScanPerformed,principal);
     }
-    @PreAuthorize("hasAuthority('ROLE_API_CICD')")
+    @PreAuthorize("hasAuthority('ROLE_API')")
     @PostMapping(value = "/loadvulnerabilities/{projectId}/{codeProjectName}/{branch}/{commitId}",produces = "application/json")
     public ResponseEntity<Status> loadVulnerabilitiesFromCICDToProject(@RequestBody List<VulnerabilityModel> vulns, @PathVariable(value = "projectId") Long projectId,
                                                                        @PathVariable(value = "codeProjectName") String codeProjectName,
@@ -99,7 +99,7 @@ public class CiOperationsController {
                                                                        @PathVariable(value = "commitId") String commitId, Principal principal) throws Exception {
         return ciOperationsService.loadVulnerabilitiesFromCICDToProject(vulns, projectId, codeProjectName, branch, commitId, principal);
     }
-    @PreAuthorize("hasAuthority('ROLE_API_CICD')")
+    @PreAuthorize("hasAuthority('ROLE_API')")
     @PostMapping(value="/loadvulnerabilities/{codeProjectName}")
     public ResponseEntity<Status> loadVulnerabilitiesForAnonymousProject (@RequestBody List<VulnerabilityModel> vulns,
                                                                           @PathVariable(value = "codeProjectName") String codeProjectName,

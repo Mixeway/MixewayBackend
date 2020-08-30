@@ -3,6 +3,7 @@ package io.mixeway.rest.vulnmanage.service;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
 import io.mixeway.domain.service.vulnerability.VulnTemplate;
+import io.mixeway.pojo.PermissionFactory;
 import io.mixeway.rest.vulnmanage.model.CreateScanManageRequest;
 import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
@@ -26,10 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
+import java.security.*;
 import java.security.cert.CertificateException;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -53,6 +51,7 @@ public class ScanManagerService {
     private final WebAppScanService acunetixService;
     private final CodeScanService codeScanService;
     private final VulnTemplate vulnTemplate;
+    private final PermissionFactory permissionFactory;
     ArrayList<String> severitiesNot = new ArrayList<String>() {{
         add("Log");
         add("Info");
@@ -62,7 +61,7 @@ public class ScanManagerService {
                               InterfaceRepository interfaceRepository,CodeProjectRepository codeProjectRepository,
                               WebAppRepository webAppRepository, VulnTemplate vulnTemplate, NetworkScanService networkScanService,
                               ProjectRepository projectRepository, WebAppScanService acunetixService,
-                              CodeScanService codeScanService){
+                              CodeScanService codeScanService, PermissionFactory permissionFactory){
         this.assetRepository = assetRepository;
         this.interfaceRepository = interfaceRepository;
         this.webAppRepository = webAppRepository;
@@ -72,20 +71,21 @@ public class ScanManagerService {
         this.acunetixService = acunetixService;
         this.codeScanService = codeScanService;
         this.vulnTemplate = vulnTemplate;
+        this.permissionFactory = permissionFactory;
     }
-    public ResponseEntity<Status> createScanManageRequest(CreateScanManageRequest createScanManageRequest) throws Exception {
+    public ResponseEntity<Status> createScanManageRequest(CreateScanManageRequest createScanManageRequest, Principal principal) throws Exception {
         if (createScanManageRequest.getTestType().equals(Constants.REQUEST_SCAN_NETWORK)){
-            return processNetworkScanRequest(createScanManageRequest.getNetworkScanRequest());
+            return processNetworkScanRequest(createScanManageRequest.getNetworkScanRequest(), principal);
         } else if (createScanManageRequest.getTestType().equals(Constants.REQUEST_SCAN_CODE)){
-            return processCodeScanRequest(createScanManageRequest.getCodeScanRequest());
+            return processCodeScanRequest(createScanManageRequest.getCodeScanRequest(),principal);
         } else if (createScanManageRequest.getTestType().equals(Constants.REQUEST_SCAN_WEBAPP)){
-            return processWebAppScanRequest(createScanManageRequest.getWebAppScanRequest());
+            return processWebAppScanRequest(createScanManageRequest.getWebAppScanRequest(),principal);
         } else {
             return new ResponseEntity<>(new Status("Unknown request"), HttpStatus.BAD_REQUEST);
         }
     }
 
-    private ResponseEntity<Status> processWebAppScanRequest(WebAppScanRequestModel webAppScanRequest) {
+    private ResponseEntity<Status> processWebAppScanRequest(WebAppScanRequestModel webAppScanRequest, Principal principal) {
         try {
             if (webAppScanRequest.getCiid().isPresent()) {
                 Optional<List<Project>> projectFromReq = projectRepository.findByCiid(webAppScanRequest.getCiid().get());
@@ -99,11 +99,13 @@ public class ScanManagerService {
                     } else {
                         project.setName("Autogen name for ciid: "+webAppScanRequest.getCiid().get());
                     }
+                    project.setOwner(permissionFactory.getUserFromPrincipal(principal));
                     project.setCiid(webAppScanRequest.getCiid().get());
                     project.setEnableVulnManage(webAppScanRequest.getEnableVulnManage().isPresent() ? webAppScanRequest.getEnableVulnManage().get() : true);
                     project = projectRepository.save(project);
+                    permissionFactory.grantPermissionToProjectForUser(project,principal);
                 }
-                return acunetixService.processScanWebAppRequest(project.getId(), webAppScanRequest.getWebApp(), Constants.STRATEGY_GUI);
+                return acunetixService.processScanWebAppRequest(project.getId(), webAppScanRequest.getWebApp(), Constants.STRATEGY_GUI, principal);
             } else {
                 return new ResponseEntity<>(new Status("Request contains no information about project. projectName and ciid are required."), HttpStatus.BAD_REQUEST);
             }
@@ -112,14 +114,14 @@ public class ScanManagerService {
         }
     }
 
-    private ResponseEntity<Status> processCodeScanRequest(CodeScanRequestModel codeScanRequest) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, JSONException, ParseException {
+    private ResponseEntity<Status> processCodeScanRequest(CodeScanRequestModel codeScanRequest, Principal principal) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, JSONException, ParseException {
 
-        return codeScanService.performScanFromScanManager(codeScanRequest);
+        return codeScanService.performScanFromScanManager(codeScanRequest, principal);
     }
 
-    private ResponseEntity<Status> processNetworkScanRequest(NetworkScanRequestModel networkScanRequest) throws Exception {
+    private ResponseEntity<Status> processNetworkScanRequest(NetworkScanRequestModel networkScanRequest, Principal principal) throws Exception {
 
-        return networkScanService.createAndRunNetworkScan(networkScanRequest);
+        return networkScanService.createAndRunNetworkScan(networkScanRequest, principal);
     }
 
     @Transactional

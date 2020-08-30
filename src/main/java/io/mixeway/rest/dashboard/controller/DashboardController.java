@@ -67,13 +67,13 @@ public class DashboardController {
                                      @PathVariable(value="enableVulnManage") int enableVulnManage, Principal principal)  {
         return dashboardService.putProject(projectName, projectDescription, ciid, enableVulnManage, principal);
     }
-    @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
+    @PreAuthorize("hasAuthority('ROLE_USER')")
     @PatchMapping(value = "/projects/{projectId}")
     public ResponseEntity editProject(@PathVariable(value = "projectId") Long projectId,
                                       @RequestBody Projects projectObject, Principal principal) {
         return dashboardService.patchProject(projectId,projectObject,principal);
     }
-    @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
+    @PreAuthorize("hasAuthority('ROLE_USER')")
     @DeleteMapping(value = "/projects/{projectId}")
     public ResponseEntity deleteProject(@PathVariable(value = "projectId") Long projectId, Principal principal) {
         return dashboardService.deleteProject(projectId,principal);

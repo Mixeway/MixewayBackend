@@ -8,12 +8,10 @@ import io.mixeway.db.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.Principal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
@@ -51,11 +49,15 @@ public class PermissionFactory {
                 return userOptional.get();
             else if (userApiKey.isPresent()){
                 return userApiKey.get();
-            }
-            else {
-                UUID test = UUID.fromString(principal.getName());
+            } else if (principal.getName().equals(Constants.ORIGIN_SCHEDULER)){
                 User u = new User();
                 u.setUsername(Constants.API_URL);
+                u.setPermisions("ROLE_API");
+                return u;
+            } else {
+                UUID test = UUID.fromString(principal.getName());
+                User u = new User();
+                u.setUsername(principal.getName());
                 u.setPermisions("ROLE_API");
                 return u;
             }
@@ -94,4 +96,15 @@ public class PermissionFactory {
         }
     }
 
+    @Transactional
+    public void grantPermissionToProjectForUser(Project projectToCreate, Principal principal) {
+        User user = getUserFromPrincipal(principal);
+        if (user.getProjects() != null) {
+            user.getProjects().add(projectToCreate);
+        } else {
+            List<Project> projects = new ArrayList<>();
+            projects.add(projectToCreate);
+            user.setProjects(new HashSet<>(projects));
+        }
+    }
 }

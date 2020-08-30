@@ -146,8 +146,8 @@ public class LegacyController {
     }
     @PreAuthorize("hasAuthority('ROLE_API')")
     @RequestMapping(value = "/api/koordynator/network",method = RequestMethod.POST)
-    public ResponseEntity<Status> createAndRunNetworkscan(@RequestBody NetworkScanRequestModel req) throws Exception {
-        return networkScanService.createAndRunNetworkScan(req);
+    public ResponseEntity<Status> createAndRunNetworkscan(@RequestBody NetworkScanRequestModel req, Principal principal) throws Exception {
+        return networkScanService.createAndRunNetworkScan(req, principal);
     }
     @PreAuthorize("hasAuthority('ROLE_API')")
     @RequestMapping(value = "/api/koordynator/network/check/{ciid}",method = RequestMethod.GET)
@@ -161,7 +161,7 @@ public class LegacyController {
         try {
             Optional<Project> project = projectRepository.findById(id);
             if (project.isPresent() && permissionFactory.canUserAccessProject(principal,project.get())) {
-                return webAppScanService.processScanWebAppRequest(id, req.getWebApp(), Constants.STRATEGY_API);
+                return webAppScanService.processScanWebAppRequest(id, req.getWebApp(), Constants.STRATEGY_API, principal);
             } else {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
@@ -172,10 +172,10 @@ public class LegacyController {
     @Transactional
     @PreAuthorize("hasAuthority('ROLE_API')")
     @PostMapping(value = "/api/koordynator/webapp")
-    public ResponseEntity<Status> createWebAppScanFromKoordynator(@RequestBody WebAppScanRequestModel req) {
+    public ResponseEntity<Status> createWebAppScanFromKoordynator(@RequestBody WebAppScanRequestModel req, Principal principal) {
         String ciid = req.getCiid().orElse("");
         String projectName = req.getProjectName().orElse("");
-        return webAppScanService.processScanWebAppRequest(projectService.getProjectId(ciid, projectName), req.getWebApp(), Constants.STRATEGY_GUI);
+        return webAppScanService.processScanWebAppRequest(projectService.getProjectId(ciid, projectName, principal), req.getWebApp(), Constants.STRATEGY_GUI,principal);
     }
 
 

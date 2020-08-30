@@ -111,11 +111,11 @@ public class WebAppScanService {
      * @return entity with status CREATED when scan is created, NOT_FOUND when there is no project and PRECONDITION_FAILED when duplicate detected
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public ResponseEntity<Status> processScanWebAppRequest(Long id, List<WebAppScanModel> webAppScanModelList, String origin) {
+    public ResponseEntity<Status> processScanWebAppRequest(Long id, List<WebAppScanModel> webAppScanModelList, String origin, Principal principal) {
         synchronized (this) {
             String requestId = null;
             Optional<Project> project = projectRepository.findById(id);
-            if (project.isPresent()) {
+            if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())) {
                 for (WebAppScanModel webAppScanModel : webAppScanModelList) {
                     String urlToCompareSimiliar = getUrltoCompare(webAppScanModel.getUrl());
                     String urlToCompareWithRegexx = WebAppScanHelper.normalizeUrl(webAppScanModel.getUrl()) + "$";

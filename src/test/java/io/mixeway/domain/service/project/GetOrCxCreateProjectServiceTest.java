@@ -17,16 +17,4 @@ public class GetOrCxCreateProjectServiceTest {
     @Mock
     private CreateProjectService createProjectService;
 
-    @Test
-    public void should_call_find_service_without_creating_project() {
-        //given
-        when(findProjectService.findProjectIdByCiid(anyString())).thenReturn(of(1l));
-        GetOrCreateProjectService projectService = new GetOrCreateProjectService(findProjectService, createProjectService);
-
-        //when
-        projectService.getProjectId("ciid", "project");
-
-        //then
-        verify(findProjectService, times(1)).findProjectIdByCiid("ciid");
-    }
 }

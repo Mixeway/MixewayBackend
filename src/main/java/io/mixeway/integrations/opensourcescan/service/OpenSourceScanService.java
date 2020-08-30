@@ -155,6 +155,7 @@ public class OpenSourceScanService {
                                     false,
                                     "none",
                                     permissionFactory.getUserFromPrincipal(principal)));
+                    permissionFactory.grantPermissionToProjectForUser(projectToCreate, principal);
                     codeService.saveCodeGroup(
                             projectToCreate.getId(),
                             new CodeGroupPutModel(codeProjectName, url, false, false, branch),
@@ -196,6 +197,7 @@ public class OpenSourceScanService {
                                     false,
                                     "none",
                                     permissionFactory.getUserFromPrincipal(principal)));
+                    permissionFactory.grantPermissionToProjectForUser(projectToCreate,principal);
                     codeService.saveCodeGroup(
                             projectToCreate.getId(),
                             new CodeGroupPutModel(codeProjectName, url, false, false,branch),

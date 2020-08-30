@@ -287,6 +287,7 @@ public class CiOperationsService {
                     false,
                     "none",
                     permissionFactory.getUserFromPrincipal(principal)));
+            permissionFactory.grantPermissionToProjectForUser(unknownProject, principal);
         }
         // Get CodeProject to load vulns to
         if (unknownProject != null){

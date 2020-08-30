@@ -28,7 +28,6 @@ public class AdminUserRestService {
         add("ROLE_ADMIN");
         add("ROLE_EDITOR_RUNNER");
         add("ROLE_API");
-        add("ROLE_API_CICD");
     }};
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
@@ -55,7 +54,7 @@ public class AdminUserRestService {
             userToCreate.setEnabled(true);
             userToCreate.setCommonName(userModel.getUserCN());
             userToCreate.setPermisions(userModel.getUserRole());
-            if (userModel.getUserRole().equals(Constants.ROLE_API_CICD)){
+            if (userModel.getUserRole().equals(Constants.ROLE_API)){
                 userToCreate.setApiKey(UUID.randomUUID().toString());
             }
             userToCreate.setUsername(userModel.getUserUsername());
