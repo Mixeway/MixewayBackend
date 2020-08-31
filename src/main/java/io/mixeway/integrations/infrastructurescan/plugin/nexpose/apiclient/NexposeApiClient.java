@@ -306,6 +306,11 @@ public class NexposeApiClient implements NetworkScanClient, SecurityScanner {
     }
 
     @Override
+    public String printInfo() {
+        return "Nexpose Scanner";
+    }
+
+    @Override
     public boolean canProcessRequest(ScannerType scannerType) {
         return scannerType.getName().equals(Constants.SCANNER_TYPE_NEXPOSE);
     }

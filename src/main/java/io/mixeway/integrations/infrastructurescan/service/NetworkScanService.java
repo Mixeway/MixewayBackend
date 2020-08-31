@@ -193,7 +193,7 @@ public class NetworkScanService {
      * @return NessusScan which is configured and running network scan
      */
     public List<NessusScan> configureAndRunManualScanForScope(Project project, List<Interface> intfs) throws Exception {
-
+        log.info("Preparing scan for {}", project.getName());
         List<NessusScan> nessusScans = new ArrayList<>();
         intfs = intfs.stream().filter(i -> !i.isScanRunning()).collect(Collectors.toList());
         Map<NetworkScanClient, Set<Interface>> scannerInterfaceMap = findNessusForInterfaces(new HashSet<>(intfs));
@@ -256,6 +256,7 @@ public class NetworkScanService {
         for (RoutingDomain rd : uniqueDomainInProjectAssets) {
             for (NetworkScanClient networkScanClient : networkScanClients){
                 if (networkScanClient.canProcessRequest(rd)){
+                    log.info("Got scanner to scan target {}");
                     scannerInterfaceMap.put(networkScanClient, intfs.stream().filter(i -> i.getRoutingDomain().getId().equals(rd.getId())).collect(Collectors.toSet()));
                 }
             }

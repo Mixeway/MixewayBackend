@@ -24,5 +24,6 @@ public interface NetworkScanClient {
     boolean canProcessRequest(Scanner scanner);
     boolean canProcessRequest(RoutingDomain routingDomain);
     Scanner getScannerFromClient(RoutingDomain routingDomain);
+    String printInfo();
 
 }
