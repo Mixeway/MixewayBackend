@@ -141,6 +141,7 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 			ResponseEntity<String> response = restTemplate.exchange(nessusScan.getNessus().getApiUrl() + "/checktask", HttpMethod.POST, entity, String.class);
 			if (response.getStatusCode() == HttpStatus.OK) {
 				String statusStr = new JSONObject(response.getBody()).getString(Constants.STATUS);
+				log.info("Status of {} is {}", nessusScan.getProject().getName(), statusStr);
 				boolean status = statusStr.equals(Constants.STATUS_DONE);
 				if (!statusStr.equals(Constants.STATUS_DONE) && !statusStr.equals(Constants.STATUS_RUNNING)){
 					nessusScan.setRunning(false);
