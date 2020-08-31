@@ -91,7 +91,7 @@ public class JwtUserDetailsService implements UserDetailsService {
         try {
             boolean isMasterKeyUsed = settingsRepository.findAll().stream().findFirst().orElse(null).getMasterApiKey().equals(username);
             Optional<io.mixeway.db.entity.User> userApiKey = userRepository.findByApiKey(username);
-            Optional<Project> projectApiKey = projectRepository.findByApiKey(username);
+            List<Project> projectApiKey = projectRepository.findByApiKey(username);
             if (isMasterKeyUsed){
                 return new User("admin", "", AuthorityUtils.commaSeparatedStringToAuthorityList(
                         "," +Constants.ROLE_USER
@@ -101,7 +101,7 @@ public class JwtUserDetailsService implements UserDetailsService {
                                 + "," +Constants.ROLE_ADMIN  ));
             } else if (userApiKey.isPresent()){
                 return new User(userApiKey.get().getApiKey(),"",getAuthoritiesForUser(userApiKey.get().getPermisions()));
-            } else if (projectApiKey.isPresent()) {
+            } else if (projectApiKey.size() > 0) {
                 return new User(username,"",getAuthoritiesForUser(Constants.ROLE_EDITOR_RUNNER));
             } else {
                 throw new UsernameNotFoundException("No permisions");

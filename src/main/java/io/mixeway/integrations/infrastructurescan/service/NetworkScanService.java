@@ -256,7 +256,7 @@ public class NetworkScanService {
         for (RoutingDomain rd : uniqueDomainInProjectAssets) {
             for (NetworkScanClient networkScanClient : networkScanClients){
                 if (networkScanClient.canProcessRequest(rd)){
-                    log.info("Got scanner to scan target {}");
+                    log.info("Got scanner to scan target {}", networkScanClient.printInfo());
                     scannerInterfaceMap.put(networkScanClient, intfs.stream().filter(i -> i.getRoutingDomain().getId().equals(rd.getId())).collect(Collectors.toSet()));
                 }
             }
