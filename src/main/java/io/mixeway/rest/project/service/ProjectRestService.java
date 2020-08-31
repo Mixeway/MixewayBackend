@@ -189,9 +189,11 @@ public class ProjectRestService {
         }
     }
 
-    public ResponseEntity<Status> updateContactList(Long id, ContactList contactList) {
+    public ResponseEntity<Status> updateContactList(Long id, ContactList contactList, Principal principal) {
         Optional<Project> project = projectRepository.findById(id);
-        if (project.isPresent() && verifyContactList(contactList) ){
+        if (project.isPresent() &&
+                permissionFactory.canUserAccessProject(principal,project.get()) &&
+                verifyContactList(contactList) ){
             project.get().setContactList(contactList.getContactList());
             projectRepository.save(project.get());
             return new ResponseEntity<>(HttpStatus.OK);

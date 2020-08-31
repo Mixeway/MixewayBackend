@@ -88,9 +88,9 @@ public class CiOperationsService {
         return new ResponseEntity<>(ciOperationsRepository.findByProjectInOrderByInsertedDesc(permissionFactory.getProjectForPrincipal(principal)), HttpStatus.OK);
     }
 
-    public ResponseEntity<Status> startPipeline(Long projectId, String groupName, String codeProjectName, String commitId) {
+    public ResponseEntity<Status> startPipeline(Long projectId, String groupName, String codeProjectName, String commitId, Principal principal) {
         Optional<Project> project = projectRepository.findById(projectId);
-        if (project.isPresent()) {
+        if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())) {
             SASTRequestVerify verifyRequest = codeAccessVerifier.verifyPermissions(projectId, groupName, codeProjectName, true);
             if (verifyRequest.getValid()) {
                 Optional<CiOperations> operation = ciOperationsRepository.findByCodeProjectAndCommitId(verifyRequest.getCp(),commitId);
@@ -113,13 +113,13 @@ public class CiOperationsService {
         return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
     }
 
-    public ResponseEntity<Status> codeScan(Long id, String groupName, String projectName, String commitId) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
+    public ResponseEntity<Status> codeScan(Long id, String groupName, String projectName, String commitId, Principal principal) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
         return codeScanService.createScanForCodeProject(id,groupName,projectName);
     }
 
-    public ResponseEntity<CIVulnManageResponse> codeVerify(String codeGroup, String codeProject, Long id, String commitid) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+    public ResponseEntity<CIVulnManageResponse> codeVerify(String codeGroup, String codeProject, Long id, String commitid, Principal principal) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         Optional<Project> project = projectRepository.findById(id);
-        if (project.isPresent()) {
+        if (project.isPresent() && permissionFactory.canUserAccessProject(principal,project.get())) {
             SASTRequestVerify sastRequestVerify = codeAccessVerifier.verifyPermissions(id,codeGroup,codeProject,false);
             if (sastRequestVerify.getValid()){
                 CodeProject codeProjectToVerify =sastRequestVerify.getCp();
@@ -200,12 +200,13 @@ public class CiOperationsService {
      * and then it create project on DTrack
      * only DTrack
      * @param getInfoRequest request with url
+     * @param principal
      * @return info about scanners
      */
-    public ResponseEntity<PrepareCIOperation> getInfoForCI(GetInfoRequest getInfoRequest) throws Exception {
+    public ResponseEntity<PrepareCIOperation> getInfoForCI(GetInfoRequest getInfoRequest, Principal principal) throws Exception {
         switch (getInfoRequest.getScope()){
             case Constants.CI_SCOPE_OPENSOURCE:
-                CodeProject codeProject = openSourceScanService.getCodeProjectByRepoUrl(getInfoRequest.getRepoUrl(), getInfoRequest.getBranch());
+                CodeProject codeProject = openSourceScanService.getCodeProjectByRepoUrl(getInfoRequest.getRepoUrl(), getInfoRequest.getBranch(),principal);
                 if (StringUtils.isBlank(codeProject.getdTrackUuid())){
                     openSourceScanService.createProjectOnOpenSourceScanner(codeProject);
                 }
@@ -213,7 +214,8 @@ public class CiOperationsService {
                         .getOpenSourceScannerConfiguration(
                                 codeProject.getCodeGroup().getProject().getId(),
                                 codeProject.getName(),
-                                codeProject.getName())
+                                codeProject.getName(),
+                                principal)
                         .getBody();
                 // FOR NOW owasp dtrack hardcoded
                 return new ResponseEntity<>(new PrepareCIOperation(openSourceConfig, codeProject,"OWASP Dependency Track"), HttpStatus.OK);
@@ -221,7 +223,7 @@ public class CiOperationsService {
         return null;
     }
 
-    public ResponseEntity<Status> infoScanPerformed(InfoScanPerformed infoScanPerformed) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+    public ResponseEntity<Status> infoScanPerformed(InfoScanPerformed infoScanPerformed, Principal principal) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         Optional<CodeProject> codeProject = codeProjectRepository.findById(infoScanPerformed.getCodeProjectId());
         if (codeProject.isPresent() && infoScanPerformed.getScope().equals(Constants.CI_SCOPE_OPENSOURCE)){
             Optional<CiOperations> ciOperations = ciOperationsRepository.findByCodeProjectAndCommitId(codeProject.get(), infoScanPerformed.getCommitId());
@@ -273,17 +275,19 @@ public class CiOperationsService {
         }
     }
 
-    public ResponseEntity<Status> loadVulnerabilitiesForAnonymousProject(List<VulnerabilityModel> vulns, String codeProjectName) {
-        Optional<List<Project>> findUnknownProject = projectRepository.findByName(Constants.PROJECT_UNKNOWN);
+    public ResponseEntity<Status> loadVulnerabilitiesForAnonymousProject(List<VulnerabilityModel> vulns, String codeProjectName, Principal principal) {
+        Optional<List<Project>> findUnknownProject = projectRepository.findByNameAndOwner(Constants.PROJECT_UNKNOWN, permissionFactory.getUserFromPrincipal(principal));
         Project unknownProject = null;
         // Get unknown project
         if (findUnknownProject.isPresent() && findUnknownProject.get().size() == 1){
             unknownProject = findUnknownProject.get().get(0);
         } else if (!findUnknownProject.isPresent() || (findUnknownProject.get().isEmpty())) {
-            unknownProject = projectRepository.save(new Project(Constants.PROJECT_UNKNOWN,
+            unknownProject = projectRepository.saveAndFlush(new Project(Constants.PROJECT_UNKNOWN,
                     "unknown project created for anynomous CICD",
                     false,
-                    "none"));
+                    "none",
+                    permissionFactory.getUserFromPrincipal(principal)));
+            permissionFactory.grantPermissionToProjectForUser(unknownProject, principal);
         }
         // Get CodeProject to load vulns to
         if (unknownProject != null){

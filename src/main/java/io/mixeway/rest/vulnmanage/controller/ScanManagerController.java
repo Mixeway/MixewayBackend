@@ -22,10 +22,7 @@ import javax.validation.Valid;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.net.UnknownHostException;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
+import java.security.*;
 import java.security.cert.CertificateException;
 import java.text.ParseException;
 
@@ -42,19 +39,19 @@ public class ScanManagerController {
 
     @PreAuthorize("hasAuthority('ROLE_API')")
     @PutMapping(value = "/create",produces = "application/json")
-    public ResponseEntity<Status> createScanManageRequest(@Valid @RequestBody CreateScanManageRequest createScanManageRequest,
+    public ResponseEntity<Status> createScanManageRequest(@Valid @RequestBody CreateScanManageRequest createScanManageRequest, Principal principal,
                                                            Errors errors) throws Exception {
         if (errors.hasErrors() || !createScanManageRequest.isValid()){
             return new ResponseEntity<>(new Status("Allowed testTypes are: `network`,`webApp`,`code`"), HttpStatus.BAD_REQUEST);
         } else {
-            return scanManagerService.createScanManageRequest(createScanManageRequest);
+            return scanManagerService.createScanManageRequest(createScanManageRequest, principal);
         }
     }
 
     @PreAuthorize("hasAuthority('ROLE_API')")
     @GetMapping(value= "/check/{requestId}")
     @Validated
-    public ResponseEntity<Status> checkStatusOfRequestedScan(@Valid RequestId requestId, @ApiIgnore Errors errors){
+    public ResponseEntity<Status> checkStatusOfRequestedScan(@Valid RequestId requestId, Errors errors, Principal principal){
         if (errors.hasErrors()){
             return new ResponseEntity<>(new Status("UUID format required"), HttpStatus.BAD_REQUEST);
         } else {
@@ -63,7 +60,7 @@ public class ScanManagerController {
     }
     @PreAuthorize("hasAuthority('ROLE_API')")
     @GetMapping(value= "/vulnerabilities/{requestId}/metadata")
-    public ResponseEntity<InfraScanMetadata> getMetadataForScanByRequestId(@Valid RequestId requestId, @ApiIgnore Errors errors ) {
+    public ResponseEntity<InfraScanMetadata> getMetadataForScanByRequestId(@Valid RequestId requestId, Errors errors, Principal principal ) {
         if (errors.hasErrors()){
             return new ResponseEntity<>( HttpStatus.BAD_REQUEST);
         } else {
@@ -73,11 +70,11 @@ public class ScanManagerController {
     }
     @PreAuthorize("hasAuthority('ROLE_API')")
     @GetMapping(value= "/vulnerabilities/{requestId}")
-    public ResponseEntity<Vulnerabilities> getVulnerabilitiesForScanByReqeustId(@Valid RequestId requestId, @ApiIgnore Errors errors) throws UnknownHostException {
+    public ResponseEntity<Vulnerabilities> getVulnerabilitiesForScanByReqeustId(@Valid RequestId requestId, Errors errors,Principal principal) throws UnknownHostException {
         if (errors.hasErrors()){
             return new ResponseEntity<>( HttpStatus.BAD_REQUEST);
         } else {
-            return scanManagerService.getVulnerabilitiesForScanByReqeustId(requestId.toString());
+            return scanManagerService.getVulnerabilitiesForScanByReqeustId(requestId.toString(), principal);
         }
 
     }

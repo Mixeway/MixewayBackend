@@ -62,45 +62,45 @@ public class WebAppService {
 
 
 
-    public ResponseEntity<Status> runSingleWebApp(Long webAppId, String username) {
-        return webAppScanService.putSingleWebAppToQueue(webAppId, username);
+    public ResponseEntity<Status> runSingleWebApp(Long webAppId, Principal principal) {
+        return webAppScanService.putSingleWebAppToQueue(webAppId, principal);
     }
 
-    public ResponseEntity<Status> deleteWebApp(Long webAppId, String username) {
+    public ResponseEntity<Status> deleteWebApp(Long webAppId, Principal principal) {
         Optional<WebApp> webApp = webAppRepository.findById(webAppId);
-        if (webApp.isPresent() ) {
+        if (webApp.isPresent() && permissionFactory.canUserAccessProject(principal, webApp.get().getProject())) {
             webAppRepository.delete(webApp.get());
-            log.info("{} - Deleted webapp  {}", username, webApp.get().getUrl());
+            log.info("{} - Deleted webapp  {}", principal.getName(), webApp.get().getUrl());
             return new ResponseEntity<>(null,HttpStatus.OK);
         }
         return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
     }
-    public ResponseEntity<Status> runAllScanForWebApp(Long id, String username) {
+    public ResponseEntity<Status> runAllScanForWebApp(Long id, Principal principal) {
         Optional<Project> project = projectRepository.findById(id);
         boolean error = false;
-        if (project.isPresent() ){
+        if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get()) ){
             try {
                 for (WebApp webApp : project.get().getWebapps()) {
-                    if (!webAppScanService.putSingleWebAppToQueue(webApp.getId(), username).getStatusCode().equals(HttpStatus.CREATED))
+                    if (!webAppScanService.putSingleWebAppToQueue(webApp.getId(), principal).getStatusCode().equals(HttpStatus.CREATED))
                         error = true;
                 }
             } catch (Exception e) {
                 return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
             }
             if (!error) {
-                log.info("{} - Started scan of webapps for project {} - scope full", username, project.get().getName());
+                log.info("{} - Started scan of webapps for project {} - scope full", principal.getName(), project.get().getName());
                 return new ResponseEntity<>(null, HttpStatus.CREATED);
             }
         }
         return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
     }
 
-    public ResponseEntity<Status> runSelectedWebApps(Long id, List<RunScanForWebApps> runScanForWebApps, String username) {
-        return webAppScanService.putSelectedWebAppsToQueue(id, runScanForWebApps,username);
+    public ResponseEntity<Status> runSelectedWebApps(Long id, List<RunScanForWebApps> runScanForWebApps, Principal principal) {
+        return webAppScanService.putSelectedWebAppsToQueue(id, runScanForWebApps,principal);
     }
-    public ResponseEntity<Status> saveWebApp(Long id, WebAppPutModel webAppPutMode, String usernamel) {
+    public ResponseEntity<Status> saveWebApp(Long id, WebAppPutModel webAppPutMode, Principal principal) {
         Optional<Project> project = projectRepository.findById(id);
-        if (project.isPresent()) {
+        if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())) {
             try {
                 WebApp webApp = new WebApp();
                 webApp.setUrl(webAppPutMode.getWebAppUrl());
@@ -131,10 +131,10 @@ public class WebAppService {
                         webAppHeaderRepository.save(waHeader);
                     }
                 }
-                log.info("{} - Added webapp [{}] {} and set {} headers", usernamel, project.get().getName(), webApp.getUrl(), webApp.getHeaders() != null ? webApp.getHeaders().size() : 0);
+                log.info("{} - Added webapp [{}] {} and set {} headers", principal.getName(), project.get().getName(), webApp.getUrl(), webApp.getHeaders() != null ? webApp.getHeaders().size() : 0);
                 return new ResponseEntity<>(null, HttpStatus.CREATED);
             } catch (DataIntegrityViolationException ex) {
-                log.info("{} - is trying to add duplicate URL [{}] for project {} ", usernamel, LogUtil.prepare(webAppPutMode.getWebAppUrl()), project.get().getName());
+                log.info("{} - is trying to add duplicate URL [{}] for project {} ", principal.getName(), LogUtil.prepare(webAppPutMode.getWebAppUrl()), project.get().getName());
                 return new ResponseEntity<>(null, HttpStatus.CONFLICT);
             }
         } else {
@@ -142,9 +142,9 @@ public class WebAppService {
         }
     }
 
-    public ResponseEntity<Status> enableWebAppAutoScan(Long id, String username) {
+    public ResponseEntity<Status> enableWebAppAutoScan(Long id, Principal principal) {
         Optional<Project> project = projectRepository.findById(id);
-        if (project.isPresent()){
+        if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             List<Scanner> scanner = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_ACUNETIX));
             WebAppScan webAppScan = new WebAppScan();
             webAppScan.setProject(project.get());
@@ -155,7 +155,7 @@ public class WebAppService {
             project.get().setAutoWebAppScan(true);
             project.get().setWebAppAutoDiscover(true);
             projectRepository.save(project.get());
-            log.info("{} - Enabled auto webapp scan for project {}", username, project.get().getName());
+            log.info("{} - Enabled auto webapp scan for project {}", principal.getName(), project.get().getName());
             return new ResponseEntity<>(null,HttpStatus.CREATED);
         } else {
             return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
@@ -195,13 +195,13 @@ public class WebAppService {
         }
     }
 
-    public ResponseEntity<Status> disableWebAppAutoScan(Long id, String name) {
+    public ResponseEntity<Status> disableWebAppAutoScan(Long id, Principal principal) {
         Optional<Project> project = projectRepository.findById(id);
-        if (project.isPresent()){
+        if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             project.get().setAutoWebAppScan(false);
             project.get().setWebAppAutoDiscover(false);
             projectRepository.save(project.get());
-            log.info("{} - Disabled auto webapp scan for project {}", name, project.get().getName());
+            log.info("{} - Disabled auto webapp scan for project {}", principal.getName(), project.get().getName());
             return new ResponseEntity<>(null,HttpStatus.CREATED);
         } else {
             return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);

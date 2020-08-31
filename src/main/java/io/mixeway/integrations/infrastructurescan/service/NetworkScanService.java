@@ -31,10 +31,7 @@ import org.springframework.web.util.HtmlUtils;
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
+import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -64,16 +61,17 @@ public class NetworkScanService {
     private final RoutingDomainRepository routingDomainRepository;
     private final List<NetworkScanClient> networkScanClients;
     private final ScanHelper scanHelper;
-    private WebAppHelper webAppHelper;
+    private final WebAppHelper webAppHelper;
     private final RfwApiClient rfwApiClient;
     private final ProjectRiskAnalyzer projectRiskAnalyzer;
+    private final PermissionFactory permissionFactory;
 
 
     public NetworkScanService(ProjectRepository projectRepository, ScannerTypeRepository scannerTypeRepository, ScanHelper scanHelper,
                               List<NetworkScanClient> networkScanClients, NessusScanTemplateRepository nessusScanTemplateRepository, NessusScanRepository nessusScanRepository,
                               ScannerRepository nessusRepository, InterfaceRepository interfaceRepository, AssetRepository assetRepository,
                               RoutingDomainRepository routingDomainRepository, RfwApiClient rfwApiClient, WebAppHelper webAppHelper,
-                              ProjectRiskAnalyzer projectRiskAnalyzer) {
+                              ProjectRiskAnalyzer projectRiskAnalyzer, PermissionFactory permissionFactory) {
         this.projectRepository = projectRepository;
         this.projectRiskAnalyzer = projectRiskAnalyzer;
         this.scannerTypeRepository = scannerTypeRepository;
@@ -87,6 +85,7 @@ public class NetworkScanService {
         this.networkScanClients = networkScanClients;
         this.rfwApiClient = rfwApiClient;
         this.scanHelper =scanHelper;
+        this.permissionFactory = permissionFactory;
     }
 
     /**
@@ -116,7 +115,7 @@ public class NetworkScanService {
      * @param req NetworkScanRequestModel which contain information about object to be sacn
      * @return HttpStatus.CREATED if scan is started, PREDONDITION_FAILED when exception occured
      */
-    public ResponseEntity<Status> createAndRunNetworkScan(NetworkScanRequestModel req) throws Exception {
+    public ResponseEntity<Status> createAndRunNetworkScan(NetworkScanRequestModel req, Principal principal) throws Exception {
         log.info("Got request for scan from koordynator - system {}, asset no: {}", LogUtil.prepare(req.getProjectName()),  LogUtil.prepare(String.valueOf(req.getIpAddresses().size())));
         Optional<List<Project>> projectFromReq = projectRepository.findByCiid(req.getCiid());
         Project project;
@@ -126,8 +125,10 @@ public class NetworkScanService {
             project = new Project();
             project.setName(req.getProjectName());
             project.setCiid(req.getCiid());
+            project.setOwner(permissionFactory.getUserFromPrincipal(principal));
             project.setEnableVulnManage(req.getEnableVulnManage().isPresent() ? req.getEnableVulnManage().get() : true);
-            projectRepository.save(project);
+            project = projectRepository.save(project);
+            permissionFactory.grantPermissionToProjectForUser(project,principal);
         }
         List<Interface> intfs = updateAssetsAndPrepareInterfacesForScan(req, project);
         //GET RUNNING MANUAL SCANS AND CHECK IF INTERFACE ON LIST

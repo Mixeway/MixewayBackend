@@ -68,8 +68,8 @@ public class ProjectRestController {
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @PatchMapping(value = "/{id}/contactlist")
-    public ResponseEntity<Status> updateContactList(@PathVariable("id")Long id, @RequestBody ContactList contactList) {
-        return projectService.updateContactList(id,contactList);
+    public ResponseEntity<Status> updateContactList(@PathVariable("id")Long id, @RequestBody ContactList contactList, Principal principal) {
+        return projectService.updateContactList(id,contactList, principal);
     }
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping(value = "/scannersavaliable")

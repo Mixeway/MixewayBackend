@@ -28,23 +28,23 @@ public class BugTrackerController {
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @GetMapping(value = "/{id}/getbugtrackers")
-    public ResponseEntity<List<BugTracker>> getBugTrackers(@PathVariable("id")Long id) {
-        return bugTrackerService.getBugTrackers(id);
+    public ResponseEntity<List<BugTracker>> getBugTrackers(@PathVariable("id")Long id, Principal principal) {
+        return bugTrackerService.getBugTrackers(id, principal);
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @PutMapping(value = "/{id}/getbugtrackers")
     public ResponseEntity<Status> saveBugTracker(@PathVariable("id")Long id, @RequestBody BugTracker bugTracker, Principal principal) {
-        return bugTrackerService.saveBugTracker(id, bugTracker,principal.getName());
+        return bugTrackerService.saveBugTracker(id, bugTracker,principal);
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @DeleteMapping(value = "/{id}/getbugtrackers/{bugtracker}")
     public ResponseEntity<Status> saveBugTracker(@PathVariable("id")Long id, @PathVariable("bugtracker")Long bugTrackerId, Principal principal) {
-        return bugTrackerService.deleteBugTracker(id, bugTrackerId, principal.getName());
+        return bugTrackerService.deleteBugTracker(id, bugTrackerId, principal);
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @PutMapping(value = "/{id}/issueticket/{vulntype}/{vulnId}")
     public ResponseEntity<Status> saveBugTracker(@PathVariable("id")Long id, @PathVariable("vulntype") String vulnType,
             @PathVariable("vulnId") Long vulnId, Principal principal) throws URISyntaxException {
-        return bugTrackerService.issueTicket(id, vulnType, vulnId,principal.getName());
+        return bugTrackerService.issueTicket(id, vulnType, vulnId,principal);
     }
 }

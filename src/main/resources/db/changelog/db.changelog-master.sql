@@ -1097,3 +1097,13 @@ alter table users add column apikey text;
 
 --changeset siewer:feature_scanner
 delete from scannertype where name='OpenVAS Socket';
+
+--changeset siewer:project_for_editor_runner
+insert into user_project (select u.id, p.id from project p, users u where u.permisions ='ROLE_EDITOR_RUNNER');
+
+--changeset siewer:project_owner
+alter table project add column owner_id int references users(id);
+update project set owner_id = (select id from users where name='admin');
+
+--changeset siewer:project_owner_fix
+update project set owner_id = (select id from users where name='username');

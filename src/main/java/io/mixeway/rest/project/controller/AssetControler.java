@@ -33,27 +33,27 @@ public class AssetControler {
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @PutMapping(value = "/{id}/asset/add")
     public ResponseEntity<Status> saveAsset(@PathVariable("id")Long id, @Valid @RequestBody AssetPutModel assetPutModel, Principal principal) {
-        return assetService.saveAsset(id, assetPutModel, principal.getName());
+        return assetService.saveAsset(id, assetPutModel, principal);
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @PutMapping(value = "/{id}/asset/runselected")
     public ResponseEntity<Status> runScanForAssets(@PathVariable("id")Long id, @RequestBody List<RunScanForAssets> runScanForAssets, Principal principal) throws Exception {
-        return assetService.runScanForAssets(id, runScanForAssets, principal.getName());
+        return assetService.runScanForAssets(id, runScanForAssets, principal);
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @PutMapping(value = "/{id}/asset/runall")
     public ResponseEntity<Status> runAllAssetScan(@PathVariable("id")Long id, Principal principal) throws Exception {
-        return assetService.runAllAssetScan(id, principal.getName());
+        return assetService.runAllAssetScan(id, principal);
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @PutMapping(value = "/asset/{assetId}/runsingle")
     public ResponseEntity<Status> runSingleAssetScan( @PathVariable("assetId") Long assetId, Principal principal) throws Exception {
-        return assetService.runSingleAssetScan(assetId, principal.getName());
+        return assetService.runSingleAssetScan(assetId, principal);
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @DeleteMapping(value = "/asset/{assetId}")
     public ResponseEntity<Status> deleteAsset( @PathVariable("assetId") Long assetId, Principal principal) {
-        return assetService.deleteAsset(assetId, principal.getName());
+        return assetService.deleteAsset(assetId, principal);
     }
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping(value = "/{id}/vulns/infra")
@@ -63,12 +63,12 @@ public class AssetControler {
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @PutMapping(value = "/{id}/asset/infraautoscan")
     public ResponseEntity<Status> enableInfraAutoScan(@PathVariable("id")Long id, Principal principal) {
-        return assetService.enableInfraAutoScan(id, principal.getName());
+        return assetService.enableInfraAutoScan(id, principal);
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @PutMapping(value = "/{id}/asset/infraautoscan/disable")
     public ResponseEntity<Status> disableInfraAutoScan(@PathVariable("id")Long id, Principal principal) {
-        return assetService.disableInfraAutoScan(id, principal.getName());
+        return assetService.disableInfraAutoScan(id, principal);
     }
 
 }

@@ -3,13 +3,13 @@ package io.mixeway.integrations.codescan.service;
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
+import io.mixeway.db.entity.Vulnerability;
 import io.mixeway.db.repository.*;
 import io.mixeway.domain.service.vulnerability.VulnTemplate;
 import io.mixeway.integrations.opensourcescan.plugins.mvndependencycheck.model.SASTRequestVerify;
 import io.mixeway.integrations.codescan.model.CodeScanRequestModel;
-import io.mixeway.pojo.LogUtil;
-import io.mixeway.pojo.VaultHelper;
-import io.mixeway.pojo.Vulnerability;
+import io.mixeway.pojo.*;
+import io.mixeway.pojo.Status;
 import io.mixeway.rest.cioperations.model.VulnerabilityModel;
 import io.mixeway.rest.project.model.RunScanForCodeProject;
 import io.mixeway.rest.project.model.SASTProject;
@@ -23,7 +23,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import io.mixeway.integrations.utils.CodeAccessVerifier;
-import io.mixeway.pojo.Status;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,10 +31,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
+import java.security.*;
 import java.security.cert.CertificateException;
 import java.text.ParseException;
 import java.util.*;
@@ -59,12 +55,13 @@ public class CodeScanService {
     private final ProjectRiskAnalyzer projectRiskAnalyzer;
     private final VulnTemplate vulnTemplate;
     private final ProjectVulnerabilityRepository projectVulnerabilityRepository;
+    private final PermissionFactory permissionFactory;
 
     CodeScanService(ProjectRepository projectRepository, CodeGroupRepository codeGroupRepository, CodeProjectRepository codeProjectRepository,
                     VulnTemplate vulnTemplate, CodeAccessVerifier codeAccessVerifier, VaultHelper vaultHelper,
                     List<CodeScanClient> codeScanClients, ScannerRepository scannerRepository, ScannerTypeRepository scannerTypeRepository,
                     CiOperationsRepository ciOperationsRepository, ProjectRiskAnalyzer projectRiskAnalyzer,
-                    ProjectVulnerabilityRepository projectVulnerabilityRepository){
+                    ProjectVulnerabilityRepository projectVulnerabilityRepository, PermissionFactory permissionFactory){
         this.projectRepository = projectRepository;
         this.projectVulnerabilityRepository = projectVulnerabilityRepository;
         this.codeGroupRepository = codeGroupRepository;
@@ -77,6 +74,7 @@ public class CodeScanService {
         this.scannerRepository = scannerRepository;
         this.scannerTypeRepository = scannerTypeRepository;
         this.projectRiskAnalyzer = projectRiskAnalyzer;
+        this.permissionFactory = permissionFactory;
     }
 
     //PREPARE SCAN
@@ -89,9 +87,11 @@ public class CodeScanService {
      * @param projectName name of CodeProject entity
      * @return List of a CodeVulns for a given CodeProject
      */
-    public ResponseEntity<List<Vulnerability>> getResultsForProject(long projectId, String groupName, String projectName){
+    public ResponseEntity<List<Vulnerability>> getResultsForProject(long projectId, String groupName, String projectName, Principal principal){
         Optional<Project> project = projectRepository.findById(projectId);
-        if (codeAccessVerifier.verifyPermissions(projectId,groupName,projectName,false).getValid() && project.isPresent()){
+        if (codeAccessVerifier.verifyPermissions(projectId,groupName,projectName,false).getValid() &&
+                project.isPresent() &&
+                permissionFactory.canUserAccessProject(principal, project.get())){
             CodeProject cp = codeProjectRepository.findByCodeGroupAndName(codeGroupRepository
                     .findByProjectAndName(project.get(),groupName).orElse(null),projectName).orElse(null);
             List<ProjectVulnerability> codeVulns = vulnTemplate.projectVulnerabilityRepository.findByCodeProjectAndAnalysisNot(cp,"Not an Issue");
@@ -135,7 +135,7 @@ public class CodeScanService {
      * @param codeScanRequest object passed from REST API
      * @return Status entity with proper HTTPStatus. CREATED when everytihng is ok and BAD_REQUEST if it is not
      */
-    public ResponseEntity<Status> performScanFromScanManager(CodeScanRequestModel codeScanRequest) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, JSONException, ParseException {
+    public ResponseEntity<Status> performScanFromScanManager(CodeScanRequestModel codeScanRequest, Principal principal) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, JSONException, ParseException {
         if (codeScanRequest.getCiid() != null && !codeScanRequest.getCiid().equals("")){
             Optional<List<Project>> projects = projectRepository.findByCiid(codeScanRequest.getCiid());
             Project project;
@@ -146,7 +146,9 @@ public class CodeScanService {
                 project.setName(codeScanRequest.getProjectName());
                 project.setCiid(codeScanRequest.getCiid());
                 project.setEnableVulnManage(codeScanRequest.getEnableVulnManage().isPresent() ? codeScanRequest.getEnableVulnManage().get() : true);
+                project.setOwner(permissionFactory.getUserFromPrincipal(() -> Constants.ORIGIN_SCHEDULER));
                 project = projectRepository.save(project);
+                permissionFactory.grantPermissionToProjectForUser(project, principal);
             }
 
             String requestId = verifyAndCreateOrUpdateCodeProjectInformations(codeScanRequest,project);
@@ -558,13 +560,13 @@ public class CodeScanService {
      *
      * @param id of Project
      * @param runScanForCodeProjects list of projects where whihch scan should be started
-     * @param username principal who is executing the request
+     * @param principal principal who is executing the request
      * @return ResponseEntity with HttpStatus.OK if scan is properly executed HttpStatus.PREDONDITION_FAILED if there is a problem
      */
-    public ResponseEntity<Status> codescanrunSelectedCodeProjectsScan(Long id, List<RunScanForCodeProject> runScanForCodeProjects, String username) {
+    public ResponseEntity<Status> codescanrunSelectedCodeProjectsScan(Long id, List<RunScanForCodeProject> runScanForCodeProjects, Principal principal) {
         try {
             Optional<Project> project = projectRepository.findById(id);
-            if (project.isPresent()) {
+            if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())) {
                 for (RunScanForCodeProject runScun : runScanForCodeProjects) {
                     Optional<CodeProject> codeProject = codeProjectRepository.findById(runScun.getId());
                     if (codeProject.isPresent() && codeProject.get().getCodeGroup().getProject() == project.get()) {
@@ -576,7 +578,7 @@ public class CodeScanService {
                         }
                     }
                 }
-                log.info("{} - Run SAST scan for {} - scope partial", LogUtil.prepare(username), LogUtil.prepare(project.get().getName()));
+                log.info("{} - Run SAST scan for {} - scope partial", LogUtil.prepare(principal.getName()), LogUtil.prepare(project.get().getName()));
 
                 return new ResponseEntity<>(null, HttpStatus.OK);
             }
@@ -592,9 +594,9 @@ public class CodeScanService {
      * @param id of CodeProject entity
      * @return true if scan is properly put into queue and false if there is no such CodeProject
      */
-    public boolean putCodeProjectToQueue(Long id){
+    public boolean putCodeProjectToQueue(Long id, Principal principal) {
         Optional<CodeProject> codeProject = codeProjectRepository.findById(id);
-        if (codeProject.isPresent()){
+        if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getCodeGroup().getProject())){
             codeProject.get().setInQueue(true);
             codeProjectRepository.save(codeProject.get());
             return true;
@@ -643,13 +645,15 @@ public class CodeScanService {
      *
      * @param id of CodeProject which should be created on SAST Scanner
      * @param projectId id of Project entity
+     * @param principal
      * @return HttpStatus.CREATED when project is properly created or HttpStatus.PREDONDITION_FAILED when error occures
      */
-    public ResponseEntity<Status> createProjectOnSASTScanner(Long id, Long projectId) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
+    public ResponseEntity<Status> createProjectOnSASTScanner(Long id, Long projectId, Principal principal) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
         Optional<Project> project = projectRepository.findById(projectId);
         Optional<CodeProject> codeProject = codeProjectRepository.findById(id);
         List<Scanner>  scanners = scannerRepository.findByScannerTypeInAndStatus(scannerTypeRepository.getCodeScanners(), true);
         if (project.isPresent()
+                && permissionFactory.canUserAccessProject(principal, project.get())
                 && codeProject.isPresent()
                 && project.get().getId().equals(codeProject.get().getCodeGroup().getProject().getId())
                 && scanners.size() < 2

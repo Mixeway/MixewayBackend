@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import io.mixeway.db.entity.Project;
+import io.mixeway.db.entity.User;
 import io.mixeway.pojo.BarChartProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -15,7 +16,9 @@ public interface ProjectRepository extends JpaRepository<Project, Long>{
 	List<Project> findByNodesNotNull();
 	Optional<List<Project>> findByCiid(String ciid);
 	Optional<List<Project>> findByName(String name);
+	Optional<List<Project>> findByNameAndOwner(String name, User user);
 	Optional<Project> findByIdAndApiKey(Long id, String apiKey);
+	Optional<Project> findByApiKey(String apiKey);
 	List<Project> findByAutoWebAppScan(boolean autoWebScan);
 	List<Project> findByAutoCodeScan(boolean autoWebScan);
 	List<Project> findByAutoInfraScan(boolean autoInfraScan);
