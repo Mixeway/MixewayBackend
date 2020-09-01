@@ -242,7 +242,23 @@ public class CiOperationsService {
     public ResponseEntity<Status> loadVulnerabilitiesFromCICDToProject(List<VulnerabilityModel> vulns, Long projectId,
                                                                        String codeProjectName, String branch,
                                                                        String commitId, Principal principal) {
-        Optional<Project> project = projectRepository.findById(projectId);
+        Optional<Project> project;
+        if (projectId == null){
+            Optional<List<Project>> projectList = projectRepository.findByNameAndOwner("CICD Project", permissionFactory.getUserFromPrincipal(principal));
+            if (projectList.isPresent() && projectList.get().size()==1){
+                project = Optional.of(projectList.get().get(0));
+            } else {
+                Project newProject = new Project();
+                newProject.setOwner(permissionFactory.getUserFromPrincipal(principal));
+                newProject.setName("CICD Project");
+                newProject.setCiid("0");
+                newProject.setEnableVulnManage(false);
+                newProject.setDescription("Project created by CICD pipeline");
+                project = Optional.of(projectRepository.save(newProject));
+            }
+        }else {
+            project = projectRepository.findById(projectId);
+        }
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             Optional<CodeProject> codeProject = codeProjectRepository.getCodeProjectByProjectNameAndBranch(project.get().getId(), codeProjectName, branch);
             CodeProject codeProjectToLoad;

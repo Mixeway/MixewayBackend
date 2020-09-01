@@ -100,6 +100,14 @@ public class CiOperationsController {
         return ciOperationsService.loadVulnerabilitiesFromCICDToProject(vulns, projectId, codeProjectName, branch, commitId, principal);
     }
     @PreAuthorize("hasAuthority('ROLE_API')")
+    @PostMapping(value = "/loadvulnerabilities/{codeProjectName}/{branch}/{commitId}",produces = "application/json")
+    public ResponseEntity<Status> loadVulnerabilitiesFromCICD(@RequestBody List<VulnerabilityModel> vulns,
+                                                                       @PathVariable(value = "codeProjectName") String codeProjectName,
+                                                                       @PathVariable(value = "branch") String branch,
+                                                                       @PathVariable(value = "commitId") String commitId, Principal principal) throws Exception {
+        return ciOperationsService.loadVulnerabilitiesFromCICDToProject(vulns, null, codeProjectName, branch, commitId, principal);
+    }
+    @PreAuthorize("hasAuthority('ROLE_API')")
     @PostMapping(value="/loadvulnerabilities/{codeProjectName}")
     public ResponseEntity<Status> loadVulnerabilitiesForAnonymousProject (@RequestBody List<VulnerabilityModel> vulns,
                                                                           @PathVariable(value = "codeProjectName") String codeProjectName,
