@@ -120,14 +120,11 @@ public class CronScheduler {
         try {
             log.info("Starting to synchronize with OpenSource Vulns scanner");
             for (CodeProject cp : codeProjectRepository.getCodeProjectsWithOSIntegrationEnabled()){
-                CompletableFuture.runAsync(() -> {
                     try {
                         openSourceScanService.loadVulnerabilities(cp);
                     } catch (CertificateException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyManagementException | KeyStoreException | IOException e) {
                         log.error("Error {} during OpenSource Scan Synchro for {}", e.getLocalizedMessage(), cp.getName());
                     }
-                });
-
             }
             log.info("Successfully synchronized with OpenSource scanner");
         } catch (Exception ignored) {
