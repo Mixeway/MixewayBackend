@@ -343,6 +343,8 @@ public class CiOperationsService {
         ciOperations.setCodeProject(codeProject);
         ciOperations.setInserted(new Date());
         ciOperations.setEnded(new Date());
+        ciOperations.setOpenSourceScan(true);
+        ciOperations.setSastScan(true);
         ciOperations.setProject(codeProject.getCodeGroup().getProject());
         ciOperations.setCommitId(codeProject.getCommitid()!=null? codeProject.getCommitid() : "unknown");
         ciOperations.setSastHigh(securityGatewayEntry.getSastHigh());
