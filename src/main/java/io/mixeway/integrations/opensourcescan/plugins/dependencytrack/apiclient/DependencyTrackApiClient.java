@@ -200,7 +200,7 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
                     Vulnerability vuln = vulnTemplate.createOrGetVulnerabilityService.createOrGetVulnerabilityWithDescAndReferences(dTrackVuln.getVulnId(), dTrackVuln.getDescription(),
                             dTrackVuln.getReferences(), dTrackVuln.getRecommendation());
                     Optional<ProjectVulnerability> softwarePacketVulnerability = vulnTemplate.projectVulnerabilityRepository
-                            .findBySoftwarePacketAndVulnerability(sPacket,vuln);
+                            .findBySoftwarePacketAndVulnerabilityAndCodeProject(sPacket,vuln, codeProject);
                     if (!softwarePacketVulnerability.isPresent()){
                         ProjectVulnerability projectVulnerability = new ProjectVulnerability(sPacket,codeProject,vuln,dTrackVuln.getDescription(),dTrackVuln.getRecommendation(),
                                 dTrackVuln.getSeverity(), null, null, null,vulnTemplate.SOURCE_OPENSOURCE);
