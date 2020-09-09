@@ -84,7 +84,6 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
         return (openSourceScanners.size() == 1 );
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     @Override
     public void loadVulnerabilities(CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         List<Scanner> dTrack = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_DEPENDENCYTRACK));
@@ -100,7 +99,6 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
                 if (response.getStatusCode() == HttpStatus.OK) {
                     createVulns(codeProject, Objects.requireNonNull(response.getBody()));
                     updateCiOperations(codeProject);
-                    log.info("loaded {}", codeProject.getName());
                 } else {
                     log.error("Unable to get Findings from Dependency Track for project {}", codeProject.getdTrackUuid());
                 }
