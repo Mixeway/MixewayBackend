@@ -132,6 +132,7 @@ public class CronScheduler {
             }
             log.info("Successfully synchronized with OpenSource scanner");
         } catch (Exception ignored) {
+            ignored.printStackTrace();
             log.error("Error during dTrack synchro {}", ignored.getLocalizedMessage());
         }
 
