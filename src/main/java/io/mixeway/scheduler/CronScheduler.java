@@ -18,6 +18,8 @@ import io.mixeway.integrations.infrastructurescan.plugin.remotefirewall.model.Ru
 import io.mixeway.pojo.DOPMailTemplateBuilder;
 import io.mixeway.pojo.EmailVulnHelper;
 import io.mixeway.pojo.ScanHelper;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.mail.internet.MimeMessage;
@@ -115,11 +117,12 @@ public class CronScheduler {
 
         return vulnTemplate.projectVulnerabilityRepository.findByProjectAndVulnerabilitySource(project,vulnTemplate.SOURCE_OPENSOURCE).count();
     }
-    @Scheduled(initialDelay=0,fixedDelay = 1500000)
+    @Scheduled(initialDelay=3000,fixedDelay = 1500000)
     public void getDepTrackVulns() {
         try {
             log.info("Starting to synchronize with OpenSource Vulns scanner");
-            for (CodeProject cp : codeProjectRepository.getCodeProjectsWithOSIntegrationEnabled()){
+            List<CodeProject> codeProjects = codeProjectRepository.getCodeProjectsWithOSIntegrationEnabled();
+            for (CodeProject cp : codeProjects){
                     try {
                         openSourceScanService.loadVulnerabilities(cp);
                     } catch (CertificateException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyManagementException | KeyStoreException | IOException e) {
@@ -128,6 +131,7 @@ public class CronScheduler {
             }
             log.info("Successfully synchronized with OpenSource scanner");
         } catch (Exception ignored) {
+            log.error("Error during dTrack synchro {}", ignored.getLocalizedMessage());
         }
 
     }
