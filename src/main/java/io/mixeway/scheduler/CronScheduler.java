@@ -123,7 +123,6 @@ public class CronScheduler {
             log.info("Starting to synchronize with OpenSource Vulns scanner");
             List<CodeProject> codeProjects = codeProjectRepository.getCodeProjectsWithOSIntegrationEnabled();
             for (CodeProject cp : codeProjects){
-                log.info("Trying to load {}", cp.getName());
                     try {
                         openSourceScanService.loadVulnerabilities(cp);
                     } catch (CertificateException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyManagementException | KeyStoreException | IOException e) {
