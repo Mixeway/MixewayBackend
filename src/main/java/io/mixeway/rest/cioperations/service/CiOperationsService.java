@@ -24,6 +24,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import io.mixeway.db.repository.CiOperationsRepository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.security.*;
@@ -239,6 +240,7 @@ public class CiOperationsService {
         }
     }
 
+    @Transactional
     public ResponseEntity<Status> loadVulnerabilitiesFromCICDToProject(List<VulnerabilityModel> vulns, Long projectId,
                                                                        String codeProjectName, String branch,
                                                                        String commitId, Principal principal) {
@@ -265,6 +267,7 @@ public class CiOperationsService {
             if (codeProject.isPresent()){
                 log.info("[CICD] Get results for {}, proceeding with load", codeProject.get().getName());
                 codeProjectToLoad = codeProject.get();
+                codeProjectToLoad.setCommitid(commitId);
 
             } else {
                 log.info("[CICD] Get results for unknown codeproject, creating new with name {}", codeProjectName);
@@ -279,12 +282,16 @@ public class CiOperationsService {
             List<VulnerabilityModel> sastVulns = vulns.stream().filter(v -> v.getScannerType().equals(ScannerType.SAST)).collect(Collectors.toList());
             if (sastVulns.size() > 0 ){
                 codeScanService.loadVulnsFromCICDToCodeProject(codeProjectToLoad, sastVulns);
+            } else {
+                codeScanService.loadVulnsFromCICDToCodeProject(codeProjectToLoad, new ArrayList<>());
+
             }
             List<VulnerabilityModel> openSourceVulns = vulns.stream().filter(v -> v.getScannerType().equals(ScannerType.OPENSOURCE)).collect(Collectors.toList());
-            if (openSourceVulns.size() > 0){
+            if (openSourceVulns.size() > 0) {
                 openSourceScanService.loadVulnsFromCICDToCodeProject(codeProjectToLoad, openSourceVulns);
+            } else {
+                openSourceScanService.loadVulnsFromCICDToCodeProject(codeProjectToLoad, new ArrayList<>());
             }
-            createCIOperationsForCICDRequest(codeProjectToLoad);
             return new ResponseEntity<>(new Status(createCIOperationsForCICDRequest(codeProjectToLoad).getResult()), HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
