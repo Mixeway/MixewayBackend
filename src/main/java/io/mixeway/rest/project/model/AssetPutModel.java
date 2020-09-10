@@ -9,7 +9,8 @@ import javax.validation.constraints.NotNull;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class AssetPutModel {
     @NotEmpty private String assetName;
-    @NotEmpty private String ipAddresses;
+    @NotEmpty
+    private String ipAddresses;
     @NotNull
     @Min(1) private Long routingDomainForAsset;
 

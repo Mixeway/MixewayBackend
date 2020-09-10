@@ -1,12 +1,11 @@
 package io.mixeway.rest.model;
 
-import org.hibernate.validator.constraints.Length;
 
-import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 public class Password {
-    @NotNull @Length(min = 7) String password;
+    @NotNull @Size(min = 7) String password;
 
     public String getPassword() {
         return password;

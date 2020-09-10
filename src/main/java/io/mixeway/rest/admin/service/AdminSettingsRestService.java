@@ -6,22 +6,16 @@ import io.mixeway.domain.service.scanner.VerifyWebAppScannerService;
 import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.VaultHelper;
 import io.mixeway.rest.admin.model.*;
-import io.mixeway.rest.project.model.VulnAuditorSettings;
 import org.quartz.CronExpression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.vault.core.VaultOperations;
 import io.mixeway.pojo.Status;
-import sun.rmi.runtime.Log;
 
 import java.text.ParseException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 

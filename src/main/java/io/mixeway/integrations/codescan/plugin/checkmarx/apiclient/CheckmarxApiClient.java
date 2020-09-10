@@ -405,8 +405,10 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
         CSVReader csvReader = null;
         csvReader = new CSVReader(new StringReader(body));
         CsvToBean csvToBean = new CsvToBean();
-        List<CxResult> results = csvToBean.parse(strategy, csvReader);
-        processVulnReportForCodeProject(results,codeProject);
+
+        //TODO fix
+        //List<CxResult> results = csvToBean.parse(strategy, csvReader);
+        processVulnReportForCodeProject(null,codeProject);
     }
     // TODO: to check in checkmarx API options for state and analysis
     private void processVulnReportForCodeProject(List<CxResult> results, CodeProject codeProject) {
