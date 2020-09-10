@@ -285,7 +285,7 @@ public class CiOperationsService {
                 openSourceScanService.loadVulnsFromCICDToCodeProject(codeProjectToLoad, openSourceVulns);
             }
             createCIOperationsForCICDRequest(codeProjectToLoad);
-            return new ResponseEntity<>(HttpStatus.OK);
+            return new ResponseEntity<>(new Status(createCIOperationsForCICDRequest(codeProjectToLoad).getResult()), HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
@@ -323,8 +323,7 @@ public class CiOperationsService {
             if (openSourceVulns.size() > 0){
                 openSourceScanService.loadVulnsFromCICDToCodeProject(codeProject, openSourceVulns);
             }
-            createCIOperationsForCICDRequest(codeProject);
-            return new ResponseEntity<>(HttpStatus.OK);
+            return new ResponseEntity<>(new Status(createCIOperationsForCICDRequest(codeProject).getResult()),HttpStatus.OK);
         }else {
             return new ResponseEntity<>(HttpStatus.PRECONDITION_FAILED);
         }
@@ -333,7 +332,7 @@ public class CiOperationsService {
     /**
      * Create CICD Operations based on CICD response
      */
-    private void createCIOperationsForCICDRequest(CodeProject codeProject){
+    private CiOperations createCIOperationsForCICDRequest(CodeProject codeProject){
         SecurityGatewayEntry securityGatewayEntry = securityQualityGateway.buildGatewayResponse(vulnTemplate.projectVulnerabilityRepository.findByCodeProject(codeProject));
         Optional<CiOperations> optionalCiOperations = ciOperationsRepository.findByCodeProjectAndCommitId(codeProject, codeProject.getCommitid());
         CiOperations ciOperations = null;
@@ -351,7 +350,7 @@ public class CiOperationsService {
         ciOperations.setSastCrit(securityGatewayEntry.getSastCritical());
         ciOperations.setOpenSourceCrit(securityGatewayEntry.getOsCritical());
         ciOperations.setOpenSourceHigh(securityGatewayEntry.getOsHigh());
-        ciOperationsRepository.save(ciOperations);
+        return ciOperationsRepository.save(ciOperations);
 
     }
 }
