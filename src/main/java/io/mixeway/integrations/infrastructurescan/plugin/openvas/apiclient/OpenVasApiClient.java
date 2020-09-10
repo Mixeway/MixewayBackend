@@ -43,6 +43,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
@@ -246,9 +247,11 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 			return false;
 	}
 
-	private void setVulnerabilities(NessusScan ns, String body) throws JSONException  {
+	@Transactional
+	void setVulnerabilities(NessusScan ns, String body) throws JSONException  {
 		List<ProjectVulnerability> oldVulns = getProjectVulnerabilititiesByScan(ns);
 		List<ProjectVulnerability> vulnsToPersist = new ArrayList<>();
+		List<Interface> scannerInterfaces = new ArrayList<>();
 		if (oldVulns.size() > 0) {
 			vulnTemplate.projectVulnerabilityRepository.updateVulnState(oldVulns.stream().map(ProjectVulnerability::getId).collect(Collectors.toList()),
 					vulnTemplate.STATUS_REMOVED.getId());
@@ -273,12 +276,14 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 						,v.getString(Constants.IF_VULN_THREAT),v.getString(Constants.IF_VULN_PORT),null,null,vulnTemplate.SOURCE_NETWORK);
 				projectVulnerability.updateStatusAndGrade(oldVulns, vulnTemplate);
 				vulnsToPersist.add(projectVulnerability);
+				scannerInterfaces.add(intfActive);
 				//vulnTemplate.vulnerabilityPersist(oldVulns,projectVulnerability);
 				//vulnTemplate.projectVulnerabilityRepository.save(projectVulnerability);
 			} else  {
 				log.error("Report contains ip {} which is not found in assets for project {}",v.getString(Constants.IF_VULN_HOST), ns.getProject().getName());
 			}
 			vulnTemplate.vulnerabilityPersistList(oldVulns, vulnsToPersist);
+			scannerInterfaces.forEach(f -> f.setScanRunning(false));
 		}
 		log.debug("Successfully loaded report results - {}", vulns.length());
 
@@ -436,7 +441,8 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 	}
 	// Jeśli nessus.usePublic = true
 	// ips = private + floating ips
-	private HashMap<String, String> prepareCreateTarget(NessusScan ns) {
+	@Transactional
+	HashMap<String, String> prepareCreateTarget(NessusScan ns) {
 		HashMap<String,String> createTarget = new HashMap<>();
 		createTarget.put(Constants.TARGET_NAME, ns.getProject().getName()+"-"+(ns.getIsAutomatic()? Constants.SCAN_MODE_AUTO : Constants.SCAN_MODE_MANUAL)+"-"+UUID.randomUUID());
 		//createTarget.put(Constants.HOSTS, StringUtils.join(ips, ","));

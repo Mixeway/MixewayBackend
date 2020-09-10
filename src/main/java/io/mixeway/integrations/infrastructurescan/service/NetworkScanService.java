@@ -399,6 +399,7 @@ public class NetworkScanService {
      * Put proper RFW rules on defined Remote Firewall
      * @param nessusScan
      */
+    @Transactional
     public void putRulesOnRfw(NessusScan nessusScan)throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         if (StringUtils.isNotBlank(nessusScan.getNessus().getRfwUrl())) {
             List<String> ipAddresses = scanHelper.prepareTargetsForScan(nessusScan, false);
@@ -413,6 +414,7 @@ public class NetworkScanService {
      * Remove configured rules from RemoteFirewall
      * @param nessusScan
      */
+    @Transactional
     public void deleteRulsFromRfw(NessusScan nessusScan)throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         if (StringUtils.isNotBlank(nessusScan.getNessus().getRfwUrl())) {
             List<String> ipAddresses = scanHelper.prepareTargetsForScan(nessusScan, false);

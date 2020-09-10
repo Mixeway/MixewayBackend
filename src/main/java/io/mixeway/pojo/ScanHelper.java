@@ -79,12 +79,8 @@ public class ScanHelper {
         try {
             for (String ip : interfacesToScan) {
                 Optional<Interface> inter = interfaceRepository.findByAssetInAndPrivateipAndActive(nessusScan.getProject().getAssets(), ip, true);
-                if (inter.isPresent()) {
-                    inter.get().setScanRunning(true);
-                    interfaceRepository.saveAndFlush(inter.get());
-                }
+                inter.ifPresent(anInterface -> anInterface.setScanRunning(true));
             }
-            nessusScanRepository.save(nessusScan);
         } catch (Exception ex) {
             log.error("IllegalArgumentException during updating interface for {}", nessusScan.getProject().getName());
         }

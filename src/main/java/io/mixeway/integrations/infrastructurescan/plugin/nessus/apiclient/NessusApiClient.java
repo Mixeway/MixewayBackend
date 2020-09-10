@@ -300,7 +300,8 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 		
 	}
 
-	private CreateScanRequest prepareCreateScanRequest(NessusScan nessusScan) {
+	@Transactional
+	CreateScanRequest prepareCreateScanRequest(NessusScan nessusScan) {
 		String isAuto = nessusScan.getIsAutomatic() ? "Automatic" : "Manual";
 		List<String> targets = scanHelper.prepareTargetsForScan(nessusScan,true);
 		NessusScanTemplate nst = nessusScanTemplateRepository.findByNameAndNessus(Constants.NESSUS_TEMPLATE_BASIC_NETOWRK, nessusScan.getNessus());
