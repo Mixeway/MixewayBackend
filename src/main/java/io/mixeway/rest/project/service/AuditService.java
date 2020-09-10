@@ -34,7 +34,7 @@ public class AuditService {
             }
             return new ResponseEntity<>(audit, HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
     }
 

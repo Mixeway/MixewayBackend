@@ -470,10 +470,10 @@ public class WebAppScanService {
                 webApp.ifPresent(app -> app.setInQueue(true));
                 waRepository.save(webApp.get());
                 log.info("{} - Put in queue scan of webapps - scope single", LogUtil.prepare(principal.getName()));
-                return new ResponseEntity<>(null,HttpStatus.CREATED);
+                return new ResponseEntity<>(HttpStatus.CREATED);
             }
         } catch (Exception e){
-            return new ResponseEntity<>(null, HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
         return new ResponseEntity<>(new Status("No Scanner for given resource"), HttpStatus.EXPECTATION_FAILED);
     }
@@ -488,15 +488,15 @@ public class WebAppScanService {
                         webApp.get().setInQueue(true);
                         waRepository.save(webApp.get());
                         log.info("{} - Put to queue scan of webapps for project {} - scope partial", LogUtil.prepare(principal.getName()), LogUtil.prepare(project.get().getName()));
-                        return new ResponseEntity<>(null,HttpStatus.CREATED);
+                        return new ResponseEntity<>(HttpStatus.CREATED);
                     }
                 } catch (Exception e){
-                    return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+                    return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
                 }
             }
 
         }
-        return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+        return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
     }
 
     private Scanner getScannerForWebApp(WebApp webApp){

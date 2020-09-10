@@ -61,7 +61,7 @@ public class IaasApiService {
         } else if (project.isPresent()) {
             return new ResponseEntity<>(new IaasModel(),HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
     }
 
@@ -69,14 +69,14 @@ public class IaasApiService {
         Optional<Project> project = projectRepository.findById(id);
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             if (project.get().getIaasApis().size() >0){
-                return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+                return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
             } else {
                iaasApiService.saveApi(iaasApiPutModel,project.get());
                 log.info("{} - Saved new IaasApi for project {}", principal.getName(), project.get().getName());
                 return new ResponseEntity<>(new Status("ok"), HttpStatus.CREATED);
             }
         } else {
-            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
     }
 
@@ -90,14 +90,14 @@ public class IaasApiService {
                     iaasApiService.testApi(api.get());
                 } catch (Exception e) {
                     log.error("Testing IAAS API of Type {} failed reason: {}", api.get().getIaasApiType().getName(), e.getLocalizedMessage());
-                    return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+                    return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
                 }
                 return new ResponseEntity<>(new Status("ok"), HttpStatus.OK);
             }
         } else {
-            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
-        return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+        return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
     }
 
     public ResponseEntity<Status> iaasApiEnableSynchro(Long id, Principal principal) {
@@ -108,12 +108,12 @@ public class IaasApiService {
                 api.get().setEnabled(true);
                 iaasApiRepository.save(api.get());
                 log.info("{} - Enabled auto synchro of IaasApi for project {}", principal.getName(), project.get().getName());
-                return new ResponseEntity<>(null,HttpStatus.OK);
+                return new ResponseEntity<>(HttpStatus.OK);
             }
         } else {
-            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
-        return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+        return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
     }
 
     public ResponseEntity<Status> iaasApiDisableSynchro(Long id, Principal principal) {
@@ -124,12 +124,12 @@ public class IaasApiService {
                 api.get().setEnabled(false);
                 iaasApiRepository.save(api.get());
                 log.info("{} - Disabled auto synchro of IaasApi for project {}", principal.getName(), project.get().getName());
-                return new ResponseEntity<>(null,HttpStatus.OK);
+                return new ResponseEntity<>(HttpStatus.OK);
             }
         } else {
-            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
-        return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+        return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
     }
     @Transactional
     public ResponseEntity<Status> iaasApiDelete(Long id, Principal principal) {
@@ -139,12 +139,12 @@ public class IaasApiService {
             if (api.isPresent() && api.get().getProject() == project.get()) {
                 iaasApiRepository.delete(api.get());
                 log.info("{} - deleted IaasApi for project {}", principal.getName(), project.get().getName());
-                return new ResponseEntity<>(null,HttpStatus.OK);
+                return new ResponseEntity<>(HttpStatus.OK);
             }
         } else {
-            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
-        return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+        return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
     }
 
     public ResponseEntity<List<IaasApiType>> getIaasApiTypes(Principal principal) {

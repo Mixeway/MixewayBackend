@@ -79,7 +79,7 @@ public class AssetService {
             return new ResponseEntity<>(assetCard, HttpStatus.OK);
 
         } else {
-            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
     }
 
@@ -129,7 +129,7 @@ public class AssetService {
             log.info("{} - Created new asset [{}]{} ", principal.getName(), project.get().getName(), asset.getName());
             return new ResponseEntity<>(new Status("created"), HttpStatus.CREATED);
         } else {
-            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
     }
     public ResponseEntity<Status> runScanForAssets(Long id, List<RunScanForAssets> runScanForAssets, Principal principal) throws Exception {
@@ -139,12 +139,12 @@ public class AssetService {
             List<NessusScan> scans = networkScanService.configureAndRunManualScanForScope(project.get(), new ArrayList(intfs));
             if (scans.stream().allMatch(NessusScan::getRunning)) {
                 log.info("{} - Started scan for project {} - scope partial", principal.getName(), project.get().getName());
-                return new ResponseEntity<>(null, HttpStatus.CREATED);
+                return new ResponseEntity<>(HttpStatus.CREATED);
             } else {
-                return new ResponseEntity<>(null, HttpStatus.EXPECTATION_FAILED);
+                return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
             }
         } else {
-            return new ResponseEntity<>(null,HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
     public ResponseEntity<Status> runAllAssetScan(Long id, Principal principal) throws Exception {
@@ -154,12 +154,12 @@ public class AssetService {
             List<NessusScan> scans = networkScanService.configureAndRunManualScanForScope(project.get(), new ArrayList(intfs));
             if (scans.stream().allMatch(NessusScan::getRunning)) {
                 log.info("{} - Started scan for project {} - scope full", principal.getName(), project.get().getName());
-                return new ResponseEntity<>(null, HttpStatus.CREATED);
+                return new ResponseEntity<>(HttpStatus.CREATED);
             } else {
-                return new ResponseEntity<>(null, HttpStatus.EXPECTATION_FAILED);
+                return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
             }
         } else {
-            return new ResponseEntity<>(null,HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
     public ResponseEntity<Status> runSingleAssetScan( Long assetId, Principal principal) throws Exception {
@@ -170,12 +170,12 @@ public class AssetService {
             List<NessusScan> scans = networkScanService.configureAndRunManualScanForScope(intf.get().getAsset().getProject(), i);
             if (scans.size() >0 && scans.stream().allMatch(NessusScan::getRunning)) {
                 log.info("{} - Started scan for project {} - scope single", principal.getName(), intf.get().getAsset().getProject().getName());
-                return new ResponseEntity<>(null, HttpStatus.CREATED);
+                return new ResponseEntity<>(HttpStatus.CREATED);
             } else {
-                return new ResponseEntity<>(null, HttpStatus.EXPECTATION_FAILED);
+                return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
             }
         } else
-            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>( HttpStatus.NOT_FOUND);
     }
 
     @Transactional
@@ -187,7 +187,7 @@ public class AssetService {
             String ip = interf.get().getPrivateip();
             interf.ifPresent(interfaceRepository::delete);
             log.info("{} - Deleted interface [{}] {} - {}", principal.getName(), projectName, assetName, ip);
-            return new ResponseEntity<>(null, HttpStatus.OK);
+            return new ResponseEntity<>(HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
@@ -200,7 +200,7 @@ public class AssetService {
                     .findByProjectAndVulnerabilitySourceAndSeverityNotIn(project.get(),vulnTemplate.SOURCE_NETWORK, logs);
             return new ResponseEntity<>(vulnsNotLog,HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
     }
     public ResponseEntity<Status> enableInfraAutoScan(Long id, Principal principal) {
@@ -210,9 +210,9 @@ public class AssetService {
             projectRepository.save(project.get());
             networkScanService.configureAutomaticScanForProject(project.get());
             log.info("{} - Enabled auto infrastructure scan for project {} - scope single", principal.getName(), project.get().getName());
-            return new ResponseEntity<>(null, HttpStatus.CREATED);
+            return new ResponseEntity<>(HttpStatus.CREATED);
         } else {
-            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
     }
 
@@ -222,9 +222,9 @@ public class AssetService {
             project.get().setAutoInfraScan(false);
             projectRepository.save(project.get());
             log.info("{} - Disabled auto infrastructure scan for project {} - scope single", principal.getName(), project.get().getName());
-            return new ResponseEntity<>(null, HttpStatus.OK);
+            return new ResponseEntity<>(HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
     }
 }

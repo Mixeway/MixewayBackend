@@ -48,7 +48,7 @@ public class OpenSourceService {
             }
             return new ResponseEntity<>(softVulns, HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(null,HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
 }

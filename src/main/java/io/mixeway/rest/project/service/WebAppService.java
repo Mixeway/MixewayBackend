@@ -71,9 +71,9 @@ public class WebAppService {
         if (webApp.isPresent() && permissionFactory.canUserAccessProject(principal, webApp.get().getProject())) {
             webAppRepository.delete(webApp.get());
             log.info("{} - Deleted webapp  {}", principal.getName(), webApp.get().getUrl());
-            return new ResponseEntity<>(null,HttpStatus.OK);
+            return new ResponseEntity<>(HttpStatus.OK);
         }
-        return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+        return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
     }
     public ResponseEntity<Status> runAllScanForWebApp(Long id, Principal principal) {
         Optional<Project> project = projectRepository.findById(id);
@@ -85,14 +85,14 @@ public class WebAppService {
                         error = true;
                 }
             } catch (Exception e) {
-                return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+                return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
             }
             if (!error) {
                 log.info("{} - Started scan of webapps for project {} - scope full", principal.getName(), project.get().getName());
-                return new ResponseEntity<>(null, HttpStatus.CREATED);
+                return new ResponseEntity<>(HttpStatus.CREATED);
             }
         }
-        return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+        return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
     }
 
     public ResponseEntity<Status> runSelectedWebApps(Long id, List<RunScanForWebApps> runScanForWebApps, Principal principal) {
@@ -132,13 +132,13 @@ public class WebAppService {
                     }
                 }
                 log.info("{} - Added webapp [{}] {} and set {} headers", principal.getName(), project.get().getName(), webApp.getUrl(), webApp.getHeaders() != null ? webApp.getHeaders().size() : 0);
-                return new ResponseEntity<>(null, HttpStatus.CREATED);
+                return new ResponseEntity<>(HttpStatus.CREATED);
             } catch (DataIntegrityViolationException ex) {
                 log.info("{} - is trying to add duplicate URL [{}] for project {} ", principal.getName(), LogUtil.prepare(webAppPutMode.getWebAppUrl()), project.get().getName());
-                return new ResponseEntity<>(null, HttpStatus.CONFLICT);
+                return new ResponseEntity<>(HttpStatus.CONFLICT);
             }
         } else {
-            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
     }
 
@@ -156,9 +156,9 @@ public class WebAppService {
             project.get().setWebAppAutoDiscover(true);
             projectRepository.save(project.get());
             log.info("{} - Enabled auto webapp scan for project {}", principal.getName(), project.get().getName());
-            return new ResponseEntity<>(null,HttpStatus.CREATED);
+            return new ResponseEntity<>(HttpStatus.CREATED);
         } else {
-            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
     }
     public ResponseEntity<List<ProjectVulnerability>> showWebAppVulns(Long id, Principal principal) {
@@ -168,7 +168,7 @@ public class WebAppService {
                     .findByProjectAndVulnerabilitySourceAndSeverityNotIn(project.get(), vulnTemplate.SOURCE_WEBAPP,logs);
             return new ResponseEntity<>(new ArrayList<>(appVulns),HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
     }
     public ResponseEntity<WebAppCard> showWebApps(Long id, Principal principal) {
@@ -191,7 +191,7 @@ public class WebAppService {
             webAppCard.setWebAppModels(webAppModels);
             return new ResponseEntity<>(webAppCard,HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
     }
 
@@ -202,9 +202,9 @@ public class WebAppService {
             project.get().setWebAppAutoDiscover(false);
             projectRepository.save(project.get());
             log.info("{} - Disabled auto webapp scan for project {}", principal.getName(), project.get().getName());
-            return new ResponseEntity<>(null,HttpStatus.CREATED);
+            return new ResponseEntity<>(HttpStatus.CREATED);
         } else {
-            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
     }
 }

@@ -82,7 +82,7 @@ public class CodeService {
             codeCard.setCodeModels(codeModels);
             return new ResponseEntity<>(codeCard, HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
     }
     public ResponseEntity<List<CodeGroup>> showCodeGroups(Long id, Principal principal) {
@@ -90,7 +90,7 @@ public class CodeService {
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             return new ResponseEntity<>(new ArrayList<>(project.get().getCodes()),HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
     }
     public ResponseEntity<Status> saveCodeGroup(Long id, CodeGroupPutModel codeGroupPutModel, Principal principal) {
@@ -119,9 +119,9 @@ public class CodeService {
             }
             codeGroupRepository.save(codeGroup);
             log.info("{} - Created new CodeGroup [{}] {}", principal.getName(), project.get().getName(), codeGroup.getName());
-            return new ResponseEntity<>(null,HttpStatus.CREATED);
+            return new ResponseEntity<>(HttpStatus.CREATED);
         } else {
-            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
     }
 
@@ -157,9 +157,9 @@ public class CodeService {
             codeProject.setTechnique(codeProjectPutModel.getProjectTech());
             codeProjectRepository.save(codeProject);
             log.info("{} - Created new CodeProject [{} / {} ] {}", principal.getName(), project.get().getName(), codeGroup.get().getName(), codeProject.getName());
-            return new ResponseEntity<>(null,HttpStatus.CREATED);
+            return new ResponseEntity<>(HttpStatus.CREATED);
         } else {
-            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
     }
 
@@ -177,9 +177,9 @@ public class CodeService {
             project.get().setAutoCodeScan(true);
             projectRepository.save(project.get());
             log.info("{} - Enabled auto SAST scan for {}", principal.getName(), project.get().getName());
-            return new ResponseEntity<>(null,HttpStatus.OK);
+            return new ResponseEntity<>(HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
     }
 
@@ -187,9 +187,9 @@ public class CodeService {
         boolean putToQueue = codeScanService.putCodeProjectToQueue(codeProjectId, principal);
         if (putToQueue){
             log.info("{} - Run SAST scan for {} - scope single", LogUtil.prepare(principal.getName()), LogUtil.prepare(codeProjectId.toString()));
-            return new ResponseEntity<>(null, HttpStatus.OK);
+            return new ResponseEntity<>(HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(null, HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         } }
 
     @Transactional
@@ -198,9 +198,9 @@ public class CodeService {
         if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getCodeGroup().getProject())){
             codeProjectRepository.removeCodeGroup(codeProject.get().getId());
             log.info("{} - Deleted codeproject [{}] {}", principal.getName(), codeProject.get().getCodeGroup().getProject().getName(), codeProject.get().getName());
-            return new ResponseEntity<>(null,HttpStatus.OK);
+            return new ResponseEntity<>(HttpStatus.OK);
         }
-        return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+        return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
     }
     @Transactional
     public ResponseEntity<List<ProjectVulnerability>> showCodeVulns(Long id, Principal principal) {
@@ -213,7 +213,7 @@ public class CodeService {
             }
             return new ResponseEntity<>(codeVulns,HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
     }
 
@@ -227,9 +227,9 @@ public class CodeService {
             project.get().setAutoCodeScan(false);
             projectRepository.save(project.get());
             log.info("{} - Disabled auto SAST scan for {}", principal.getName(), project.get().getName());
-            return new ResponseEntity<>(null,HttpStatus.OK);
+            return new ResponseEntity<>(HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
     }
 

@@ -36,7 +36,7 @@ public class ApiAccessService {
             log.info("{} - Generated new ApiKey {}", principal.getName(), project.get().getName());
             return new ResponseEntity<>(new ApiKeyResponse(project.get().getApiKey()), HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
     }
 
@@ -48,7 +48,7 @@ public class ApiAccessService {
             log.info("{} - Deleted existing ApiKey {}", principal.getName(), project.get().getName());
             return new ResponseEntity<>(new Status("ok"), HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
     }
 
@@ -57,7 +57,7 @@ public class ApiAccessService {
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             return new ResponseEntity<>(new ApiKeyResponse(project.get().getApiKey()), HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
     }
 }

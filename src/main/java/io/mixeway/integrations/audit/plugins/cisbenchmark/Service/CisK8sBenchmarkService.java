@@ -44,9 +44,9 @@ public class CisK8sBenchmarkService {
         this.activityRepository = activityRepository;
         this.requirementRepository = requirementRepository;
     }
-    private DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    private LocalDateTime dateNow = LocalDateTime.now();
-    private CisBenchmarkProcesor procesor = new CisBenchmarkProcesor();
+    private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private final LocalDateTime dateNow = LocalDateTime.now();
+    private final CisBenchmarkProcesor procesor = new CisBenchmarkProcesor();
     private static final Logger log = LoggerFactory.getLogger(CisK8sBenchmarkService.class);
 
     public ResponseEntity<Status> processK8sReport(MultipartFile file, Long id) throws IOException{
@@ -110,8 +110,6 @@ public class CisK8sBenchmarkService {
                         node = procesor.createNode(filename,matcher.group(3),project);
                         nodeRepository.save(node);
                     }
-                } else if (pattern.getKey().equals(CisBenchmarkProcesor.CATEGORY)) {
-                    categoryname = matcher.group(3);
                 } else if (pattern.getKey().equals(CisBenchmarkProcesor.REQUIREMENT) || pattern.getKey().equals(CisBenchmarkProcesor.AQUA)) {
 
                     try {

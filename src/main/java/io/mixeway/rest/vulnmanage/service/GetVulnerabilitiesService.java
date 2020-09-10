@@ -360,7 +360,7 @@ public class GetVulnerabilitiesService {
             prepareOperationForRequest(ciVulnManageResponse, cp.get());
             return new ResponseEntity<>(ciVulnManageResponse,HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(null,HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
 

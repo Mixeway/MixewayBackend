@@ -58,7 +58,7 @@ public class CodeAccessVerifier {
                     return sastRequestVerify;
                 }
                 else{
-                    log.info("Has no group {} and no projec {}", LogUtil.prepare(groupName),LogUtil.prepare(projectName));
+                    log.info("Has no group {}", LogUtil.prepare(groupName));
                     sastRequestVerify.setValid(false);
                     return sastRequestVerify;
                 }

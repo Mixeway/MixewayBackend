@@ -124,7 +124,7 @@ public class DashboardService {
         if (user.isPresent()){
             return new ResponseEntity<>(new SessionOwner(name, user.get().getLogins()), HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(null, HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
     }
 
@@ -136,9 +136,9 @@ public class DashboardService {
             //searchResponse.setCodeProjects(codeProjectRepository.searchForName(searchRequest.getSearch()));
             //searchResponse.setWebApps(webAppRepository.searchForUrl(searchRequest.getSearch()));
             //searchResponse.setVulns(setVulnsForVulnName(searchRequest.getSearch()));
-            return new ResponseEntity<>(null, HttpStatus.OK);
+            return new ResponseEntity<>(HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(null, HttpStatus.OK);
+            return new ResponseEntity<>(HttpStatus.OK);
         }
     }
 

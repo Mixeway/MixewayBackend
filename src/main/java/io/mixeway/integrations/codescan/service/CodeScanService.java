@@ -302,7 +302,7 @@ public class CodeScanService {
                         }
                     }
                 }
-                List<Long> toRemove = vulnTemplate.projectVulnerabilityRepository.findByProjectAndVulnerabilitySource(group.getProject(), vulnTemplate.SOURCE_SOURCECODE).filter(v -> v.getStatus().getId() == vulnTemplate.STATUS_REMOVED.getId()).map(ProjectVulnerability::getId).collect(Collectors.toList());
+                List<Long> toRemove = vulnTemplate.projectVulnerabilityRepository.findByProjectAndVulnerabilitySource(group.getProject(), vulnTemplate.SOURCE_SOURCECODE).filter(v -> v.getStatus().getId().equals(vulnTemplate.STATUS_REMOVED.getId())).map(ProjectVulnerability::getId).collect(Collectors.toList());
                 int removed =0;
                 if (toRemove !=null && toRemove.size() > 0) {
                     removed = vulnTemplate.projectVulnerabilityRepository.deleteProjectVulnerabilityIn(toRemove);
@@ -580,12 +580,12 @@ public class CodeScanService {
                 }
                 log.info("{} - Run SAST scan for {} - scope partial", LogUtil.prepare(principal.getName()), LogUtil.prepare(project.get().getName()));
 
-                return new ResponseEntity<>(null, HttpStatus.OK);
+                return new ResponseEntity<>(HttpStatus.OK);
             }
         } catch (IndexOutOfBoundsException | ParseException | JSONException | CertificateException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyManagementException | KeyStoreException | IOException ioob){
             log.error("Problem with scanning selected projects reason is {}", ioob.getLocalizedMessage());
         }
-        return new ResponseEntity<>(null, HttpStatus.EXPECTATION_FAILED);
+        return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
     }
 
     /**

@@ -98,7 +98,7 @@ public class ProjectRestService {
             riskCards.setProjectDescription(project.get().getDescription());
             return new ResponseEntity<>(riskCards,HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
     }
 
@@ -168,7 +168,7 @@ public class ProjectRestService {
             projectVulnTrendChart.setSeries(series);
             return new ResponseEntity<>(projectVulnTrendChart,HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
     }
 
@@ -185,7 +185,7 @@ public class ProjectRestService {
             }
             return new ResponseEntity<>(pieData,HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
     }
 
@@ -198,7 +198,7 @@ public class ProjectRestService {
             projectRepository.save(project.get());
             return new ResponseEntity<>(HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
     }
 
@@ -227,7 +227,7 @@ public class ProjectRestService {
                 return new ResponseEntity<>(vulnsForProject.collect(Collectors.toList()),HttpStatus.OK);
             }
         } else {
-            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
     }
 
@@ -238,9 +238,9 @@ public class ProjectRestService {
             if (projectVulnerability.isPresent() && projectVulnerability.get().getProject().getId().equals(project.get().getId()))
                 return new ResponseEntity<>(projectVulnerability.get(),HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
-        return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+        return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
     }
 
     public ResponseEntity<Project> showProject(Long id, Principal principal) {
@@ -248,7 +248,7 @@ public class ProjectRestService {
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
            return new ResponseEntity<>(project.get(), HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
     }
     @Transactional(propagation = Propagation.REQUIRED)
@@ -262,7 +262,7 @@ public class ProjectRestService {
                 project.get().setNetworkdc(settings.getDclocation());
             return new ResponseEntity<>(HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
     }
 
@@ -276,8 +276,8 @@ public class ProjectRestService {
                 return new ResponseEntity<>( HttpStatus.OK);
             }
         } else {
-            return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
-        return new ResponseEntity<>(null,HttpStatus.EXPECTATION_FAILED);
+        return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
     }
 }
