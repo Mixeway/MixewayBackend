@@ -33,32 +33,25 @@ public class SecurityQualityGateway {
         SecurityGateway securityGateway = securityGatewayRepository.findAll().stream().findFirst().orElse(null);
 
         SecurityGatewayEntry securityGatewayEntry = null;
+        securityGatewayEntry = SecurityGatewayEntry.builder()
+                .sastCritical((int)projectVulnerabilities.stream().filter(v -> v.getVulnerabilitySource().getId().equals(vulnTemplate.SOURCE_SOURCECODE.getId()) && isCritical(v) && v.getGrade() == 1).count())
+                .sastHigh((int)projectVulnerabilities.stream().filter(v -> v.getVulnerabilitySource().getId().equals(vulnTemplate.SOURCE_SOURCECODE.getId()) && isHigh(v) && v.getGrade() == 1).count())
+                .sastMedium((int)projectVulnerabilities.stream().filter(v -> v.getVulnerabilitySource().getId().equals(vulnTemplate.SOURCE_SOURCECODE.getId()) && isMedium(v) && v.getGrade() == 1).count())
+                .sastLow((int)projectVulnerabilities.stream().filter(v -> v.getVulnerabilitySource().getId().equals(vulnTemplate.SOURCE_SOURCECODE.getId()) && isLow(v) && v.getGrade() == 1).count())
+                .osCritical((int)projectVulnerabilities.stream().filter(v -> v.getVulnerabilitySource().getId().equals(vulnTemplate.SOURCE_OPENSOURCE.getId()) && isCritical(v) && v.getGrade() == 1).count())
+                .osHigh((int)projectVulnerabilities.stream().filter(v -> v.getVulnerabilitySource().getId().equals(vulnTemplate.SOURCE_OPENSOURCE.getId()) && isHigh(v) && v.getGrade() == 1).count())
+                .osMedium((int)projectVulnerabilities.stream().filter(v -> v.getVulnerabilitySource().getId().equals(vulnTemplate.SOURCE_OPENSOURCE.getId()) && isMedium(v) && v.getGrade() == 1).count())
+                .osLow((int)projectVulnerabilities.stream().filter(v -> v.getVulnerabilitySource().getId().equals(vulnTemplate.SOURCE_OPENSOURCE.getId()) && isLow(v) && v.getGrade() == 1).count())
+                .build();
         if (securityGateway.isGrade()){
-            securityGatewayEntry = SecurityGatewayEntry.builder()
-                    .sastCritical((int)projectVulnerabilities.stream().filter(v -> v.getVulnerabilitySource().getId().equals(vulnTemplate.SOURCE_SOURCECODE.getId()) && isCritical(v) && v.getGrade() == 1).count())
-                    .sastHigh((int)projectVulnerabilities.stream().filter(v -> v.getVulnerabilitySource().getId().equals(vulnTemplate.SOURCE_SOURCECODE.getId()) && isHigh(v) && v.getGrade() == 1).count())
-                    .sastMedium((int)projectVulnerabilities.stream().filter(v -> v.getVulnerabilitySource().getId().equals(vulnTemplate.SOURCE_SOURCECODE.getId()) && isMedium(v) && v.getGrade() == 1).count())
-                    .sastLow((int)projectVulnerabilities.stream().filter(v -> v.getVulnerabilitySource().getId().equals(vulnTemplate.SOURCE_SOURCECODE.getId()) && isLow(v) && v.getGrade() == 1).count())
-                    .osCritical((int)projectVulnerabilities.stream().filter(v -> v.getVulnerabilitySource().getId().equals(vulnTemplate.SOURCE_OPENSOURCE.getId()) && isCritical(v) && v.getGrade() == 1).count())
-                    .osHigh((int)projectVulnerabilities.stream().filter(v -> v.getVulnerabilitySource().getId().equals(vulnTemplate.SOURCE_OPENSOURCE.getId()) && isHigh(v) && v.getGrade() == 1).count())
-                    .osMedium((int)projectVulnerabilities.stream().filter(v -> v.getVulnerabilitySource().getId().equals(vulnTemplate.SOURCE_OPENSOURCE.getId()) && isMedium(v) && v.getGrade() == 1).count())
-                    .osLow((int)projectVulnerabilities.stream().filter(v -> v.getVulnerabilitySource().getId().equals(vulnTemplate.SOURCE_OPENSOURCE.getId()) && isLow(v) && v.getGrade() == 1).count())
-                    .build();
-            boolean passedHigh = (securityGatewayEntry.getSastHigh() + securityGatewayEntry.getOsHigh()) <= securityGateway.getHigh();
-            boolean passwedMedium = (securityGatewayEntry.getSastMedium() + securityGatewayEntry.getOsMedium()) <= securityGateway.getMedium();
-            boolean passwedCritical = (securityGatewayEntry.getSastCritical() + securityGatewayEntry.getOsCritical()) <= securityGateway.getCritical();
-            securityGatewayEntry.setPassed(passedHigh && passwedCritical && passwedMedium);
+
+            int vulnGraded = securityGatewayEntry.getImageHigh() +
+                    securityGatewayEntry.getSastCritical() +
+                    securityGatewayEntry.getSastHigh() +
+                    securityGatewayEntry.getOsCritical() +
+                    securityGatewayEntry.getOsHigh();
+            securityGatewayEntry.setPassed(vulnGraded < securityGateway.getVuln());
         } else {
-            securityGatewayEntry = SecurityGatewayEntry.builder()
-                    .sastCritical((int)projectVulnerabilities.stream().filter(v -> v.getVulnerabilitySource().getId().equals(vulnTemplate.SOURCE_SOURCECODE.getId()) && isCritical(v)).count())
-                    .sastHigh((int)projectVulnerabilities.stream().filter(v -> v.getVulnerabilitySource().getId().equals(vulnTemplate.SOURCE_SOURCECODE.getId()) && isHigh(v)).count())
-                    .sastMedium((int)projectVulnerabilities.stream().filter(v -> v.getVulnerabilitySource().getId().equals(vulnTemplate.SOURCE_SOURCECODE.getId()) && isMedium(v)).count())
-                    .sastLow((int)projectVulnerabilities.stream().filter(v -> v.getVulnerabilitySource().getId().equals(vulnTemplate.SOURCE_SOURCECODE.getId()) && isLow(v)).count())
-                    .osCritical((int)projectVulnerabilities.stream().filter(v -> v.getVulnerabilitySource().getId().equals(vulnTemplate.SOURCE_OPENSOURCE.getId()) && isCritical(v)).count())
-                    .osHigh((int)projectVulnerabilities.stream().filter(v -> v.getVulnerabilitySource().getId().equals(vulnTemplate.SOURCE_OPENSOURCE.getId()) && isHigh(v)).count())
-                    .osMedium((int)projectVulnerabilities.stream().filter(v -> v.getVulnerabilitySource().getId().equals(vulnTemplate.SOURCE_OPENSOURCE.getId()) && isMedium(v)).count())
-                    .osLow((int)projectVulnerabilities.stream().filter(v -> v.getVulnerabilitySource().getId().equals(vulnTemplate.SOURCE_OPENSOURCE.getId()) && isLow(v)).count())
-                    .build();
             boolean passedHigh = (securityGatewayEntry.getSastHigh() + securityGatewayEntry.getOsHigh()) <= securityGateway.getHigh();
             boolean passwedMedium = (securityGatewayEntry.getSastMedium() + securityGatewayEntry.getOsMedium()) <= securityGateway.getMedium();
             boolean passwedCritical = (securityGatewayEntry.getSastCritical() + securityGatewayEntry.getOsCritical()) <= securityGateway.getCritical();
