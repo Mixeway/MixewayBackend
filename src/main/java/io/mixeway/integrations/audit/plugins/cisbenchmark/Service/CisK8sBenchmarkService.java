@@ -49,7 +49,7 @@ public class CisK8sBenchmarkService {
     private final CisBenchmarkProcesor procesor = new CisBenchmarkProcesor();
     private static final Logger log = LoggerFactory.getLogger(CisK8sBenchmarkService.class);
 
-    public ResponseEntity<Status> processK8sReport(MultipartFile file, Long id) throws IOException{
+    public ResponseEntity<Status> processK8sReport(MultipartFile file, Long id) {
         ApiType apiType = apiTypeRepository.findByUrl(Constants.API_TYPE_CIS_K8S);
         Project project = projectRepository.getOne(id);
         ApiPermision apiPermision = apiPermisionRepository.findByProjectAndApiType(project, apiType);
@@ -64,7 +64,7 @@ public class CisK8sBenchmarkService {
         activityRepository.save(act);
         return new ResponseEntity<>(new Status("OK"), HttpStatus.OK);
     }
-    private void processReportK8s(ApiType apiType, Project project, MultipartFile file) throws IOException{
+    private void processReportK8s(ApiType apiType, Project project, MultipartFile file) {
         BufferedReader br;
         String filename;
         try {
@@ -75,11 +75,9 @@ public class CisK8sBenchmarkService {
             log.error("Nullpointer during cis k8s split for filename {}", file.getOriginalFilename());
             filename = file.getOriginalFilename();
         }
-        log.info("Putting K8S docker benchmark for project {} node {}",project.getName(), LogUtil.prepare(file.getOriginalFilename()));
-        String categoryname ="";
+        log.info("Putting K8S docker benchmark for project {} node {}",project.getName(), LogUtil.prepare(Objects.requireNonNull(file.getOriginalFilename())));
         boolean process = false;
         Node node = null;
-        boolean aqua = checkIntegrityForAquaScript(file);
         try {
             String line;
             InputStream is = file.getInputStream();
@@ -87,7 +85,7 @@ public class CisK8sBenchmarkService {
             int i=0;
             while ((line = br.readLine()) != null) {
                 process = true;
-                node = processDevOpsScriptFile(project,filename,node,categoryname,apiType,line);
+                node = processDevOpsScriptFile(project,filename,node, apiType,line);
                 i++;
                 if (i > 1000)
                     break;
@@ -100,7 +98,7 @@ public class CisK8sBenchmarkService {
         }
 
     }
-    private Node processDevOpsScriptFile(Project project, String filename, Node node, String categoryname, ApiType apiType,String line){
+    private Node processDevOpsScriptFile(Project project, String filename, Node node, ApiType apiType, String line){
         for (Map.Entry<String,Pattern> pattern : procesor.getPatterns().entrySet()) {
             Matcher matcher = pattern.getValue().matcher(line);
             if (matcher.matches()) {
@@ -111,7 +109,6 @@ public class CisK8sBenchmarkService {
                         nodeRepository.save(node);
                     }
                 } else if (pattern.getKey().equals(CisBenchmarkProcesor.REQUIREMENT) || pattern.getKey().equals(CisBenchmarkProcesor.AQUA)) {
-
                     try {
                         procesor.createRequirements(matcher, requirementRepository,
                                 nodeAuditRepository, node, apiType, dateNow,
@@ -127,17 +124,5 @@ public class CisK8sBenchmarkService {
         }
         return node;
     }
-    private boolean checkIntegrityForAquaScript(MultipartFile file) throws IOException{
-        InputStream is = file.getInputStream();
-        BufferedReader br = new BufferedReader(new InputStreamReader(is));
-        String line, lastline ="";
-        while ((line = br.readLine()) != null) {
-            lastline = line;
-        }
-        return lastline.contains("checks INFO");
-    }
 
-    private boolean checkIntegrity(String line) {
-        return CisBenchmarkProcesor.PATTERN_FIRST_LEVEL.matcher(line).matches();
-    }
 }

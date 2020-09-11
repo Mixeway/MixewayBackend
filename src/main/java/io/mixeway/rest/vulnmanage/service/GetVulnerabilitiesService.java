@@ -298,7 +298,6 @@ public class GetVulnerabilitiesService {
         List<Vuln> tmpVulns = vulns.getVulnerabilities();
         List<ProjectVulnerability> osVulns = null;
         if (project != null) {
-            List<SoftVuln> softVulns = new ArrayList<>();
             for (CodeProject cp : codeProjectRepository.findByCodeGroupIn(project.getCodes())){
                 try (Stream<ProjectVulnerability> softwarePacketVulnerabilities = vulnTemplate.projectVulnerabilityRepository
                         .findByCodeProjectAndVulnerabilitySource(cp, vulnTemplate.SOURCE_OPENSOURCE)) {

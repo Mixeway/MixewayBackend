@@ -15,6 +15,7 @@ public class IpAddressUtils {
     public static boolean isValidSubnetFormat(String subnet) {
         try {
             SubnetUtils subnetUtils = new SubnetUtils(subnet);
+            subnetUtils.getInfo();
             return true;
         } catch (IllegalArgumentException e) {
             return false;

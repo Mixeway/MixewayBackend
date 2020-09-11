@@ -184,7 +184,7 @@ public class AdminSettingsRestService {
             if (settings.isPresent()){
                 settings.get().setInfraAutoCron(cronSettings.getExpression());
                 settingsRepository.save(settings.get());
-                log.info("{} - Changed Cron auto scan start for network to {}", name, LogUtil.prepare(cronSettings.getExpression()));
+                log.info("{} - Changed Cron auto scan start for network to {} - {}", name, LogUtil.prepare(cronSettings.getExpression()), cron.getExpressionSummary());
                 return new ResponseEntity<>( HttpStatus.OK);
             }
         } catch (ParseException e) {
@@ -200,7 +200,7 @@ public class AdminSettingsRestService {
             if (settings.isPresent()){
                 settings.get().setWebAppAutoCron(cronSettings.getExpression());
                 settingsRepository.save(settings.get());
-                log.info("{} - Changed Cron auto scan start for WebApp to {}", name, LogUtil.prepare(cronSettings.getExpression()));
+                log.info("{} - Changed Cron auto scan start for WebApp to {}", name, cron.getExpressionSummary());
                 return new ResponseEntity<>( HttpStatus.OK);
             }
         } catch (ParseException e) {
@@ -216,7 +216,7 @@ public class AdminSettingsRestService {
             if (settings.isPresent()){
                 settings.get().setCodeAutoCron(cronSettings.getExpression());
                 settingsRepository.save(settings.get());
-                log.info("{} - Changed Cron auto scan start for code to {}", name, LogUtil.prepare(cronSettings.getExpression()));
+                log.info("{} - Changed Cron auto scan start for code to {}", name, cron.getExpressionSummary());
                 return new ResponseEntity<>( HttpStatus.OK);
             }
         } catch (ParseException e) {
@@ -232,7 +232,7 @@ public class AdminSettingsRestService {
             if (settings.isPresent()){
                 settings.get().setTrendEmailCron(cronSettings.getExpression());
                 settingsRepository.save(settings.get());
-                log.info("{} - Changed Cron auto scan start for code to {}", LogUtil.prepare(name), LogUtil.prepare(cronSettings.getExpression()));
+                log.info("{} - Changed Cron auto scan start for code to {}", LogUtil.prepare(name), cron.getExpressionSummary());
                 return new ResponseEntity<>( HttpStatus.OK);
             }
         } catch (ParseException e) {

@@ -32,11 +32,11 @@ public class CisDockerBenchmarkService {
     private final NodeAuditRepository nodeAuditRepository;
     private final RequirementRepository requirementRepository;
     private final NodeRepository nodeRepository;
-    private DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    private LocalDateTime dateNow = LocalDateTime.now();
+    private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private final LocalDateTime dateNow = LocalDateTime.now();
 
     private static final Logger log = LoggerFactory.getLogger(CisDockerBenchmarkService.class);
-    private CisBenchmarkProcesor procesor = new CisBenchmarkProcesor();
+    private final CisBenchmarkProcesor procesor = new CisBenchmarkProcesor();
 
     CisDockerBenchmarkService(ApiTypeRepository apiTypeRepository, ProjectRepository projectRepository, ApiPermisionRepository apiPermisionRepository,
                               ActivityRepository activityRepository, NodeAuditRepository nodeAuditRepository, RequirementRepository requirementRepository,

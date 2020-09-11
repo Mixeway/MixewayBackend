@@ -16,19 +16,14 @@ import io.mixeway.integrations.servicediscovery.plugin.IaasApiClient;
 import io.mixeway.pojo.VaultHelper;
 import io.mixeway.rest.project.model.IaasApiPutModel;
 import org.apache.commons.lang3.StringUtils;
-import org.checkerframework.checker.nullness.Opt;
-import org.hibernate.exception.SQLGrammarException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.dao.InvalidDataAccessResourceUsageException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.validation.Valid;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -84,6 +79,7 @@ public class AwsApiClient implements IaasApiClient {
             iaasApi.setStatus(true);
             iaasApiRepository.save(iaasApi);
             unsetProxy();
+            log.info("[AWS EC2] Test of configuration completed {}", response.getSdkResponseMetadata().getRequestId());
         } catch (AmazonEC2Exception e) {
             log.error("Error During testing IaasAPI of type AWS EC2 for {}, reason - {}", iaasApi.getProject().getName(),e.getLocalizedMessage());
         }
@@ -226,60 +222,6 @@ public class AwsApiClient implements IaasApiClient {
     }
 
     /**
-     * Method which is processing Instance obtained by AWS Client and process it in order to create Assets and Interfaces
-     *
-     * @param instance received by API Call
-     * @param iaasApi on which API Call were made
-     */
-    private void createOrUpdateAssetPrivate(Instance instance, IaasApi iaasApi) {
-        int added = 0;
-        String assetName = "";
-        if (instance.getTags().stream().filter(p -> p.getKey().equals("Name")).findFirst().orElse(null).getValue() != null){
-            assetName = instance.getTags().stream().filter(p -> p.getKey().equals("Name")).findFirst().orElse(null).getValue();
-        } else {
-            assetName = "empty - should not happen";
-        }
-        Optional<Asset> asset = assetRepository.findByNameAndProject(assetName, iaasApi.getProject());
-        if (asset.isPresent()){
-            Interface anInterface = asset.get().getInterfaces().stream().filter(i -> i.getPrivateip().equals(instance.getPrivateIpAddress())).findFirst().orElse(null);
-            if (anInterface != null){
-                anInterface.setActive(instance.getState().getName().equals(Constants.AWS_STATE_RUNNING));
-                interfaceRepository.save(anInterface);
-            } else {
-                Interface newInterface = new Interface(instance, asset.get(), iaasApi.getRoutingDomain(), false);
-                interfaceRepository.save(newInterface);
-                added++;
-            }
-
-            if (StringUtils.isNotBlank(instance.getPublicIpAddress())) {
-                Interface anInterfacePublic = asset.get().getInterfaces().stream().filter(i -> i.getPrivateip().equals(instance.getPublicIpAddress())).findFirst().orElse(null);
-                if (anInterfacePublic != null) {
-                    anInterfacePublic.setActive(instance.getState().getName().equals(Constants.AWS_STATE_RUNNING));
-                    interfaceRepository.save(anInterfacePublic);
-                } else {
-                    Interface newInterface = new Interface(instance, asset.get(), routingDomainRepository.findByName(Constants.DOMAIN_INTERNET), true);
-                    interfaceRepository.save(newInterface);
-                    added++;
-                }
-
-            }
-        } else {
-            Asset newAsset = new Asset(instance, iaasApi);
-            newAsset = assetRepository.save(newAsset);
-            Interface newInterface = new Interface(instance, newAsset, iaasApi.getRoutingDomain(), false);
-            interfaceRepository.save(newInterface);
-            added++;
-            if (StringUtils.isNotBlank(instance.getPublicIpAddress())){
-                Interface newInterfacePublic = new Interface(instance, newAsset, routingDomainRepository.findByName(Constants.DOMAIN_INTERNET), true);
-                interfaceRepository.save(newInterfacePublic);
-                added++;
-            }
-        }
-        if (added > 0)
-            log.info("Successfully added {} assets for {} [AWS EC2 Plugin]", added, iaasApi.getProject().getName());
-    }
-
-    /**
      * Saving the AWS EC2 API to DB
      *
      * @param iaasApiPutModel model from fronend
@@ -310,8 +252,6 @@ public class AwsApiClient implements IaasApiClient {
     /**
      * Verification if proper API Client is ok to process request base on frontend request
      *
-     * @param iaasApiPutModel
-     * @return
      */
     @Override
     public boolean canProcessRequest(IaasApiPutModel iaasApiPutModel) {
