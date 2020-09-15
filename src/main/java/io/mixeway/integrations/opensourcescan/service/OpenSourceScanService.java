@@ -218,6 +218,63 @@ public class OpenSourceScanService {
     }
 
     /**
+     * Based on Repo URL create project, codeproject or return already existing
+     *
+     * @param url repo url
+     * @return codeproject
+     */
+    public CodeProject getCodeProjectByRepoUrlAndProject(String url, String branch, Principal principal, Project project) throws Exception {
+        URL repoUrl = new URL(url.split("\\.git")[0]);
+        String projectName, codeProjectName = null;
+        String[] repoUrlParts = repoUrl.getPath().split("/");
+        // If url contains both Organization and Project Name
+        if (repoUrlParts.length == 3 || repoUrlParts.length == 4){
+            projectName = repoUrlParts[1];
+            codeProjectName = repoUrlParts.length==3 ? repoUrlParts[2] +"_"+branch : repoUrlParts[3] +"_"+branch;
+            Optional<CodeProject> codeProject = codeProjectRepository.findByNameAndBranch(codeProjectName, branch);
+            //If CodeProject with name already exists
+            if (codeProject.isPresent()){
+                return codeProject.get();
+            }
+            // else Create CodeProject and possibliy project
+            else {
+                codeService.saveCodeGroup(
+                    project.getId(),
+                    new CodeGroupPutModel(codeProjectName, url, false, false, branch),
+                    principal);
+                Optional<CodeProject> justCreatedCodeProject = codeProjectRepository.findByNameAndBranch(codeProjectName, branch);
+                if (justCreatedCodeProject.isPresent()){
+                    log.info("CICD job - Project present, CodeProject just created");
+                    return justCreatedCodeProject.get();
+                } else{
+                    throw new Exception("Just created codeProject is not present");
+                }
+            }
+
+        } else if (repoUrlParts.length == 2){
+            codeProjectName = repoUrlParts[1] + "_" + branch;
+            Optional<CodeProject> codeProject = codeProjectRepository.findByNameAndBranch(codeProjectName, branch);
+            if (codeProject.isPresent()) {
+                return codeProject.get();
+            } else {
+                codeService.saveCodeGroup(
+                        project.getId(),
+                        new CodeGroupPutModel(codeProjectName, url, false, false,branch),
+                        principal);
+                Optional<CodeProject> justCreatedCodeProject = codeProjectRepository.findByNameAndBranch(codeProjectName, branch);
+                if (justCreatedCodeProject.isPresent()){
+                    log.info("CICD job - Project present (unknown), CodeProject just created");
+                    return justCreatedCodeProject.get();
+                } else{
+                    throw new Exception("Just created codeProject is not present");
+                }
+            }
+        } else {
+            throw new Exception("Unknown Repo Url format " + url);
+        }
+    }
+
+    /**
      * Using configured OpenSource Vulnerability Scanner and loading vulnerabilities for given codeproject
      *
      * @param codeProjectToVerify CodeProject to load opensource vulnerabilities

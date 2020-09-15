@@ -85,6 +85,11 @@ public class CiOperationsController {
     public ResponseEntity<PrepareCIOperation> getInfoForCI(@Valid @RequestBody GetInfoRequest getInfoRequest, Principal principal) throws Exception {
         return ciOperationsService.getInfoForCI(getInfoRequest, principal);
     }
+    @PreAuthorize("hasAuthority('ROLE_API')")
+    @PostMapping(value = "/project/{projectid}/getscannerinfo",produces = "application/json")
+    public ResponseEntity<PrepareCIOperation> getInfoForCI(@PathVariable(value = "projectid") Long projectid, @Valid @RequestBody GetInfoRequest getInfoRequest, Principal principal) throws Exception {
+        return ciOperationsService.getInfoForCIForProject(getInfoRequest, principal, projectid);
+    }
 
     @PreAuthorize("hasAuthority('ROLE_API')")
     @PostMapping(value = "/infoscanperformed",produces = "application/json")

@@ -360,4 +360,29 @@ public class CiOperationsService {
         return ciOperationsRepository.save(ciOperations);
 
     }
+
+    public ResponseEntity<PrepareCIOperation> getInfoForCIForProject(GetInfoRequest getInfoRequest, Principal principal, Long projectid) throws Exception {
+        Optional<Project> project = projectRepository.findById(projectid);
+        if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())) {
+            switch (getInfoRequest.getScope()) {
+                case Constants.CI_SCOPE_OPENSOURCE:
+                    CodeProject codeProject = openSourceScanService.getCodeProjectByRepoUrlAndProject(getInfoRequest.getRepoUrl(), getInfoRequest.getBranch(), principal, project.get());
+                    if (StringUtils.isBlank(codeProject.getdTrackUuid())) {
+                        openSourceScanService.createProjectOnOpenSourceScanner(codeProject);
+                    }
+                    OpenSourceConfig openSourceConfig = openSourceScanService
+                            .getOpenSourceScannerConfiguration(
+                                    codeProject.getCodeGroup().getProject().getId(),
+                                    codeProject.getName(),
+                                    codeProject.getName(),
+                                    principal)
+                            .getBody();
+                    // FOR NOW owasp dtrack hardcoded
+                    return new ResponseEntity<>(new PrepareCIOperation(openSourceConfig, codeProject, "OWASP Dependency Track"), HttpStatus.OK);
+            }
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
 }

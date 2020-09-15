@@ -18,8 +18,6 @@ import io.mixeway.integrations.infrastructurescan.plugin.remotefirewall.model.Ru
 import io.mixeway.pojo.DOPMailTemplateBuilder;
 import io.mixeway.pojo.EmailVulnHelper;
 import io.mixeway.pojo.ScanHelper;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.mail.internet.MimeMessage;
@@ -33,9 +31,7 @@ import java.text.DateFormat;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Component
 @Transactional
@@ -85,6 +81,10 @@ public class CronScheduler {
         add("High");
         add("Critical");
     }};
+    private List<String> critSeverities = new ArrayList<String>(){{
+        add("High");
+        add("Critical");
+    }};
     private List<String> scores = new ArrayList<String>(){{
         add("WARN" );
         add("FAIL");
@@ -104,7 +104,7 @@ public class CronScheduler {
             vulnHistory.setWebAppVulnHistory(createWebAppVulnHistory(project));
             vulnHistory.setCodeVulnHistory(createCodeVulnHistory(project));
             vulnHistory.setAuditVulnHistory(createAuditHistory(project));
-            vulnHistory.setSoftwarePacketVulnNumber(createSoftwarePacketHistory(project));
+            vulnHistory.setSoftwarePacketVulnNumber((long) createSoftwarePacketHistory(project));
             vulnHistory.setProject(project);
             vulnHistory.setInserted(format.format(new Date()));
             vulnHistoryRepository.save(vulnHistory);
@@ -113,9 +113,9 @@ public class CronScheduler {
 
     }
 
-    private Long createSoftwarePacketHistory(Project project) {
+    private int createSoftwarePacketHistory(Project project) {
 
-        return vulnTemplate.projectVulnerabilityRepository.findByProjectAndVulnerabilitySource(project,vulnTemplate.SOURCE_OPENSOURCE).count();
+        return vulnTemplate.projectVulnerabilityRepository.findByProjectAndVulnerabilitySourceAndSeverityIn(project,vulnTemplate.SOURCE_OPENSOURCE, critSeverities).size();
     }
     @Scheduled(initialDelay=3000,fixedDelay = 1500000)
     public void getDepTrackVulns() {
