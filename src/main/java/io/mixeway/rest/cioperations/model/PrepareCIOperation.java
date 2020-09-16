@@ -10,11 +10,20 @@ import io.mixeway.rest.project.model.OpenSourceConfig;
 
 public class PrepareCIOperation {
     Long projectId;
+    Long codeProjectId;
     String openSourceScannerProjectId;
     String openSourceScannerCredentials;
     String openSourceScannerApiUrl;
     boolean openSourceScannerIntegration;
     String scannerType;
+
+    public Long getCodeProjectId() {
+        return codeProjectId;
+    }
+
+    public void setCodeProjectId(Long codeProjectId) {
+        this.codeProjectId = codeProjectId;
+    }
 
     public String getScannerType() {
         return scannerType;
@@ -74,6 +83,7 @@ public class PrepareCIOperation {
             this.openSourceScannerIntegration = false;
         }
         this.scannerType = type;
-        this.projectId = codeProject.getId();
+        this.projectId = codeProject.getCodeGroup().getProject().getId();
+        this.codeProjectId = codeProject.getId();
     }
 }

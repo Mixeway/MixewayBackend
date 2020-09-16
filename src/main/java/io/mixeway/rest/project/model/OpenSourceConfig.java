@@ -7,6 +7,15 @@ public class OpenSourceConfig {
     String openSourceScannerCredentials;
     String tech;
     String scannerType;
+    Long codeProjectId;
+
+    public Long getCodeProjectId() {
+        return codeProjectId;
+    }
+
+    public void setCodeProjectId(Long codeProjectId) {
+        this.codeProjectId = codeProjectId;
+    }
 
     public String getScannerType() {
         return scannerType;
