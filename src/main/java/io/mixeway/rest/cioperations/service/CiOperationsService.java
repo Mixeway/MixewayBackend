@@ -218,7 +218,6 @@ public class CiOperationsService {
                                 codeProject.getName(),
                                 principal)
                         .getBody();
-                openSourceConfig.setCodeProjectId;
                 // FOR NOW owasp dtrack hardcoded
                 return new ResponseEntity<>(new PrepareCIOperation(openSourceConfig, codeProject,"OWASP Dependency Track"), HttpStatus.OK);
         }
