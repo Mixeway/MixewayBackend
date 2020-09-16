@@ -281,10 +281,15 @@ public class CiOperationsService {
             }
             List<VulnerabilityModel> sastVulns = vulns.stream().filter(v -> v.getScannerType().equals(ScannerType.SAST)).collect(Collectors.toList());
             if (sastVulns.size() > 0 ){
-                codeScanService.loadVulnsFromCICDToCodeProject(codeProjectToLoad, sastVulns);
+                codeScanService.loadVulnsFromCICDToCodeProject(codeProjectToLoad, sastVulns, ScannerType.SAST);
             } else {
-                codeScanService.loadVulnsFromCICDToCodeProject(codeProjectToLoad, new ArrayList<>());
-
+                codeScanService.loadVulnsFromCICDToCodeProject(codeProjectToLoad, new ArrayList<>(), ScannerType.SAST);
+            }
+            List<VulnerabilityModel> gitLeaksVulns = vulns.stream().filter(v -> v.getScannerType().equals(ScannerType.GITLEAKS)).collect(Collectors.toList());
+            if (sastVulns.size() > 0 ){
+                codeScanService.loadVulnsFromCICDToCodeProject(codeProjectToLoad, gitLeaksVulns, ScannerType.GITLEAKS);
+            } else {
+                codeScanService.loadVulnsFromCICDToCodeProject(codeProjectToLoad, new ArrayList<>(), ScannerType.GITLEAKS);
             }
             List<VulnerabilityModel> openSourceVulns = vulns.stream().filter(v -> v.getScannerType().equals(ScannerType.OPENSOURCE)).collect(Collectors.toList());
             if (openSourceVulns.size() > 0) {
@@ -292,6 +297,7 @@ public class CiOperationsService {
             } else {
                 openSourceScanService.loadVulnsFromCICDToCodeProject(codeProjectToLoad, new ArrayList<>());
             }
+
             return new ResponseEntity<>(new Status(createCIOperationsForCICDRequest(codeProjectToLoad).getResult()), HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
@@ -324,7 +330,7 @@ public class CiOperationsService {
             }
             List<VulnerabilityModel> sastVulns = vulns.stream().filter(v -> v.getScannerType().equals(ScannerType.SAST)).collect(Collectors.toList());
             if (sastVulns.size() > 0 ){
-                codeScanService.loadVulnsFromCICDToCodeProject(codeProject, sastVulns);
+                codeScanService.loadVulnsFromCICDToCodeProject(codeProject, sastVulns,ScannerType.SAST);
             }
             List<VulnerabilityModel> openSourceVulns = vulns.stream().filter(v -> v.getScannerType().equals(ScannerType.OPENSOURCE)).collect(Collectors.toList());
             if (openSourceVulns.size() > 0){

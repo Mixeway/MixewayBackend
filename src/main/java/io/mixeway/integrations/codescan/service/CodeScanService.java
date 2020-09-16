@@ -10,6 +10,7 @@ import io.mixeway.integrations.opensourcescan.plugins.mvndependencycheck.model.S
 import io.mixeway.integrations.codescan.model.CodeScanRequestModel;
 import io.mixeway.pojo.*;
 import io.mixeway.pojo.Status;
+import io.mixeway.rest.cioperations.model.ScannerType;
 import io.mixeway.rest.cioperations.model.VulnerabilityModel;
 import io.mixeway.rest.project.model.RunScanForCodeProject;
 import io.mixeway.rest.project.model.SASTProject;
@@ -502,6 +503,23 @@ public class CodeScanService {
 
         return codeVulns;
     }
+    /**
+     * Getting old vulnerabilities for CodeProject, and set status to removed
+     *
+     * @param codeProject CodeProject to delate vulns for
+     * @return List of deleted vulns to set proper status
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    List<ProjectVulnerability> getOldVulnsForCodeProjectAndSource(CodeProject codeProject, VulnerabilitySource vulnerabilitySource){
+        List<ProjectVulnerability> codeVulns = vulnTemplate.projectVulnerabilityRepository.findByCodeProjectAndVulnerabilitySource(codeProject, vulnerabilitySource).collect(Collectors.toList());
+        if (codeVulns.size() > 0) {
+            vulnTemplate.projectVulnerabilityRepository.updateVulnState(codeVulns.stream().map(ProjectVulnerability::getId).collect(Collectors.toList()),
+                    vulnTemplate.STATUS_REMOVED.getId());
+            codeVulns.forEach(pv -> pv.setStatus(vulnTemplate.STATUS_REMOVED));
+        }
+
+        return codeVulns;
+    }
 
     /**
      * Method which run scan for given parameters
@@ -674,15 +692,21 @@ public class CodeScanService {
      */
     @Transactional
     @Modifying
-    public void loadVulnsFromCICDToCodeProject(CodeProject codeProject, List<VulnerabilityModel> sastVulns) {
-        List<ProjectVulnerability> oldVulnsForCodeProject = getOldVulnsForCodeProject(codeProject);
+    public void loadVulnsFromCICDToCodeProject(CodeProject codeProject, List<VulnerabilityModel> sastVulns, ScannerType scannerType) {
+        VulnerabilitySource vulnerabilitySource = null;
+        if (scannerType.equals(ScannerType.SAST)){
+            vulnerabilitySource = vulnTemplate.SOURCE_SOURCECODE;
+        } else if (scannerType.equals(ScannerType.GITLEAKS)){
+            vulnerabilitySource = vulnTemplate.SOURCE_GITLEAKS;
+        }
+        List<ProjectVulnerability> oldVulnsForCodeProject = getOldVulnsForCodeProjectAndSource(codeProject,vulnerabilitySource);
         List<ProjectVulnerability> vulnToPersist = new ArrayList<>();
         for (VulnerabilityModel vulnerabilityModel : sastVulns){
             io.mixeway.db.entity.Vulnerability vulnerability = vulnTemplate.createOrGetVulnerabilityService.createOrGetVulnerability(vulnerabilityModel.getName());
 
             ProjectVulnerability projectVulnerability = new ProjectVulnerability(codeProject,codeProject,vulnerability, vulnerabilityModel.getDescription(),null,
                     vulnerabilityModel.getSeverity(),null,vulnerabilityModel.getFilename()+":"+vulnerabilityModel.getLine(),
-                    "", vulnTemplate.SOURCE_SOURCECODE );
+                    "", vulnerabilitySource );
 
             vulnToPersist.add(projectVulnerability);
         }
@@ -692,7 +716,7 @@ public class CodeScanService {
         List<ProjectVulnerability> test = vulnTemplate.projectVulnerabilityRepository.findByCodeProjectAndVulnerabilitySource(codeProject, vulnTemplate.SOURCE_SOURCECODE).collect(Collectors.toList());
 
         vulnTemplate.projectVulnerabilityRepository.flush();
-        log.info("[CICD] SourceCode - Loading Vulns for {} completed", codeProject.getName());
+        log.info("[CICD] SourceCode - Loading Vulns for {} completed type of {}", codeProject.getName(), scannerType);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)

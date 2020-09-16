@@ -1107,3 +1107,6 @@ update project set owner_id = (select id from users where name='admin');
 
 --changeset siewer:project_owner_fix
 update project set owner_id = (select id from users where name='username');
+
+--changeset siewer:add_gitleaks
+insert into vulnerabilitysource (name) values ("gitleaks");
