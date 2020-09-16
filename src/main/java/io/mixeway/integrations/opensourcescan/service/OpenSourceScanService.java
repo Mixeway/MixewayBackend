@@ -124,7 +124,7 @@ public class OpenSourceScanService {
         // If url contains both Organization and Project Name
         if (repoUrlParts.length == 3 || repoUrlParts.length == 4){
             projectName = repoUrlParts[1];
-            codeProjectName = repoUrlParts.length==3 ? repoUrlParts[2] +"_"+branch : repoUrlParts[3] +"_"+branch;
+            codeProjectName = repoUrlParts.length==3 ? repoUrlParts[2] : repoUrlParts[3];
             Optional<CodeProject> codeProject = codeProjectRepository.findByNameAndBranch(codeProjectName, branch);
             //If CodeProject with name already exists
             if (codeProject.isPresent()){
@@ -132,7 +132,7 @@ public class OpenSourceScanService {
             }
             // else Create CodeProject and possibliy project
             else {
-                Optional<Project> project = projectRepository.getProjectByName(projectName+ "_" + branch);
+                Optional<Project> project = projectRepository.getProjectByName(projectName);
                 // If project exist only add codeproject to it
                 if (project.isPresent() ){
                     codeService.saveCodeGroup(
@@ -150,7 +150,7 @@ public class OpenSourceScanService {
                 } else {
                     Project projectToCreate = projectRepository
                             .saveAndFlush(new Project(
-                                    projectName + "_" + branch,
+                                    projectName,
                                     "Project created by CICD, branch: "+branch,
                                     false,
                                     "none",
@@ -171,7 +171,7 @@ public class OpenSourceScanService {
             }
 
         } else if (repoUrlParts.length == 2){
-            codeProjectName = repoUrlParts[1] + "_" + branch;
+            codeProjectName = repoUrlParts[1];
             Optional<CodeProject> codeProject = codeProjectRepository.findByNameAndBranch(codeProjectName, branch);
             if (codeProject.isPresent()) {
                 return codeProject.get();
