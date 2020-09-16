@@ -149,7 +149,7 @@ public class OpenSourceScanService {
 
                 } else {
                     Project projectToCreate = projectRepository
-                            .save(new Project(
+                            .saveAndFlush(new Project(
                                     projectName + "_" + branch,
                                     "Project created by CICD, branch: "+branch,
                                     false,
