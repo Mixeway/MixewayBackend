@@ -207,7 +207,7 @@ public class CiOperationsService {
     public ResponseEntity<PrepareCIOperation> getInfoForCI(GetInfoRequest getInfoRequest, Principal principal) throws Exception {
         switch (getInfoRequest.getScope()){
             case Constants.CI_SCOPE_OPENSOURCE:
-                CodeProject codeProject = openSourceScanService.getCodeProjectByRepoUrl(getInfoRequest.getRepoUrl(), getInfoRequest.getBranch(),principal);
+                CodeProject codeProject = openSourceScanService.getCodeProjectByRepoUrl(getInfoRequest.getRepoUrl(), getInfoRequest.getRepoName(), getInfoRequest.getBranch(),principal);
                 if (StringUtils.isBlank(codeProject.getdTrackUuid())){
                     openSourceScanService.createProjectOnOpenSourceScanner(codeProject);
                 }

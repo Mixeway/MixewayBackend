@@ -11,6 +11,15 @@ public class GetInfoRequest {
     @NotNull String repoUrl;
     @NotNull String branch;
     @NotNull String scope;
+    String repoName;
+
+    public String getRepoName() {
+        return repoName;
+    }
+
+    public void setRepoName(String repoName) {
+        this.repoName = repoName;
+    }
 
     public String getBranch() {
         return branch;
