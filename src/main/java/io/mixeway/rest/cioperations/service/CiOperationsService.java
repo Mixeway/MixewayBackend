@@ -286,7 +286,7 @@ public class CiOperationsService {
                 codeScanService.loadVulnsFromCICDToCodeProject(codeProjectToLoad, new ArrayList<>(), ScannerType.SAST);
             }
             List<VulnerabilityModel> gitLeaksVulns = vulns.stream().filter(v -> v.getScannerType().equals(ScannerType.GITLEAKS)).collect(Collectors.toList());
-            if (sastVulns.size() > 0 ){
+            if (gitLeaksVulns.size() > 0 ){
                 codeScanService.loadVulnsFromCICDToCodeProject(codeProjectToLoad, gitLeaksVulns, ScannerType.GITLEAKS);
             } else {
                 codeScanService.loadVulnsFromCICDToCodeProject(codeProjectToLoad, new ArrayList<>(), ScannerType.GITLEAKS);
