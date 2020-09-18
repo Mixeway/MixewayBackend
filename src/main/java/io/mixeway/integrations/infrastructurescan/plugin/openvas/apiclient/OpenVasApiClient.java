@@ -275,7 +275,7 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 				Vulnerability vulnerability = vulnTemplate.createOrGetVulnerabilityService.createOrGetVulnerability(v.getString(Constants.IF_VULN_NAME));
 				ProjectVulnerability projectVulnerability = new ProjectVulnerability(intfActive,null,vulnerability,v.getString(Constants.IF_VULN_DESC),null
 						,v.getString(Constants.IF_VULN_THREAT),v.getString(Constants.IF_VULN_PORT),null,null,vulnTemplate.SOURCE_NETWORK);
-				projectVulnerability.updateStatusAndGrade(oldVulns, vulnTemplate);
+				//projectVulnerability.updateStatusAndGrade(oldVulns, vulnTemplate);
 				vulnsToPersist.add(projectVulnerability);
 				scannerInterfaces.add(intfActive);
 				//vulnTemplate.vulnerabilityPersist(oldVulns,projectVulnerability);
@@ -286,9 +286,7 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 			vulnTemplate.vulnerabilityPersistList(oldVulns, vulnsToPersist);
 			scannerInterfaces.forEach(f -> f.setScanRunning(false));
 		}
-		log.debug("Successfully loaded report results - {}", vulns.length());
-
-
+		log.info("OpenVas finished loading vulns for {}", ns.getProject().getName());
 	}
 
 	// TODO: wczytanie interfejsow dla assetu i stremami wyszukanie
