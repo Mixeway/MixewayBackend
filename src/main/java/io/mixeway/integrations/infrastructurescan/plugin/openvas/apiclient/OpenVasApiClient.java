@@ -283,9 +283,10 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 			} else  {
 				log.error("Report contains ip {} which is not found in assets for project {}",v.getString(Constants.IF_VULN_HOST), ns.getProject().getName());
 			}
-			vulnTemplate.vulnerabilityPersistList(oldVulns, vulnsToPersist);
-			scannerInterfaces.forEach(f -> f.setScanRunning(false));
+
 		}
+		vulnTemplate.vulnerabilityPersistList(oldVulns, vulnsToPersist);
+		scannerInterfaces.forEach(f -> f.setScanRunning(false));
 		log.info("OpenVas finished loading vulns for {}", ns.getProject().getName());
 	}
 
