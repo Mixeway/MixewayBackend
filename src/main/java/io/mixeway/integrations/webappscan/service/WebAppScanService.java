@@ -23,14 +23,12 @@ import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 
 import javax.persistence.NonUniqueResultException;
 import java.security.Principal;
-import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -373,7 +371,7 @@ public class WebAppScanService {
      *
      * @throws Exception
      */
-    @Transactional(isolation = Isolation.READ_COMMITTED)
+    @Transactional
     public void scheduledCheckAndDownloadResults() throws Exception {
         List<WebApp> apps = waRepository.findByRunning(true);
         for (WebApp app : apps) {
