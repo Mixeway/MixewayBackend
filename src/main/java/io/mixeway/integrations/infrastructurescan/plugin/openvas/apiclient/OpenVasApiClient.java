@@ -43,6 +43,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
@@ -247,7 +248,7 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 			return false;
 	}
 
-	@Transactional
+	@Transactional(propagation = Propagation.REQUIRES_NEW)
 	void setVulnerabilities(NessusScan ns, String body) throws JSONException  {
 		List<ProjectVulnerability> oldVulns = getProjectVulnerabilititiesByScan(ns);
 		List<ProjectVulnerability> vulnsToPersist = new ArrayList<>();
