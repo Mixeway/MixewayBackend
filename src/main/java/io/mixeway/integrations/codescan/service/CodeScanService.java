@@ -348,7 +348,7 @@ public class CodeScanService {
             List<CodeProject> codeProjectsRunning =codeProjectRepository.findByRunning(true);
             for (CodeProject codeProject : codeProjectsRunning) {
                 List<ProjectVulnerability> codeVulns = getOldVulnsForCodeProject(codeProject);
-                for (CodeScanClient codeScanClient : codeScanClients)
+                for (CodeScanClient codeScanClient : codeScanClients) {
                     if (codeScanClient.canProcessRequest(sastScanner.get()) && codeScanClient.isScanDone(null, codeProject)) {
                         codeScanClient.loadVulnerabilities(sastScanner.get(), codeProject.getCodeGroup(), null, true, codeProject, codeVulns);
                         log.info("Vulerabilities for codescan for {} with scope of {} loaded - single app", codeProject.getCodeGroup().getName(), codeProject.getName());
