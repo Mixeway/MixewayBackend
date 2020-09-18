@@ -341,14 +341,14 @@ public class CodeScanService {
      * Method which is looking for CodeProject and CodeGroup with running = true
      * Verify if scan is done, and if so loads vulnerabilities
      */
-    @Transactional(isolation = Isolation.READ_COMMITTED)
+    @Transactional
     public void getResultsForRunningScan() throws CertificateException, ParseException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, UnrecoverableKeyException, IOException, URISyntaxException {
         Optional<Scanner> sastScanner = scannerRepository.findByScannerTypeInAndStatus(scannerTypeRepository.getCodeScanners(), true).stream().findFirst();
         if (sastScanner.isPresent()) {
             List<CodeProject> codeProjectsRunning =codeProjectRepository.findByRunning(true);
             for (CodeProject codeProject : codeProjectsRunning) {
                 List<ProjectVulnerability> codeVulns = getOldVulnsForCodeProject(codeProject);
-                for (CodeScanClient codeScanClient : codeScanClients) {
+                for (CodeScanClient codeScanClient : codeScanClients)
                     if (codeScanClient.canProcessRequest(sastScanner.get()) && codeScanClient.isScanDone(null, codeProject)) {
                         codeScanClient.loadVulnerabilities(sastScanner.get(), codeProject.getCodeGroup(), null, true, codeProject, codeVulns);
                         log.info("Vulerabilities for codescan for {} with scope of {} loaded - single app", codeProject.getCodeGroup().getName(), codeProject.getName());

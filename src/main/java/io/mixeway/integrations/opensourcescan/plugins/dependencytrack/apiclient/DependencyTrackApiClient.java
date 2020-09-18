@@ -177,7 +177,7 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
         return null;
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.READ_COMMITTED)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void createVulns(CodeProject codeProject, List<DTrackVuln> body) {
         List<ProjectVulnerability> oldVulns = vulnTemplate.projectVulnerabilityRepository
                 .findByVulnerabilitySourceAndCodeProject(vulnTemplate.SOURCE_OPENSOURCE, codeProject);

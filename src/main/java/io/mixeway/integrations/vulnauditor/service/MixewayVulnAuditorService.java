@@ -38,7 +38,7 @@ public class MixewayVulnAuditorService {
         this.settingsRepository = settingsRepository;
     }
 
-    @Transactional(isolation = Isolation.READ_COMMITTED)
+    @Transactional
     public void perdictVulnerabilities() throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         Optional<Settings> settings = settingsRepository.findAll().stream().findFirst();
         if (settings.isPresent() && settings.get().isVulnAuditorEnable()) {
