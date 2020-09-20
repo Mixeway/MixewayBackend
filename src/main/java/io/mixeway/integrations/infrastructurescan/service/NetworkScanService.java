@@ -447,9 +447,6 @@ public class NetworkScanService {
                             webAppHelper.discoverWebAppFromInfrastructureVulns(ns.getProject(), ns);
                     }
                     //Change state of interface which was not loaded for some reason
-                    if (nessusScanRepository.findByRunning(true).size() == 0 ){
-                        interfaceRepository.updateStateForNotRunningScan();
-                    }
                     return;
                 }
             }
