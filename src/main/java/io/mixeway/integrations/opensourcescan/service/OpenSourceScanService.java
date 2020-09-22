@@ -125,7 +125,7 @@ public class OpenSourceScanService {
             codeProject.get().setBranch(branch);
             return codeProject.get();
         } else {
-            Optional<List<Project>> project = projectRepository.findByName(codeProjectName);
+            Optional<List<Project>> project = projectRepository.findByNameIgnoreCase(codeProjectName);
             if (project.isPresent() && project.get().size()==1 && permissionFactory.canUserAccessProject(principal, project.get().stream().findFirst().get())){
                 codeService.saveCodeGroup(
                         project.get().stream().findFirst().get().getId(),

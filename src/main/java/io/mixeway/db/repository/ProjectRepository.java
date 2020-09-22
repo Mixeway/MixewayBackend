@@ -16,6 +16,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long>{
 	List<Project> findByNodesNotNull();
 	Optional<List<Project>> findByCiid(String ciid);
 	Optional<List<Project>> findByName(String name);
+	Optional<List<Project>> findByNameIgnoreCase(String name);
 	Optional<List<Project>> findByNameAndOwner(String name, User user);
 	Optional<Project> findByIdAndApiKey(Long id, String apiKey);
 	List<Project> findByApiKey(String apiKey);
