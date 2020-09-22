@@ -205,23 +205,27 @@ public class CiOperationsService {
      * @return info about scanners
      */
     public ResponseEntity<PrepareCIOperation> getInfoForCI(GetInfoRequest getInfoRequest, Principal principal) throws Exception {
-        switch (getInfoRequest.getScope()){
-            case Constants.CI_SCOPE_OPENSOURCE:
-                CodeProject codeProject = openSourceScanService.getCodeProjectByRepoUrl(getInfoRequest.getRepoUrl(), getInfoRequest.getRepoName(), getInfoRequest.getBranch(),principal);
-                if (StringUtils.isBlank(codeProject.getdTrackUuid())){
-                    openSourceScanService.createProjectOnOpenSourceScanner(codeProject);
-                }
-                OpenSourceConfig openSourceConfig = openSourceScanService
-                        .getOpenSourceScannerConfiguration(
-                                codeProject.getCodeGroup().getProject().getId(),
-                                codeProject.getName(),
-                                codeProject.getName(),
-                                principal)
-                        .getBody();
-                // FOR NOW owasp dtrack hardcoded
-                return new ResponseEntity<>(new PrepareCIOperation(openSourceConfig, codeProject,"OWASP Dependency Track"), HttpStatus.OK);
+        try {
+            switch (getInfoRequest.getScope()) {
+                case Constants.CI_SCOPE_OPENSOURCE:
+                    CodeProject codeProject = openSourceScanService.getCodeProjectByRepoUrl(getInfoRequest.getRepoUrl(), getInfoRequest.getRepoName(), getInfoRequest.getBranch(), principal);
+                    if (StringUtils.isBlank(codeProject.getdTrackUuid())) {
+                        openSourceScanService.createProjectOnOpenSourceScanner(codeProject);
+                    }
+                    OpenSourceConfig openSourceConfig = openSourceScanService
+                            .getOpenSourceScannerConfiguration(
+                                    codeProject.getCodeGroup().getProject().getId(),
+                                    codeProject.getName(),
+                                    codeProject.getName(),
+                                    principal)
+                            .getBody();
+                    // FOR NOW owasp dtrack hardcoded
+                    return new ResponseEntity<>(new PrepareCIOperation(openSourceConfig, codeProject, "OWASP Dependency Track"), HttpStatus.OK);
+            }
+        } catch (Exception e){
+            log.error("[CICD] Exception occured during preparation of data for CICD - {}", e.getLocalizedMessage());
         }
-        return null;
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
     public ResponseEntity<Status> infoScanPerformed(InfoScanPerformed infoScanPerformed, Principal principal) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
