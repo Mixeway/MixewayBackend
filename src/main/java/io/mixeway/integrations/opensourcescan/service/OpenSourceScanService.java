@@ -119,10 +119,8 @@ public class OpenSourceScanService {
      * @return codeproject
      */
     public CodeProject getCodeProjectByRepoUrl(String url, String codeProjectName, String branch, Principal principal) throws Exception {
-        URL repoUrl = new URL(url.split("\\.git")[0]);
-        String projectName;
-        String[] repoUrlParts = repoUrl.getPath().split("/");
-        Optional<CodeProject> codeProject = codeProjectRepository.getCodeProjectByNameAndPermissions(codeProjectName, permissionFactory.getProjectForPrincipal(principal).stream().map(Project::getId).collect(Collectors.toList()));
+        List<Long> projectForUserIds = permissionFactory.getProjectForPrincipal(principal).stream().map(Project::getId).collect(Collectors.toList());
+        Optional<CodeProject> codeProject = codeProjectRepository.getCodeProjectByNameAndPermissions(codeProjectName, projectForUserIds);
         if (codeProject.isPresent()) {
             codeProject.get().setBranch(branch);
             return codeProject.get();
@@ -319,7 +317,7 @@ public class OpenSourceScanService {
         }
         vulnTemplate.vulnerabilityPersistList(oldVulns,vulnToPersist);
         removeOldVulns(codeProject);
-        log.info("[CICD] OpenSource Loading vulns for {} completed", codeProject.getName());
+        log.info("[CICD] SourceCode - Loading Vulns for {} completed type of DEPENDENCY CHECK", codeProject.getName());
     }
 
     public void removeOldVulns(CodeProject codeProject){
