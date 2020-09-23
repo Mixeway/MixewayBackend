@@ -421,7 +421,7 @@ public class FortifyApiClient implements CodeScanClient, SecurityScanner {
 			fortifyScanRequest.setdTrackUuid(cp.getdTrackUuid());
 			fortifyScanRequest.setUsername(cp.getCodeGroup().getRepoUsername());
 			fortifyScanRequest.setPassword(vaultHelper.getPassword(cp.getCodeGroup().getRepoPassword()));
-			fortifyScanRequest.setVersionId(cp.getCodeGroup().getVersionIdsingle()>0 ? cp.getCodeGroup().getVersionIdsingle() : cp.getCodeGroup().getVersionIdAll() );
+			fortifyScanRequest.setVersionId(0);
 			ProjectCode pc = new ProjectCode();
 			pc.setTechnique(cp.getTechnique());
 			pc.setdTrackUuid(cp.getdTrackUuid());
