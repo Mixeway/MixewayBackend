@@ -21,6 +21,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -118,101 +119,50 @@ public class OpenSourceScanService {
      * @return codeproject
      */
     public CodeProject getCodeProjectByRepoUrl(String url, String codeProjectName, String branch, Principal principal) throws Exception {
-        URL repoUrl = new URL(url.split("\\.git")[0]);
-        String projectName;
-        String[] repoUrlParts = repoUrl.getPath().split("/");
-        // If url contains both Organization and Project Name
-        if (repoUrlParts.length == 3 || repoUrlParts.length == 4){
-            projectName = repoUrlParts[1];
-            Optional<CodeProject> codeProject = codeProjectRepository.findByNameAndBranch(codeProjectName, branch);
-            //If CodeProject with name already exists
-            if (codeProject.isPresent()){
-                return codeProject.get();
-            }
-            // else Create CodeProject and possibliy project
-            else {
-                Optional<Project> project = projectRepository.getProjectByName(projectName);
-                // If project exist only add codeproject to it
-                if (project.isPresent() ){
-                    codeService.saveCodeGroup(
-                            project.get().getId(),
-                            new CodeGroupPutModel(codeProjectName, url, false, false, branch),
-                            principal);
-                    Optional<CodeProject> justCreatedCodeProject = codeProjectRepository.findByNameAndBranch(codeProjectName, branch);
-                    if (justCreatedCodeProject.isPresent()){
-                        log.info("CICD job - Project present, CodeProject just created");
-                        return justCreatedCodeProject.get();
-                    } else{
-                        throw new Exception("Just created codeProject is not present");
-                    }
-
-                } else {
-                    Project projectToCreate = projectRepository
-                            .saveAndFlush(new Project(
-                                    projectName,
-                                    "Project created by CICD, branch: "+branch,
-                                    false,
-                                    "none",
-                                    permissionFactory.getUserFromPrincipal(principal)));
-                    permissionFactory.grantPermissionToProjectForUser(projectToCreate, principal);
-                    codeService.saveCodeGroup(
-                            projectToCreate.getId(),
-                            new CodeGroupPutModel(codeProjectName, url, false, false, branch),
-                            principal);
-                    Optional<CodeProject> justCreatedCodeProject = codeProjectRepository.findByNameAndBranch(codeProjectName, branch);
-                    if (justCreatedCodeProject.isPresent()){
-                        log.info("CICD job - Project just created, CodeProject just created");
-                        return justCreatedCodeProject.get();
-                    } else{
-                        throw new Exception("Just created codeProject is not present");
-                    }
-                }
-            }
-
-        } else if (repoUrlParts.length == 2){
-            Optional<CodeProject> codeProject = codeProjectRepository.findByNameAndBranch(codeProjectName, branch);
-            if (codeProject.isPresent()) {
-                return codeProject.get();
-            } else {
-                Optional<Project> project = projectRepository.getProjectByName("unknown");
-                if (project.isPresent()){
-                    codeService.saveCodeGroup(
-                            project.get().getId(),
-                            new CodeGroupPutModel(codeProjectName, url, false, false,branch),
-                            principal);
-                    Optional<CodeProject> justCreatedCodeProject = codeProjectRepository.findByNameAndBranch(codeProjectName, branch);
-                    if (justCreatedCodeProject.isPresent()){
-                        log.info("CICD job - Project present (unknown), CodeProject just created");
-                        return justCreatedCodeProject.get();
-                    } else{
-                        throw new Exception("Just created codeProject is not present");
-                    }
-                } else {
-                    Project projectToCreate = projectRepository
-                            .save(new Project(
-                                    "unknown",
-                                    "unknown project (created by CICD)",
-                                    false,
-                                    "none",
-                                    permissionFactory.getUserFromPrincipal(principal)));
-                    permissionFactory.grantPermissionToProjectForUser(projectToCreate,principal);
-                    codeService.saveCodeGroup(
-                            projectToCreate.getId(),
-                            new CodeGroupPutModel(codeProjectName, url, false, false,branch),
-                            principal);
-                    Optional<CodeProject> justCreatedCodeProject = codeProjectRepository.findByNameAndBranch(codeProjectName,branch);
-                    if (justCreatedCodeProject.isPresent()){
-                        log.info("CICD job - Project just created, CodeProject just created");
-                        return justCreatedCodeProject.get();
-                    } else{
-                        throw new Exception("Just created codeProject is not present");
-                    }
-                }
-            }
-
+        List<Long> projectForUserIds = permissionFactory.getProjectForPrincipal(principal).stream().map(Project::getId).collect(Collectors.toList());
+        Optional<CodeProject> codeProject = codeProjectRepository.getCodeProjectByNameAndPermissions(codeProjectName, projectForUserIds);
+        if (codeProject.isPresent()) {
+            codeProject.get().setBranch(branch);
+            return codeProject.get();
         } else {
-            throw new Exception("Unknown Repo Url format " + url);
+            Optional<List<Project>> project = projectRepository.findByNameIgnoreCase(codeProjectName);
+            if (project.isPresent() && project.get().size()==1 && permissionFactory.canUserAccessProject(principal, project.get().stream().findFirst().get())){
+                codeService.saveCodeGroup(
+                        project.get().stream().findFirst().get().getId(),
+                        new CodeGroupPutModel(codeProjectName, url, false, false, branch),
+                        principal);
+                Optional<CodeProject> justCreatedCodeProject = codeProjectRepository.findByNameAndBranch(codeProjectName, branch);
+                if (justCreatedCodeProject.isPresent()){
+                    log.info("CICD job - Project present, CodeProject just created");
+                    return justCreatedCodeProject.get();
+                } else{
+                    throw new Exception("Just created codeProject is not present");
+                }
+            } else if (!project.isPresent()) {
+                Project projectToCreate = projectRepository
+                        .saveAndFlush(new Project(
+                                codeProjectName,
+                                "Project created by CICD, branch: "+branch,
+                                false,
+                                "none",
+                                permissionFactory.getUserFromPrincipal(principal)));
+                permissionFactory.grantPermissionToProjectForUser(projectToCreate, principal);
+                codeService.saveCodeGroup(
+                        projectToCreate.getId(),
+                        new CodeGroupPutModel(codeProjectName, url, false, false, branch),
+                        principal);
+                Optional<CodeProject> justCreatedCodeProject = codeProjectRepository.findByNameAndBranch(codeProjectName, branch);
+                if (justCreatedCodeProject.isPresent()){
+                    log.info("CICD job - Project just created, CodeProject just created");
+                    return justCreatedCodeProject.get();
+                } else{
+                    throw new Exception("Just created codeProject is not present");
+                }
+            } else {
+                log.error("[CICD] Wierd case happened for project with name {}", codeProject);
+            }
         }
+        return null;
     }
 
     /**
@@ -367,7 +317,7 @@ public class OpenSourceScanService {
         }
         vulnTemplate.vulnerabilityPersistList(oldVulns,vulnToPersist);
         removeOldVulns(codeProject);
-        log.info("[CICD] OpenSource Loading vulns for {} completed", codeProject.getName());
+        log.info("[CICD] SourceCode - Loading Vulns for {} completed type of DEPENDENCY CHECK", codeProject.getName());
     }
 
     public void removeOldVulns(CodeProject codeProject){

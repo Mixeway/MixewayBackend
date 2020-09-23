@@ -108,7 +108,7 @@ public class CodeService {
             codeGroup.setVersionIdsingle(codeGroupPutModel.getVersionIdSingle());
             codeGroup.setProject(project.get());
             codeGroup.setAppClient(codeGroupPutModel.getAppClient());
-            codeGroupRepository.save(codeGroup);
+            codeGroupRepository.saveAndFlush(codeGroup);
             codeGroup.setVersionIdsingle(codeGroupPutModel.getVersionIdAll());
             createProjectForCodeGroup(codeGroup, codeGroupPutModel);
             String uuidToken = UUID.randomUUID().toString();
@@ -117,7 +117,7 @@ public class CodeService {
             } else {
                 codeGroup.setRepoPassword(codeGroupPutModel.getGitpassword());
             }
-            codeGroupRepository.save(codeGroup);
+            codeGroupRepository.saveAndFlush(codeGroup);
             log.info("{} - Created new CodeGroup [{}] {}", principal.getName(), project.get().getName(), codeGroup.getName());
             return new ResponseEntity<>(HttpStatus.CREATED);
         } else {
@@ -136,7 +136,7 @@ public class CodeService {
         cp.setTechnique(codeGroup.getTechnique());
         cp.setInQueue(false);
         cp.setdTrackUuid(codeGroupPutModel.getdTrackUuid());
-        codeProjectRepository.save(cp);
+        codeProjectRepository.saveAndFlush(cp);
     }
 
     public ResponseEntity<Status> saveCodeProject(Long id, CodeProjectPutModel codeProjectPutModel, Principal principal) {

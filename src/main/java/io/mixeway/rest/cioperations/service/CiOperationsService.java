@@ -205,23 +205,28 @@ public class CiOperationsService {
      * @return info about scanners
      */
     public ResponseEntity<PrepareCIOperation> getInfoForCI(GetInfoRequest getInfoRequest, Principal principal) throws Exception {
-        switch (getInfoRequest.getScope()){
-            case Constants.CI_SCOPE_OPENSOURCE:
-                CodeProject codeProject = openSourceScanService.getCodeProjectByRepoUrl(getInfoRequest.getRepoUrl(), getInfoRequest.getRepoName(), getInfoRequest.getBranch(),principal);
-                if (StringUtils.isBlank(codeProject.getdTrackUuid())){
-                    openSourceScanService.createProjectOnOpenSourceScanner(codeProject);
-                }
-                OpenSourceConfig openSourceConfig = openSourceScanService
-                        .getOpenSourceScannerConfiguration(
-                                codeProject.getCodeGroup().getProject().getId(),
-                                codeProject.getName(),
-                                codeProject.getName(),
-                                principal)
-                        .getBody();
-                // FOR NOW owasp dtrack hardcoded
-                return new ResponseEntity<>(new PrepareCIOperation(openSourceConfig, codeProject,"OWASP Dependency Track"), HttpStatus.OK);
+        try {
+            switch (getInfoRequest.getScope()) {
+                case Constants.CI_SCOPE_OPENSOURCE:
+                    CodeProject codeProject = openSourceScanService.getCodeProjectByRepoUrl(getInfoRequest.getRepoUrl(), getInfoRequest.getRepoName(), getInfoRequest.getBranch(), principal);
+                    if (StringUtils.isBlank(codeProject.getdTrackUuid())) {
+                        openSourceScanService.createProjectOnOpenSourceScanner(codeProject);
+                    }
+                    OpenSourceConfig openSourceConfig = openSourceScanService
+                            .getOpenSourceScannerConfiguration(
+                                    codeProject.getCodeGroup().getProject().getId(),
+                                    codeProject.getName(),
+                                    codeProject.getName(),
+                                    principal)
+                            .getBody();
+                    // FOR NOW owasp dtrack hardcoded
+                    return new ResponseEntity<>(new PrepareCIOperation(openSourceConfig, codeProject, "OWASP Dependency Track"), HttpStatus.OK);
+            }
+        } catch (Exception e){
+            log.error("[CICD] Exception occured during preparation of data for CICD - {}", e.getLocalizedMessage());
+            e.printStackTrace();
         }
-        return null;
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
     public ResponseEntity<Status> infoScanPerformed(InfoScanPerformed infoScanPerformed, Principal principal) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
@@ -243,62 +248,40 @@ public class CiOperationsService {
     @Transactional
     public ResponseEntity<Status> loadVulnerabilitiesFromCICDToProject(List<VulnerabilityModel> vulns, Long projectId,
                                                                        String codeProjectName, String branch,
-                                                                       String commitId, Principal principal) {
+                                                                       String commitId, Principal principal) throws Exception {
         Optional<Project> project;
         if (projectId == null){
-            Optional<List<Project>> projectList = projectRepository.findByNameAndOwner("CICD Project", permissionFactory.getUserFromPrincipal(principal));
-            if (projectList.isPresent() && projectList.get().size()==1){
-                project = Optional.of(projectList.get().get(0));
-            } else {
-                Project newProject = new Project();
-                newProject.setOwner(permissionFactory.getUserFromPrincipal(principal));
-                newProject.setName("CICD Project");
-                newProject.setCiid("0");
-                newProject.setEnableVulnManage(false);
-                newProject.setDescription("Project created by CICD pipeline");
-                project = Optional.of(projectRepository.save(newProject));
-            }
+            CodeProject codeProject = openSourceScanService.getCodeProjectByRepoUrl(null, codeProjectName, branch, principal);
+            project = Optional.ofNullable(codeProject.getCodeGroup().getProject());
         }else {
             project = projectRepository.findById(projectId);
         }
-        if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
-            Optional<CodeProject> codeProject = codeProjectRepository.getCodeProjectByProjectNameAndBranch(project.get().getId(), codeProjectName, branch);
-            CodeProject codeProjectToLoad;
-            if (codeProject.isPresent()){
-                log.info("[CICD] Get results for {}, proceeding with load", codeProject.get().getName());
-                codeProjectToLoad = codeProject.get();
-                codeProjectToLoad.setCommitid(commitId);
 
-            } else {
-                log.info("[CICD] Get results for unknown codeproject, creating new with name {}", codeProjectName);
-                Optional<CodeGroup> codeGroup = codeGroupRepository.findByProjectAndName(project.get(), codeProjectName);
-                if (codeGroup.isPresent()){
-                    codeProjectToLoad = codeProjectRepository.save(new CodeProject(codeProjectName,branch,codeGroup.get(),commitId));
-                } else {
-                    CodeGroup newCodeGroup = codeGroupRepository.save(new CodeGroup(project.get(), codeProjectName));
-                    codeProjectToLoad = codeProjectRepository.save(new CodeProject(codeProjectName,branch,newCodeGroup,commitId));
-                }
-            }
+        if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
+            CodeProject codeProject = openSourceScanService.getCodeProjectByRepoUrl(null, codeProjectName, branch, principal);
+            log.info("[CICD] Get results for {}, proceeding with load", codeProject.getName());
+            codeProject.setCommitid(commitId);
+
             List<VulnerabilityModel> sastVulns = vulns.stream().filter(v -> v.getScannerType().equals(ScannerType.SAST)).collect(Collectors.toList());
             if (sastVulns.size() > 0 ){
-                codeScanService.loadVulnsFromCICDToCodeProject(codeProjectToLoad, sastVulns, ScannerType.SAST);
+                codeScanService.loadVulnsFromCICDToCodeProject(codeProject, sastVulns, ScannerType.SAST);
             } else {
-                codeScanService.loadVulnsFromCICDToCodeProject(codeProjectToLoad, new ArrayList<>(), ScannerType.SAST);
+                codeScanService.loadVulnsFromCICDToCodeProject(codeProject, new ArrayList<>(), ScannerType.SAST);
             }
             List<VulnerabilityModel> gitLeaksVulns = vulns.stream().filter(v -> v.getScannerType().equals(ScannerType.GITLEAKS)).collect(Collectors.toList());
             if (gitLeaksVulns.size() > 0 ){
-                codeScanService.loadVulnsFromCICDToCodeProject(codeProjectToLoad, gitLeaksVulns, ScannerType.GITLEAKS);
+                codeScanService.loadVulnsFromCICDToCodeProject(codeProject, gitLeaksVulns, ScannerType.GITLEAKS);
             } else {
-                codeScanService.loadVulnsFromCICDToCodeProject(codeProjectToLoad, new ArrayList<>(), ScannerType.GITLEAKS);
+                codeScanService.loadVulnsFromCICDToCodeProject(codeProject, new ArrayList<>(), ScannerType.GITLEAKS);
             }
             List<VulnerabilityModel> openSourceVulns = vulns.stream().filter(v -> v.getScannerType().equals(ScannerType.OPENSOURCE)).collect(Collectors.toList());
             if (openSourceVulns.size() > 0) {
-                openSourceScanService.loadVulnsFromCICDToCodeProject(codeProjectToLoad, openSourceVulns);
+                openSourceScanService.loadVulnsFromCICDToCodeProject(codeProject, openSourceVulns);
             } else {
-                openSourceScanService.loadVulnsFromCICDToCodeProject(codeProjectToLoad, new ArrayList<>());
+                openSourceScanService.loadVulnsFromCICDToCodeProject(codeProject, new ArrayList<>());
             }
 
-            return new ResponseEntity<>(new Status(createCIOperationsForCICDRequest(codeProjectToLoad).getResult()), HttpStatus.OK);
+            return new ResponseEntity<>(new Status(createCIOperationsForCICDRequest(codeProject).getResult()), HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }

@@ -35,7 +35,7 @@ public class User {
 		this.apiKey = apiKey;
 	}
 
-	@ManyToMany(cascade = { CascadeType.ALL })
+	@ManyToMany
 	@JoinTable(
 			name = "user_project",
 			joinColumns = { @JoinColumn(name = "users_id") },

@@ -108,7 +108,7 @@ public class PermissionFactory {
             Optional<User> user = userRepository.findByApiKey(principal.getName());
             if (user.isPresent() && (user.get().getPermisions().equals(Constants.ROLE_ADMIN) || user.get().getPermisions().equals(Constants.ROLE_AUDITOR))){
                 return true;
-            } else if (user.isPresent() && (user.get().getPermisions().equals(Constants.ROLE_USER) || user.get().getPermisions().equals(Constants.ROLE_EDITOR_RUNNER))){
+            } else if (user.isPresent() && (user.get().getPermisions().equals(Constants.ROLE_USER) || user.get().getPermisions().equals(Constants.ROLE_EDITOR_RUNNER) || user.get().getPermisions().equals(Constants.ROLE_API))){
                 return user.get().getProjects().contains(project);
             }
             Optional<Project> optionalProject = projectRepository.findByIdAndApiKey(project.getId(), principal.getName());
@@ -131,8 +131,8 @@ public class PermissionFactory {
      * @return
      */
     public List<Project> getProjectForPrincipal(Principal principal){
-        Optional<User> userOptional = userRepository.findByUsername(principal.getName());
-        if (userOptional.isPresent() && (userOptional.get().getPermisions().equals(Constants.ROLE_USER) ||
+        Optional<User> userOptional = userRepository.findByUsernameOrApiKey(principal.getName(),principal.getName());
+        if (userOptional.isPresent() && (userOptional.get().getPermisions().equals(Constants.ROLE_API) || userOptional.get().getPermisions().equals(Constants.ROLE_USER) ||
                 userOptional.get().getPermisions().equals(Constants.ROLE_EDITOR_RUNNER))){
             return new ArrayList<>(userOptional.get().getProjects());
         } else if (userOptional.isPresent() && (userOptional.get().getPermisions().equals(Constants.ROLE_ADMIN) ||
