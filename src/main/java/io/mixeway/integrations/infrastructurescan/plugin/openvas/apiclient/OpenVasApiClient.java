@@ -189,6 +189,11 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 			log.error("GetReport HTTP exception {} for {}", ex.getRawStatusCode(), nessusScan.getProject().getName());
 		} catch (HttpServerErrorException e) {
 			log.warn("Exception during getReport httpCode: {}",e.getStatusCode().toString());
+			if (e.getStatusCode().equals(HttpStatus.INTERNAL_SERVER_ERROR)){
+				nessusScan.setRunning(false);
+				nessusScan.setTaskId(null);
+				nessusScanRepository.save(nessusScan);
+			}
 		}
 	}
 
