@@ -75,7 +75,7 @@ public class JwtUserDetailsService implements UserDetailsService {
             case Constants.ROLE_API:
                 return AuthorityUtils.commaSeparatedStringToAuthorityList(Constants.ROLE_API + "," + Constants.ROLE_USER);
             default:
-                return AuthorityUtils.commaSeparatedStringToAuthorityList(Constants.ROLE_USER);
+                return AuthorityUtils.commaSeparatedStringToAuthorityList(Constants.ROLE_USER + "," + Constants.ROLE_API);
         }
 
 
