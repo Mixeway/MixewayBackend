@@ -184,6 +184,7 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 				nessusScan.setRunning(false);
 				nessusScan.setTaskId(null);
 				nessusScanRepository.save(nessusScan);
+				interfaceRepository.disableScanRunningOnInterfaces(scanHelper.prepareTargetsForScan(nessusScan,false));
 			}
 		} catch (HttpClientErrorException ex) {
 			log.error("GetReport HTTP exception {} for {}", ex.getRawStatusCode(), nessusScan.getProject().getName());

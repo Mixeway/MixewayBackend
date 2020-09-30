@@ -54,4 +54,8 @@ public interface InterfaceRepository extends JpaRepository<Interface, Long>{
 	@Query(value="update Interface i set i.active= :status where i.asset.id in :assets")
 	void updateStateOfInterfaceByAssets(@Param("assets") List<Long> assets, @Param("status") boolean status);
 	List<Interface> findByActive(Boolean active);
+
+	@Modifying
+	@Query(value="update Interface i set i.scanRunning=false where i.privateip in :ips")
+    void disableScanRunningOnInterfaces(@Param("ips") List<String> prepareTargetsForScan);
 }
