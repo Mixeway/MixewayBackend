@@ -82,7 +82,8 @@ public class ScanHelper {
                 inter.ifPresent(anInterface -> anInterface.setScanRunning(true));
             }
         } catch (Exception ex) {
-            log.error("IllegalArgumentException during updating interface for {}", nessusScan.getProject().getName());
+            ex.printStackTrace();
+            log.error("{} during updating interface for {}",ex.getLocalizedMessage(), nessusScan.getProject().getName());
         }
     }
     public Set<Interface> prepareInterfacesToScan(List<RunScanForAssets> runScanForAssets, Project project){
