@@ -67,6 +67,7 @@ public class PermissionFactory {
      */
     public User getUserFromPrincipal(Principal principal) {
         try {
+            Optional<User> admin = userRepository.findById(1L);
             Optional<User> userOptional = userRepository.findByUsername(principal.getName());
             Optional<User> userApiKey = userRepository.findByApiKey(principal.getName());
             if (userOptional.isPresent())
@@ -75,11 +76,13 @@ public class PermissionFactory {
                 return userApiKey.get();
             } else if (settingsRepository.findAll().stream().findFirst().orElse(null).getMasterApiKey().equals(principal.getName())) {
                 return userRepository.findByUsername("admin").orElse(null);
-            } else if (principal.getName().equals(Constants.ORIGIN_SCHEDULER)){
+            } else if (principal.getName().equals(Constants.ORIGIN_SCHEDULER)) {
                 User u = new User();
                 u.setUsername(Constants.API_URL);
                 u.setPermisions("ROLE_API");
                 return u;
+            } else if(principal.getName().equals("admin")){
+                return admin.orElse(null);
             } else {
                 UUID test = UUID.fromString(principal.getName());
                 User u = new User();
