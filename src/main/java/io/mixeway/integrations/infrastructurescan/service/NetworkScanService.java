@@ -125,7 +125,7 @@ public class NetworkScanService {
             project.setCiid(req.getCiid());
             project.setOwner(permissionFactory.getUserFromPrincipal(principal));
             project.setEnableVulnManage(req.getEnableVulnManage().isPresent() ? req.getEnableVulnManage().get() : true);
-            project = projectRepository.save(project);
+            project = projectRepository.saveAndFlush(project);
             permissionFactory.grantPermissionToProjectForUser(project,principal);
         }
         List<Interface> intfs = updateAssetsAndPrepareInterfacesForScan(req, project);
