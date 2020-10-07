@@ -282,4 +282,5 @@ public class Constants {
     public static final String PROJECT_UNKNOWN = "unknown";
     public static final String ROLE_AUDITOR = "ROLE_AUDITOR";
     public static final String VULNEARBILITY_SOURCE_GITLEAKS = "GitLeaks";
+    public static final String STATUS_STOPPED = "Stopped";
 }
