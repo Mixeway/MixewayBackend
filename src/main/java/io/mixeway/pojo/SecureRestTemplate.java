@@ -9,6 +9,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +26,8 @@ import java.io.IOException;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.time.Duration;
+import java.util.function.Supplier;
 
 @Component
 public class SecureRestTemplate {
@@ -75,6 +78,46 @@ public class SecureRestTemplate {
 
         return new RestTemplate(requestFactory);
     }
+    public RestTemplate prepareClientWithCertificateWithoutTimeout(Scanner scanner) throws KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, CertificateException, FileNotFoundException, IOException {
+        KeyStore clientStore = KeyStore.getInstance("PKCS12");
+        clientStore.load(new FileInputStream(keyStorePath), keyStorePassword.toCharArray());
+
+        KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+        kmf.init(clientStore, keyStorePassword.toCharArray());
+        KeyManager[] kms = kmf.getKeyManagers();
+
+        KeyStore trustStore = KeyStore.getInstance("JKS");
+        trustStore.load(new FileInputStream(trustStorePath), trustStorePassword.toCharArray());
+
+        TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        tmf.init(trustStore);
+        TrustManager[] tms = tmf.getTrustManagers();
+
+        SSLContext sslContext = null;
+        sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(kms, tms, new SecureRandom());
+        CloseableHttpClient httpClient;
+        if(scanner != null && scanner.getProxies() !=null){
+            httpClient = HttpClients
+                    .custom()
+                    .setProxy(new HttpHost(scanner.getProxies().getIp(), Integer.parseInt(scanner.getProxies().getPort())))
+                    .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE)
+                    .setSSLContext(sslContext)
+                    .build();
+        }else {
+            httpClient = HttpClients
+                    .custom()
+                    .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE)
+                    .setSSLContext(sslContext)
+                    .build();
+        }
+
+        ClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
+
+        return new RestTemplateBuilder().requestFactory((Supplier<ClientHttpRequestFactory>) requestFactory).setConnectTimeout(Duration.ofMinutes(5)).setReadTimeout(Duration.ofMinutes(5)).build();
+        //return new RestTemplate(requestFactory);
+    }
+
     public RestTemplate restTemplateForIaasApi(IaasApi api) throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException, KeyManagementException {
         //SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
         KeyStore trustStore = KeyStore.getInstance("JKS");
