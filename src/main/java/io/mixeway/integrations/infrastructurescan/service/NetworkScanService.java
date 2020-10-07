@@ -126,7 +126,9 @@ public class NetworkScanService {
             project.setOwner(permissionFactory.getUserFromPrincipal(principal));
             project.setEnableVulnManage(req.getEnableVulnManage().isPresent() ? req.getEnableVulnManage().get() : true);
             project = projectRepository.saveAndFlush(project);
-            permissionFactory.grantPermissionToProjectForUser(project,principal);
+            if (!principal.getName().equals("admin")) {
+                permissionFactory.grantPermissionToProjectForUser(project, principal);
+            }
         }
         List<Interface> intfs = updateAssetsAndPrepareInterfacesForScan(req, project);
         //GET RUNNING MANUAL SCANS AND CHECK IF INTERFACE ON LIST
