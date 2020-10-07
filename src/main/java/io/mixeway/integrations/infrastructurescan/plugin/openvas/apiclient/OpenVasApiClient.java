@@ -174,7 +174,7 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 			HashMap<String, String> params = new HashMap<>();
 			params.put(Constants.REPORT_ID, nessusScan.getReportId());
 			rrb.setParams(params);
-			RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificateWithoutTimeout(nessusScan.getNessus());
+			RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(nessusScan.getNessus());
 			HttpHeaders headers = new HttpHeaders();
 			headers.set("Content-Type", "application/json");
 			HttpEntity<String> entity = new HttpEntity<>(new Gson().toJson(rrb),headers);
