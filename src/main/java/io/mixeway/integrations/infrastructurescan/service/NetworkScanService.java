@@ -271,6 +271,7 @@ public class NetworkScanService {
      * @param project context
      * @return list of interface in request
      */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     private List<Interface> updateAssetsAndPrepareInterfacesForScan(NetworkScanRequestModel req, Project project) {
         List<Interface> listtoScan = new ArrayList<>();
         for (AssetToCreate atc : req.getIpAddresses()){
