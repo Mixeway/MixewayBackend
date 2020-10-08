@@ -78,8 +78,10 @@ public class ScanHelper {
     private void updateInterfaceState(NessusScan nessusScan, List<String> interfacesToScan) {
         try {
             for (String ip : interfacesToScan) {
-                Optional<Interface> inter = interfaceRepository.findByAssetInAndPrivateipAndActive(nessusScan.getProject().getAssets(), ip, true);
-                inter.ifPresent(anInterface -> anInterface.setScanRunning(true));
+                if (ip!=null && nessusScan.getProject().getAssets() != null) {
+                    Optional<Interface> inter = interfaceRepository.findByAssetInAndPrivateipAndActive(nessusScan.getProject().getAssets(), ip, true);
+                    inter.ifPresent(anInterface -> anInterface.setScanRunning(true));
+                }
             }
         } catch (Exception ex) {
             ex.printStackTrace();
