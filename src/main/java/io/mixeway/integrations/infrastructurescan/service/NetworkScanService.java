@@ -214,7 +214,7 @@ public class NetworkScanService {
                 interfaceRepository.save(i);
                 assetRepository.save(i.getAsset());
             }
-            nessusScanRepository.save(scan);
+            scan = nessusScanRepository.saveAndFlush(scan);
             putRulesOnRfw(scan);
             keyValue.getKey().runScan(scan);
             nessusScans.add(scan);
