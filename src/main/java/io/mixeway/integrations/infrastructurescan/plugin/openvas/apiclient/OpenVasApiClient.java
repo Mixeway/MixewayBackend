@@ -150,6 +150,7 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 					nessusScan.setRunning(false);
 					nessusScan.setTaskId(null);
 					nessusScanRepository.save(nessusScan);
+					interfaceRepository.disableScanRunningOnInterfaces(scanHelper.prepareTargetsForScan(nessusScan,false));
 				}
 				if (new JSONObject(response.getBody()).getString(Constants.STATUS).equals(Constants.STATUS_DONE))
 					log.debug("Checking status for task {} status is: {}", nessusScan.getTaskId(),new JSONObject(response.getBody()).getString(Constants.STATUS));
