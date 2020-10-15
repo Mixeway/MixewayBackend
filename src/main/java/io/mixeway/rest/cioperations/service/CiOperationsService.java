@@ -374,4 +374,17 @@ public class CiOperationsService {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
+
+    public ResponseEntity<Status> performSastScanForCodeProject(Long codeProjectId, Principal principal) {
+        Optional<CodeProject> codeProject = codeProjectRepository.findById(codeProjectId);
+        if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getCodeGroup().getProject())) {
+            codeProject.get().setInQueue(true);
+            codeProjectRepository.save(codeProject.get());
+            log.info("{} put SAST Project in queue - {}", principal.getName(), codeProject.get().getName());
+            return new ResponseEntity<>(HttpStatus.OK);
+        } else {
+            log.error("{} tries to run SAST scan for id {} but project doesnt exist or user has no permision to do so.", principal.getName(), codeProjectId);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
 }

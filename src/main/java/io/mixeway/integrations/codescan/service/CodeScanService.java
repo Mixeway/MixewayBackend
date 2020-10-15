@@ -366,20 +366,20 @@ public class CodeScanService {
                 }
                 vulnTemplate.projectVulnerabilityRepository.deleteByStatus(vulnTemplate.STATUS_REMOVED);
             }
-            List<CodeGroup> codeGroups = codeGroupRepository.findByRunning(true);
-            for (CodeGroup codeGroup : codeGroups) {
-                for (CodeScanClient codeScanClient : codeScanClients) {
-                    if (codeScanClient.canProcessRequest(sastScanner.get()) && codeScanClient.isScanDone(codeGroup,null) ) {
-                        codeScanClient.loadVulnerabilities(sastScanner.get(), codeGroup, null, false, null, getOldVulnsForGroup(codeGroup));
-                        codeGroup.setRunning(false);
-                        codeGroup.setRequestid(null);
-                        codeGroup.setScanid(null);
-                        codeGroup.setScope(null);
-                        codeGroupRepository.save(codeGroup);
-                    }
-                }
-                vulnTemplate.projectVulnerabilityRepository.deleteByStatus(vulnTemplate.STATUS_REMOVED);
-            }
+//            List<CodeGroup> codeGroups = codeGroupRepository.findByRunning(true);
+//            for (CodeGroup codeGroup : codeGroups) {
+//                for (CodeScanClient codeScanClient : codeScanClients) {
+//                    if (codeScanClient.canProcessRequest(sastScanner.get()) && codeScanClient.isScanDone(codeGroup,null) ) {
+//                        codeScanClient.loadVulnerabilities(sastScanner.get(), codeGroup, null, false, null, getOldVulnsForGroup(codeGroup));
+//                        codeGroup.setRunning(false);
+//                        codeGroup.setRequestid(null);
+//                        codeGroup.setScanid(null);
+//                        codeGroup.setScope(null);
+//                        codeGroupRepository.save(codeGroup);
+//                    }
+//                }
+//                vulnTemplate.projectVulnerabilityRepository.deleteByStatus(vulnTemplate.STATUS_REMOVED);
+//            }
         }
 
     }
@@ -424,18 +424,18 @@ public class CodeScanService {
                         }
                     }
                 }
-                for (CodeGroup cg : codeGroupRepository.findByInQueue(true)) {
-                    if (codeGroupRepository.countByRunning(true) == 0) {
-                        for (CodeScanClient codeScanClient : codeScanClients) {
-                            if (codeScanClient.canProcessRequest(cg)) {
-                                log.info("Ready to scan [scope ALL] {}, taking it from the queue", cg.getName());
-                                cg.setInQueue(false);
-                                codeGroupRepository.saveAndFlush(cg);
-                                codeScanClient.runScan(cg, null);
-                            }
-                        }
-                    }
-                }
+//                for (CodeGroup cg : codeGroupRepository.findByInQueue(true)) {
+//                    if (codeGroupRepository.countByRunning(true) == 0) {
+//                        for (CodeScanClient codeScanClient : codeScanClients) {
+//                            if (codeScanClient.canProcessRequest(cg)) {
+//                                log.info("Ready to scan [scope ALL] {}, taking it from the queue", cg.getName());
+//                                cg.setInQueue(false);
+//                                codeGroupRepository.saveAndFlush(cg);
+//                                codeScanClient.runScan(cg, null);
+//                            }
+//                        }
+//                    }
+//                }
 
             } catch (IndexOutOfBoundsException ex) {
                 log.debug("Fortify configuration missing");

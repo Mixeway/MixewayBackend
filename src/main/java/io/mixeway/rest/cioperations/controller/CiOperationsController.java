@@ -105,6 +105,11 @@ public class CiOperationsController {
         return ciOperationsService.loadVulnerabilitiesFromCICDToProject(vulns, projectId, codeProjectName, branch, commitId, principal);
     }
     @PreAuthorize("hasAuthority('ROLE_API')")
+    @GetMapping(value = "/sast/performscan/codeproject/{id}")
+    public ResponseEntity<Status> performSastScanForCodeProject(@PathVariable("id") Long codeProjectId, Principal principal){
+        return ciOperationsService.performSastScanForCodeProject(codeProjectId, principal);
+    }
+    @PreAuthorize("hasAuthority('ROLE_API')")
     @PostMapping(value = "/loadvulnerabilities/{codeProjectName}/{branch}/{commitId}",produces = "application/json")
     public ResponseEntity<Status> loadVulnerabilitiesFromCICD(@RequestBody List<VulnerabilityModel> vulns,
                                                                        @PathVariable(value = "codeProjectName") String codeProjectName,

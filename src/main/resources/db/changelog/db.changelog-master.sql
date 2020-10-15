@@ -1110,3 +1110,11 @@ update project set owner_id = (select id from users where name='username');
 
 --changeset siewer:add_gitleaks
 insert into vulnerabilitysource (name) values ('GitLeaks');
+
+--changeset siewer:add_git_credentials
+create table gitcredentials (
+    id serial primary key,
+    url text,
+    username text,
+    password text
+);

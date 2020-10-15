@@ -12,6 +12,8 @@ import io.mixeway.pojo.SecureRestTemplate;
 import io.mixeway.pojo.SecurityScanner;
 import io.mixeway.pojo.VaultHelper;
 import io.mixeway.rest.model.ScannerModel;
+import io.mixeway.rest.project.model.SASTProject;
+import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -129,7 +131,7 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
     public boolean createProject(CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         List<Scanner> dTrack = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_DEPENDENCYTRACK));
         //Multiple dTrack instances not yet supported
-        if (dTrack.size() == 1 && (codeProject.getdTrackUuid() == null || codeProject.getdTrackUuid().isEmpty())){
+        if (dTrack.size() == 1 && !isProjectAlreadyDefined(codeProject,dTrack.get(0)) && (codeProject.getdTrackUuid() == null || codeProject.getdTrackUuid().isEmpty())){
             RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(dTrack.get(0));
             HttpHeaders headers = prepareAuthHeader(dTrack.get(0));
             HttpEntity<DTrackCreateProject> entity = new HttpEntity<>(new DTrackCreateProject(codeProject.getName()),headers);
@@ -150,7 +152,22 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
             }
         }
 
-        return false;
+        return StringUtils.isNotBlank(codeProject.getdTrackUuid());
+    }
+    private boolean isProjectAlreadyDefined(CodeProject codeProject, Scanner scanner) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+        List<Projects> sastProjects = getProjects();
+        List<Projects> filteredProject = sastProjects.stream().filter(p -> p.getName().equals(codeProject.getName())).collect(Collectors.toList());
+        if (filteredProject.size() == 1){
+            codeProject.setdTrackUuid(filteredProject.get(0).getUuid());
+            codeProjectRepository.save(codeProject);
+            log.info("[DependencyTrack] No need to create new project on Dtrack - project {} already exists", codeProject.getName());
+            return true;
+        } else if (filteredProject.size() == 0){
+            return false;
+        } else {
+            log.warn("[DependencyTrack] Something strage durign project creation, list of project with name `{}` is size of: {}", codeProject.getName(), filteredProject.size());
+            return true;
+        }
     }
     @Override
     public List<Projects> getProjects() throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {

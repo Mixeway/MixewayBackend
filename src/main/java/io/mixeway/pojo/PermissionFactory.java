@@ -152,7 +152,7 @@ public class PermissionFactory {
      * @param projectToCreate
      * @param principal
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public void grantPermissionToProjectForUser(Project projectToCreate, Principal principal) {
         User user = getUserFromPrincipal(principal);
         if (user.getProjects() != null) {

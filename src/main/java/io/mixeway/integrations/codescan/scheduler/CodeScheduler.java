@@ -34,12 +34,12 @@ public class CodeScheduler {
 	@Scheduled(cron="0 10 7,23 * * ?")
 	//@Scheduled(initialDelay=0,fixedDelay = 1500000)
 	public void getReportForAllGroups() throws JSONException, ParseException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, URISyntaxException {
-		codeScanService.schedulerReportSynchro();
+		//codeScanService.schedulerReportSynchro();
 	}
 	@Transactional
 	@Scheduled(cron="#{@getCodeCronExpression}" )
 	public void runScheduledScans() throws KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, CertificateException, IOException, JSONException, ParseException {
-		codeScanService.schedulerRunAutoScans();
+		//codeScanService.schedulerRunAutoScans();
 	}
 	@Scheduled(fixedDelay = 30000)
 	public void getVulns() throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException, URISyntaxException {

@@ -41,10 +41,11 @@ public class CreateProjectService {
             p.setEnableVulnManage(enableVulnManage == 1);
             p.setCiid(ciid);
             p.setOwner(permissionFactory.getUserFromPrincipal(principal));
-            p = projectRepository.save(p);
+            p = projectRepository.saveAndFlush(p);
             permissionFactory.grantPermissionToProjectForUser(p, principal);
             return true;
         } catch (Exception e) {
+            e.printStackTrace();
             return false;
         }
     }

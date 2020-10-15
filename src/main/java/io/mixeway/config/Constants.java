@@ -283,4 +283,10 @@ public class Constants {
     public static final String ROLE_AUDITOR = "ROLE_AUDITOR";
     public static final String VULNEARBILITY_SOURCE_GITLEAKS = "GitLeaks";
     public static final String STATUS_STOPPED = "Stopped";
+    public static final String CX_STATUS_CREATED = "Created";
+	public static final String CX_ANALYSIS_TO_VERIFY = "To Verify";
+	public static final String CX_ANALYSIS_NOT_EXPLOITABLE = "Not Exploitable";
+	public static final String CX_ANALYSIS_CONFIRMED = "Confirmed";
+	public static final String CX_ANALYSIS_URGENT = "Urgent";
+	public static final String CX_ANALYSIS_FP = "Proposed Not Exploitable";
 }
