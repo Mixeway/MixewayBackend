@@ -196,7 +196,6 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
     private String getPasswordStringForCodeProejct(CodeProject codeProject) throws MalformedURLException {
         boolean isPasswordAndUsernameNotBlank = StringUtils.isNotBlank(codeProject.getRepoUsername()) && StringUtils.isNotBlank(codeProject.getRepoPassword());
         boolean isPasswordANotBlank = StringUtils.isNotBlank(codeProject.getRepoPassword());
-        log.info("isPasswordAndUsernameNotBlank-{}, isPasswordANotBlank-{}",isPasswordAndUsernameNotBlank,isPasswordANotBlank);
         if (isPasswordAndUsernameNotBlank){
             return codeProject.getRepoUsername()+":"+vaultHelper.getPassword(codeProject.getRepoPassword());
         } else if(isPasswordANotBlank){
@@ -207,10 +206,8 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
             if (gitCredentials.isPresent()){
                 boolean isGlobalPasswordAndUsernameNotBlank = StringUtils.isNotBlank(gitCredentials.get().getUsername()) && StringUtils.isNotBlank(gitCredentials.get().getPassword());
                 boolean isGlobalPasswordANotBlank = StringUtils.isNotBlank(gitCredentials.get().getPassword());
-                log.info("isGlobalPasswordAndUsernameNotBlank-{}, isGlobalPasswordANotBlank-{}",isGlobalPasswordAndUsernameNotBlank,isGlobalPasswordANotBlank);
 
                 if (isGlobalPasswordAndUsernameNotBlank) {
-                    log.info("creds: {}",gitCredentials.get().getUsername()+":"+vaultHelper.getPassword(gitCredentials.get().getPassword()));
                     return gitCredentials.get().getUsername()+":"+vaultHelper.getPassword(gitCredentials.get().getPassword());
                 } else if (isGlobalPasswordANotBlank){
                     return vaultHelper.getPassword(gitCredentials.get().getPassword());
