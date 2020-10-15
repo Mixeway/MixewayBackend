@@ -87,6 +87,9 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
     public Boolean runScan(CodeGroup cg, CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, JSONException, ParseException {
         Optional<io.mixeway.db.entity.Scanner> cxSast = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_CHECKMARX)).stream().findFirst();
         if (cxSast.isPresent()){
+            if (codeProject.getCodeGroup().getVersionIdAll() == 0){
+                createProject(cxSast.get(),codeProject);
+            }
             setGitRepositoryForProject(cxSast.get(),codeProject);
             return createScan(cxSast.get(),codeProject);
         } else {
