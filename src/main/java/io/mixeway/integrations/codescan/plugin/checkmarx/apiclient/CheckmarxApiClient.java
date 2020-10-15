@@ -207,6 +207,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
                 boolean isGlobalPasswordAndUsernameNotBlank = StringUtils.isNotBlank(gitCredentials.get().getUsername()) && StringUtils.isNotBlank(gitCredentials.get().getPassword());
                 boolean isGlobalPasswordANotBlank = StringUtils.isNotBlank(gitCredentials.get().getPassword());
                 if (isGlobalPasswordAndUsernameNotBlank) {
+                    log.info("creds: {}",gitCredentials.get().getUsername()+":"+vaultHelper.getPassword(gitCredentials.get().getPassword()));
                     return gitCredentials.get().getUsername()+":"+vaultHelper.getPassword(gitCredentials.get().getPassword());
                 } else if (isGlobalPasswordANotBlank){
                     return vaultHelper.getPassword(gitCredentials.get().getPassword());
