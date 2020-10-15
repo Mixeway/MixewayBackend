@@ -180,7 +180,7 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
 
             try {
                 ResponseEntity<List<Projects>> response = restTemplate.exchange(dTrack.get(0).getApiUrl() +
-                        "/api/v1/project", HttpMethod.GET, entity, new ParameterizedTypeReference<List<Projects>>() {});
+                        "/api/v1/project?excludeInactive=true&searchText=&sortOrder=asc&pageSize=500&pageNumber=1", HttpMethod.GET, entity, new ParameterizedTypeReference<List<Projects>>() {});
                 if (response.getStatusCode() == HttpStatus.OK) {
                     return response.getBody();
                 } else {
