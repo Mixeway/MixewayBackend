@@ -111,18 +111,19 @@ public class WebAppScanService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public ResponseEntity<Status> processScanWebAppRequest(Long id, List<WebAppScanModel> webAppScanModelList, String origin, Principal principal) {
         synchronized (this) {
-            String requestId = null;
+            String requestId;
             Optional<Project> project = projectRepository.findById(id);
             if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())) {
+                requestId = UUID.randomUUID().toString();
                 for (WebAppScanModel webAppScanModel : webAppScanModelList) {
                     String urlToCompareSimiliar = getUrltoCompare(webAppScanModel.getUrl());
                     String urlToCompareWithRegexx = WebAppScanHelper.normalizeUrl(webAppScanModel.getUrl()) + "$";
                     try {
                         List<WebApp> webAppOptional = waRepository.getWebAppBySimiliarUrlOrRegexUrl(urlToCompareSimiliar, urlToCompareWithRegexx, project.get().getId());
                         if (webAppOptional.size() == 1){
-                            requestId = updateAndPutWebAppToQueue(webAppOptional.stream().findFirst().get(), webAppScanModel);
+                            updateAndPutWebAppToQueue(webAppOptional.stream().findFirst().get(), webAppScanModel, requestId);
                         } else if ( webAppOptional.size() == 0){
-                            requestId = createAndPutWebAppToQueue(webAppScanModel, project.get(), origin);
+                            createAndPutWebAppToQueue(webAppScanModel, project.get(), origin,requestId);
                         } else {
                             log.warn("There is something really wrong With WebAppScan API: URL from request= {}, urlForSimiliarCheck= {}, urlForRegexChecl= {}", webAppScanModel.getUrl(),
                                     urlToCompareSimiliar, urlToCompareWithRegexx);
@@ -166,7 +167,7 @@ public class WebAppScanService {
      * @param origin origin of request. Required for Scan Strategy
      * @return requestiD in form of UUID
      */
-    private String createAndPutWebAppToQueue(WebAppScanModel webAppScanModel, Project project, String origin) {
+    private String createAndPutWebAppToQueue(WebAppScanModel webAppScanModel, Project project, String origin, String requestId) {
         WebApp webApp = new WebApp();
         webApp.setProject(project);
         webApp = setCodeProjectLink(webApp, project, webAppScanModel);
@@ -175,7 +176,7 @@ public class WebAppScanService {
         if (StringUtils.isNotBlank(webAppScanModel.getRoutingDomain()))
             webApp.setRoutingDomain(routingDomainRepository.findByName(webAppScanModel.getRoutingDomain()));
         webApp.setInQueue(true);
-        webApp.setRequestId(UUID.randomUUID().toString());
+        webApp.setRequestId(requestId);
         webApp.setInserted(sdf.format(new Date()));
         webApp.setPublicscan(webAppScanModel.getIsPublic());
         webApp.setUrl(webAppScanModel.getUrl());
@@ -201,10 +202,10 @@ public class WebAppScanService {
      * @param webApp to update
      * @return requestiD in form of UUID
      */
-    private String updateAndPutWebAppToQueue(WebApp webApp, WebAppScanModel webAppScanModel) throws ParseException {
+    private String updateAndPutWebAppToQueue(WebApp webApp, WebAppScanModel webAppScanModel, String requestId) throws ParseException {
         webApp.setUrl(webAppScanModel.getUrl());
         webApp.setInQueue(canPutWebAppToQueueDueToLastExecuted(webApp));
-        webApp.setRequestId(UUID.randomUUID().toString());
+        webApp.setRequestId(requestId);
         waRepository.save(webApp);
         webApp = setCodeProjectLink(webApp, webApp.getProject(), webAppScanModel);
         this.updateHeadersAndCookies(webAppScanModel.getHeaders(), webAppScanModel.getCookies(), webApp);
