@@ -464,6 +464,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
                             String.class);
             if (response.getStatusCode().equals(HttpStatus.OK) ) {
                 codeGroup.setRunning(false);
+                codeGroup.setJobId(null);
                 codeGroupRepository.save(codeGroup);
                 log.info("[Checkmarx] Report for {} is ready to be downloaded", codeProject.getName());
                 return processCsvReport(response.getBody(),codeProject);
