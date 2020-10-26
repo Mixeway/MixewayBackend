@@ -498,7 +498,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
                 .withIgnoreLeadingWhiteSpace(true)
                 .build();
 
-        List<CxResult> results = csvToBean.parse().stream().filter(cxResult -> cxResult.getSeverity().equals("High")).collect(Collectors.toList());
+        List<CxResult> results = csvToBean.parse().stream().filter(cxResult -> cxResult.getSeverity().equals("High") || cxResult.getSeverity().equals("Medium")).collect(Collectors.toList());
         results.forEach(f -> {
             try {
                 f.setDescription(getShortDescription(codeProject,f).getShortDescription());
