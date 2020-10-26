@@ -327,10 +327,9 @@ public class CodeScanService {
         if ( sastScanner.isPresent() &&  sastScanner.get().getStatus()) {
             for (Project p : projects){
                 for (CodeGroup cg : p.getCodes()){
-                    for(CodeScanClient codeScanClient : codeScanClients){
-                        if (codeScanClient.canProcessRequest(sastScanner.get())){
-                            codeScanClient.runScan(cg,null);
-                        }
+                    for (CodeProject cp : cg.getProjects()){
+                        cp.setInQueue(true);
+                        codeProjectRepository.save(cp);
                     }
                 }
             }
@@ -443,6 +442,7 @@ public class CodeScanService {
                 log.warn("HttpClientErrorException with code [{}] during cloud scan job synchro ", ex.getStatusCode().toString());
             } catch (ParseException | JSONException | CertificateException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyManagementException | KeyStoreException | IOException e) {
                 log.warn("Exception came up during running scan {}", e.getLocalizedMessage());
+                e.printStackTrace();
             }
         }
     }

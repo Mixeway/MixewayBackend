@@ -93,6 +93,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
             setGitRepositoryForProject(cxSast.get(),codeProject);
             return createScan(cxSast.get(),codeProject);
         } else {
+            log.error("[Checkmarx] Checkmarx detected but no scanener found");
             return false;
         }
     }
