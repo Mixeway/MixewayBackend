@@ -314,8 +314,9 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
     @Override
     public boolean createProject(Scanner scanner, CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
         CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
+        Long numberOfProjects = codeGroupRepository.getCodeGroupWithVersionIdSet();
         try {
-            if (!isProjectAlreadyCreated(codeProject,scanner)) {
+            if (!isProjectAlreadyCreated(codeProject,scanner) && numberOfProjects < 500) {
                 ResponseEntity<CxResponseId> response = codeRequestHelper
                         .getRestTemplate()
                         .exchange(scanner.getApiUrl() + Constants.CX_CREATE_PROJECT_API, HttpMethod.POST,

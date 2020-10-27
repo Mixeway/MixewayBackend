@@ -132,19 +132,17 @@ public class GetVulnerabilitiesService {
             }
         }
         for (ProjectVulnerability projectVulnerability : softVuln) {
-            for (Asset a : projectVulnerability.getSoftwarePacket().getAssets()) {
-                String hostname;
-                AtomicReference<String> ipAddress = null;
-                hostname = a.getName();
-                Optional<Interface> interfaceToAdd = a.getInterfaces().stream().findFirst();
-                interfaceToAdd.ifPresent(anInterface -> ipAddress.set(anInterface.getPrivateip()));
-                Vuln v = new Vuln(projectVulnerability, hostname, ipAddress.get(), a, Constants.API_SCANNER_PACKAGE);
-                tmpVulns.add(v);
-            }
-            for (CodeProject cp : projectVulnerability.getSoftwarePacket().getCodeProjects()) {
-                Vuln v = new Vuln(projectVulnerability, null, null,cp, Constants.API_SCANNER_PACKAGE);
-                tmpVulns.add(v);
-            }
+//            for (Asset a : projectVulnerability.getSoftwarePacket().getAssets()) {
+//                String hostname;
+//                AtomicReference<String> ipAddress = null;
+//                hostname = a.getName();
+//                Optional<Interface> interfaceToAdd = a.getInterfaces().stream().findFirst();
+//                interfaceToAdd.ifPresent(anInterface -> ipAddress.set(anInterface.getPrivateip()));
+//                Vuln v = new Vuln(projectVulnerability, hostname, ipAddress.get(), a, Constants.API_SCANNER_PACKAGE);
+//                tmpVulns.add(v);
+//            }
+            Vuln v = new Vuln(projectVulnerability, null, null,projectVulnerability.getCodeProject(), Constants.API_SCANNER_PACKAGE);
+            tmpVulns.add(v);
         }
         vulns.setVulnerabilities(tmpVulns);
         return vulns;
