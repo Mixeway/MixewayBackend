@@ -1118,3 +1118,17 @@ create table gitcredentials (
     username text,
     password text
 );
+
+--changeset siewer:cx_branches
+create table cxbranch (
+    id serial primary key,
+    codeproject_id int references codeproject(id),
+    branch text,
+    cxid int
+);
+insert into cxbranch (codeproject_id, branch, cxid) select cp.id, cp.branch, cg.versionidall from codeproject cp, codegroup cg where cp.codegroup_id = cg.id and cg.versionidall>0;
+
+--changeset siewer:cx_branches_2
+alter table codegroup add column remoteid int;
+update codegroup set remoteid =0;
+update codegroup set remoteid=versionidall;

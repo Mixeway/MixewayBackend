@@ -18,6 +18,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
@@ -55,12 +56,15 @@ public class OpenSourceScanService {
     private final CodeService codeService;
     private final SoftwarePacketRepository softwarePacketRepository;
     private final PermissionFactory permissionFactory;
+    private final CxBranchRepository cxBranchRepository;
     private static final Logger log = LoggerFactory.getLogger(OpenSourceScanService.class);
     OpenSourceScanService(ProjectRepository projectRepository, CodeAccessVerifier codeAccessVerifier, ScannerRepository scannerRepository,
                           ScannerTypeRepository scannerTypeRepository, VaultHelper vaultHelper, List<OpenSourceScanClient> openSourceScanClients,
                           VulnTemplate vulnTemplate,CodeProjectRepository codeProjectRepository, @Lazy CodeService codeService,
-                          SoftwarePacketRepository softwarePacketRepository, PermissionFactory permissionFactory){
+                          SoftwarePacketRepository softwarePacketRepository, PermissionFactory permissionFactory,
+                          CxBranchRepository cxBranchRepository){
         this.projectRepository = projectRepository;
+        this.cxBranchRepository = cxBranchRepository;
         this.codeAccessVerifier = codeAccessVerifier;
         this.scannerRepository = scannerRepository;
         this.scannerTypeRepository =scannerTypeRepository;
@@ -120,49 +124,64 @@ public class OpenSourceScanService {
      */
     @Transactional
     public CodeProject getCodeProjectByRepoUrl(String url, String codeProjectName, String branch, Principal principal) throws Exception {
-        List<Long> projectForUserIds = permissionFactory.getProjectForPrincipal(principal).stream().map(Project::getId).collect(Collectors.toList());
-        Optional<CodeProject> codeProject = codeProjectRepository.getCodeProjectByNameAndPermissions(codeProjectName, projectForUserIds);
-        if (codeProject.isPresent()) {
-            codeProject.get().setBranch(branch);
-            return codeProject.get();
-        } else {
-            Optional<List<Project>> project = projectRepository.findByNameIgnoreCase(codeProjectName);
-            if (project.isPresent() && project.get().size()==1 && permissionFactory.canUserAccessProject(principal, project.get().stream().findFirst().get())){
-                codeService.saveCodeGroup(
-                        project.get().stream().findFirst().get().getId(),
-                        new CodeGroupPutModel(codeProjectName, url, false, false, branch),
-                        principal);
-                Optional<CodeProject> justCreatedCodeProject = codeProjectRepository.findByNameAndBranch(codeProjectName, branch);
-                if (justCreatedCodeProject.isPresent()){
-                    log.info("CICD job - Project present, CodeProject just created");
-                    return justCreatedCodeProject.get();
-                } else{
-                    throw new Exception("Just created codeProject is not present");
+        //try {
+            List<Long> projectForUserIds = permissionFactory.getProjectForPrincipal(principal).stream().map(Project::getId).collect(Collectors.toList());
+            Optional<CodeProject> codeProject = codeProjectRepository.getCodeProjectByNameAndPermissions(codeProjectName, projectForUserIds);
+            if (codeProject.isPresent()) {
+                if (codeProject.get().getBranch().equals(branch)) {
+
+                } else {
+                    codeProject.get().setBranch(branch);
+                    codeProject.get().getCodeGroup().setVersionIdAll(0);
+                    codeProject.get().getCodeGroup().setVersionIdsingle(0);
+                    if (!cxBranchRepository.findByBranchAndCodeProject(branch, codeProject.get()).isPresent()) {
+                        cxBranchRepository.save(new CxBranch(codeProject.get(), branch));
+                        log.info("Creating new branch for {} - {}", codeProject.get().getName(), branch);
+                    }
                 }
-            } else if (!project.isPresent()) {
-                Project projectToCreate = projectRepository
-                        .saveAndFlush(new Project(
-                                codeProjectName,
-                                "Project created by CICD, branch: "+branch,
-                                false,
-                                "none",
-                                permissionFactory.getUserFromPrincipal(principal)));
-                permissionFactory.grantPermissionToProjectForUser(projectToCreate, principal);
-                codeService.saveCodeGroup(
-                        projectToCreate.getId(),
-                        new CodeGroupPutModel(codeProjectName, url, false, false, branch),
-                        principal);
-                Optional<CodeProject> justCreatedCodeProject = codeProjectRepository.findByNameAndBranch(codeProjectName, branch);
-                if (justCreatedCodeProject.isPresent()){
-                    log.info("CICD job - Project just created, CodeProject just created");
-                    return justCreatedCodeProject.get();
-                } else{
-                    throw new Exception("Just created codeProject is not present");
-                }
+                return codeProject.get();
             } else {
-                log.error("[CICD] Wierd case happened for project with name {}", codeProject);
+                Optional<List<Project>> project = projectRepository.findByNameIgnoreCase(codeProjectName);
+                if (project.isPresent() && project.get().size() == 1 && permissionFactory.canUserAccessProject(principal, project.get().stream().findFirst().get())) {
+                    codeService.saveCodeGroup(
+                            project.get().stream().findFirst().get().getId(),
+                            new CodeGroupPutModel(codeProjectName, url, false, false, branch),
+                            principal);
+                    Optional<CodeProject> justCreatedCodeProject = codeProjectRepository.findByNameAndBranch(codeProjectName, branch);
+                    if (justCreatedCodeProject.isPresent()) {
+                        log.info("CICD job - Project present, CodeProject just created");
+                        return justCreatedCodeProject.get();
+                    } else {
+                        throw new Exception("Just created codeProject is not present");
+                    }
+                } else if (!project.isPresent()) {
+                    Project projectToCreate = projectRepository
+                            .saveAndFlush(new Project(
+                                    codeProjectName,
+                                    "Project created by CICD, branch: " + branch,
+                                    false,
+                                    "none",
+                                    permissionFactory.getUserFromPrincipal(principal)));
+                    permissionFactory.grantPermissionToProjectForUser(projectToCreate, principal);
+                    codeService.saveCodeGroup(
+                            projectToCreate.getId(),
+                            new CodeGroupPutModel(codeProjectName, url, false, false, branch),
+                            principal);
+                    Optional<CodeProject> justCreatedCodeProject = codeProjectRepository.findByNameAndBranch(codeProjectName, branch);
+                    if (justCreatedCodeProject.isPresent()) {
+                        log.info("CICD job - Project just created, CodeProject just created");
+                        return justCreatedCodeProject.get();
+                    } else {
+                        throw new Exception("Just created codeProject is not present");
+                    }
+                } else {
+                    log.error("[CICD] Wierd case happened for project with name {}", codeProject);
+                }
             }
-        }
+        //}
+        //catch (IncorrectResultSizeDataAccessException e){
+        //    log.error("There are more then 1 CodeProject with name of {} detected. This should not happen!", codeProjectName);
+        //}
         return null;
     }
 

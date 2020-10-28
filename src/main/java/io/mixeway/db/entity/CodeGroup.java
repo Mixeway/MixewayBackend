@@ -36,7 +36,16 @@ public class CodeGroup {
 	@JsonIgnore private String requestid;
 	@JsonIgnore private String scanid;
 	@JsonIgnore private String scope;
+	@JsonIgnore private int remoteid;
 	private String appClient;
+
+	public int getRemoteid() {
+		return remoteid;
+	}
+
+	public void setRemoteid(int remoteid) {
+		this.remoteid = remoteid;
+	}
 
 	public CodeGroup(){}
 	/**

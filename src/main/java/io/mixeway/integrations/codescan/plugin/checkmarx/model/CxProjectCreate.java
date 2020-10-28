@@ -1,6 +1,7 @@
 package io.mixeway.integrations.codescan.plugin.checkmarx.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.mixeway.db.entity.CodeProject;
 import io.mixeway.db.entity.Scanner;
 
 public class CxProjectCreate {
@@ -13,6 +14,9 @@ public class CxProjectCreate {
         this.name = name;
         this.owningTeam = scanner.getTeam();
         this.isPublic = true;
+    }
+    public CxProjectCreate(CodeProject codeProject){
+        this.name=codeProject.getName()+"_"+codeProject.getBranch();
     }
     public CxProjectCreate(){}
 

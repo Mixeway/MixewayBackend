@@ -2,8 +2,7 @@ package io.mixeway.rest.project.service;
 
 import com.amazonaws.services.ec2.model.PriceSchedule;
 import io.mixeway.config.Constants;
-import io.mixeway.db.entity.Project;
-import io.mixeway.db.entity.ProjectVulnerability;
+import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
 import io.mixeway.domain.service.vulnerability.VulnTemplate;
 import io.mixeway.integrations.opensourcescan.model.Projects;
@@ -21,8 +20,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import io.mixeway.db.entity.CodeGroup;
-import io.mixeway.db.entity.CodeProject;
 import io.mixeway.pojo.Status;
 
 import java.io.IOException;
@@ -30,6 +27,8 @@ import java.security.*;
 import java.security.cert.CertificateException;
 import java.text.ParseException;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -44,11 +43,13 @@ public class CodeService {
     private final CodeScanService codeScanService;
     private final OpenSourceScanService openSourceScanService;
     private final VulnTemplate vulnTemplate;
+    private final CxBranchRepository cxBranchRepository;
 
     CodeService(ProjectRepository projectRepository, CodeProjectRepository codeProjectRepository, CodeGroupRepository codeGroupRepository,
                 VaultHelper vaultHelper, VulnTemplate vulnTemplate, PermissionFactory permissionFactory,
-                CodeScanService  codeScanService, OpenSourceScanService openSourceScanService) {
+                CodeScanService  codeScanService, OpenSourceScanService openSourceScanService, CxBranchRepository cxBranchRepository) {
         this.projectRepository = projectRepository;
+        this.cxBranchRepository = cxBranchRepository;
         this.codeProjectRepository = codeProjectRepository;
         this.vaultHelper = vaultHelper;
         this.codeGroupRepository = codeGroupRepository;
@@ -99,7 +100,7 @@ public class CodeService {
             CodeGroup codeGroup = new CodeGroup();
             codeGroup.setBasePath("");
             codeGroup.setName(codeGroupPutModel.getCodeGroupName());
-            codeGroup.setRepoUrl(codeGroupPutModel.getGiturl());
+            codeGroup.setRepoUrl(setRepoUrl(codeGroupPutModel));
             codeGroup.setRepoUsername(codeGroupPutModel.getGitusername());
             codeGroup.setTechnique(codeGroupPutModel.getTech());
             codeGroup.setHasProjects(codeGroupPutModel.isChilds());
@@ -112,7 +113,7 @@ public class CodeService {
             codeGroup.setVersionIdsingle(codeGroupPutModel.getVersionIdAll());
             createProjectForCodeGroup(codeGroup, codeGroupPutModel);
             String uuidToken = UUID.randomUUID().toString();
-            if (vaultHelper.savePassword(codeGroupPutModel.getGitpassword(), uuidToken)) {
+            if (StringUtils.isNotBlank(codeGroupPutModel.getGitpassword()) && vaultHelper.savePassword(codeGroupPutModel.getGitpassword(), uuidToken)) {
                 codeGroup.setRepoPassword(uuidToken);
             } else {
                 codeGroup.setRepoPassword(codeGroupPutModel.getGitpassword());
@@ -123,6 +124,20 @@ public class CodeService {
         } else {
             return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
+    }
+
+    /**
+     * Removing auth info from model
+     * @param codeGroupPutModel
+     * @return
+     */
+    private String setRepoUrl(CodeGroupPutModel codeGroupPutModel) {
+        Pattern pattern = Pattern.compile("https?:\\/\\/(.*:.*@).*");
+        Matcher matcher = pattern.matcher(codeGroupPutModel.getGiturl());
+        if (matcher.find())
+            return codeGroupPutModel.getGiturl().replace(matcher.group(1), "");
+        else
+           return codeGroupPutModel.getGiturl();
     }
 
     private void createProjectForCodeGroup(CodeGroup codeGroup, CodeGroupPutModel codeGroupPutModel) {
@@ -136,7 +151,8 @@ public class CodeService {
         cp.setTechnique(codeGroup.getTechnique());
         cp.setInQueue(false);
         cp.setdTrackUuid(codeGroupPutModel.getdTrackUuid());
-        codeProjectRepository.saveAndFlush(cp);
+        cp = codeProjectRepository.saveAndFlush(cp);
+        cxBranchRepository.save(new CxBranch(cp, codeGroupPutModel.getBranch()));
     }
 
     public ResponseEntity<Status> saveCodeProject(Long id, CodeProjectPutModel codeProjectPutModel, Principal principal) {
