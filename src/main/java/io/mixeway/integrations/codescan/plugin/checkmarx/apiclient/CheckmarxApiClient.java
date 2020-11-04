@@ -349,6 +349,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
         return sastProjects;
     }
     @Override
+    @Transactional
     public boolean createProject(Scanner scanner, CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
         CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
         Long numberOfProjects = codeGroupRepository.getCodeGroupWithVersionIdSet();
@@ -362,6 +363,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
                 if (response.getStatusCode().equals(HttpStatus.CREATED)) {
                     codeProject.getCodeGroup().setVersionIdAll((int) Objects.requireNonNull(response.getBody()).getId());
                     codeProject.getCodeGroup().setRemoteid((int) Objects.requireNonNull(response.getBody()).getId());
+                    updateBranch(codeProject);
                     codeGroupRepository.save(codeProject.getCodeGroup());
                     log.info("[Checkmarx] Remote project created for {}", codeProject.getCodeGroup().getName());
                     return true;
@@ -371,6 +373,11 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
             log.error("Error during loading projects from Checkmarx - {}", e.getLocalizedMessage());
         }
         return codeProject.getCodeGroup().getVersionIdAll() > 0;
+    }
+
+    private void updateBranch(CodeProject codeProject) {
+        Optional<CxBranch> cxBranch = cxBranchRepository.findByBranchAndCodeProject(codeProject.getBranch(), codeProject);
+        cxBranch.ifPresent(branch -> branch.setCxid(codeProject.getCodeGroup().getVersionIdAll()));
     }
 
     public boolean isProjectAlreadyCreated(CodeProject codeProject, Scanner scanner) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
