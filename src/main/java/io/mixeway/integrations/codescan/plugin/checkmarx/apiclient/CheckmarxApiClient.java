@@ -1,10 +1,6 @@
 package io.mixeway.integrations.codescan.plugin.checkmarx.apiclient;
 
-import com.opencsv.CSVReader;
-import com.opencsv.bean.CsvToBean;
-import com.opencsv.bean.CsvToBeanBuilder;
-import com.opencsv.bean.HeaderColumnNameTranslateMappingStrategy;
-import com.sun.jndi.toolkit.url.Uri;
+import com.univocity.parsers.csv.CsvRoutines;
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
@@ -13,7 +9,6 @@ import io.mixeway.domain.service.vulnerability.VulnTemplate;
 import io.mixeway.integrations.codescan.plugin.checkmarx.model.*;
 import io.mixeway.integrations.codescan.model.CodeRequestHelper;
 import io.mixeway.integrations.codescan.model.TokenValidator;
-import io.mixeway.integrations.codescan.plugin.fortify.model.FortifyVuln;
 import io.mixeway.integrations.codescan.service.CodeScanClient;
 import io.mixeway.pojo.SecureRestTemplate;
 import io.mixeway.pojo.SecurityScanner;
@@ -21,7 +16,6 @@ import io.mixeway.pojo.VaultHelper;
 import io.mixeway.rest.model.ScannerModel;
 import io.mixeway.rest.project.model.SASTProject;
 import org.apache.commons.lang3.StringUtils;
-import org.checkerframework.checker.nullness.Opt;
 import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,10 +28,11 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -82,7 +77,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
     }
     @Override
     public void loadVulnerabilities(Scanner scanner, CodeGroup codeGroup, String urlToGetNext, Boolean single, CodeProject codeProject, List<ProjectVulnerability> codeVulns) throws ParseException, JSONException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
-        List<CxResult> cxResults = downloadResultsForScan(scanner,codeProject, codeGroup);
+        List<CxResultCsvTemplate> cxResults = downloadResultsForScan(scanner,codeProject, codeGroup);
         processVulnReportForCodeProject(cxResults,codeProject,codeVulns);
     }
 
@@ -501,7 +496,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
         }
         return false;
     }
-    private List<CxResult> downloadResultsForScan(Scanner scanner, CodeProject codeProject, CodeGroup codeGroup) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
+    private List<CxResultCsvTemplate> downloadResultsForScan(Scanner scanner, CodeProject codeProject, CodeGroup codeGroup) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
         CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
         try {
             ResponseEntity<String> response = codeRequestHelper
@@ -524,37 +519,43 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
         return new ArrayList<>();
     }
 
-    private List<CxResult> processCsvReport(String body, CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
-        body = body.substring(3);
-        Map<String, String> mapping = new
-                HashMap<>();
-        mapping.put(Constants.CX_REPORT_QUERY, "query");
-        mapping.put(Constants.CX_REPORT_DSTFILE, "dstLocation");
-        mapping.put(Constants.CX_REPORT_DSTLINENO, "dstLine");
-        mapping.put(Constants.CX_REPORT_ANALYSIS, "analysis");
-        mapping.put(Constants.CX_REPORT_SEVERITY, "severity");
-        mapping.put(Constants.CX_REPORT_DESCRIPTION, "description");
-        mapping.put(Constants.CX_REPORT_STATE, "state");
-        HeaderColumnNameTranslateMappingStrategy<CxResult> strategy =
-                new HeaderColumnNameTranslateMappingStrategy<>();
-        strategy.setType(CxResult.class);
-        strategy.setColumnMapping(mapping);
-        CSVReader csvReader = null;
-        CsvToBean<CxResult> csvToBean = new CsvToBeanBuilder(new StringReader(body))
-                .withType(CxResult.class)
-                .withMappingStrategy(strategy)
-                .withIgnoreLeadingWhiteSpace(true)
-                .build();
-
-        List<CxResult> results = csvToBean.parse().stream().filter(cxResult -> cxResult.getSeverity().equals("High") || cxResult.getSeverity().equals("Medium")).collect(Collectors.toList());
-        results.forEach(f -> {
-            try {
-                f.setDescription(getShortDescription(codeProject,f).getShortDescription());
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-        return results;
+    private List<CxResultCsvTemplate> processCsvReport(String body, CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
+       try {
+           body = body.substring(3);
+//           Map<String, String> mapping = new
+//                   HashMap<>();
+//           mapping.put(Constants.CX_REPORT_QUERY, "query");
+//           mapping.put(Constants.CX_REPORT_DSTFILE, "dstLocation");
+//           mapping.put(Constants.CX_REPORT_DSTLINENO, "dstLine");
+//           mapping.put(Constants.CX_REPORT_ANALYSIS, "analysis");
+//           mapping.put(Constants.CX_REPORT_SEVERITY, "severity");
+//           mapping.put(Constants.CX_REPORT_DESCRIPTION, "description");
+//           mapping.put(Constants.CX_REPORT_STATE, "state");
+//           HeaderColumnNameTranslateMappingStrategy<CxResult> strategy =
+//                   new HeaderColumnNameTranslateMappingStrategy<>();
+//           strategy.setType(CxResult.class);
+//           strategy.setColumnMapping(mapping);
+//           CSVReader csvReader = null;
+//           CsvToBean<CxResult> csvToBean = new CsvToBeanBuilder(new StringReader(body))
+//                   .withType(CxResult.class)
+//                   .withMappingStrategy(strategy)
+//                   .withIgnoreLeadingWhiteSpace(true)
+//                   .build();
+//List<CxResult> results = csvToBean.parse()
+           List<CxResultCsvTemplate> results = new CsvRoutines().parseAll(CxResultCsvTemplate.class,new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8))).stream().filter(cxResult -> cxResult.getSeverity().equals("High") || cxResult.getSeverity().equals("Medium")).collect(Collectors.toList());
+           results.forEach(f -> {
+               try {
+                   f.setDescription(getShortDescription(codeProject, f).getShortDescription());
+               } catch (Exception e) {
+                   e.printStackTrace();
+               }
+           });
+           log.info("[Checkmarx] Loaded {} vulnerabilities for {}", results.size(),codeProject.getName());
+           return results;
+       }catch(Exception e){
+           log.error("[Checkmarx] Error during csv parsing {}", e.getLocalizedMessage());
+       }
+       return new ArrayList<>();
     }
 
     /**
@@ -562,9 +563,9 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
      * @param results
      * @param codeProject
      */
-    private void processVulnReportForCodeProject(List<CxResult> results, CodeProject codeProject, List<ProjectVulnerability> oldVulns) {
+    private void processVulnReportForCodeProject(List<CxResultCsvTemplate> results, CodeProject codeProject, List<ProjectVulnerability> oldVulns) {
         List<ProjectVulnerability> vulnsToPersist = new ArrayList<>();
-        for (CxResult cxVuln: results) {
+        for (CxResultCsvTemplate cxVuln: results) {
             Vulnerability vulnerability = vulnTemplate.createOrGetVulnerabilityService.createOrGetVulnerability(cxVuln.getQuery());
 
             ProjectVulnerability projectVulnerability = new ProjectVulnerability(codeProject,codeProject,vulnerability,cxVuln.getDescription(),null,
@@ -592,7 +593,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
     /**
      * get single result
      */
-    private CxVulnShortDescription getShortDescription(CodeProject codeProject,CxResult cxResult) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
+    private CxVulnShortDescription getShortDescription(CodeProject codeProject,CxResultCsvTemplate cxResult) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
         Optional<io.mixeway.db.entity.Scanner> cxSast = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_CHECKMARX)).stream().findFirst();
         if (cxSast.isPresent()){
             CodeRequestHelper codeRequestHelper = prepareRestTemplate(cxSast.get());
