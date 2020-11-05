@@ -1,7 +1,5 @@
 package io.mixeway.rest.auth.model;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
-
 public class StatusEntity {
     Boolean initialized;
     Boolean password;
