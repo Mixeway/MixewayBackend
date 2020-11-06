@@ -93,7 +93,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
             } else if (hasToCreateBranch){
                 createBranch(cxSast.get(),codeProject, branch.get());
             } else {
-                log.info("[Checkmarx] Scan create for archived branch of {} with already existing cxid {}", codeProject.getBranch(), branch.get().getCxid());
+                log.info("[Checkmarx] Scan create for archived branch of {}", codeProject.getBranch());
                 codeProject.getCodeGroup().setVersionIdAll(branch.get().getCxid());
             }
             setGitRepositoryForProject(cxSast.get(),codeProject);
