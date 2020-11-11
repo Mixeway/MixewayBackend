@@ -87,7 +87,7 @@ public class JwtUserDetailsService implements UserDetailsService {
      * @param requestURI
      * @return
      */
-    UserDetails loadUserByApiKeyAndRequestUri(String username, String requestURI) {
+    public UserDetails loadUserByApiKeyAndRequestUri(String username, String requestURI) {
         try {
             boolean isMasterKeyUsed = settingsRepository.findAll().stream().findFirst().orElse(null).getMasterApiKey().equals(username);
             Optional<io.mixeway.db.entity.User> userApiKey = userRepository.findByApiKey(username);
