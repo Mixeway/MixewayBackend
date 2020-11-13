@@ -29,6 +29,7 @@ public class Status {
 	public Status(String status) {
 		this.status = status;
 	}
+
 	public Status(String status,String requestId) {
 		this.status = status;
 		this.requestId = requestId;
