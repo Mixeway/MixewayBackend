@@ -7,12 +7,13 @@ create table project(
   description text);
 
 --changeset siewer:4
+--validCheckSum 1:any
 create table iaasapi(
   id serial primary key,
   iamurl text,
   serviceurl text,
   networkurl text,
-  project_id int references project(id));
+  project_id int references project(id) on delete cascade);
 
 --changeset siewer:5
 alter table iaasapi add column domain text;
@@ -21,11 +22,12 @@ alter table iaasapi add column password text;
 alter table iaasapi add column tenantid text;
 
 --changeset siewer:6
+--validCheckSum 1:any
 create table asset(
   id serial primary key,
   name text,
   assetid text,
-  project_id int references project(id));
+  project_id int references project(id) on delete cascade);
 
 --changeset siewer:7
 alter table asset add column origin text;
@@ -34,6 +36,7 @@ alter table asset add column origin text;
 alter table asset add column active boolean;
 
 --changeset siewer:9
+--validCheckSum 1:any
 create table interface (
   id serial primary key,
   privateip text,
@@ -41,7 +44,7 @@ create table interface (
   subnetid text,
   macaddr text,
   active boolean,
-  asset_id int references asset(id));
+  asset_id int references asset(id) on delete cascade);
 
 --changeset siewer:10
 alter table iaasapi add column token text;
@@ -51,6 +54,7 @@ alter table iaasapi add column tokenexpires text;
 alter table iaasapi add column enabled boolean;
 
 --changeset siewer:12
+--validCheckSum 1:any
 create table securitygroup(
   id serial primary key,
   name text,
@@ -58,7 +62,7 @@ create table securitygroup(
 
 create table securitygrouprule(
   id serial primary key,
-  securitygroup_id int references securitygroup(id),
+  securitygroup_id int references securitygroup(id) on delete cascade,
   direction text,
   type text,
   protocol text,
@@ -67,7 +71,7 @@ create table securitygrouprule(
 
 create table asset_securitygroup(
   asset_id int references asset(id),
-  securitygroup_id int references securitygroup(id));
+  securitygroup_id int references securitygroup(id) on delete cascade );
 
 --changeset siewer:13
 alter table securitygrouprule add column ruleid text;
@@ -90,6 +94,7 @@ update iaasapi set external=true;
 insert into proxies (ip,port,description) values ('126.204.4.20','3128','BST lab proxy');
 
 --changeset siewer:17
+--validCheckSum 1:any
 create table apitype(
   id serial primary key,
   url text,
@@ -99,7 +104,7 @@ create table apipermision(
   id serial primary key,
   cn text,
   ip text,
-  project_id int references project(id));
+  project_id int references project(id) on delete cascade);
 
 insert into apitype (url, name , description) values ('cis-k8s','CIS k8s Benchmark','curl -k https://<stsc_url>/api/costam -X POST --cert <client_certificate> --key <client_private_key> -F file=@<file>');
 
@@ -110,19 +115,20 @@ alter table apipermision add column apitype_id int references apitype(id);
 alter table apipermision add column enabled boolean;
 
 --changeset siewer:20
+--validCheckSum 1:any
 create table node(
   id serial primary key,
   name text,
   type text,
-  project_id int references project(id));
+  project_id int references project(id) on delete cascade );
 create table requirement(
   id serial primary key,
-  code text unique,
+  code text,
   name text,
   severity int);
 create table nodeaudit(
   id serial primary key,
-  node_id int references node(id),
+  node_id int references node(id) on delete cascade ,
   requirement_id int references requirement(id),
   score text,
   updated text);
@@ -150,18 +156,19 @@ insert into proxies (ip,port,description) values ('126.204.4.20','3128','labprox
 delete from proxies where description='labproxy';
 
 --changeset siewer:24
+--validCheckSum 1:any
 create table nessusscantemplate(
   id serial primary key,
   name text,
   uuid text,
-  nessus_id int references nessus(id));
+  nessus_id int references nessus(id) on delete cascade );
 
 create table nessusscanner(
   id serial primary key,
   expiration text,
   version text,
   scannerid int,
-  nessus_id int references nessus(id));
+  nessus_id int references nessus(id) on delete cascade );
 update nessus set status = false;
 
 --changeset siewer:25
@@ -169,6 +176,7 @@ alter table interface add column networktag text;
 update interface set networktag = 'fe' where subnetid is not null;
 
 --changeset siewer:26
+--validCheckSum 1:any
 create table nessusscan(
   id serial primary key,
   project_id int references project(id),
@@ -182,13 +190,14 @@ create table nessusscan(
   publicip boolean);
 
 create table nessus_interface (
-  nessusscan_id int references nessusscan(id),
-  interface_id int references interface(id));
+  nessusscan_id int references nessusscan(id) on delete cascade,
+  interface_id int references interface(id) on delete cascade);
 
 --changeset siewer:27
+--validCheckSum 1:any
 create table users (
   id serial primary key,
-  commonname text unique,
+  commonname text,
   permisions text,
   lastloggeddate text,
   lastloggedip text);
@@ -233,15 +242,16 @@ create table software(
   asset_id int references asset(id));
 
 --changeset siewer:36
+--validCheckSum 1:any
 create table codegroup(
   id serial primary key,
-  project_id int references project(id),
+  project_id int references project(id) on delete cascade,
   name text,
   basepath text,
   giturl text);
 create table codeproject(
   id serial primary key,
-  codegroup_id int references codegroup(id),
+  codegroup_id int references codegroup(id) on delete cascade,
   name text);
 create table codevuln(
   id serial primary key,
@@ -270,7 +280,8 @@ create table vulnhistory(
   inserted text);
 
 --changeset siewer:40
-alter table vulnhistory add column project_id int references project(id);
+--validCheckSum 1:any
+alter table vulnhistory add column project_id int references project(id) on delete cascade ;
 
 --changeset siewer:41
 create table routingdomain(
@@ -298,6 +309,7 @@ update nessus set scannertype_id=1;
 insert into scannertype (name) values ('Nessus');
 
 --changeset siewer:45
+--validCheckSum 1:any
 insert into scannertype (name) values ('Acunetix');
 
 create table acunetix(
@@ -313,7 +325,7 @@ create table loginsequence(
 
 create table webapp(
   id serial primary key,
-  project_id int references project(id),
+  project_id int references project(id) on delete cascade,
   url text,
   loginsequence_id int references loginsequence(id),
   lastexecuted text,
@@ -326,7 +338,7 @@ create table webappscan(
   running boolean,
   scan_id text,
   type text,
-  webapp_id int references webapp(id));
+  webapp_id int references webapp(id) on delete cascade );
 
 create table webappvuln(
   id serial primary key,
@@ -366,11 +378,12 @@ alter table webapp add column scanid text;
 alter table webappscan add column project_id int references project(id);
 
 --changeset siewer:55
+--validCheckSum 1:any
 create table webappheader(
   id serial primary key,
 	headername text,
 	headervalue text,
-	webapp_id int references webapp(id));
+	webapp_id int references webapp(id) on delete cascade);
 
 --changeset siewer:56
 alter table webappvuln add column severity text;
@@ -388,12 +401,13 @@ alter table webapp add column inqueue boolean;
 update webapp set inqueue=false;
 
 --changeset siewer:61
+--validCheckSum 1:any
 create table softwarepacket(
   id serial primary key,
 	name text);
 create table asset_softwarepacket(
   asset_id int references asset(id),
-  softwarepacket_id int references softwarepacket(id));
+  softwarepacket_id int references softwarepacket(id) on delete cascade);
 
 --changeset siewer:62
 alter table asset add os text;
@@ -453,10 +467,11 @@ alter table webapp add column codegroup_id int references codegroup(id);
 alter table webapp add column codeproject_id int references codeproject(id);
 
 --changeset siewer:85
+--validCheckSum 1:any
 alter table vulnhistory add column codevulnnumber int;
 alter table vulnhistory add column webappvulnnumber int;
 alter table vulnhistory add column auditvulnnumber int;
-alter table vulnhistory rename vulnnumber to infrastructurevulnnumber;
+alter table vulnhistory rename column vulnnumber to infrastructurevulnnumber;
 
 --changeset siewer:86
 truncate table vulnhistory;
@@ -516,10 +531,11 @@ alter table webapp add column autostart boolean;
 alter table webappvuln add column codeproject_id int references codeproject(id);
 
 --changeset siewer:100
+--validCheckSum 1:any
 create table cioperations(
   id serial primary key,
-  project_id int references project(id),
-  codeproject_id int references codeproject(id),
+  project_id int references project(id) on delete cascade,
+  codeproject_id int references codeproject(id) on delete cascade,
   codegroup_id int references codegroup(id),
   inserted timestamp default now(),
   vulnnumber int,
@@ -566,9 +582,10 @@ update codeproject set skipallscan=false;
 alter table codeproject add column additionalpath text;
 
 --changeset siewer:109
+--validCheckSum 1:any
 create table webappcookies(
     id serial primary key,
-    webapp_id int references webapp(id),
+    webapp_id int references webapp(id) on delete cascade,
     cookie text,
     url text
 );
@@ -576,11 +593,12 @@ create table webappcookies(
 alter table codeproject add column inqueue boolean;
 update codeproject set inqueue=false;
 --changeset siewer:111
+--validCheckSum 1:any
 create table fortifysingleapp(
     id serial primary key,
     requestid text,
-    codeproject_id int references codeproject(id),
-    codegroup_id int references codegroup(id),
+    codeproject_id int references codeproject(id) on delete cascade,
+    codegroup_id int references codegroup(id) on delete cascade,
     jobtoken text,
     finished boolean,
     downloaded boolean
@@ -589,6 +607,7 @@ create table fortifysingleapp(
 alter table nessus add column rfwscannerip text;
 
 --changeset siewer:113
+--validCheckSum 1:any
 create table status(
     id serial primary key,
     name text
@@ -600,7 +619,7 @@ create table service(
     name text,
     netproto text,
     appproto text,
-    interface_id int references interface(id),
+    interface_id int references interface(id) on delete cascade,
     status_id int references status(id)
 );
 alter table infrastructurevuln add column status_id int references status(id);
@@ -620,7 +639,9 @@ alter table project add column autocodescan boolean;
 update project set autocodescan = false;
 
 --changeset siewer:117
-alter table asset_securitygroup drop constraint "asset_securitygroup_asset_id_fkey", add constraint "asset_securitygroup_asset_id_fkey" foreign key ("asset_id") references "asset"(id) on delete cascade;
+--validCheckSum 1:any
+--alter table asset_securitygroup drop constraint "asset_securitygroup_asset_id_fkey";
+--alter table asset_securitygroup add constraint "asset_securitygroup_asset_id_fkey" foreign key ("asset_id") references "asset"(id) on delete cascade;
 
 --changeset siewer:118
 alter table project add column apikey text;
@@ -639,15 +660,19 @@ update users set failedlogins = 0;
 alter table codeproject add column commitid text;
 
 --changeset siewer:122
-alter table interface drop constraint interface_asset_id_fkey, add constraint interface_asset_id_fkey foreign key ("asset_id") references "asset"(id) on delete cascade;
+--validCheckSum 1:any
+--alter table interface drop constraint interface_asset_id_fkey;
+--alter table interface add constraint interface_asset_id_fkey foreign key ("asset_id") references "asset"(id) on delete cascade;
 
 --changeset siewer:123
-alter table vulnhistory drop constraint vulnhistory_project_id_fkey, add constraint vulnhistory_project_id_fkey foreign key ("project_id") references "project"(id) on delete cascade;
+--validCheckSum 1:any
+--alter table vulnhistory drop constraint vulnhistory_project_id_fkey, add constraint vulnhistory_project_id_fkey foreign key ("project_id") references "project"(id) on delete cascade;
 
 --changeset siewer:124
-alter table webappvuln drop constraint "webappvuln_webapp_id_fkey", add constraint "webappvuln_webapp_id_fkey" foreign key ("webapp_id") references "webapp"(id) on delete cascade;
-alter table webappheader drop constraint "webappheader_webapp_id_fkey", add constraint "webappheader_webapp_id_fkey" foreign key ("webapp_id") references "webapp"(id) on delete cascade;
-alter table webappcookies drop constraint "webappcookies_webapp_id_fkey", add constraint "webappcookies_webapp_id_fkey" foreign key ("webapp_id") references "webapp"(id) on delete cascade;
+--validCheckSum 1:any
+--alter table webappvuln drop constraint "webappvuln_webapp_id_fkey", add constraint "webappvuln_webapp_id_fkey" foreign key ("webapp_id") references "webapp"(id) on delete cascade;
+--alter table webappheader drop constraint "webappheader_webapp_id_fkey", add constraint "webappheader_webapp_id_fkey" foreign key ("webapp_id") references "webapp"(id) on delete cascade;
+--alter table webappcookies drop constraint "webappcookies_webapp_id_fkey", add constraint "webappcookies_webapp_id_fkey" foreign key ("webapp_id") references "webapp"(id) on delete cascade;
 
 --changeset siewer:125
 create table settings (
@@ -664,9 +689,10 @@ update codeproject set running=false;
 insert into apitype (url, name , description) values ('mvndependencycheck','Download for MVN Dependency Check by owasp','');
 
 --changeset siewer:128
+--validCheckSum 1:any
 create table codeproject_softwarepacket(
-    codeproject_id int references codeproject(id),
-    softwarepacket_id int references softwarepacket(id));
+    codeproject_id int references codeproject(id) on delete cascade,
+    softwarepacket_id int references softwarepacket(id) on delete cascade);
 alter table softwarepacketvulnerability add column description text;
 alter table softwarepacketvulnerability add column severity text;
 
@@ -682,13 +708,15 @@ update project set autoinfrascan= false;
 alter table codeproject add column branch text;
 
 --changeset siewer:133
-alter table infrastructurevuln drop constraint infrastructurevuln_interface_id_fkey, add constraint infrastructurevuln_interface_id_fkey foreign key ("interface_id") references "interface"(id) on delete cascade;
-alter table service drop constraint service_interface_id_fkey, add constraint service_interface_id_fkey foreign key ("interface_id") references "interface"(id) on delete cascade;
-alter table nessus_interface drop constraint nessus_interface_interface_id_fkey, add constraint nessus_interface_interface_id_fkey foreign key ("interface_id") references "interface"(id) on delete cascade;
+--validCheckSum 1:any
+--alter table infrastructurevuln drop constraint infrastructurevuln_interface_id_fkey, add constraint infrastructurevuln_interface_id_fkey foreign key ("interface_id") references "interface"(id) on delete cascade;
+--alter table service drop constraint service_interface_id_fkey, add constraint service_interface_id_fkey foreign key ("interface_id") references "interface"(id) on delete cascade;
+--alter table nessus_interface drop constraint nessus_interface_interface_id_fkey, add constraint nessus_interface_interface_id_fkey foreign key ("interface_id") references "interface"(id) on delete cascade;
 
 --changeset siewer:134
-alter table codevuln drop constraint codevuln_codeproject_id_fkey, add constraint codevuln_codeproject_id_fkey foreign key ("codeproject_id") references codeproject(id) on delete cascade;
-alter table codevuln drop constraint codevuln_codegroup_id_fkey, add constraint codevuln_codegroup_id_fkey foreign key ("codegroup_id") references codegroup(id) on delete cascade;
+--validCheckSum 1:any
+--alter table codevuln drop constraint codevuln_codeproject_id_fkey, add constraint codevuln_codeproject_id_fkey foreign key ("codeproject_id") references codeproject(id) on delete cascade;
+--alter table codevuln drop constraint codevuln_codegroup_id_fkey, add constraint codevuln_codegroup_id_fkey foreign key ("codegroup_id") references codegroup(id) on delete cascade;
 
 --changeset siewer:135
 alter table codegroup add column if not exists hasprojects boolean;
@@ -698,15 +726,18 @@ alter table codeproject add column requestid text;
 alter table webapp add column requestid text;
 
 --changeset siewer:137
-alter table nessusscan drop constraint nessusscan_nessus_id_fkey, add constraint nessusscan_nessus_id_fkey foreign key ("nessus_id") references nessus(id) on delete cascade;
-alter table nessus_interface drop constraint nessus_interface_nessusscan_id_fkey, add constraint nessus_interface_nessusscan_id_fkey foreign key ("nessusscan_id") references nessusscan(id) on delete cascade;
+--validCheckSum 1:any
+--alter table nessusscan drop constraint nessusscan_nessus_id_fkey, add constraint nessusscan_nessus_id_fkey foreign key ("nessus_id") references nessus(id) on delete cascade;
+--alter table nessus_interface drop constraint nessus_interface_nessusscan_id_fkey, add constraint nessus_interface_nessusscan_id_fkey foreign key ("nessusscan_id") references nessusscan(id) on delete cascade;
 
 --changeset siewer:138
-alter table webapp add constraint unique_url unique (url);
+--validCheckSum 1:any
+--alter table webapp add constraint unique_url unique (url);
 
 --changeset siewer:139
-alter table webapp drop constraint unique_url;
-alter table webapp add constraint unique_url unique(project_id,url);
+--validCheckSum 1:any
+--alter table webapp drop constraint unique_url;
+--alter table webapp add constraint unique_url unique(project_id,url);
 
 --changeset siewer:140
 alter table settings add column smtphost text;
@@ -750,6 +781,7 @@ alter table softwarepacketvulnerability add column status_id int references stat
 update settings set certificateauth=true, passwordauth=true;
 
 --changeset siewer:147
+--validCheckSum 1:any
 create table bugtrackertype (
     id serial primary key,
     name text
@@ -763,7 +795,7 @@ create table bugtracker (
     projectid text,
     issuetype text,
     vulns text,
-    project_id int references project(id)
+    project_id int references project(id) on delete cascade
 );
 
 --changeset siewer:148
@@ -802,7 +834,8 @@ alter table bugtracker add column proxies_id int references proxies(id);
 insert into scannertype (name) values ('OpenVAS Socket');
 
 --changeset siewer:155
-alter table bugtracker drop constraint bugtracker_project_id_fkey, add constraint bugtracker_project_id_fkey foreign key ("project_id") references project(id) on delete cascade;
+--validCheckSum 1:any
+--alter table bugtracker drop constraint bugtracker_project_id_fkey, add constraint bugtracker_project_id_fkey foreign key ("project_id") references project(id) on delete cascade;
 
 --changeset siewer:156
 alter table settings add column infraautocron text;
@@ -849,9 +882,10 @@ update scannertype set authapikey=false,authsecrettoken=false,authaccesstoken=fa
 update scannertype set authapikey=false,authsecrettoken=false,authaccesstoken=false,authusername=true,authpassword=true,authcloudctrltoken=false where name='OpenVAS';
 
 --changeset siewer:164
+--validCheckSum 1:any
 create table user_project (
-    users_id int references users(id),
-    project_id int references project(id)
+    users_id int references users(id) on delete cascade,
+    project_id int references project(id) on delete cascade
 );
 
 --changeset:siewer:165
@@ -862,8 +896,9 @@ create table user_project (
 );
 
 --changeset siewer:166
-alter table user_project drop constraint user_project_project_id_fkey, add constraint user_project_project_id_fkey foreign key ("project_id") references project(id) on delete cascade;
-alter table user_project drop constraint user_project_users_id_fkey, add constraint user_project_users_id_fkey foreign key ("users_id") references users(id) on delete cascade;
+--validCheckSum 1:any
+--alter table user_project drop constraint user_project_project_id_fkey, add constraint user_project_project_id_fkey foreign key ("project_id") references project(id) on delete cascade;
+--alter table user_project drop constraint user_project_users_id_fkey, add constraint user_project_users_id_fkey foreign key ("users_id") references users(id) on delete cascade;
 
 --changeset siewer:167
 insert into user_project (users_id ,project_id) select u.id, p.id from users u, project p where u.permisions='ROLE_USER';
@@ -886,9 +921,10 @@ alter table cioperations add column imagescan boolean;
 alter table cioperations add column ended timestamp;
 
 --changeset siewer:170
+--validCheckSum 1:any
 delete from cioperations;
-alter table nessusscan drop constraint "nessusscan_nessusscantemplate_id_fkey", add constraint "nessusscan_nessusscantemplate_id_fkey" foreign key ("nessusscantemplate_id") references "nessusscantemplate"(id) on delete cascade;
-alter table nessusscantemplate drop constraint "nessusscantemplate_nessus_id_fkey", add constraint "nessusscantemplate_nessus_id_fkey" foreign key ("nessus_id") references "nessus"(id) on delete cascade;
+--alter table nessusscan drop constraint "nessusscan_nessusscantemplate_id_fkey", add constraint "nessusscan_nessusscantemplate_id_fkey" foreign key ("nessusscantemplate_id") references "nessusscantemplate"(id) on delete cascade;
+--alter table nessusscantemplate drop constraint "nessusscantemplate_nessus_id_fkey", add constraint "nessusscantemplate_nessus_id_fkey" foreign key ("nessus_id") references "nessus"(id) on delete cascade;
 
 --changeset siewer:171
 create table webappscanstrategy (
@@ -951,13 +987,16 @@ alter table webapp add column username text;
 alter table webapp add column password text;
 
 --changeset siewer:182
-alter table codeproject_softwarepacket drop constraint "codeproject_softwarepacket_codeproject_id_fkey", add constraint "codeproject_softwarepacket_codeproject_id_fkey" foreign key ("codeproject_id") references "codeproject"(id) on delete cascade;
+--validCheckSum 1:any
+--alter table codeproject_softwarepacket drop constraint "codeproject_softwarepacket_codeproject_id_fkey", add constraint "codeproject_softwarepacket_codeproject_id_fkey" foreign key ("codeproject_id") references "codeproject"(id) on delete cascade;
 
 --changeset siewer:183
-alter table cioperations drop constraint "cioperations_codeproject_id_fkey", add constraint "cioperations_codeproject_id_fkey" foreign key ("codeproject_id") references codeproject("id") on delete cascade;
+--validCheckSum 1:any
+--alter table cioperations drop constraint "cioperations_codeproject_id_fkey", add constraint "cioperations_codeproject_id_fkey" foreign key ("codeproject_id") references codeproject("id") on delete cascade;
 
 --changeset siewer:184
-alter table fortifysingleapp drop constraint "fortifysingleapp_codeproject_id_fkey", add constraint "fortifysingleapp_codeproject_id_fkey" foreign key ("codeproject_id") references codeproject("id") on delete cascade;
+--validCheckSum 1:any
+--alter table fortifysingleapp drop constraint "fortifysingleapp_codeproject_id_fkey", add constraint "fortifysingleapp_codeproject_id_fkey" foreign key ("codeproject_id") references codeproject("id") on delete cascade;
 
 --changeset siewer:185
 alter table infrastructurevuln add column grade int;
@@ -1120,9 +1159,10 @@ create table gitcredentials (
 );
 
 --changeset siewer:cx_branches
+--validCheckSum 1:any
 create table cxbranch (
     id serial primary key,
-    codeproject_id int references codeproject(id),
+    codeproject_id int references codeproject(id) on delete cascade,
     branch text,
     cxid int
 );
