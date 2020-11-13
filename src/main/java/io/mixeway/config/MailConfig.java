@@ -29,8 +29,7 @@ public class MailConfig {
     public JavaMailSenderImpl emailService() {
         Settings settings = settingsRepository.findAll().stream().findFirst().orElse(null);
         Properties mailProperties = new Properties();
-        assert settings != null;
-        if (settings.getSmtpHost() != null) {
+        if (settings != null && settings.getSmtpHost() != null) {
             mailProperties.put("spring.mail.host", settings.getSmtpHost());
             mailProperties.put("spring.mail.port", settings.getSmtpPort());
             mailProperties.put("spring.mail.username", settings.getSmtpUsername());
