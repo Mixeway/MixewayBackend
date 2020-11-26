@@ -348,19 +348,23 @@ public class CodeScanService {
             for (CodeProject codeProject : codeProjectsRunning) {
                 List<ProjectVulnerability> codeVulns = getOldVulnsForCodeProject(codeProject);
                 for (CodeScanClient codeScanClient : codeScanClients) {
-                    if (codeScanClient.canProcessRequest(sastScanner.get()) && codeScanClient.isScanDone(null, codeProject)) {
-                        codeScanClient.loadVulnerabilities(sastScanner.get(), codeProject.getCodeGroup(), null, true, codeProject, codeVulns);
-                        log.info("Vulerabilities for codescan for {} with scope of {} loaded - single app", codeProject.getCodeGroup().getName(), codeProject.getName());
-                        if (StringUtils.isNotBlank(codeProject.getCommitid()))
-                            updateCiOperationsForDoneSastScan(codeProject);
-                        codeProject.setRunning(false);
-                        codeProject.getCodeGroup().setRunning(false);
-                        codeProject.getCodeGroup().setRequestid(null);
-                        codeProject.getCodeGroup().setScanid(null);
-                        codeProject.getCodeGroup().setScope(null);
-                        codeProject.setRisk(projectRiskAnalyzer.getCodeProjectRisk(codeProject) + projectRiskAnalyzer.getCodeProjectOpenSourceRisk(codeProject));
-                        codeGroupRepository.save(codeProject.getCodeGroup());
-                        codeProjectRepository.save(codeProject);
+                    try {
+                        if (codeScanClient.canProcessRequest(sastScanner.get()) && codeScanClient.isScanDone(null, codeProject)) {
+                            codeScanClient.loadVulnerabilities(sastScanner.get(), codeProject.getCodeGroup(), null, true, codeProject, codeVulns);
+                            log.info("Vulerabilities for codescan for {} with scope of {} loaded - single app", codeProject.getCodeGroup().getName(), codeProject.getName());
+                            if (StringUtils.isNotBlank(codeProject.getCommitid()))
+                                updateCiOperationsForDoneSastScan(codeProject);
+                            codeProject.setRunning(false);
+                            codeProject.getCodeGroup().setRunning(false);
+                            codeProject.getCodeGroup().setRequestid(null);
+                            codeProject.getCodeGroup().setScanid(null);
+                            codeProject.getCodeGroup().setScope(null);
+                            codeProject.setRisk(projectRiskAnalyzer.getCodeProjectRisk(codeProject) + projectRiskAnalyzer.getCodeProjectOpenSourceRisk(codeProject));
+                            codeGroupRepository.save(codeProject.getCodeGroup());
+                            codeProjectRepository.save(codeProject);
+                        }
+                    } catch (Exception e){
+                        log.error("[CodeScanService] There is exception of {} during verifying codeproject off {}", e.getLocalizedMessage(), codeProject.getName());
                     }
                 }
                 vulnTemplate.projectVulnerabilityRepository.deleteByStatus(vulnTemplate.STATUS_REMOVED);
