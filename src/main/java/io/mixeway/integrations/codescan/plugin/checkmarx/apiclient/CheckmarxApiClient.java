@@ -137,7 +137,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
             boolean isScanFinished = Objects.requireNonNull(getScanInfo(cxSast.get(), cp.getCodeGroup())).getStatus().getName().equals(Constants.CX_STATUS_FINISHED);
             boolean isReportGenerationStarged = isScanFinished && (StringUtils.isNotBlank(cp.getCodeGroup().getJobId()) || generateReport(cxSast.get(), cp.getCodeGroup()));
             boolean isRaportGenerated = isReportGenerationStarged &&checkReportState(cxSast.get(), cp.getCodeGroup());
-
+            log.info("[Checkmarx] {} - isScanFinished={}, isReportGenerationStarged={}, isRaportGenerated={}", cp.getName(), isScanFinished, isReportGenerationStarged, isRaportGenerated);
             return isScanFinished && isReportGenerationStarged && isRaportGenerated;
         } else
             return false;
@@ -462,7 +462,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
             if (response.getStatusCode().equals(HttpStatus.ACCEPTED) ) {
                 codeGroup.setJobId(String.valueOf(Objects.requireNonNull(response.getBody()).getReportId()));
                 codeGroupRepository.save(codeGroup);
-                log.info("[Checkmarx] Raport generation for {} started", codeGroup.getName());
+                log.info("[Checkmarx] Report generation for {} started", codeGroup.getName());
                 return true;
             }
         } catch (HttpClientErrorException e){
