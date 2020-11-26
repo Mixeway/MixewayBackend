@@ -137,7 +137,6 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
             boolean isScanFinished = Objects.requireNonNull(getScanInfo(cxSast.get(), cp.getCodeGroup())).getStatus().getName().equals(Constants.CX_STATUS_FINISHED);
             boolean isReportGenerationStarged = isScanFinished && (StringUtils.isNotBlank(cp.getCodeGroup().getJobId()) || generateReport(cxSast.get(), cp.getCodeGroup()));
             boolean isRaportGenerated = isReportGenerationStarged &&checkReportState(cxSast.get(), cp.getCodeGroup());
-            log.info("[Checkmarx] {} - isScanFinished={}, isReportGenerationStarged={}, isRaportGenerated={}", cp.getName(), isScanFinished, isReportGenerationStarged, isRaportGenerated);
             return isScanFinished && isReportGenerationStarged && isRaportGenerated;
         } else
             return false;
@@ -547,7 +546,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
                try {
                    f.setDescription(getShortDescription(codeProject, f).getShortDescription());
                } catch (Exception e) {
-                   e.printStackTrace();
+                   log.error("[Checkmarx] Problem with setting description for one of {}", codeProject.getName());
                }
            });
            log.info("[Checkmarx] Loaded {} vulnerabilities for {}", results.size(),codeProject.getName());
