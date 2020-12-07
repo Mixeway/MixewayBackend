@@ -10,6 +10,7 @@ import io.mixeway.integrations.infrastructurescan.plugin.remotefirewall.apiclien
 import io.mixeway.pojo.*;
 import io.mixeway.pojo.Status;
 import io.mixeway.rest.model.KeyValue;
+import io.mixeway.rest.utils.InterfaceOperations;
 import io.mixeway.rest.utils.ProjectRiskAnalyzer;
 import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jettison.json.JSONException;
@@ -272,7 +273,7 @@ public class NetworkScanService {
      * @return list of interface in request
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    private List<Interface> updateAssetsAndPrepareInterfacesForScan(NetworkScanRequestModel req, Project project) {
+    List<Interface> updateAssetsAndPrepareInterfacesForScan(NetworkScanRequestModel req, Project project) {
         List<Interface> listtoScan = new ArrayList<>();
         for (AssetToCreate atc : req.getIpAddresses()){
             Optional<Asset> asset = assetRepository.findByNameAndProject(atc.getHostname(), project);
@@ -282,13 +283,9 @@ public class NetworkScanService {
                     listtoScan.add(intf.get());
                 }
                 else {
-                    Interface interf = new Interface();
-                    interf.setActive(true);
-                    interf.setPrivateip(atc.getIp());
-                    interf.setAsset(asset.get());
-                    interf.setRoutingDomain(asset.get().getRoutingDomain());
-                    interfaceRepository.save(interf);
-                    listtoScan.add(interf);
+                    List<Interface> interfacesToBeCreated = InterfaceOperations.createInterfacesForModel(asset.get(), asset.get().getRoutingDomain(),atc.getIp());
+                    interfacesToBeCreated = interfaceRepository.saveAll(interfacesToBeCreated);
+                    listtoScan.addAll(interfacesToBeCreated);
                 }
             } else {
                 Asset a = new Asset();
@@ -298,14 +295,9 @@ public class NetworkScanService {
                 a.setOrigin("manual");
                 a.setRoutingDomain(routingDomainRepository.findByName(atc.getRoutingDomain()));
                 assetRepository.save(a);
-                Interface interf = new Interface();
-                interf.setActive(true);
-                interf.setPrivateip(atc.getIp());
-                interf.setAsset(a);
-                interf.setAutoCreated(false);
-                interf.setRoutingDomain(a.getRoutingDomain());
-                interfaceRepository.save(interf);
-                listtoScan.add(interf);
+                List<Interface> interfacesToBeCreated = InterfaceOperations.createInterfacesForModel(a, a.getRoutingDomain(),atc.getIp());
+                interfacesToBeCreated = interfaceRepository.saveAll(interfacesToBeCreated);
+                listtoScan.addAll(interfacesToBeCreated);
             }
         }
         return listtoScan;

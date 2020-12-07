@@ -10,6 +10,7 @@ import io.mixeway.rest.project.model.AssetCard;
 import io.mixeway.rest.project.model.AssetModel;
 import io.mixeway.rest.project.model.AssetPutModel;
 import io.mixeway.rest.project.model.RunScanForAssets;
+import io.mixeway.rest.utils.InterfaceOperations;
 import io.mixeway.rest.utils.IpAddressUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,7 +87,8 @@ public class AssetService {
     @Transactional
     public ResponseEntity<Status> saveAsset(Long id, AssetPutModel assetPutModel, Principal principal) {
         Optional<Project> project = projectRepository.findById(id);
-        if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
+        Optional<RoutingDomain> routingDomain = routingDomainRepository.findById(assetPutModel.getRoutingDomainForAsset());
+        if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get()) && routingDomain.isPresent()){
             Asset asset = new Asset();
             asset.setProject(project.get());
             asset.setRoutingDomain(routingDomainRepository.getOne(assetPutModel.getRoutingDomainForAsset()));
@@ -94,37 +96,8 @@ public class AssetService {
             asset.setOrigin("manual");
             asset.setActive(true);
             assetRepository.save(asset);
-            for(String ip : assetPutModel.getIpAddresses().trim().split(",")){
-                if (IpAddressUtils.validate(ip)){
-                    Interface inf = new Interface();
-                    inf.setActive(true);
-                    inf.setAsset(asset);
-                    inf.setPrivateip(ip);
-                    inf.setAutoCreated(false);
-                    inf.setRoutingDomain(asset.getRoutingDomain());
-                    interfaceRepository.save(inf);
-                } else if (ip.contains("/")){
-                    for (String ipFromCidr : IpAddressUtils.getIpAddressesFromCidr(ip)){
-                        Interface inf = new Interface();
-                        inf.setActive(true);
-                        inf.setAsset(asset);
-                        inf.setPrivateip(ipFromCidr);
-                        inf.setAutoCreated(false);
-                        inf.setRoutingDomain(asset.getRoutingDomain());
-                        interfaceRepository.save(inf);
-                    }
-                } else if (ip.contains("-")){
-                    for (String ipFromRange : IpAddressUtils.getIpAddressesFromRange(ip)){
-                        Interface inf = new Interface();
-                        inf.setActive(true);
-                        inf.setAsset(asset);
-                        inf.setPrivateip(ipFromRange);
-                        inf.setAutoCreated(false);
-                        inf.setRoutingDomain(asset.getRoutingDomain());
-                        interfaceRepository.save(inf);
-                    }
-                }
-            }
+            List<Interface> interfaces = InterfaceOperations.createInterfacesForModel(asset, routingDomain.get(), assetPutModel.getIpAddresses());
+            interfaces = interfaceRepository.saveAll(interfaces);
             //asset = assetRepository.findById(asset.getId()).get();
             log.info("{} - Created new asset [{}]{} ", principal.getName(), project.get().getName(), asset.getName());
             return new ResponseEntity<>(new Status("created"), HttpStatus.CREATED);

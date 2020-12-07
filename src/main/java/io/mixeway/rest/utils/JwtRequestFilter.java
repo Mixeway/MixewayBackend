@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -32,14 +33,21 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
-
         LoginUtil login = new LoginUtil(request, jwtTokenUtil);
         UserDetails userDetails = null;
         UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = null;
         if (StringUtils.isNotBlank(login.getUsername())) {
             switch (login.getAuthType()){
                 case Constants.AUTH_TYPE_APIKEY:
-                    userDetails = this.jwtUserDetailsService.loadUserByApiKeyAndRequestUri(login.getUsername(), request.getRequestURI());
+                    try {
+                        userDetails = this.jwtUserDetailsService.loadUserByApiKeyAndRequestUri(login.getUsername(), request.getRequestURI());
+                    } catch (UsernameNotFoundException e) {
+                        log.error("User {} has no permision for {}", login.getUsername(), request.getRequestURI());
+                    }
+                    if (userDetails == null) {
+                        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                        return;
+                    }
                     usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
                             userDetails, null, userDetails.getAuthorities());
                     usernamePasswordAuthenticationToken
