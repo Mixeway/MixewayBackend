@@ -365,6 +365,11 @@ public class CodeScanService {
                         }
                     } catch (Exception e){
                         log.error("[CodeScanService] There is exception of {} during verifying codeproject off {}", e.getLocalizedMessage(), codeProject.getName());
+                        codeProject.setRunning(false);
+                        codeProject.setInQueue(false);
+                        codeProjectRepository.save(codeProject);
+                        codeProject.getCodeGroup().setRunning(false);
+                        codeGroupRepository.save(codeProject.getCodeGroup());
                     }
                 }
                 vulnTemplate.projectVulnerabilityRepository.deleteByStatus(vulnTemplate.STATUS_REMOVED);
