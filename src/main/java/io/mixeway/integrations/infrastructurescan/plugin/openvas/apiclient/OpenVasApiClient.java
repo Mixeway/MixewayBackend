@@ -2,6 +2,7 @@ package io.mixeway.integrations.infrastructurescan.plugin.openvas.apiclient;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.ProtocolException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
@@ -448,7 +449,7 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 				return ns;
 			}
 			return ns;
-		} catch (HttpClientErrorException hcee){
+		} catch (HttpClientErrorException | ConnectException hcee){
 			log.error("Error occured during target creation for {} with code {}",ns.getProject().getName(),hcee.getLocalizedMessage() );
 		}
 		return null;
