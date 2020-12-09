@@ -8,12 +8,16 @@ package io.mixeway.rest.utils;
 import io.mixeway.db.entity.Asset;
 import io.mixeway.db.entity.Interface;
 import io.mixeway.db.entity.RoutingDomain;
-import io.mixeway.rest.project.model.AssetPutModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class InterfaceOperations {
+
+    private final static Logger log = LoggerFactory.getLogger(InterfaceOperations.class);
+
 
     public static List<Interface> createInterfacesForModel(Asset asset, RoutingDomain routingDomain, String ips) {
         List<Interface> interfaces = new ArrayList<>();
@@ -48,23 +52,28 @@ public class InterfaceOperations {
     }
 
     public static boolean isInterfaceAlreadyDefinedForAsset(Asset a, String ips){
-        for(String ip : ips.trim().split(",")){
-            if (IpAddressUtils.validate(ip)){
-                return a.getInterfaces().stream().anyMatch(i -> i.getPrivateip().equals(ip));
-            } else if (ip.contains("/")){
-                for (String ipFromCidr : IpAddressUtils.getIpAddressesFromCidr(ip)){
-                    if (a.getInterfaces().stream().anyMatch(i -> i.getPrivateip().equals(ipFromCidr))){
-                        return true;
+        try {
+            for (String ip : ips.trim().split(",")) {
+                if (IpAddressUtils.validate(ip)) {
+                    return a.getInterfaces().stream().anyMatch(i -> i.getPrivateip().equals(ip));
+                } else if (ip.contains("/")) {
+                    for (String ipFromCidr : IpAddressUtils.getIpAddressesFromCidr(ip)) {
+                        if (a.getInterfaces().stream().anyMatch(i -> i.getPrivateip().equals(ipFromCidr))) {
+                            return true;
+                        }
                     }
-                }
-            } else if (ip.contains("-")){
-                for (String ipFromRange : IpAddressUtils.getIpAddressesFromRange(ip)){
-                    if (a.getInterfaces().stream().anyMatch(i -> i.getPrivateip().equals(ipFromRange))){
-                        return true;
+                } else if (ip.contains("-")) {
+                    for (String ipFromRange : IpAddressUtils.getIpAddressesFromRange(ip)) {
+                        if (a.getInterfaces().stream().anyMatch(i -> i.getPrivateip().equals(ipFromRange))) {
+                            return true;
+                        }
                     }
                 }
             }
+            return false;
+        } catch (NullPointerException e){
+            log.warn("[Interface Operations] Nullpointer for got during checking if interface is already defined");
+            return false;
         }
-        return false;
     }
 }
