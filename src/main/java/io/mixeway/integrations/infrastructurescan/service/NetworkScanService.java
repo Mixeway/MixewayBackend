@@ -30,6 +30,7 @@ import org.springframework.web.util.HtmlUtils;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.ConnectException;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.*;
@@ -199,26 +200,30 @@ public class NetworkScanService {
         intfs = intfs.stream().filter(i -> !i.isScanRunning()).collect(Collectors.toList());
         Map<NetworkScanClient, Set<Interface>> scannerInterfaceMap = findNessusForInterfaces(new HashSet<>(intfs));
         for (Map.Entry<NetworkScanClient, Set<Interface>> keyValue: scannerInterfaceMap.entrySet()) {
-            NessusScan scan = new NessusScan();
-            scan = configureScan(scan,
-                    keyValue.getKey().getScannerFromClient(
-                            Objects.requireNonNull(keyValue.getValue().stream().findFirst().orElse(null)).getRoutingDomain()),
-                    project,
-                    false);
-            scan.setInterfaces(keyValue.getValue());
-            scan.setRequestId(UUID.randomUUID().toString());
-            scan.setScanFrequency(EXECUTE_ONCE);
-            scan.setScheduled(false);
-            for (Interface i: keyValue.getValue()){
-                i.getAsset().setRequestId(scan.getRequestId());
-                i.setScanRunning(true);
-                interfaceRepository.save(i);
-                assetRepository.save(i.getAsset());
+            try {
+                NessusScan scan = new NessusScan();
+                scan = configureScan(scan,
+                        keyValue.getKey().getScannerFromClient(
+                                Objects.requireNonNull(keyValue.getValue().stream().findFirst().orElse(null)).getRoutingDomain()),
+                        project,
+                        false);
+                scan.setInterfaces(keyValue.getValue());
+                scan.setRequestId(UUID.randomUUID().toString());
+                scan.setScanFrequency(EXECUTE_ONCE);
+                scan.setScheduled(false);
+                for (Interface i : keyValue.getValue()) {
+                    i.getAsset().setRequestId(scan.getRequestId());
+                    i.setScanRunning(true);
+                    interfaceRepository.save(i);
+                    assetRepository.save(i.getAsset());
+                }
+                scan = nessusScanRepository.saveAndFlush(scan);
+                putRulesOnRfw(scan);
+                keyValue.getKey().runScan(scan);
+                nessusScans.add(scan);
+            } catch (ConnectException e){
+                log.error("Problem with connection to scanner {}", keyValue.getKey().printInfo());
             }
-            scan = nessusScanRepository.saveAndFlush(scan);
-            putRulesOnRfw(scan);
-            keyValue.getKey().runScan(scan);
-            nessusScans.add(scan);
         }
 
         return nessusScans;
