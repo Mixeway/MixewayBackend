@@ -114,7 +114,7 @@ public class CiOperationsService {
         return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
     }
 
-    public ResponseEntity<Status> codeScan(Long id, String groupName, String projectName, String commitId, Principal principal) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
+    public ResponseEntity<Status> codeScan(Long id, String groupName, String projectName, String commitId, Principal principal) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, ParseException, IOException, JSONException {
         return codeScanService.createScanForCodeProject(id,groupName,projectName);
     }
 
@@ -158,7 +158,8 @@ public class CiOperationsService {
         }
     }
 
-    private List<VulnManageResponse> createVulnManageResponseForCodeProject(CodeProject cp){
+    @Transactional
+    List<VulnManageResponse> createVulnManageResponseForCodeProject(CodeProject cp){
         List<VulnManageResponse> vulnManageResponses = new ArrayList<>();
         List<ProjectVulnerability> codeVulns = null;
         try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository
