@@ -396,8 +396,8 @@ public class CiOperationsService {
             return new ResponseEntity<CIVulnManageResponse>(CIVulnManageResponse
                     .builder()
                     .result(securityGatewayEntry.isPassed() ? "Ok" : "Not Ok")
-                    .running(false)
-                    .inQueue(false)
+                    .running(codeProject.get().getRunning())
+                    .inQueue(codeProject.get().getInQueue())
                     .build(), HttpStatus.OK);
         }
         else {
