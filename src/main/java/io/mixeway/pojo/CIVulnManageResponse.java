@@ -1,15 +1,13 @@
 package io.mixeway.pojo;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.List;
 
 @Builder
 @Getter
 @Setter
+@AllArgsConstructor
 @NoArgsConstructor
 public class CIVulnManageResponse {
     String result;
@@ -17,6 +15,7 @@ public class CIVulnManageResponse {
     Boolean running;
     Boolean inQueue;
     List<VulnManageResponse> vulnManageResponseList;
+
 
     public Boolean getRunning() {
         return running;
