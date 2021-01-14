@@ -80,6 +80,15 @@ public class CiOperationsController {
     }
 
 
+    @CrossOrigin(origins="*")
+    @PreAuthorize("hasAuthority('ROLE_API')")
+    @GetMapping(value = "/verifyproject/{id}",produces = "application/json")
+    public ResponseEntity<CIVulnManageResponse> verifyCodeProject(@PathVariable(value = "id") Long codeProjectId,
+                                                           Principal principal) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+        return ciOperationsService.verifyCodeProject(codeProjectId, principal);
+    }
+
+
     @PreAuthorize("hasAuthority('ROLE_API')")
     @PostMapping(value = "/getscannerinfo",produces = "application/json")
     public ResponseEntity<PrepareCIOperation> getInfoForCI(@Valid @RequestBody GetInfoRequest getInfoRequest, Principal principal) throws Exception {
