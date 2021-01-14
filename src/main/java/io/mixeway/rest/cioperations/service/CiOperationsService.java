@@ -393,7 +393,12 @@ public class CiOperationsService {
         Optional<CodeProject> codeProject = codeProjectRepository.findById(codeProjectId);
         if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getCodeGroup().getProject())) {
             SecurityGatewayEntry securityGatewayEntry = securityQualityGateway.buildGatewayResponse(vulnTemplate.projectVulnerabilityRepository.findByCodeProject(codeProject.get()));
-            return new ResponseEntity<CIVulnManageResponse>(CIVulnManageResponse.builder().result(securityGatewayEntry.isPassed() ? "Ok" : "Not Ok").build(), HttpStatus.OK);
+            return new ResponseEntity<CIVulnManageResponse>(CIVulnManageResponse
+                    .builder()
+                    .result(securityGatewayEntry.isPassed() ? "Ok" : "Not Ok")
+                    .running(false)
+                    .inQueue(false)
+                    .build(), HttpStatus.OK);
         }
         else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
