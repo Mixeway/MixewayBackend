@@ -15,6 +15,7 @@ import io.mixeway.pojo.Status;
 import io.mixeway.pojo.VaultHelper;
 import io.mixeway.rest.project.model.RunScanForWebApps;
 import io.mixeway.rest.utils.ProjectRiskAnalyzer;
+import org.apache.catalina.loader.WebappClassLoader;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -116,6 +117,12 @@ public class WebAppScanService {
             if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())) {
                 requestId = UUID.randomUUID().toString();
                 for (WebAppScanModel webAppScanModel : webAppScanModelList) {
+                    Optional<WebApp> applicationToLoad = waRepository.findByProjectAndUrl(project.get(), webAppScanModel.getUrl());
+                    if (applicationToLoad.isPresent()){
+                        applicationToLoad.get().setInQueue(true);
+                        waRepository.save(applicationToLoad.get());
+                        return new ResponseEntity<>(new Status("Scan is requested", requestId), HttpStatus.CREATED);
+                    }
                     String urlToCompareSimiliar = getUrltoCompare(webAppScanModel.getUrl());
                     String urlToCompareWithRegexx = WebAppScanHelper.normalizeUrl(webAppScanModel.getUrl()) + "$";
                     try {
