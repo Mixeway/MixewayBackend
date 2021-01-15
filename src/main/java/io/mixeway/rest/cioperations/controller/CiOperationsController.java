@@ -5,6 +5,7 @@ import io.mixeway.pojo.Status;
 import io.mixeway.rest.cioperations.model.*;
 import io.mixeway.rest.cioperations.service.CiOperationsService;
 import io.mixeway.rest.model.OverAllVulnTrendChartData;
+import io.mixeway.rest.vulnmanage.model.Vuln;
 import org.codehaus.jettison.json.JSONException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -16,6 +17,7 @@ import io.mixeway.db.entity.CiOperations;
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.text.ParseException;
@@ -88,6 +90,14 @@ public class CiOperationsController {
         return ciOperationsService.verifyCodeProject(codeProjectId, principal);
     }
 
+    @CrossOrigin(origins="*")
+    @PreAuthorize("hasAuthority('ROLE_API')")
+    @GetMapping(value = "/vulnerabilities/{id}",produces = "application/json")
+    public ResponseEntity<List<Vuln>> getVulnerabilitiesForCodeProject(@PathVariable(value = "id") Long codeProjectId,
+                                                                 Principal principal) throws UnknownHostException {
+        return ciOperationsService.getVulnerabilitiesForCodeProject(codeProjectId, principal);
+    }
+
 
     @PreAuthorize("hasAuthority('ROLE_API')")
     @PostMapping(value = "/getscannerinfo",produces = "application/json")
@@ -99,6 +109,8 @@ public class CiOperationsController {
     public ResponseEntity<PrepareCIOperation> getInfoForCI(@PathVariable(value = "projectid") Long projectid, @Valid @RequestBody GetInfoRequest getInfoRequest, Principal principal) throws Exception {
         return ciOperationsService.getInfoForCIForProject(getInfoRequest, principal, projectid);
     }
+
+
 
     @PreAuthorize("hasAuthority('ROLE_API')")
     @PostMapping(value = "/infoscanperformed",produces = "application/json")

@@ -16,6 +16,7 @@ import io.mixeway.rest.cioperations.model.*;
 import io.mixeway.rest.cioperations.model.ScannerType;
 import io.mixeway.rest.model.OverAllVulnTrendChartData;
 import io.mixeway.rest.project.model.OpenSourceConfig;
+import io.mixeway.rest.vulnmanage.model.Vuln;
 import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
@@ -27,6 +28,7 @@ import io.mixeway.db.repository.CiOperationsRepository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.text.ParseException;
@@ -401,6 +403,30 @@ public class CiOperationsService {
                     .build(), HttpStatus.OK);
         }
         else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
+    /**
+     * Getting vulnerabilies related with particular code project
+     * @param codeProjectId to load vulns
+     * @param principal user requesting
+     * @return returning list of vulnerbilities
+     */
+    public ResponseEntity<List<Vuln>> getVulnerabilitiesForCodeProject(Long codeProjectId, Principal principal) throws UnknownHostException {
+        Optional<CodeProject> codeProject = codeProjectRepository.findById(codeProjectId);
+        if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getCodeGroup().getProject())) {
+            List<ProjectVulnerability> vulns = vulnTemplate.projectVulnerabilityRepository.findByCodeProject(codeProject.get());
+            List<Vuln> vulnList = new ArrayList<>();
+            for (ProjectVulnerability pv : vulns){
+                if (pv.getVulnerabilitySource().getId().equals(vulnTemplate.SOURCE_OPENSOURCE.getId())){
+                    vulnList.add(new Vuln(pv,null,null,pv.getCodeProject(),Constants.API_SCANNER_OPENSOURCE));
+                } else if (pv.getVulnerabilitySource().getId().equals(vulnTemplate.SOURCE_SOURCECODE.getId())){
+                    vulnList.add(new Vuln(pv,null,null,pv.getCodeProject(),Constants.API_SCANNER_CODE));
+                }
+            }
+            return new ResponseEntity<List<Vuln>>(vulnList, HttpStatus.OK);
+        } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
