@@ -26,4 +26,5 @@ public interface NessusScanRepository extends JpaRepository<NessusScan, Long>{
 
 	@Query(value="select * from nessusscan where running=true order by random() limit 5", nativeQuery = true)
     List<NessusScan> getRandom5RunningScans();
+	List<NessusScan> findByProjectAndRunning(Project project, boolean running);
 }

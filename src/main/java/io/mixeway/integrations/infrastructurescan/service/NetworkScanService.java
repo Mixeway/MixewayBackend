@@ -502,5 +502,19 @@ public class NetworkScanService {
             }
         }
     }
+
+    /**
+     * Method which verify if Network Scan is running (or some kind of error occured), if there is Interface.scanRunning with no nessusscan.running
+     * terminate running interfaces. Otherwise another scan cannot be started
+     */
+    public void verifyInteraceState() {
+        List<Project> projectRunning = projectRepository.getProjectWithInterfaceRunning();
+        for (Project p : projectRunning){
+            if (nessusScanRepository.findByProjectAndRunning(p,true).size() == 0){
+                interfaceRepository.updateInterfaceStateForNotRunningScan(p);
+                log.info("[Network Scan] Detected interface with status ScanRunning=true for project {}, disabling it.", p.getName());
+            }
+        }
+    }
 }
 

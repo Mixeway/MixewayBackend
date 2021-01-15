@@ -29,8 +29,12 @@ public interface AssetRepository extends JpaRepository<Asset,Long> {
 	@Modifying
 	@Query(value="delete from asset a where not exists (select 1 from interface i where i.asset_id = a.id)", nativeQuery=true)
 	void deleteAsset();
+
+	@Query(value="select distinct a from Asset a, Interface i where i.scanRunning=true and i.asset=a")
+	List<Asset> getAssetsWithRunningInterfaces();
+
 	List<Asset> findByInterfacesIsNull();
-	
+
 	@Modifying
 	@Query(value="delete from asset_securitygroup where asset_id in (select a.id from asset a where not exists (select 1 from interface i where i.asset_id = a.id))",nativeQuery=true)
 	void delteSecurityGroupMapping();

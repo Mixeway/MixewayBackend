@@ -25,5 +25,14 @@ public class NetworkScanScheduler {
 
 	}
 
+
+	/**
+	 * Method which verify if Network Scan is running (or some kind of error occured), if there is Interface.scanRunning with no nessusscan.running
+	 * terminate running interfaces. Otherwise another scan cannot be started
+	 */
+	@Scheduled(initialDelay=0,fixedDelay = 300000)
+	public void verifyInterfaceState(){
+		networkScanService.verifyInteraceState();
+	}
 }
 

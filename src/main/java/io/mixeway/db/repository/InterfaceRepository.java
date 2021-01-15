@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import io.mixeway.db.entity.Interface;
+import io.mixeway.db.entity.Project;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -58,4 +59,10 @@ public interface InterfaceRepository extends JpaRepository<Interface, Long>{
 	@Modifying
 	@Query(value="update Interface i set i.scanRunning=false where i.privateip in :ips")
     void disableScanRunningOnInterfaces(@Param("ips") List<String> prepareTargetsForScan);
+
+	List<Interface> findByScanRunning(boolean scannRunning);
+
+	@Modifying
+	@Query(value = "update Interface i set i.scanRunning=false where i.asset in (select a from Asset a where a.project=:project)")
+	void updateInterfaceStateForNotRunningScan(@Param("project") Project project);
 }

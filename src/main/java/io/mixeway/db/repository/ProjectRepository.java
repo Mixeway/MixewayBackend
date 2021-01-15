@@ -32,4 +32,6 @@ public interface ProjectRepository extends JpaRepository<Project, Long>{
 	List<Project> getUniqueContactListEmails(@Param("email") String email);
 	List<Project> findByVulnAuditorEnable(boolean vulnAuditorEnable);
 	List<Project> findByEnableVulnManage(boolean vulnManage);
+	@Query(value = "select distinct p from Project p, Asset a, Interface i where i.scanRunning=true and i.asset=a and a.project=p")
+	List<Project> getProjectWithInterfaceRunning();
 }
