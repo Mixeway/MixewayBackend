@@ -5,6 +5,7 @@ import io.mixeway.pojo.Status;
 import io.mixeway.rest.cioperations.model.*;
 import io.mixeway.rest.cioperations.service.CiOperationsService;
 import io.mixeway.rest.model.OverAllVulnTrendChartData;
+import io.mixeway.rest.vulnmanage.model.SecurityGatewayResponse;
 import io.mixeway.rest.vulnmanage.model.Vuln;
 import org.codehaus.jettison.json.JSONException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -93,8 +94,8 @@ public class CiOperationsController {
     @CrossOrigin(origins="*")
     @PreAuthorize("hasAuthority('ROLE_API')")
     @GetMapping(value = "/vulnerabilities/{id}",produces = "application/json")
-    public ResponseEntity<List<Vuln>> getVulnerabilitiesForCodeProject(@PathVariable(value = "id") Long codeProjectId,
-                                                                 Principal principal) throws UnknownHostException {
+    public ResponseEntity<SecurityGatewayResponse> getVulnerabilitiesForCodeProject(@PathVariable(value = "id") Long codeProjectId,
+                                                                                    Principal principal) throws UnknownHostException {
         return ciOperationsService.getVulnerabilitiesForCodeProject(codeProjectId, principal);
     }
 

@@ -16,6 +16,7 @@ import io.mixeway.rest.cioperations.model.*;
 import io.mixeway.rest.cioperations.model.ScannerType;
 import io.mixeway.rest.model.OverAllVulnTrendChartData;
 import io.mixeway.rest.project.model.OpenSourceConfig;
+import io.mixeway.rest.vulnmanage.model.SecurityGatewayResponse;
 import io.mixeway.rest.vulnmanage.model.Vuln;
 import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jettison.json.JSONException;
@@ -413,7 +414,7 @@ public class CiOperationsService {
      * @param principal user requesting
      * @return returning list of vulnerbilities
      */
-    public ResponseEntity<List<Vuln>> getVulnerabilitiesForCodeProject(Long codeProjectId, Principal principal) throws UnknownHostException {
+    public ResponseEntity<SecurityGatewayResponse> getVulnerabilitiesForCodeProject(Long codeProjectId, Principal principal) throws UnknownHostException {
         Optional<CodeProject> codeProject = codeProjectRepository.findById(codeProjectId);
         if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getCodeGroup().getProject())) {
             List<ProjectVulnerability> vulns = vulnTemplate.projectVulnerabilityRepository.findByCodeProject(codeProject.get());
@@ -425,7 +426,12 @@ public class CiOperationsService {
                     vulnList.add(new Vuln(pv,null,null,pv.getCodeProject(),Constants.API_SCANNER_CODE));
                 }
             }
-            return new ResponseEntity<List<Vuln>>(vulnList, HttpStatus.OK);
+            SecurityGatewayEntry securityGatewayEntry = securityQualityGateway.buildGatewayResponse(vulns);
+            return new ResponseEntity<SecurityGatewayResponse>(
+                    new SecurityGatewayResponse(securityGatewayEntry.isPassed(),
+                            securityGatewayEntry.isPassed() ? Constants.SECURITY_GATEWAY_PASSED : Constants.SECURITY_GATEWAY_FAILED,
+                            vulnList),
+                    HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
