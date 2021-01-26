@@ -44,7 +44,7 @@ public class Vuln {
 			this.setId(projectVulnerability.getId());
 			this.setType(Constants.API_SCANNER_PACKAGE);
 			this.setVulnerabilityName(projectVulnerability.getVulnerability().getName());
-			this.setSeverity(projectVulnerability.getSeverity());
+			this.setSeverity(projectVulnerability.getVulnerability().getSeverity() == null ? projectVulnerability.getSeverity() : projectVulnerability.getVulnerability().getSeverity());
 			this.setDescription(projectVulnerability.getDescription());
 			this.setHostname(hostname);
 			this.setLocation(((Asset) target).getName());
@@ -58,7 +58,7 @@ public class Vuln {
 			this.setLocation(cp.getName());
 			this.setType(Constants.API_SCANNER_PACKAGE);
 			this.setVulnerabilityName(projectVulnerability.getVulnerability().getName());
-			this.setSeverity(projectVulnerability.getSeverity());
+			this.setSeverity(projectVulnerability.getVulnerability().getSeverity() == null ? projectVulnerability.getSeverity() : projectVulnerability.getVulnerability().getSeverity());
 			this.setDescription(projectVulnerability.getRecommendation()+ " " + projectVulnerability.getDescription());
 			this.setProject(cp.getName());
 			if (cp.getCodeGroup().getProject().getCiid() != null)
@@ -70,7 +70,7 @@ public class Vuln {
 			this.setGrade(projectVulnerability.getGrade());
 			this.setId(projectVulnerability.getId());
 			this.setVulnerabilityName(projectVulnerability.getVulnerability().getName());
-			this.setSeverity(projectVulnerability.getSeverity());
+			this.setSeverity(projectVulnerability.getVulnerability().getSeverity() == null ? projectVulnerability.getSeverity() : projectVulnerability.getVulnerability().getSeverity());
 			//TODO: zrobienie opisu dla fortify
 			this.setDescription(projectVulnerability.getDescription());
 			try {
@@ -88,7 +88,7 @@ public class Vuln {
 			this.setGrade(projectVulnerability.getGrade());
 			this.setId(projectVulnerability.getId());
 			this.setVulnerabilityName(projectVulnerability.getVulnerability().getName());
-			this.setSeverity(projectVulnerability.getSeverity());
+			this.setSeverity(projectVulnerability.getVulnerability().getSeverity() == null ? projectVulnerability.getSeverity() : projectVulnerability.getVulnerability().getSeverity());
 			this.setDescription(projectVulnerability.getDescription()+"\n\n"+projectVulnerability.getRecommendation());
 			this.setBaseURL(projectVulnerability.getWebApp().getUrl());
 			this.setLocation(projectVulnerability.getLocation());
@@ -111,7 +111,7 @@ public class Vuln {
 			this.setId(projectVulnerability.getId());
 			this.setGrade(projectVulnerability.getGrade());
 			this.setVulnerabilityName(projectVulnerability.getVulnerability().getName());
-			this.setSeverity(projectVulnerability.getSeverity());
+			this.setSeverity(projectVulnerability.getVulnerability().getSeverity() == null ? projectVulnerability.getSeverity() : projectVulnerability.getVulnerability().getSeverity());
 			this.setDescription(projectVulnerability.getDescription());
 			try {
 				if ( projectVulnerability.getAnInterface().getPrivateip() == null && projectVulnerability.getAnInterface().getPrivateip().equals("") )
@@ -134,7 +134,7 @@ public class Vuln {
 			this.setId(projectVulnerability.getId());
 			this.setGrade(projectVulnerability.getGrade());
 			this.setVulnerabilityName(projectVulnerability.getCisRequirement().getName());
-			this.setSeverity(projectVulnerability.getSeverity());
+			this.setSeverity(projectVulnerability.getVulnerability().getSeverity() == null ? projectVulnerability.getSeverity() : projectVulnerability.getVulnerability().getSeverity());
 			this.setDescription(projectVulnerability.getDescription());
 			try {
 				if ( projectVulnerability.getAnInterface().getPrivateip() == null && projectVulnerability.getAnInterface().getPrivateip().equals("") )
