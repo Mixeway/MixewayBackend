@@ -1132,3 +1132,16 @@ insert into cxbranch (codeproject_id, branch, cxid) select cp.id, cp.branch, cg.
 alter table codegroup add column remoteid int;
 update codegroup set remoteid =0;
 update codegroup set remoteid=versionidall;
+
+--changeset siewer:cis_openscap
+create table cisrequirement(
+    id serial primary key,
+    name text,
+    type text
+);
+alter table projectvulnerability add column cisrequirement_id int references cisrequirement(id);
+update projectvulnerability set cisrequirement_id=null;
+insert into vulnerabilitysource (name) values ('CISBenchmark');
+
+--changeset siewer:cis_openscap2
+insert into routingdomain (name) values ('Default');

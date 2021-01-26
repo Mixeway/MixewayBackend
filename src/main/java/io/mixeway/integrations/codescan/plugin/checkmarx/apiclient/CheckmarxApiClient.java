@@ -568,7 +568,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
             Vulnerability vulnerability = vulnTemplate.createOrGetVulnerabilityService.createOrGetVulnerability(cxVuln.getQuery());
 
             ProjectVulnerability projectVulnerability = new ProjectVulnerability(codeProject,codeProject,vulnerability,cxVuln.getDescription(),null,
-                    cxVuln.getSeverity(),null,cxVuln.getDstLocation()+":"+cxVuln.getDstLine(),getTag(cxVuln.getAnalysis()), vulnTemplate.SOURCE_SOURCECODE );
+                    cxVuln.getSeverity(),null,cxVuln.getDstLocation()+":"+cxVuln.getDstLine(),getTag(cxVuln.getAnalysis()), vulnTemplate.SOURCE_SOURCECODE, null );
 
             vulnsToPersist.add(projectVulnerability);
         }

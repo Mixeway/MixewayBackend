@@ -130,6 +130,25 @@ public class Vuln {
 				this.setIpProtocol(projectVulnerability.getPort().split("/")[1].trim().replace(" ", ""));
 			} catch (ArrayIndexOutOfBoundsException | NullPointerException ignored){ }
 			this.setType(Constants.API_SCANNER_OPENVAS);
+		} else if ((target instanceof Interface) && projectVulnerability.getVulnerabilitySource().getName().equals(Constants.VULNEARBILITY_SOURCE_CISBENCHMARK)) {
+			this.setId(projectVulnerability.getId());
+			this.setGrade(projectVulnerability.getGrade());
+			this.setVulnerabilityName(projectVulnerability.getCisRequirement().getName());
+			this.setSeverity(projectVulnerability.getSeverity());
+			this.setDescription(projectVulnerability.getDescription());
+			try {
+				if ( projectVulnerability.getAnInterface().getPrivateip() == null && projectVulnerability.getAnInterface().getPrivateip().equals("") )
+					this.setIpAddress(projectVulnerability.getAnInterface().getFloatingip());
+				else
+					this.setIpAddress(projectVulnerability.getAnInterface().getPrivateip());
+			} catch (NullPointerException e) {
+				this.setIpAddress("null");
+			}
+			this.setDateCreated(projectVulnerability.getInserted());
+			if (projectVulnerability.getAnInterface().getAsset().getProject().getCiid() != null && !projectVulnerability.getAnInterface().getAsset().getProject().getCiid().isEmpty())
+				this.setCiid(projectVulnerability.getAnInterface().getAsset().getProject().getCiid());
+			this.setRoutingDomainName(projectVulnerability.getAnInterface().getRoutingDomain() != null ? projectVulnerability.getAnInterface().getRoutingDomain().getName() : "");
+			this.setType(Constants.VULNEARBILITY_SOURCE_CISBENCHMARK);
 		}
 
     }

@@ -57,6 +57,13 @@ public class Asset implements VulnSource {
 		this.setRoutingDomain(routingDomain);
 		this.setOrigin(Constants.ORIGIN_API);
 	}
+	public Asset(String name, RoutingDomain routingDomain, Project project){
+		this.setName(name);
+		this.setActive(true);
+		this.setProject(project);
+		this.setRoutingDomain(routingDomain);
+		this.setOrigin(Constants.ORIGIN_API);
+	}
 
 	@Column(name = "requestid")
 	public String getRequestId() {

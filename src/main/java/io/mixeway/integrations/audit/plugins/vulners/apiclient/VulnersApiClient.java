@@ -84,7 +84,7 @@ public class VulnersApiClient {
 	// TO REVIEW
 	private void createVulnerability(SoftwarePacket softPack, String vulnCode, Double cvss,String fix,Asset asset) {
 		Vulnerability vulnerability = vulnTemplate.createOrGetVulnerabilityService.createOrGetVulnerability(vulnCode);
-		ProjectVulnerability spv = new ProjectVulnerability(softPack,null,vulnerability,null, fix,createScore(cvss),null,null,null,vulnTemplate.SOURCE_OSPACKAGE);
+		ProjectVulnerability spv = new ProjectVulnerability(softPack,null,vulnerability,null, fix,createScore(cvss),null,null,null,vulnTemplate.SOURCE_OSPACKAGE, null);
 		vulnTemplate.projectVulnerabilityRepository.save(spv);
 		
 	}

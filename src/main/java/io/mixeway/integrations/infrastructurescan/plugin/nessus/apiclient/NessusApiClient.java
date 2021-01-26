@@ -560,7 +560,8 @@ public class NessusApiClient implements NetworkScanClient, SecurityScanner {
 						threat = "Critical";
 					Vulnerability vulnerability = vulnTemplate.createOrGetVulnerabilityService.createOrGetVulnerability(vuln.getString(Constants.NESSUS_PLUGIN_NAME));
 					ProjectVulnerability projectVulnerability = new ProjectVulnerability(i, null, vulnerability,bodyJ.getJSONObject(Constants.NESSUS_SCAN_INFO).getJSONObject(Constants.NESSUS_PLUGINDESCRIPTION)
-							.getJSONObject(Constants.NESSUS_PLUGINATTRIBUTES).getString(Constants.NESSUS_VULN_DESCRIPTION),null,threat, key,null,null, vulnTemplate.SOURCE_NETWORK);
+							.getJSONObject(Constants.NESSUS_PLUGINATTRIBUTES).getString(Constants.NESSUS_VULN_DESCRIPTION),
+							null,threat, key,null,null, vulnTemplate.SOURCE_NETWORK,null);
 					projectVulnerability.updateStatusAndGrade(oldVulns, vulnTemplate);
 
 					projectVulnerabilities.add(projectVulnerability);

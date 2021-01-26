@@ -64,6 +64,13 @@ public class Interface implements VulnSource {
 		this.setRoutingDomain(routingDomain);
 		this.setAutoCreated(false);
     }
+    public Interface (Asset asset, String ip) {
+		this.setActive(true);
+		this.setAsset(asset);
+		this.setPrivateip(ip);
+		this.setRoutingDomain(asset.getRoutingDomain());
+		this.setAutoCreated(false);
+	}
 
     public int getRisk() {
 		return risk;

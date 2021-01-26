@@ -282,6 +282,7 @@ public class Constants {
     public static final String PROJECT_UNKNOWN = "unknown";
     public static final String ROLE_AUDITOR = "ROLE_AUDITOR";
     public static final String VULNEARBILITY_SOURCE_GITLEAKS = "GitLeaks";
+    public static final String VULNEARBILITY_SOURCE_CISBENCHMARK = "CISBenchmark";
     public static final String STATUS_STOPPED = "Stopped";
     public static final String CX_STATUS_CREATED = "Created";
 	public static final String CX_ANALYSIS_TO_VERIFY = "To Verify";
@@ -291,4 +292,7 @@ public class Constants {
 	public static final String CX_ANALYSIS_FP = "Proposed Not Exploitable";
     public static final String SECURITY_GATEWAY_PASSED = "Security Policy (scope Source Code and Open Source) is passed. Congratz!";
     public static final String SECURITY_GATEWAY_FAILED = "Security Policy (scope Source Code and Open Source) is NOT passed. Vulnerabilities are listed above, please fix them before proceeding.";
+    public static final String DEFAULT_ROUTING_DOMAIN = "Default";
 }
+
+

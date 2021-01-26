@@ -715,7 +715,7 @@ public class CodeScanService {
 
             ProjectVulnerability projectVulnerability = new ProjectVulnerability(codeProject,codeProject,vulnerability, vulnerabilityModel.getDescription(),null,
                     vulnerabilityModel.getSeverity(),null,vulnerabilityModel.getFilename()+":"+vulnerabilityModel.getLine(),
-                    "", vulnerabilitySource );
+                    "", vulnerabilitySource, null );
 
             vulnToPersist.add(projectVulnerability);
         }
