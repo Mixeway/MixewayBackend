@@ -115,7 +115,8 @@ public class VulnsService {
                 || severity.equals(Constants.VULN_CRITICALITY_CRITICAL)
                 || severity.equals(Constants.VULN_CRITICALITY_MEDIUM)
                 || severity.equals(Constants.VULN_CRITICALITY_LOW)
-                || severity.equals(Constants.INFO_SEVERITY)){
+                || severity.equals(Constants.INFO_SEVERITY)
+                || severity.equals(Constants.SKIP_VULENRABILITY)){
             vulnerability.get().setSeverity(severity);
             return new ResponseEntity<>(HttpStatus.OK);
         } else {
@@ -133,7 +134,8 @@ public class VulnsService {
                 || severity.equals(Constants.VULN_CRITICALITY_CRITICAL)
                 || severity.equals(Constants.VULN_CRITICALITY_MEDIUM)
                 || severity.equals(Constants.VULN_CRITICALITY_LOW)
-                || severity.equals(Constants.INFO_SEVERITY)){
+                || severity.equals(Constants.INFO_SEVERITY)
+                || severity.equals(Constants.SKIP_VULENRABILITY)){
             cisRequirement.get().setSeverity(severity);
             return new ResponseEntity<>(HttpStatus.OK);
         } else {
