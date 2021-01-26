@@ -1,15 +1,21 @@
 package io.mixeway.rest.statistic.service;
 
+import io.mixeway.config.Constants;
+import io.mixeway.db.entity.CisRequirement;
 import io.mixeway.db.entity.Project;
+import io.mixeway.db.entity.Vulnerability;
 import io.mixeway.domain.service.vulnerability.VulnTemplate;
 import io.mixeway.pojo.PermissionFactory;
+import io.mixeway.pojo.Status;
 import io.mixeway.pojo.VulnBarChartProjection;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -89,5 +95,48 @@ public class VulnsService {
                 .stream()
                 .map(Project::getId)
                 .collect(Collectors.toList())), HttpStatus.OK);
+    }
+
+    public ResponseEntity<List<Vulnerability>> getVulnerabilities(Principal principal) {
+        return new ResponseEntity<>(vulnTemplate.vulnerabilityRepository.findAll(), HttpStatus.OK);
+    }
+
+    public ResponseEntity<List<CisRequirement>> getCisRequirements(Principal principal) {
+        return new ResponseEntity<>(vulnTemplate.cisRequirementRepository.findAll(), HttpStatus.OK);
+    }
+
+    @Transactional
+    public ResponseEntity<Status> setVulnerabilitySeverity(Long id, String severity, Principal principal) {
+        Optional<Vulnerability> vulnerability = vulnTemplate.vulnerabilityRepository.findById(id);
+        if (!vulnerability.isPresent()){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        if (severity.equals(Constants.VULN_CRITICALITY_HIGH)
+                || severity.equals(Constants.VULN_CRITICALITY_CRITICAL)
+                || severity.equals(Constants.VULN_CRITICALITY_MEDIUM)
+                || severity.equals(Constants.VULN_CRITICALITY_LOW)
+                || severity.equals(Constants.INFO_SEVERITY)){
+            vulnerability.get().setSeverity(severity);
+        } else {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    }
+
+    public ResponseEntity<Status> setCisRequirementSeverity(Long id, String severity, Principal principal) {
+        Optional<CisRequirement> cisRequirement = vulnTemplate.cisRequirementRepository.findById(id);
+        if (!cisRequirement.isPresent()){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        if (severity.equals(Constants.VULN_CRITICALITY_HIGH)
+                || severity.equals(Constants.VULN_CRITICALITY_CRITICAL)
+                || severity.equals(Constants.VULN_CRITICALITY_MEDIUM)
+                || severity.equals(Constants.VULN_CRITICALITY_LOW)
+                || severity.equals(Constants.INFO_SEVERITY)){
+            cisRequirement.get().setSeverity(severity);
+        } else {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
 }

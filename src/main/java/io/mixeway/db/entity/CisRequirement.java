@@ -22,10 +22,19 @@ public class CisRequirement {
     private Long id;
     private String name;
     private String type;
+    private String severity;
     public CisRequirement(){}
     public CisRequirement(String name, String type) {
         this.name =name;
         this.type = type;
+    }
+
+    public String getSeverity() {
+        return severity;
+    }
+
+    public void setSeverity(String severity) {
+        this.severity = severity;
     }
 
     public Long getId() {

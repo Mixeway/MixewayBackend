@@ -1145,3 +1145,8 @@ insert into vulnerabilitysource (name) values ('CISBenchmark');
 
 --changeset siewer:cis_openscap2
 insert into routingdomain (name) values ('Default');
+
+--changeset siewer:vulnerability_severity_customization
+alter table vulnerability add column severity text;
+alter table cisrequirement add column severity text;
+update cisrequirement set severity = 'Medium';

@@ -1,10 +1,14 @@
 package io.mixeway.rest.statistic.controller;
 
+import io.mixeway.db.entity.CisRequirement;
+import io.mixeway.db.entity.Vulnerability;
+import io.mixeway.pojo.Status;
 import io.mixeway.pojo.VulnBarChartProjection;
 import io.mixeway.rest.statistic.service.VulnsService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -59,5 +63,30 @@ public class VulnsController {
     public ResponseEntity<List<VulnBarChartProjection>> getOpenSourceVulnsForCodeProject(Principal principal) {
         return vulnsService.getOpenSourceVulnsForCodeProject(principal);
     }
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @GetMapping(value = "/vulnerabilities")
+    public ResponseEntity<List<Vulnerability>> getVulnerabilities(Principal principal) {
+        return vulnsService.getVulnerabilities(principal);
+    }
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @GetMapping(value = "/cisrequirements")
+    public ResponseEntity<List<CisRequirement>> getCisRequirements(Principal principal) {
+        return vulnsService.getCisRequirements(principal);
+    }
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @GetMapping(value = "/vulnerabilities/{id}/{severity}")
+    public ResponseEntity<Status> setVulnerabilitySeverity(@PathVariable(name = "id") Long id,
+                                                           @PathVariable(name = "severity") String severity,
+                                                           Principal principal) {
+        return vulnsService.setVulnerabilitySeverity(id, severity, principal);
+    }
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @GetMapping(value = "/cisrequirements/{id}/{severity}")
+    public ResponseEntity<Status> setCisRequirementSeverity(@PathVariable(name = "id") Long id,
+                                                                          @PathVariable(name = "severity") String severity,
+                                                                          Principal principal) {
+        return vulnsService.setCisRequirementSeverity(id, severity, principal);
+    }
+
 
 }
