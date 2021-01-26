@@ -234,8 +234,11 @@ public class GetVulnerabilitiesService {
             }
         }
         for (ProjectVulnerability iv : infraVulns) {
-            Vuln v = new Vuln(iv, null, null,new Interface(), Constants.API_SCANNER_OPENVAS);
-            tmpVulns.add(v);
+            if (iv.getVulnerability().getSeverity() == null ||
+                    (iv.getVulnerability().getSeverity() != null && !iv.getVulnerability().getSeverity().equals(Constants.SKIP_VULENRABILITY))) {
+                Vuln v = new Vuln(iv, null, null, new Interface(), Constants.API_SCANNER_OPENVAS);
+                tmpVulns.add(v);
+            }
         }
         vulns.setVulnerabilities(tmpVulns);
         return vulns;
