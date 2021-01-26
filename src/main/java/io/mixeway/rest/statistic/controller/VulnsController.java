@@ -63,12 +63,12 @@ public class VulnsController {
     public ResponseEntity<List<VulnBarChartProjection>> getOpenSourceVulnsForCodeProject(Principal principal) {
         return vulnsService.getOpenSourceVulnsForCodeProject(principal);
     }
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping(value = "/vulnerabilities")
     public ResponseEntity<List<Vulnerability>> getVulnerabilities(Principal principal) {
         return vulnsService.getVulnerabilities(principal);
     }
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping(value = "/cisrequirements")
     public ResponseEntity<List<CisRequirement>> getCisRequirements(Principal principal) {
         return vulnsService.getCisRequirements(principal);

@@ -117,12 +117,13 @@ public class VulnsService {
                 || severity.equals(Constants.VULN_CRITICALITY_LOW)
                 || severity.equals(Constants.INFO_SEVERITY)){
             vulnerability.get().setSeverity(severity);
+            return new ResponseEntity<>(HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
 
+    @Transactional
     public ResponseEntity<Status> setCisRequirementSeverity(Long id, String severity, Principal principal) {
         Optional<CisRequirement> cisRequirement = vulnTemplate.cisRequirementRepository.findById(id);
         if (!cisRequirement.isPresent()){
@@ -134,9 +135,9 @@ public class VulnsService {
                 || severity.equals(Constants.VULN_CRITICALITY_LOW)
                 || severity.equals(Constants.INFO_SEVERITY)){
             cisRequirement.get().setSeverity(severity);
+            return new ResponseEntity<>(HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
 }
