@@ -294,6 +294,7 @@ public class Constants {
     public static final String SECURITY_GATEWAY_FAILED = "Security Policy (scope Source Code and Open Source) is NOT passed. Vulnerabilities are listed above, please fix them before proceeding.";
     public static final String DEFAULT_ROUTING_DOMAIN = "Default";
     public static final String SKIP_VULENRABILITY = "skip";
+    public static final String STATUS_QUEUEDGVM = "Queued";
 }
 
 
