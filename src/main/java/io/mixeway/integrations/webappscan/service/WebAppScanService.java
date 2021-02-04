@@ -152,9 +152,7 @@ public class WebAppScanService {
             } else {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
-            if (success){
-                return new ResponseEntity<>(new Status(status.toString(), requestId), HttpStatus.CREATED);
-            }
+
         }
     }
 
