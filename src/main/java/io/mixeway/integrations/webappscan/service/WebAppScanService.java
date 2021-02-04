@@ -113,6 +113,8 @@ public class WebAppScanService {
     public ResponseEntity<Status> processScanWebAppRequest(Long id, List<WebAppScanModel> webAppScanModelList, String origin, Principal principal) {
         synchronized (this) {
             String requestId;
+            boolean success = true;
+            StringBuilder status = new StringBuilder();
             Optional<Project> project = projectRepository.findById(id);
             if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())) {
                 requestId = UUID.randomUUID().toString();
@@ -120,8 +122,10 @@ public class WebAppScanService {
                     Optional<WebApp> applicationToLoad = waRepository.findByProjectAndUrl(project.get(), webAppScanModel.getUrl());
                     if (applicationToLoad.isPresent()){
                         applicationToLoad.get().setInQueue(true);
+                        applicationToLoad.get().setRequestId(requestId);
                         waRepository.save(applicationToLoad.get());
-                        return new ResponseEntity<>(new Status("Scan is requested", requestId), HttpStatus.CREATED);
+                        status.append(" ").append(applicationToLoad.get().getUrl()).append(" requested,");
+                        //return new ResponseEntity<>(new Status("Scan is requested", requestId), HttpStatus.CREATED);
                     }
                     String urlToCompareSimiliar = getUrltoCompare(webAppScanModel.getUrl());
                     String urlToCompareWithRegexx = WebAppScanHelper.normalizeUrl(webAppScanModel.getUrl()) + "$";
@@ -147,6 +151,9 @@ public class WebAppScanService {
                 return new ResponseEntity<>(new Status("Scan is requested", requestId), HttpStatus.CREATED);
             } else {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+            if (success){
+                return new ResponseEntity<>(new Status(status.toString(), requestId), HttpStatus.CREATED);
             }
         }
     }
