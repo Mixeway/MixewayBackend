@@ -294,7 +294,7 @@ public class NetworkScanService {
                 }
             } else {
                 Asset a = new Asset();
-                a.setName(atc.getHostname());
+                a.setName(atc.getHostname() != null ? atc.getHostname() : atc.getIp());
                 a.setActive(true);
                 a.setProject(project);
                 a.setOrigin("manual");
