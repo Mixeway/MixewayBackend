@@ -58,19 +58,16 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
     private final VulnTemplate vulnTemplate;
     private final TokenValidator tokenValidator = new TokenValidator();
     private final GitCredentialsRepository gitCredentialsRepository;
-    private final CxBranchRepository cxBranchRepository;
 
     CheckmarxApiClient(ScannerTypeRepository scannerTypeRepository, ScannerRepository scannerRepository, GitCredentialsRepository gitCredentialsRepository,
                        CodeProjectRepository codeProjectRepository, ProxiesRepository proxiesRepository, VulnTemplate vulnTemplate,
-                       VaultHelper vaultHelper, SecureRestTemplate secureRestTemplate, CodeGroupRepository codeGroupRepository,
-                       CxBranchRepository cxBranchRepository){
+                       VaultHelper vaultHelper, SecureRestTemplate secureRestTemplate, CodeGroupRepository codeGroupRepository){
         this.vaultHelper = vaultHelper;
         this.gitCredentialsRepository = gitCredentialsRepository;
         this.scannerRepository = scannerRepository;
         this.proxiesRepository = proxiesRepository;
         this.scannerTypeRepository = scannerTypeRepository;
         this.codeProjectRepository = codeProjectRepository;
-        this.cxBranchRepository = cxBranchRepository;
         this.codeGroupRepository = codeGroupRepository;
         this.vulnTemplate = vulnTemplate;
         this.secureRestTemplate = secureRestTemplate;
@@ -84,17 +81,10 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
     @Override
     public Boolean runScan(CodeGroup cg, CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, JSONException, ParseException {
         Optional<io.mixeway.db.entity.Scanner> cxSast = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_CHECKMARX)).stream().findFirst();
-        Optional<CxBranch> branch = cxBranchRepository.getCxBranchForProjectAndBranchAndCxProjectCreated(codeProject,codeProject.getBranch());
         boolean hasToCreateProject = codeProject.getCodeGroup().getVersionIdAll() == 0 && codeProject.getCodeGroup().getRemoteid() ==0;
-        boolean hasToCreateBranch = codeProject.getCodeGroup().getRemoteid() > 0 && codeProject.getCodeGroup().getVersionIdAll() == 0 && branch.isPresent() && branch.get().getCxid() == 0;
         if (cxSast.isPresent()){
             if (hasToCreateProject){
                 createProject(cxSast.get(),codeProject);
-            } else if (hasToCreateBranch){
-                createBranch(cxSast.get(),codeProject, branch.get());
-            } else {
-                log.info("[Checkmarx] Scan create for archived branch of {}", codeProject.getBranch());
-                codeProject.getCodeGroup().setVersionIdAll(branch.get().getCxid());
             }
             setGitRepositoryForProject(cxSast.get(),codeProject);
             return createScan(cxSast.get(),codeProject);
@@ -120,7 +110,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
                 if (response.getStatusCode().equals(HttpStatus.CREATED)) {
                     codeProject.getCodeGroup().setVersionIdAll((int) Objects.requireNonNull(response.getBody()).getId());
                     cxBranch.setCxid((int) Objects.requireNonNull(response.getBody()).getId());
-                    cxBranchRepository.save(cxBranch);
+                    //cxBranchRepository.save(cxBranch);
                     codeGroupRepository.save(codeProject.getCodeGroup());
                     log.info("[Checkmarx] Remote project branch created for {} - {}", codeProject.getCodeGroup().getName(), codeProject.getBranch());
                 }
@@ -357,7 +347,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
                 if (response.getStatusCode().equals(HttpStatus.CREATED)) {
                     codeProject.getCodeGroup().setVersionIdAll((int) Objects.requireNonNull(response.getBody()).getId());
                     codeProject.getCodeGroup().setRemoteid((int) Objects.requireNonNull(response.getBody()).getId());
-                    updateBranch(codeProject);
+                    //updateBranch(codeProject);
                     codeGroupRepository.save(codeProject.getCodeGroup());
                     log.info("[Checkmarx] Remote project created for {}", codeProject.getCodeGroup().getName());
                     return true;
@@ -369,10 +359,10 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
         return codeProject.getCodeGroup().getVersionIdAll() > 0;
     }
 
-    private void updateBranch(CodeProject codeProject) {
-        Optional<CxBranch> cxBranch = cxBranchRepository.findByBranchAndCodeProject(codeProject.getBranch(), codeProject);
-        cxBranch.ifPresent(branch -> branch.setCxid(codeProject.getCodeGroup().getVersionIdAll()));
-    }
+//    private void updateBranch(CodeProject codeProject) {
+//        Optional<CxBranch> cxBranch = cxBranchRepository.findByBranchAndCodeProject(codeProject.getBranch(), codeProject);
+//        cxBranch.ifPresent(branch -> branch.setCxid(codeProject.getCodeGroup().getVersionIdAll()));
+//    }
 
     public boolean isProjectAlreadyCreated(CodeProject codeProject, Scanner scanner) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
         List<SASTProject> sastProjects = getProjects(scanner);
