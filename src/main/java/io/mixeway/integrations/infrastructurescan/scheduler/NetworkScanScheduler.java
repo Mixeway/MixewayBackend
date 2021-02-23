@@ -15,7 +15,7 @@ public class NetworkScanScheduler {
 		this.networkScanService = networkScanService;
 	}
 
-	@Scheduled(initialDelay=0,fixedDelay = 30000)
+	@Scheduled(initialDelay=0,fixedDelay = 300000)
 	public void checkScanStatus(){
 		networkScanService.scheduledCheckStatusAndLoadVulns();
 	}

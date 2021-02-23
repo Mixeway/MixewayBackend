@@ -165,8 +165,10 @@ public class SecureRestTemplate {
                     .build();
         }
         HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory() ;
+        requestFactory.setConnectionRequestTimeout(200000);
+        requestFactory.setConnectTimeout(200000);
+        requestFactory.setReadTimeout(200000);
         requestFactory.setHttpClient(httpClient);
-
         RestTemplate restTemplate = new RestTemplate(requestFactory);
         return restTemplate;
     }
