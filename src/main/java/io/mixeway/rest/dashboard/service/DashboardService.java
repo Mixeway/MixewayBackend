@@ -82,7 +82,7 @@ public class DashboardService {
     }
 
     public ResponseEntity putProject(String projectName, String projectDescription, String ciid, int enableVulnManage, Principal principal) {
-        if (!projectRepository.findByName(projectName).isPresent() && createProjectService.putProject(projectName,projectDescription,ciid, enableVulnManage, principal)){
+        if (!projectRepository.getProjectByName(projectName).isPresent() && createProjectService.putProject(projectName,projectDescription,ciid, enableVulnManage, principal)){
             log.info("{} - Created new project {}",principal.getName(), LogUtil.prepare(projectName));
             return new ResponseEntity(HttpStatus.CREATED);
         } else {
