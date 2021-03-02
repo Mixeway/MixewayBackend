@@ -17,6 +17,7 @@ public interface ScannerRepository extends JpaRepository<Scanner, Long> {
 	List<Scanner> findByStatus(Boolean status);
 	Optional<Scanner> findByApiUrlAndScannerType(String url, ScannerType scannerType);
 	List<Scanner> findByScannerType(ScannerType scannerType);
+	List<Scanner> findByScannerTypeAndStatus(ScannerType scannerType, Boolean status);
 	List<Scanner> findByRoutingDomainAndScannerTypeIn(RoutingDomain routingDomain, List<ScannerType> scannerTypes);
 	List<Scanner> findByRoutingDomainAndStatusAndScannerTypeIn(RoutingDomain routingDomain, Boolean status, List<ScannerType> scannerTypes);
 	@Query(value = "select * from nessus where id=?1",nativeQuery = true)

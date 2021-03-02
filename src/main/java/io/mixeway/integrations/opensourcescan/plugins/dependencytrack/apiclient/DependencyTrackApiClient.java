@@ -76,13 +76,13 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
 
     @Override
     public boolean canProcessRequest(CodeProject codeProject) {
-        List<Scanner> openSourceScanners = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_DEPENDENCYTRACK));
+        List<Scanner> openSourceScanners = scannerRepository.findByScannerTypeAndStatus(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_DEPENDENCYTRACK), true);
         return (openSourceScanners.size() == 1 );
     }
 
     @Override
     public boolean canProcessRequest() {
-        List<Scanner> openSourceScanners = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_DEPENDENCYTRACK));
+        List<Scanner> openSourceScanners = scannerRepository.findByScannerTypeAndStatus(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_DEPENDENCYTRACK),true);
         return (openSourceScanners.size() == 1 );
     }
 
@@ -273,7 +273,7 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
 
     @Override
     public boolean canProcessInitRequest(Scanner scanner) {
-        return scanner.getScannerType().getName().equals(Constants.SCANNER_TYPE_DEPENDENCYTRACK);
+        return scanner.getScannerType().getName().equals(Constants.SCANNER_TYPE_DEPENDENCYTRACK) && scanner.getStatus();
     }
 
     @Override
