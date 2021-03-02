@@ -149,7 +149,7 @@ public class CronScheduler {
         }
         log.info("Updater risks for projects");
     }
-    @Scheduled(cron="0 10 3 * * ?" )
+    @Scheduled(cron="0 10 23 * * ?" )
     @Transactional
     public void setRiskForAssets() {
         for (Interface i : interfaceRepository.findByActive(true)){

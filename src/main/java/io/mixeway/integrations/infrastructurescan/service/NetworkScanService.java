@@ -438,7 +438,7 @@ public class NetworkScanService {
                         if (networkScanClient.canProcessRequest(ns) && networkScanClient.isScanDone(ns)) {
                             networkScanClient.loadVulnerabilities(ns);
                             deleteRulsFromRfw(ns);
-                            //updateRiskForInterfaces(ns);
+                            updateRiskForInterfaces(ns);
                         }
                     }
                     //For nessus create webapp linking
@@ -462,7 +462,7 @@ public class NetworkScanService {
         List<String> ipAddresses = scanHelper.prepareTargetsForScan(ns, false);
         for (String ipAddress : ipAddresses) {
             Optional<Interface> interfaceOptional = interfaceRepository.findByPrivateipAndActiveAndAssetIn(ipAddress, true, new ArrayList<>(ns.getProject().getAssets())).stream().findFirst();
-            interfaceOptional.ifPresent(anInterface -> anInterface.setRisk(projectRiskAnalyzer.getInterfaceRisk(anInterface)));
+            interfaceOptional.ifPresent(anInterface -> anInterface.setRisk(Math.min(projectRiskAnalyzer.getInterfaceRisk(anInterface), 100)));
         }
     }
 
