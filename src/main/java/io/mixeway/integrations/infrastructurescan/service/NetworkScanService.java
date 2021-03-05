@@ -119,7 +119,7 @@ public class NetworkScanService {
         log.info("Got request for scan from koordynator - system {}, asset no: {}", LogUtil.prepare(req.getProjectName()),  LogUtil.prepare(String.valueOf(req.getIpAddresses().size())));
         Optional<List<Project>> projectFromReq = projectRepository.findByCiid(req.getCiid());
         Project project;
-        if (projectFromReq.isPresent()) {
+        if (projectFromReq.isPresent() && projectFromReq.get().size() > 0) {
             project = projectFromReq.get().get(0);
         } else {
             project = new Project();
@@ -281,17 +281,9 @@ public class NetworkScanService {
     List<Interface> updateAssetsAndPrepareInterfacesForScan(NetworkScanRequestModel req, Project project) {
         List<Interface> listtoScan = new ArrayList<>();
         for (AssetToCreate atc : req.getIpAddresses()){
-            Optional<Asset> asset = assetRepository.findByNameAndProject(atc.getHostname(), project);
-            if (asset.isPresent() ) {
-                Optional<Interface> intf = interfaceRepository.findByAssetAndPrivateip(asset.get(), atc.getIp());
-                if (intf.isPresent()) {
-                    listtoScan.add(intf.get());
-                }
-                else {
-                    List<Interface> interfacesToBeCreated = InterfaceOperations.createInterfacesForModel(asset.get(), asset.get().getRoutingDomain(),atc.getIp());
-                    interfacesToBeCreated = interfaceRepository.saveAll(interfacesToBeCreated);
-                    listtoScan.addAll(interfacesToBeCreated);
-                }
+            Optional<Interface> interfaceOptional = interfaceRepository.findByAssetInAndPrivateip(project.getAssets(), atc.getIp());
+            if (interfaceOptional.isPresent()){
+                listtoScan.add(interfaceOptional.get());
             } else {
                 Asset a = new Asset();
                 a.setName(atc.getHostname() != null ? atc.getHostname() : atc.getIp());
@@ -304,6 +296,7 @@ public class NetworkScanService {
                 interfacesToBeCreated = interfaceRepository.saveAll(interfacesToBeCreated);
                 listtoScan.addAll(interfacesToBeCreated);
             }
+
         }
         return listtoScan;
     }
