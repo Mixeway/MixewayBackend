@@ -133,7 +133,7 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 			HashMap<String, String> params = new HashMap<>();
 			params.put(Constants.TASK_ID, nessusScan.getTaskId());
 			rrb.setParams(params);
-			RestTemplate restTemplate = secureRestTemplate.noVerificationClient(nessusScan.getNessus());
+			RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(nessusScan.getNessus());
 			HttpHeaders headers = new HttpHeaders();
 			headers.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
 			HttpEntity<String> entity = new HttpEntity<>(new Gson().toJson(rrb),headers);
@@ -173,7 +173,7 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 			HashMap<String, String> params = new HashMap<>();
 			params.put(Constants.REPORT_ID, nessusScan.getReportId());
 			rrb.setParams(params);
-			RestTemplate restTemplate = secureRestTemplate.noVerificationClient(nessusScan.getNessus());
+			RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(nessusScan.getNessus());
 			HttpHeaders headers = new HttpHeaders();
 			headers.set("Content-Type", "application/json");
 			HttpEntity<String> entity = new HttpEntity<>(new Gson().toJson(rrb),headers);
@@ -202,7 +202,7 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 	}
 
 	ResponseEntity<String> createRequest(String url, HttpHeaders httpHeaders, String body, HttpMethod method, Scanner scanner) throws KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, CertificateException, IOException{
-		RestTemplate restTemplate = secureRestTemplate.noVerificationClient(scanner);
+		RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(scanner);
 		if (httpHeaders == null)
 			httpHeaders = new HttpHeaders();
 		httpHeaders.set("Content-Type", "application/json");
@@ -242,7 +242,7 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 		HashMap<String, String> params = new HashMap<>();
 		params.put(Constants.TASK_ID, ns.getTaskId());
 		rrb.setParams(params);
-		RestTemplate restTemplate = secureRestTemplate.noVerificationClient(ns.getNessus());
+		RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(ns.getNessus());
 		HttpHeaders headers = new HttpHeaders();
 		headers.set("Content-Type", "application/json");
 		HttpEntity<String> entity = new HttpEntity<>(new Gson().toJson(rrb),headers);
@@ -393,7 +393,7 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 			HashMap<String, String> params = new HashMap<>();
 			params.put(Constants.TASK_ID, ns.getTaskId());
 			rrb.setParams(params);
-			RestTemplate restTemplate = secureRestTemplate.noVerificationClient(ns.getNessus());
+			RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(ns.getNessus());
 			HttpHeaders headers = new HttpHeaders();
 			headers.set("Content-Type", "application/json");
 			HttpEntity<String> entity = new HttpEntity<>(new Gson().toJson(rrb),headers);
@@ -420,7 +420,7 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 		params.put(Constants.TARGET_ID, ns.getTargetId());
 		params.put(Constants.TARGET_NAME,ns.getProject().getName()+"-"+(ns.getIsAutomatic()? Constants.SCAN_MODE_AUTO : Constants.SCAN_MODE_MANUAL));
 		rrb.setParams(params);
-		RestTemplate restTemplate = secureRestTemplate.noVerificationClient(ns.getNessus());
+		RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(ns.getNessus());
 		HttpHeaders headers = new HttpHeaders();
 		headers.set("Content-Type", "application/json");
 		HttpEntity<String> entity = new HttpEntity<>(new Gson().toJson(rrb),headers);
@@ -434,7 +434,7 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 	}
 	private NessusScan createNewTarget(NessusScan ns,RestRequestBody rrb) throws JSONException, KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, CertificateException, FileNotFoundException, IOException {
 		try {
-			RestTemplate restTemplate = secureRestTemplate.noVerificationClient(ns.getNessus());
+			RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(ns.getNessus());
 			HttpHeaders headers = new HttpHeaders();
 			headers.set("Content-Type", "application/json");
 			HttpEntity<String> entity = new HttpEntity<>(new Gson().toJson(rrb), headers);
