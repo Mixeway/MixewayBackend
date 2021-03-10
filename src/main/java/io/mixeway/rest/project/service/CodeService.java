@@ -253,36 +253,43 @@ public class CodeService {
         Optional<CodeProject> codeProject = codeProjectRepository.findById(id);
         try{
             if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getCodeGroup().getProject())){
-                if ((editCodeProjectModel.getdTrackUuid() != null && !editCodeProjectModel.getdTrackUuid().equals(""))) {
+                if (StringUtils.isNotBlank(editCodeProjectModel.getdTrackUuid()) && !codeProject.get().getdTrackUuid().equals(editCodeProjectModel.getdTrackUuid())) {
                     UUID uuid = UUID.fromString(editCodeProjectModel.getdTrackUuid());
                     codeProject.get().setdTrackUuid(editCodeProjectModel.getdTrackUuid());
                     codeProjectRepository.save(codeProject.get());
-                    log.info("{} Successfully Edited codeProject {}", principal.getName(), codeProject.get().getName());
+                    log.info("{} Edited CodeProject {} scope DtrackUUID", principal.getName(), codeProject.get().getName());
                 }
-                if (editCodeProjectModel.getSastProject() > 0) {
+                if (editCodeProjectModel.getSastProject() > 0 && codeProject.get().getCodeGroup().getVersionIdAll() != editCodeProjectModel.getSastProject() ) {
                     codeProject.get().getCodeGroup().setVersionIdAll(editCodeProjectModel.getSastProject());
                     if (!codeProject.get().getCodeGroup().getHasProjects()){
                         codeProject.get().getCodeGroup().setVersionIdsingle(editCodeProjectModel.getSastProject());
+                        codeProject.get().getCodeGroup().setVersionIdAll(editCodeProjectModel.getSastProject());
                     }
                     codeGroupRepository.save(codeProject.get().getCodeGroup());
-                    log.info("{} Successfully Edited codeProject {}", principal.getName(), codeProject.get().getName());
+                    log.info("{} Edited CodeProject {} scope SAST scanner integration", principal.getName(), codeProject.get().getName());
                 }
-                if (editCodeProjectModel.getBranch().equals("") || editCodeProjectModel.getBranch() == null){
-                    codeProject.get().setBranch(Constants.CODE_PROJECT_DEFAULT_BRANCH);
-                    log.warn("{} passed null branch for {}, setting to default {}", principal.getName(), codeProject.get().getName(), Constants.CODE_PROJECT_DEFAULT_BRANCH);
-                } else {
+                if (StringUtils.isNotBlank(editCodeProjectModel.getBranch()) && !codeProject.get().getBranch().equals(editCodeProjectModel.getBranch())){
                     codeProject.get().setBranch(editCodeProjectModel.getBranch());
-                    log.info("{} Setting branch for {} - {}", principal.getName(), codeProject.get().getName(), LogUtil.prepare(editCodeProjectModel.getBranch()));
+                    log.info("{} Edited CodeProject {} scope Branch, new value: {}", principal.getName(), codeProject.get().getName(), LogUtil.prepare(editCodeProjectModel.getBranch()));
                 }
-                codeProject.get().setRepoUrl(editCodeProjectModel.getRepoUrl());
-                codeProject.get().setRepoUsername(editCodeProjectModel.getRepoUsername());
-                if (!editCodeProjectModel.getRepoPassword().equals(Constants.DUMMY_PASSWORD)){
+                if (StringUtils.isNotBlank(editCodeProjectModel.getRepoUrl()) && !codeProject.get().getRepoUrl().equals(editCodeProjectModel.getRepoUrl())){
+                    codeProject.get().setRepoUrl(editCodeProjectModel.getRepoUrl());
+                    log.info("{} Edited CodeProject {} scope RepoURL, new value: {}", principal.getName(), codeProject.get().getName(), LogUtil.prepare(editCodeProjectModel.getRepoUrl()));
+
+                }
+                if (StringUtils.isNotBlank(editCodeProjectModel.getRepoUsername()) && !codeProject.get().getRepoUsername().equals(editCodeProjectModel.getRepoUsername())){
+                    codeProject.get().setRepoUsername(editCodeProjectModel.getRepoUsername());
+                    log.info("{} Edited CodeProject {} scope RepoUsername, new value: {}", principal.getName(), codeProject.get().getName(), LogUtil.prepare(editCodeProjectModel.getRepoUsername()));
+
+                }
+                if (!editCodeProjectModel.getRepoPassword().equals(Constants.DUMMY_PASSWORD) && !editCodeProjectModel.getRepoPassword().equals(Constants.DUMMY_PASSWORD2)){
                     String uuidToken = UUID.randomUUID().toString();
                     if (vaultHelper.savePassword(editCodeProjectModel.getRepoPassword(), uuidToken)) {
                         codeProject.get().setRepoPassword(uuidToken);
                     } else {
                         codeProject.get().setRepoPassword(editCodeProjectModel.getRepoPassword());
                     }
+                    log.info("{} Edited CodeProject {} scope Password", principal.getName(), codeProject.get().getName());
                 }
                 codeProjectRepository.save(codeProject.get());
                 return new ResponseEntity<>(HttpStatus.OK);

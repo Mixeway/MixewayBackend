@@ -12,4 +12,5 @@ import java.util.Optional;
 
 public interface GitCredentialsRepository extends JpaRepository<GitCredentials, Long> {
     Optional<GitCredentials> findByUrl(String url);
+
 }
