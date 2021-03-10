@@ -13,6 +13,7 @@ import io.mixeway.rest.admin.service.AdminSettingsRestService;
 
 import javax.validation.Valid;
 import java.security.Principal;
+import java.util.List;
 
 @RestController()
 @RequestMapping("/v2/api/admin")
@@ -342,6 +343,74 @@ public class AdminSettingsRestController {
     @GetMapping(value = "/settings/securitygateway")
     public ResponseEntity<SecurityGateway> getSecurityGatewaySettings(Principal principal)  {
         return adminSettingsRestService.getSecurityGatewaySettings(principal.getName());
+    }
+
+
+    /**
+     * Get Configuration for git credentials
+     *
+     * @return status
+     */
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Value returned")
+    })
+    @ApiOperation(value = "Get Configuration for git credentials",
+            notes = "List of Git instances with predefined credentials")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @GetMapping(value = "/settings/gitcredentials")
+    public ResponseEntity<List<GitCredentials>> getGitCredentials(Principal principal)  {
+        return adminSettingsRestService.getGitCredentials(principal.getName());
+    }
+
+    /**
+     * Add new Git credentials configuration
+     *
+     * @return status
+     */
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Value returned"),
+            @ApiResponse(code = 400, message = "Bad Request")
+    })
+    @ApiOperation(value = "Add new Git credentials configuration",
+            notes = "Add predefined credentials for particular Git instance")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PutMapping(value = "/settings/gitcredentials")
+    public ResponseEntity<Status> addGitCredentials(@RequestBody GitCredentials gitCredentials, Principal principal)  {
+        return adminSettingsRestService.addGitCredentials(gitCredentials, principal.getName());
+    }
+
+
+    /**
+     * Edit git credentials
+     *
+     * @return status
+     */
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Value returned"),
+            @ApiResponse(code = 400, message = "Bad Request")
+    })
+    @ApiOperation(value = "Edit git credentials",
+            notes = "Edit git credentials, editing url, username, password in any combination")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PostMapping(value = "/settings/gitcredentials/{id}")
+    public ResponseEntity<Status> editGitCredentials(@PathVariable("id") Long id, @RequestBody GitCredentials gitCredentials, Principal principal)  {
+        return adminSettingsRestService.editGitCredentials(id, gitCredentials, principal.getName());
+    }
+    /**
+     * Delete git credentials
+     *
+     * @return status
+     */
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Value returned"),
+            @ApiResponse(code = 400, message = "Bad Request")
+    })
+    @ApiOperation(value = "Delete git credentials",
+            notes = "Delete git credentials")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @DeleteMapping(value = "/settings/gitcredentials/{id}")
+    public ResponseEntity<Status> deleteGitCredentials(@PathVariable("id") Long id, Principal principal)  {
+        return adminSettingsRestService.deleteGitCredentials(id, principal.getName());
     }
 
 

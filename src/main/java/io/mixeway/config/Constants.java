@@ -295,6 +295,7 @@ public class Constants {
     public static final String DEFAULT_ROUTING_DOMAIN = "Default";
     public static final String SKIP_VULENRABILITY = "skip";
     public static final String STATUS_QUEUEDGVM = "Queued";
+    public static final String DUMMY_PASSWORD2 = "******";
 }
 
 

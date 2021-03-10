@@ -1,11 +1,13 @@
 package io.mixeway.rest.admin.service;
 
+import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
 import io.mixeway.domain.service.scanner.VerifyWebAppScannerService;
 import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.VaultHelper;
 import io.mixeway.rest.admin.model.*;
+import org.apache.commons.lang3.StringUtils;
 import org.quartz.CronExpression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import io.mixeway.pojo.Status;
 
 import java.text.ParseException;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -32,12 +35,14 @@ public class AdminSettingsRestService {
     private final ScannerTypeRepository scannerTypeRepository;
     private final VerifyWebAppScannerService verifyWebAppScannerService;
     private final SecurityGatewayRepository securityGatewayRepository;
+    private final GitCredentialsRepository gitCredentialsRepository;
     private static final Logger log = LoggerFactory.getLogger(AdminSettingsRestService.class);
 
 
     public AdminSettingsRestService(SettingsRepository settingsRepository, VaultHelper vaultHelper, WebAppScanStrategyRepository webAppScanStrategyRepository,
                                     RoutingDomainRepository routingDomainRepository, ProxiesRepository proxiesRepository, SecurityGatewayRepository securityGatewayRepository,
-                                    ScannerTypeRepository scannerTypeRepository, VerifyWebAppScannerService verifyWebAppScannerService){
+                                    ScannerTypeRepository scannerTypeRepository, VerifyWebAppScannerService verifyWebAppScannerService,
+                                    GitCredentialsRepository gitCredentialsRepository){
         this.settingsRepository = settingsRepository;
         this.vaultHelper = vaultHelper;
         this.securityGatewayRepository = securityGatewayRepository;
@@ -46,6 +51,7 @@ public class AdminSettingsRestService {
         this.webAppScanStrategyRepository = webAppScanStrategyRepository;
         this.routingDomainRepository = routingDomainRepository;
         this.verifyWebAppScannerService = verifyWebAppScannerService;
+        this.gitCredentialsRepository = gitCredentialsRepository;
     }
 
     public ResponseEntity<Settings> getSettings() {
@@ -330,5 +336,67 @@ public class AdminSettingsRestService {
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
+    }
+
+    public ResponseEntity<List<GitCredentials>> getGitCredentials(String name) {
+        List<GitCredentials> gitCredentials = gitCredentialsRepository.findAll();
+        gitCredentials.forEach(p->p.setPassword(Constants.DUMMY_PASSWORD));
+        return new ResponseEntity<>( gitCredentials, HttpStatus.OK);
+    }
+
+    public ResponseEntity<Status> addGitCredentials(GitCredentials gitCredentials, String name) {
+        Optional<GitCredentials> toVerifyCredentials = gitCredentialsRepository.findByUrl(gitCredentials.getUrl());
+        if (toVerifyCredentials.isPresent()){
+            return new ResponseEntity<>(new Status("Given URL already exists"), HttpStatus.PRECONDITION_FAILED);
+        }
+        if (StringUtils.isNotBlank(gitCredentials.getUrl()) &&
+                StringUtils.isNotBlank(gitCredentials.getUsername()) &&
+                StringUtils.isNotBlank(gitCredentials.getPassword())) {
+            String repoPasswordToken = UUID.randomUUID().toString();
+            if (vaultHelper.savePassword(gitCredentials.getPassword(),repoPasswordToken)){
+                gitCredentials.setPassword(repoPasswordToken);
+            }
+            gitCredentialsRepository.save(gitCredentials);
+            log.info("{}, created new GitCredentials entry for URL: {}, and user: {}", name, LogUtil.prepare(gitCredentials.getUrl())
+                    ,LogUtil.prepare(gitCredentials.getUsername()));
+            return new ResponseEntity<>(HttpStatus.CREATED);
+        }
+        return new ResponseEntity<>(new Status("All fields should be set"), HttpStatus.BAD_REQUEST);
+    }
+
+    public ResponseEntity<Status> editGitCredentials(Long id, GitCredentials gitCredentials, String name) {
+        Optional<GitCredentials> gitCredentialsToEdit = gitCredentialsRepository.findById(id);
+        if (gitCredentialsToEdit.isPresent()){
+            if (StringUtils.isNotBlank(gitCredentials.getUrl())){
+                log.info("{} Editing entry for git credentials URL- old value: {}, new value {}",name,LogUtil.prepare(gitCredentialsToEdit.get().getUrl()), LogUtil.prepare(gitCredentials.getUrl()));
+                gitCredentialsToEdit.get().setUrl(gitCredentials.getUrl());
+            }
+            if (StringUtils.isNotBlank(gitCredentials.getUsername())){
+                log.info("{} Editing entry for git credentials USERNAME- old value: {}, new value {}",name,LogUtil.prepare(gitCredentialsToEdit.get().getUsername()), LogUtil.prepare(gitCredentials.getUsername()));
+                gitCredentialsToEdit.get().setUsername(gitCredentials.getUsername());
+            }
+            if (StringUtils.isNotBlank(gitCredentials.getPassword()) && !gitCredentials.getPassword().equals(Constants.DUMMY_PASSWORD)){
+                log.info("{} Editing entry for git credentials URL {} changing password.",name,LogUtil.prepare(gitCredentialsToEdit.get().getUrl()));
+                String repoPasswordToken = UUID.randomUUID().toString();
+                if (vaultHelper.savePassword(gitCredentials.getPassword(),repoPasswordToken)){
+                    gitCredentialsToEdit.get().setPassword(repoPasswordToken);
+                } else {
+                    gitCredentialsToEdit.get().setPassword(gitCredentials.getPassword());
+                }
+            }
+            gitCredentialsRepository.save(gitCredentialsToEdit.get());
+            return new ResponseEntity<>(HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
+
+    public ResponseEntity<Status> deleteGitCredentials(Long id, String name) {
+        Optional<GitCredentials> gitCredentials = gitCredentialsRepository.findById(id);
+        if (gitCredentials.isPresent()){
+            gitCredentialsRepository.delete(gitCredentials.get());
+            log.info("{} Deleted GitConfiguration for URL {}", name, gitCredentials.get().getUrl());
+            return new ResponseEntity<>(HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 }
