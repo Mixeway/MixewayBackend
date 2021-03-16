@@ -142,6 +142,7 @@ public class OpenSourceScanService {
                 return codeProject.get();
             } else {
                 Optional<List<Project>> project = projectRepository.findByNameIgnoreCase(codeProjectName);
+                log.info("[CICD] Project name {}, project existing {}, project number {}", codeProject, project.isPresent(), project.map(List::size).orElse(0));
                 if (project.isPresent() && project.get().size() == 1 && permissionFactory.canUserAccessProject(principal, project.get().stream().findFirst().get())) {
                     codeService.saveCodeGroup(
                             project.get().stream().findFirst().get().getId(),
