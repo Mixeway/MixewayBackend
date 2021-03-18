@@ -16,6 +16,7 @@ public class TrustStoreConfig {
     private void configureSSL() {
         System.setProperty("javax.net.ssl.trustStore", trustStorePath);
         System.setProperty("javax.net.ssl.trustStorePassword",trustStorePassword);
+        System.setProperty("jsse.enableSNIExtension", "false");
 
     }
 }
