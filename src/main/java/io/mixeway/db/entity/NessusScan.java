@@ -47,6 +47,8 @@ public class NessusScan {
 	private String targetId;
 	private String requestId;
 	private int retries;
+	private Boolean inQueue;
+
 
 	public Boolean getAutomatic() {
 		return isAutomatic;
@@ -196,8 +198,13 @@ public class NessusScan {
 	public void setTargetId(String targetId) {
 		this.targetId = targetId;
 	}
-	
-	
-	
 
+	@Column(name = "inqueue")
+	public Boolean getInQueue() {
+		return inQueue;
+	}
+
+	public void setInQueue(Boolean inQueue) {
+		this.inQueue = inQueue;
+	}
 }

@@ -20,7 +20,7 @@ public class NetworkScanScheduler {
 		networkScanService.scheduledCheckStatusAndLoadVulns();
 	}
 	@Scheduled(cron="#{@getNetworkCronExpresion}" )
-	public void runScheduledTest() {
+	public void runScheduledTest() throws Exception {
 		networkScanService.scheduledRunScans();
 
 	}
@@ -33,6 +33,14 @@ public class NetworkScanScheduler {
 	@Scheduled(initialDelay=0,fixedDelay = 300000)
 	public void verifyInterfaceState(){
 		networkScanService.verifyInteraceState();
+	}
+
+	/**
+	 * Method which takes scans in queue and run them if it is possible
+	 */
+	@Scheduled(initialDelay=0,fixedDelay = 300000)
+	public void runScansFromQueue() throws Exception {
+		networkScanService.runScansFromQueue();
 	}
 }
 

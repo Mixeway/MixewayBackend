@@ -7,6 +7,15 @@ public class AssetModel {
     String routingDomain;
     int risk;
     boolean running;
+    boolean inQueue;
+
+    public boolean isInQueue() {
+        return inQueue;
+    }
+
+    public void setInQueue(boolean inQueue) {
+        this.inQueue = inQueue;
+    }
 
     public boolean isRunning() {
         return running;

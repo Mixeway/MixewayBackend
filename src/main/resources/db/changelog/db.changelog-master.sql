@@ -1150,3 +1150,7 @@ insert into routingdomain (name) values ('Default');
 alter table vulnerability add column severity text;
 alter table cisrequirement add column severity text;
 update cisrequirement set severity = 'Medium';
+
+--changeset siewer:add_queue_to_nessuscan
+alter table nessusscan add column inqueue boolean;
+update scannertype set scanlimit=5 where name='OpenVAS';

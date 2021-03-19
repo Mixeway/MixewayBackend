@@ -110,7 +110,7 @@ public class AssetService {
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             Set<Interface> intfs =  scanHelper.prepareInterfacesToScan(runScanForAssets, project.get());
             List<NessusScan> scans = networkScanService.configureAndRunManualScanForScope(project.get(), new ArrayList(intfs));
-            if (scans.stream().allMatch(NessusScan::getRunning)) {
+            if (scans.stream().allMatch(NessusScan::getInQueue)) {
                 log.info("{} - Started scan for project {} - scope partial", principal.getName(), project.get().getName());
                 return new ResponseEntity<>(HttpStatus.CREATED);
             } else {
@@ -125,7 +125,7 @@ public class AssetService {
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             List<Interface> intfs =  interfaceRepository.findByAssetIn(new ArrayList<>(project.get().getAssets())).stream().filter(i -> !i.isScanRunning()).collect(Collectors.toList());
             List<NessusScan> scans = networkScanService.configureAndRunManualScanForScope(project.get(), new ArrayList(intfs));
-            if (scans.stream().allMatch(NessusScan::getRunning)) {
+            if (scans.stream().allMatch(NessusScan::getInQueue)) {
                 log.info("{} - Started scan for project {} - scope full", principal.getName(), project.get().getName());
                 return new ResponseEntity<>(HttpStatus.CREATED);
             } else {
@@ -141,7 +141,7 @@ public class AssetService {
         if (intf.isPresent() && permissionFactory.canUserAccessProject(principal, intf.get().getAsset().getProject())) {
             i.add(intf.get());
             List<NessusScan> scans = networkScanService.configureAndRunManualScanForScope(intf.get().getAsset().getProject(), i);
-            if (scans.size() >0 && scans.stream().allMatch(NessusScan::getRunning)) {
+            if (scans.size() >0 && scans.stream().allMatch(NessusScan::getInQueue)) {
                 log.info("{} - Started scan for project {} - scope single", principal.getName(), intf.get().getAsset().getProject().getName());
                 return new ResponseEntity<>(HttpStatus.CREATED);
             } else {

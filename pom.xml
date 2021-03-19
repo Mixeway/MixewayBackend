@@ -258,8 +258,15 @@
             <artifactId>commons-validator</artifactId>
             <version>1.7</version>
         </dependency>
+		<!-- https://mvnrepository.com/artifact/one.util/streamex -->
+		<dependency>
+			<groupId>one.util</groupId>
+			<artifactId>streamex</artifactId>
+			<version>0.7.3</version>
+		</dependency>
 
-    </dependencies>
+
+	</dependencies>
 
 	<build>
 		<plugins>

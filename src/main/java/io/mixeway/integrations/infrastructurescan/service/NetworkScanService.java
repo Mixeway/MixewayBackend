@@ -12,6 +12,7 @@ import io.mixeway.pojo.Status;
 import io.mixeway.rest.model.KeyValue;
 import io.mixeway.rest.utils.InterfaceOperations;
 import io.mixeway.rest.utils.ProjectRiskAnalyzer;
+import one.util.streamex.StreamEx;
 import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
@@ -38,6 +39,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import javax.xml.bind.JAXBException;
 
@@ -65,14 +67,16 @@ public class NetworkScanService {
     private final RfwApiClient rfwApiClient;
     private final ProjectRiskAnalyzer projectRiskAnalyzer;
     private final PermissionFactory permissionFactory;
+    private final ScannerRepository scannerRepository;
 
 
     public NetworkScanService(ProjectRepository projectRepository, ScannerTypeRepository scannerTypeRepository, ScanHelper scanHelper,
                               List<NetworkScanClient> networkScanClients, NessusScanTemplateRepository nessusScanTemplateRepository, NessusScanRepository nessusScanRepository,
                               ScannerRepository nessusRepository, InterfaceRepository interfaceRepository, AssetRepository assetRepository,
                               RoutingDomainRepository routingDomainRepository, RfwApiClient rfwApiClient, WebAppHelper webAppHelper,
-                              ProjectRiskAnalyzer projectRiskAnalyzer, PermissionFactory permissionFactory) {
+                              ProjectRiskAnalyzer projectRiskAnalyzer, PermissionFactory permissionFactory, ScannerRepository scannerRepository) {
         this.projectRepository = projectRepository;
+        this.scannerRepository = scannerRepository;
         this.projectRiskAnalyzer = projectRiskAnalyzer;
         this.scannerTypeRepository = scannerTypeRepository;
         this.nessusRepository = nessusRepository;
@@ -198,7 +202,18 @@ public class NetworkScanService {
         log.info("Preparing scan for {}", project.getName());
         List<NessusScan> nessusScans = new ArrayList<>();
         intfs = intfs.stream().filter(i -> !i.isScanRunning()).collect(Collectors.toList());
-        Map<NetworkScanClient, Set<Interface>> scannerInterfaceMap = findNessusForInterfaces(new HashSet<>(intfs));
+
+        // Partitioning scans for smaller parts
+        int partitionSize = 15;
+        List<List<Interface>> sublists = StreamEx.ofSubLists(intfs, partitionSize).toList();
+
+        String requestUIDD = UUID.randomUUID().toString();
+        Map<NetworkScanClient, Set<Interface>> scannerInterfaceMap = new HashMap<>();
+
+        for (List<Interface> interfacesPartial : sublists){
+            scannerInterfaceMap.putAll(findNessusForInterfaces(new HashSet<>(interfacesPartial)));
+        }
+
         for (Map.Entry<NetworkScanClient, Set<Interface>> keyValue: scannerInterfaceMap.entrySet()) {
             try {
                 NessusScan scan = new NessusScan();
@@ -208,20 +223,23 @@ public class NetworkScanService {
                         project,
                         false);
                 scan.setInterfaces(keyValue.getValue());
-                scan.setRequestId(UUID.randomUUID().toString());
+                scan.setRequestId(requestUIDD);
                 scan.setScanFrequency(EXECUTE_ONCE);
                 scan.setScheduled(false);
-                for (Interface i : keyValue.getValue()) {
+                scan.setRunning(false);
+                scan.setInQueue(true);
+
+                scan = nessusScanRepository.saveAndFlush(scan);
+                //putRulesOnRfw(scan);
+                //keyValue.getKey().runScan(scan);
+                for (Interface i : scan.getInterfaces()) {
                     i.getAsset().setRequestId(scan.getRequestId());
                     i.setScanRunning(true);
                     interfaceRepository.save(i);
                     assetRepository.save(i.getAsset());
                 }
-                scan = nessusScanRepository.saveAndFlush(scan);
-                putRulesOnRfw(scan);
-                keyValue.getKey().runScan(scan);
                 nessusScans.add(scan);
-            } catch (ConnectException e){
+            } catch (Exception e){
                 log.error("Problem with connection to scanner {}", keyValue.getKey().printInfo());
             }
         }
@@ -463,30 +481,33 @@ public class NetworkScanService {
      * Method which check for nessusscan.isautomatic and run scan
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void scheduledRunScans() {
+    public void scheduledRunScans() throws Exception {
         log.info("Starting Scheduled task for automatic test");
         List<Project> autoInfraProjectList = projectRepository.findByAutoInfraScan(true);
-
-        for (Project project : autoInfraProjectList){
-            List<NessusScan> nessusScan = nessusScanRepository.findByProjectAndIsAutomatic(project,true);
-            for (NessusScan ns : nessusScan) {
-                try {
-                    if (ns.getNessus().getStatus()) {
-                        for (NetworkScanClient networkScanClient :networkScanClients) {
-                            if (networkScanClient.canProcessRequest(ns) ) {
-                                putRulesOnRfw(ns);
-                                networkScanClient.runScan(ns);
-                                log.info("{} Starting automatic scan for {}",ns.getNessus().getScannerType().getName(), ns.getProject().getName());
-                            }
-                        }
-                    }
-                } catch (ResourceAccessException | NullPointerException | HttpServerErrorException | JAXBException | HttpClientErrorException e) {
-                    log.error("Exception - {} came up during scan for {}",e.getLocalizedMessage(), ns.getProject().getName());
-                } catch (Exception e) {
-                    log.error(e.getLocalizedMessage());
-                }
-            }
+        for (Project project : autoInfraProjectList) {
+            configureAndRunManualScanForScope(project, interfaceRepository.findByAssetInAndActive((List<Asset>) project.getAssets(), true));
         }
+
+//        for (Project project : autoInfraProjectList){
+//            List<NessusScan> nessusScan = nessusScanRepository.findByProjectAndIsAutomatic(project,true);
+//            for (NessusScan ns : nessusScan) {
+//                try {
+//                    if (ns.getNessus().getStatus()) {
+//                        for (NetworkScanClient networkScanClient :networkScanClients) {
+//                            if (networkScanClient.canProcessRequest(ns) ) {
+//                                putRulesOnRfw(ns);
+//                                networkScanClient.runScan(ns);
+//                                log.info("{} Starting automatic scan for {}",ns.getNessus().getScannerType().getName(), ns.getProject().getName());
+//                            }
+//                        }
+//                    }
+//                } catch (ResourceAccessException | NullPointerException | HttpServerErrorException | JAXBException | HttpClientErrorException e) {
+//                    log.error("Exception - {} came up during scan for {}",e.getLocalizedMessage(), ns.getProject().getName());
+//                } catch (Exception e) {
+//                    log.error(e.getLocalizedMessage());
+//                }
+//            }
+//        }
     }
     public void runNetworkScan(NessusScan nessusScan) throws Exception {
         for (NetworkScanClient networkScanClient : networkScanClients){
@@ -506,6 +527,43 @@ public class NetworkScanService {
             if (nessusScanRepository.findByProjectAndRunning(p,true).size() == 0){
                 interfaceRepository.updateInterfaceStateForNotRunningScan(p);
                 log.info("[Network Scan] Detected interface with status ScanRunning=true for project {}, disabling it.", p.getName());
+            }
+        }
+    }
+
+    /**
+     * Running scans fromqueue (NessusScan.inQueue = true)
+     */
+    @Transactional
+    public void runScansFromQueue() throws Exception {
+        // Take all Network scanners
+        List<Scanner> networkScanners = scannerRepository.findByScannerTypeInAndStatus(scannerTypeRepository.findByCategory(Constants.SCANER_CATEGORY_NETWORK), true);
+        for (Scanner scanner: networkScanners){
+            List<NessusScan> nessusScansInQueue = nessusScanRepository.findByNessusAndInQueue(scanner, true);
+            List<NessusScan> nessusScansRunning = nessusScanRepository.findByNessusAndRunning(scanner, true);
+            int difference = scanner.getScannerType().getScanLimit() - nessusScansRunning.size();
+            if (nessusScansInQueue.size() > 0 ) {
+                log.info("[NetworkScanService] Got {} scans in queue (Running: {}, max scans {}) for scanner {} with zone {}", nessusScansInQueue.size(), nessusScansRunning.size(), scanner.getScannerType().getScanLimit(), scanner.getApiUrl(), scanner.getRoutingDomain().getName());
+                log.info("[NetworkScanService] Taking {} scans from queue for scanner {} with zone {}", difference, scanner.getApiUrl(), scanner.getRoutingDomain().getName());
+            }
+            if (scanner.getScannerType().getScanLimit() > nessusScansRunning.size()){
+                for(NessusScan nessusScan : nessusScansInQueue.subList(0, Math.min(difference, nessusScansInQueue.size()))) {
+                    for (NetworkScanClient networkScanClient : networkScanClients) {
+                        if (networkScanClient.canProcessRequest(nessusScan)) {
+                            putRulesOnRfw(nessusScan);
+                            networkScanClient.runScan(nessusScan);
+                            nessusScan.setInQueue(false);
+                            nessusScan.setRunning(true);
+                            for (Interface i : nessusScan.getInterfaces()) {
+                                i.getAsset().setRequestId(nessusScan.getRequestId());
+                                i.setScanRunning(true);
+                                //interfaceRepository.save(i);
+                                //assetRepository.save(i.getAsset());
+                            }
+                            log.info("[NetworkScanService] {} Starting automatic scan for {}", nessusScan.getNessus().getScannerType().getName(), nessusScan.getProject().getName());
+                        }
+                    }
+                }
             }
         }
     }
