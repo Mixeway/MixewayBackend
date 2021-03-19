@@ -2,6 +2,7 @@ package io.mixeway.rest.project.service;
 
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
+import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.*;
 import io.mixeway.domain.service.vulnerability.VulnTemplate;
 import io.mixeway.pojo.PermissionFactory;
@@ -105,7 +106,7 @@ public class ProjectRestService {
 
 
     public ResponseEntity<List<RoutingDomain>> showRoutingDomains() {
-        return new ResponseEntity<>(routingDomainRepository.findAll(),HttpStatus.OK);
+        return new ResponseEntity<>(scannerRepository.findDistinctByRoutingDomain().stream().map(Scanner::getRoutingDomain).collect(Collectors.toList()), HttpStatus.OK);
     }
 
     public ResponseEntity<List<Proxies>> showProxies() {
