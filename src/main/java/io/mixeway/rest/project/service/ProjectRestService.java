@@ -106,7 +106,7 @@ public class ProjectRestService {
 
 
     public ResponseEntity<List<RoutingDomain>> showRoutingDomains() {
-        return new ResponseEntity<>(scannerRepository.findDistinctByRoutingDomain().stream().map(Scanner::getRoutingDomain).collect(Collectors.toList()), HttpStatus.OK);
+        return new ResponseEntity<>(scannerRepository.findDistinctByRoutingDomain().stream().filter(Scanner::getStatus).map(Scanner::getRoutingDomain).collect(Collectors.toList()), HttpStatus.OK);
     }
 
     public ResponseEntity<List<Proxies>> showProxies() {
