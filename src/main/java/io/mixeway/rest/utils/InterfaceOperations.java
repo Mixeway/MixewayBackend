@@ -38,7 +38,9 @@ public class InterfaceOperations {
     }
 
     private static void checkAndCreateInterface(Asset asset, List<Interface> interfaces, String ip) {
-        if (!isInterfaceAlreadyDefinedForAsset(asset, ip)) {
+        List<Interface> interfacesAlreadyDefined = new ArrayList<>();
+        asset.getProject().getAssets().forEach(a -> interfacesAlreadyDefined.addAll(a.getInterfaces()));
+        if (!isInterfaceAlreadyDefinedForAsset(asset, ip, interfacesAlreadyDefined)) {
             Interface inf = new Interface();
             inf.setActive(true);
             inf.setAsset(asset);
@@ -47,24 +49,24 @@ public class InterfaceOperations {
             inf.setRoutingDomain(asset.getRoutingDomain());
             interfaces.add(inf);
         } else {
-            interfaces.add(asset.getInterfaces().stream().filter(i -> i.getPrivateip().equals(ip)).findFirst().orElse(null));
+            interfaces.add(interfacesAlreadyDefined.stream().filter(i -> i.getPrivateip().equals(ip)).findFirst().orElse(null));
         }
     }
 
-    public static boolean isInterfaceAlreadyDefinedForAsset(Asset a, String ips){
+    public static boolean isInterfaceAlreadyDefinedForAsset(Asset a, String ips, List<Interface> interfacesDefined){
         try {
             for (String ip : ips.trim().split(",")) {
                 if (IpAddressUtils.validate(ip)) {
-                    return a.getInterfaces().stream().anyMatch(i -> i.getPrivateip().equals(ip));
+                    return interfacesDefined.stream().anyMatch(i -> i.getPrivateip().equals(ip));
                 } else if (ip.contains("/")) {
                     for (String ipFromCidr : IpAddressUtils.getIpAddressesFromCidr(ip)) {
-                        if (a.getInterfaces().stream().anyMatch(i -> i.getPrivateip().equals(ipFromCidr))) {
+                        if (interfacesDefined.stream().anyMatch(i -> i.getPrivateip().equals(ipFromCidr))) {
                             return true;
                         }
                     }
                 } else if (ip.contains("-")) {
                     for (String ipFromRange : IpAddressUtils.getIpAddressesFromRange(ip)) {
-                        if (a.getInterfaces().stream().anyMatch(i -> i.getPrivateip().equals(ipFromRange))) {
+                        if (interfacesDefined.stream().anyMatch(i -> i.getPrivateip().equals(ipFromRange))) {
                             return true;
                         }
                     }
