@@ -298,9 +298,12 @@ public class NetworkScanService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     List<Interface> updateAssetsAndPrepareInterfacesForScan(NetworkScanRequestModel req, Project project) {
         List<Interface> listtoScan = new ArrayList<>();
+        Optional<Interface> interfaceOptional = Optional.empty();
         for (AssetToCreate atc : req.getIpAddresses()){
-            Optional<Interface> interfaceOptional = interfaceRepository.findByAssetInAndPrivateip(project.getAssets(), atc.getIp());
-            if (interfaceOptional.isPresent()){
+            if (project.getAssets() != null){
+                interfaceRepository.findByAssetInAndPrivateip(project.getAssets(), atc.getIp());
+            }
+           if (interfaceOptional.isPresent()){
                 listtoScan.add(interfaceOptional.get());
             } else {
                 Asset a = new Asset();
