@@ -569,7 +569,7 @@ public class NetworkScanService {
                                 //interfaceRepository.save(i);
                                 //assetRepository.save(i.getAsset());
                             }
-                            log.info("[NetworkScanService] {} Starting automatic scan for {}", nessusScan.getNessus().getScannerType().getName(), nessusScan.getProject().getName());
+                            //log.info("[NetworkScanService] {} Starting automatic scan for {}", nessusScan.getNessus().getScannerType().getName(), nessusScan.getProject().getName());
                         }
                     }
                 }

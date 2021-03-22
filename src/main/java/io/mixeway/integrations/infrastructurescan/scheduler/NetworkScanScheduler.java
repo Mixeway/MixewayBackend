@@ -2,22 +2,48 @@ package io.mixeway.integrations.infrastructurescan.scheduler;
 
 
 import javax.transaction.Transactional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import io.mixeway.integrations.infrastructurescan.service.NetworkScanService;
+
+import java.time.Duration;
+import java.util.concurrent.*;
 
 @Component
 @Transactional
 public class NetworkScanScheduler {
 	private final NetworkScanService networkScanService;
-
+	private static final Logger log = LoggerFactory.getLogger(NetworkScanScheduler.class);
 	NetworkScanScheduler(NetworkScanService networkScanService){
 		this.networkScanService = networkScanService;
 	}
 
 	@Scheduled(initialDelay=0,fixedDelay = 60000)
 	public void checkScanStatus(){
-		networkScanService.scheduledCheckStatusAndLoadVulns();
+		ExecutorService executor = Executors.newCachedThreadPool();
+		Callable<Object> task = () -> {
+			networkScanService.scheduledCheckStatusAndLoadVulns();
+			return null;
+		};
+		Future<Object> future = executor.submit(task);
+		try {
+			Object result = future.get(3, TimeUnit.MINUTES);
+		} catch (TimeoutException ex) {
+			log.warn("[NetworkScanServiceScheduler] 3 minutes lmit exceeded for loading vulns... interrupting..");
+		} catch (InterruptedException e) {
+			log.warn("[NetworkScanServiceScheduler] Vuln loading interrupted");
+		} catch (ExecutionException e) {
+			log.warn("[NetworkScanServiceScheduler] ExecutionException during vuln loading..");
+		} finally {
+			future.cancel(true); // may or may not desire this
+		}
+
+
+
+
 	}
 	@Scheduled(cron="#{@getNetworkCronExpresion}" )
 	public void runScheduledTest() throws Exception {
