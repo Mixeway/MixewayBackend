@@ -458,7 +458,7 @@ public class NetworkScanService {
                         if (networkScanClient.canProcessRequest(ns) && networkScanClient.isScanDone(ns)) {
                             networkScanClient.loadVulnerabilities(ns);
                             deleteRulsFromRfw(ns);
-                            updateRiskForInterfaces(ns);
+                            //updateRiskForInterfaces(ns);
                         }
                     }
                     //For nessus create webapp linking
@@ -553,12 +553,12 @@ public class NetworkScanService {
             int difference = scanner.getScannerType().getScanLimit() - nessusScansRunning.size();
             if (nessusScansInQueue.size() > 0 ) {
                 log.info("[NetworkScanService] Got {} scans in queue (Running: {}, max scans {}) for scanner {} with zone {}", nessusScansInQueue.size(), nessusScansRunning.size(), scanner.getScannerType().getScanLimit(), scanner.getApiUrl(), scanner.getRoutingDomain().getName());
-                log.info("[NetworkScanService] Running {}n-th scan from queue for scanner {} with zone {}", nessusScansRunning.size()+1, scanner.getApiUrl(), scanner.getRoutingDomain().getName());
             }
             if (scanner.getScannerType().getScanLimit() > nessusScansRunning.size()){
                 for(NessusScan nessusScan : nessusScansInQueue.subList(0, Math.min(difference, nessusScansInQueue.size()))) {
                     for (NetworkScanClient networkScanClient : networkScanClients) {
                         if (networkScanClient.canProcessRequest(nessusScan)) {
+                            log.info("[NetworkScanService] Running {}n-th scan from queue for scanner {} with zone {}", nessusScansRunning.size()+1, scanner.getApiUrl(), scanner.getRoutingDomain().getName());
                             putRulesOnRfw(nessusScan);
                             networkScanClient.runScan(nessusScan);
                             nessusScan.setInQueue(false);
