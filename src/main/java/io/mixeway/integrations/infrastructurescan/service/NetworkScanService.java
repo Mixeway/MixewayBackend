@@ -161,7 +161,7 @@ public class NetworkScanService {
 //                }
 //            }
 //        }
-        if (ns.stream().allMatch(NessusScan::getRunning)) {
+        if (ns.stream().allMatch(NessusScan::getInQueue)) {
             return new ResponseEntity<>(new Status("ok",
                     StringUtils.join(ns.stream().map(NessusScan::getRequestId).collect(Collectors.toSet()), ",")),
                     HttpStatus.CREATED);
@@ -547,7 +547,7 @@ public class NetworkScanService {
             int difference = scanner.getScannerType().getScanLimit() - nessusScansRunning.size();
             if (nessusScansInQueue.size() > 0 ) {
                 log.info("[NetworkScanService] Got {} scans in queue (Running: {}, max scans {}) for scanner {} with zone {}", nessusScansInQueue.size(), nessusScansRunning.size(), scanner.getScannerType().getScanLimit(), scanner.getApiUrl(), scanner.getRoutingDomain().getName());
-                log.info("[NetworkScanService] Taking {} scans from queue for scanner {} with zone {}", difference, scanner.getApiUrl(), scanner.getRoutingDomain().getName());
+                log.info("[NetworkScanService] Running {}n-th scan from queue for scanner {} with zone {}", nessusScansRunning.size()+1, scanner.getApiUrl(), scanner.getRoutingDomain().getName());
             }
             if (scanner.getScannerType().getScanLimit() > nessusScansRunning.size()){
                 for(NessusScan nessusScan : nessusScansInQueue.subList(0, Math.min(difference, nessusScansInQueue.size()))) {
