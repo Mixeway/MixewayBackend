@@ -1,6 +1,8 @@
 package io.mixeway.integrations.infrastructurescan.service;
 
 
+import com.google.common.collect.LinkedHashMultimap;
+import com.google.common.collect.Multimap;
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
@@ -13,6 +15,10 @@ import io.mixeway.rest.model.KeyValue;
 import io.mixeway.rest.utils.InterfaceOperations;
 import io.mixeway.rest.utils.ProjectRiskAnalyzer;
 import one.util.streamex.StreamEx;
+import org.apache.commons.collections.MultiMap;
+import org.apache.commons.collections.map.MultiValueMap;
+import org.apache.commons.collections4.MultiValuedMap;
+import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
@@ -208,13 +214,13 @@ public class NetworkScanService {
         List<List<Interface>> sublists = StreamEx.ofSubLists(intfs, partitionSize).toList();
 
         String requestUIDD = UUID.randomUUID().toString();
-        Map<NetworkScanClient, Set<Interface>> scannerInterfaceMap = new HashMap<>();
+        Multimap<NetworkScanClient, Set<Interface>> scannerInterfaceMap = LinkedHashMultimap.create();
 
         for (List<Interface> interfacesPartial : sublists){
             scannerInterfaceMap.putAll(findNessusForInterfaces(new HashSet<>(interfacesPartial)));
         }
 
-        for (Map.Entry<NetworkScanClient, Set<Interface>> keyValue: scannerInterfaceMap.entrySet()) {
+        for (Map.Entry<NetworkScanClient, Set<Interface>> keyValue: scannerInterfaceMap.entries()) {
             try {
                 NessusScan scan = new NessusScan();
                 scan = configureScan(scan,
@@ -274,8 +280,8 @@ public class NetworkScanService {
      * @param intfs
      * @return
      */
-    public Map<NetworkScanClient, Set<Interface>> findNessusForInterfaces(Set<Interface> intfs) {
-        Map<NetworkScanClient, Set<Interface>> scannerInterfaceMap = new HashMap<>();
+    public Multimap<NetworkScanClient, Set<Interface>> findNessusForInterfaces(Set<Interface> intfs) {
+        Multimap<NetworkScanClient, Set<Interface>> scannerInterfaceMap = LinkedHashMultimap.create();
         List<RoutingDomain> uniqueDomainInProjectAssets = intfs.stream().map(Interface::getRoutingDomain).distinct().collect(Collectors.toList());
         for (RoutingDomain rd : uniqueDomainInProjectAssets) {
             for (NetworkScanClient networkScanClient : networkScanClients){
