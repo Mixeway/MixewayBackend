@@ -39,7 +39,8 @@ public class InterfaceOperations {
 
     private static void checkAndCreateInterface(Asset asset, List<Interface> interfaces, String ip) {
         List<Interface> interfacesAlreadyDefined = new ArrayList<>();
-        asset.getProject().getAssets().forEach(a -> interfacesAlreadyDefined.addAll(a.getInterfaces()));
+        if (asset.getInterfaces() != null)
+            asset.getProject().getAssets().forEach(a -> interfacesAlreadyDefined.addAll(a.getInterfaces()));
         if (!isInterfaceAlreadyDefinedForAsset(asset, ip, interfacesAlreadyDefined)) {
             Interface inf = new Interface();
             inf.setActive(true);
