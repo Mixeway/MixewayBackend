@@ -150,17 +150,17 @@ public class NetworkScanService {
                     HttpStatus.EXPECTATION_FAILED);
         }
 
-        //RUN MANUAL SCAN
-        for (NessusScan nessusScan : ns){
-            if (!nessusScan.getRunning()) {
-                for (NetworkScanClient networkScanClient :networkScanClients){
-                    if (networkScanClient.canProcessRequest(nessusScan)){
-                        putRulesOnRfw(nessusScan);
-                        networkScanClient.runScan(nessusScan);
-                    }
-                }
-            }
-        }
+//        //RUN MANUAL SCAN
+//        for (NessusScan nessusScan : ns){
+//            if (!nessusScan.getRunning()) {
+//                for (NetworkScanClient networkScanClient :networkScanClients){
+//                    if (networkScanClient.canProcessRequest(nessusScan)){
+//                        putRulesOnRfw(nessusScan);
+//                        networkScanClient.runScan(nessusScan);
+//                    }
+//                }
+//            }
+//        }
         if (ns.stream().allMatch(NessusScan::getRunning)) {
             return new ResponseEntity<>(new Status("ok",
                     StringUtils.join(ns.stream().map(NessusScan::getRequestId).collect(Collectors.toSet()), ",")),
