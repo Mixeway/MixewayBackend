@@ -95,7 +95,7 @@ public class CiOperationsController {
     @PreAuthorize("hasAuthority('ROLE_API')")
     @GetMapping(value = "/vulnerabilities/{id}",produces = "application/json")
     public ResponseEntity<SecurityGatewayResponse> getVulnerabilitiesForCodeProject(@PathVariable(value = "id") Long codeProjectId,
-                                                                                    Principal principal) throws UnknownHostException {
+                                                                                    Principal principal) throws IOException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException {
         return ciOperationsService.getVulnerabilitiesForCodeProject(codeProjectId, principal);
     }
 

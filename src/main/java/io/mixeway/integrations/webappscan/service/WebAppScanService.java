@@ -24,6 +24,7 @@ import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.UnexpectedRollbackException;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
@@ -142,8 +143,8 @@ public class WebAppScanService {
                         }
                     } catch (NonUniqueResultException | IncorrectResultSizeDataAccessException | ParseException ex) {
                         return new ResponseEntity<>(HttpStatus.PRECONDITION_FAILED);
-                    } catch (DataIntegrityViolationException e){
-                        log.error("Cannot put {} into queue, error is dataintegrity violation", urlToCompareWithRegexx);
+                    } catch (DataIntegrityViolationException | UnexpectedRollbackException e){
+                        log.error("Cannot put {} into queue, error is dataintegrity violation, rollback..", urlToCompareWithRegexx);
                         return new ResponseEntity<>(HttpStatus.PRECONDITION_FAILED);
                     }
                 }
