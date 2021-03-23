@@ -23,21 +23,7 @@ public class NetworkScanScheduler {
 
 	@Scheduled(initialDelay=0,fixedDelay = 60000)
 	public void checkScanStatus(){
-		ExecutorService executor = Executors.newSingleThreadExecutor();
-		Future<String> future = executor.submit((Callable) () -> {
-			networkScanService.scheduledCheckStatusAndLoadVulns();
-			return "OK";
-		});
-		try {
-			future.get(3, TimeUnit.MINUTES);
-		} catch (TimeoutException ex) {
-			log.warn("[NetworkScanServiceScheduler] 3 minutes lmit exceeded for loading vulns... interrupting..");
-		} catch (InterruptedException e) {
-			log.warn("[NetworkScanServiceScheduler] Vuln loading interrupted");
-		} catch (ExecutionException e) {
-			log.warn("[NetworkScanServiceScheduler] ExecutionException during vuln loading..");
-		}
-		executor.shutdownNow();
+		networkScanService.scheduledCheckStatusAndLoadVulns();
 
 	}
 	@Scheduled(cron="#{@getNetworkCronExpresion}" )
