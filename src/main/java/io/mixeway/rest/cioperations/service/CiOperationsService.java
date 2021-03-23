@@ -414,10 +414,11 @@ public class CiOperationsService {
      * @param principal user requesting
      * @return returning list of vulnerbilities
      */
-    public ResponseEntity<SecurityGatewayResponse> getVulnerabilitiesForCodeProject(Long codeProjectId, Principal principal) throws UnknownHostException {
+    public ResponseEntity<SecurityGatewayResponse> getVulnerabilitiesForCodeProject(Long codeProjectId, Principal principal) throws IOException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException {
         Optional<CodeProject> codeProject = codeProjectRepository.findById(codeProjectId);
         if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getCodeGroup().getProject())) {
             List<ProjectVulnerability> vulns = vulnTemplate.projectVulnerabilityRepository.findByCodeProject(codeProject.get());
+            openSourceScanService.loadVulnerabilities(codeProject.get());
             List<Vuln> vulnList = new ArrayList<>();
             for (ProjectVulnerability pv : vulns){
                 if (pv.getVulnerabilitySource().getId().equals(vulnTemplate.SOURCE_OPENSOURCE.getId())){
@@ -426,7 +427,9 @@ public class CiOperationsService {
                     vulnList.add(new Vuln(pv,null,null,pv.getCodeProject(),Constants.API_SCANNER_CODE));
                 }
             }
+
             SecurityGatewayEntry securityGatewayEntry = securityQualityGateway.buildGatewayResponse(vulns);
+            updateCiOperationWithSecurityGatewayResponse(codeProject.get(), securityGatewayEntry);
             return new ResponseEntity<SecurityGatewayResponse>(
                     new SecurityGatewayResponse(securityGatewayEntry.isPassed(),
                             securityGatewayEntry.isPassed() ? Constants.SECURITY_GATEWAY_PASSED : Constants.SECURITY_GATEWAY_FAILED,
@@ -434,6 +437,25 @@ public class CiOperationsService {
                     HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
+    /**
+     * Updating CIOperations entry (for codeproject, branch and commitid) with scan performed, result and vulnerabilities number
+     * @param codeProject to edit cioperations
+     * @param securityGatewayEntry to check vulnerabilities number
+     */
+    @Transactional
+    void updateCiOperationWithSecurityGatewayResponse(CodeProject codeProject, SecurityGatewayEntry securityGatewayEntry) {
+        Optional<CiOperations> ciOperations = ciOperationsRepository.findByCodeProjectAndCommitId(codeProject, codeProject.getCommitid());
+        if (ciOperations.isPresent()){
+            ciOperations.get().setResult(securityGatewayEntry.isPassed()?"Ok":"Not Ok");
+            ciOperations.get().setOpenSourceScan(StringUtils.isNotBlank(codeProject.getdTrackUuid()));
+            ciOperations.get().setSastScan(securityGatewayEntry.countSastVulns() > 0);
+            ciOperations.get().setOpenSourceHigh(securityGatewayEntry.getOsHigh());
+            ciOperations.get().setOpenSourceCrit(securityGatewayEntry.getOsCritical());
+            ciOperations.get().setSastCrit(securityGatewayEntry.getSastCritical());
+            ciOperations.get().setSastHigh(securityGatewayEntry.getSastHigh());
         }
     }
 }

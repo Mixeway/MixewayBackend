@@ -147,4 +147,11 @@ public class SecurityGatewayEntry {
     public void setPassed(boolean passed) {
         this.passed = passed;
     }
+
+    public int countSastVulns(){
+        return this.sastCritical + sastHigh + sastMedium;
+    }
+    public int countOpenSourceVulns(){
+        return this.osCritical + this.osHigh + this.osMedium;
+    }
 }

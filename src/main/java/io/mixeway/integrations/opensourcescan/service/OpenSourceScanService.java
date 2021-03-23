@@ -265,6 +265,8 @@ public class OpenSourceScanService {
         }
     }
 
+
+
     /**
      * Using configured OpenSource Vulnerability Scanner and geting defined properties
      *

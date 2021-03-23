@@ -728,6 +728,7 @@ public class CodeScanService {
         log.info("[CICD] SourceCode - Loading Vulns for {} completed type of {}", codeProject.getName(), scannerType);
     }
 
+
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     void removeOldVulns(CodeProject codeProject) {
         List<ProjectVulnerability> toRemove = vulnTemplate.projectVulnerabilityRepository.findByCodeProjectAndVulnerabilitySource(codeProject, vulnTemplate.SOURCE_SOURCECODE).filter(v -> v.getStatus().getId().equals(vulnTemplate.STATUS_REMOVED.getId())).collect(Collectors.toList());
