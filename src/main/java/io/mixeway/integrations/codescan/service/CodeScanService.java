@@ -5,6 +5,7 @@ import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.entity.Vulnerability;
 import io.mixeway.db.repository.*;
+import io.mixeway.domain.service.cioperations.UpdateCiOperations;
 import io.mixeway.domain.service.vulnerability.VulnTemplate;
 import io.mixeway.integrations.opensourcescan.plugins.mvndependencycheck.model.SASTRequestVerify;
 import io.mixeway.integrations.codescan.model.CodeScanRequestModel;
@@ -17,6 +18,7 @@ import io.mixeway.rest.project.model.SASTProject;
 import io.mixeway.rest.utils.ProjectRiskAnalyzer;
 import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jettison.json.JSONException;
+import org.hibernate.sql.Update;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.jpa.repository.Modifying;
@@ -52,26 +54,24 @@ public class CodeScanService {
     private final List<CodeScanClient> codeScanClients;
     private final ScannerRepository scannerRepository;
     private final ScannerTypeRepository scannerTypeRepository;
-    private final CiOperationsRepository ciOperationsRepository;
     private final ProjectRiskAnalyzer projectRiskAnalyzer;
     private final VulnTemplate vulnTemplate;
-    private final ProjectVulnerabilityRepository projectVulnerabilityRepository;
+    private final UpdateCiOperations updateCiOperations;
     private final PermissionFactory permissionFactory;
 
     CodeScanService(ProjectRepository projectRepository, CodeGroupRepository codeGroupRepository, CodeProjectRepository codeProjectRepository,
-                    VulnTemplate vulnTemplate, CodeAccessVerifier codeAccessVerifier, VaultHelper vaultHelper,
+                    VulnTemplate vulnTemplate, CodeAccessVerifier codeAccessVerifier, VaultHelper vaultHelper, UpdateCiOperations updateCiOperations,
                     List<CodeScanClient> codeScanClients, ScannerRepository scannerRepository, ScannerTypeRepository scannerTypeRepository,
-                    CiOperationsRepository ciOperationsRepository, ProjectRiskAnalyzer projectRiskAnalyzer,
-                    ProjectVulnerabilityRepository projectVulnerabilityRepository, PermissionFactory permissionFactory){
+                    ProjectRiskAnalyzer projectRiskAnalyzer,
+                    PermissionFactory permissionFactory){
         this.projectRepository = projectRepository;
-        this.projectVulnerabilityRepository = projectVulnerabilityRepository;
         this.codeGroupRepository = codeGroupRepository;
+        this.updateCiOperations = updateCiOperations;
         this.codeProjectRepository = codeProjectRepository;
         this.codeAccessVerifier = codeAccessVerifier;
         this.vaultHelper = vaultHelper;
         this.vulnTemplate = vulnTemplate;
         this.codeScanClients = codeScanClients;
-        this.ciOperationsRepository = ciOperationsRepository;
         this.scannerRepository = scannerRepository;
         this.scannerTypeRepository = scannerTypeRepository;
         this.projectRiskAnalyzer = projectRiskAnalyzer;
@@ -352,8 +352,7 @@ public class CodeScanService {
                         if (codeScanClient.canProcessRequest(sastScanner.get()) && codeScanClient.isScanDone(null, codeProject)) {
                             codeScanClient.loadVulnerabilities(sastScanner.get(), codeProject.getCodeGroup(), null, true, codeProject, codeVulns);
                             log.info("Vulerabilities for codescan for {} with scope of {} loaded - single app", codeProject.getCodeGroup().getName(), codeProject.getName());
-                            if (StringUtils.isNotBlank(codeProject.getCommitid()))
-                                updateCiOperationsForDoneSastScan(codeProject);
+                            updateCiOperations.updateCiOperationsForSAST(codeProject);
                             codeProject.setRunning(false);
                             codeProject.getCodeGroup().setRunning(false);
                             codeProject.getCodeGroup().setRequestid(null);
@@ -392,25 +391,6 @@ public class CodeScanService {
 
     }
 
-    /**
-     * Method which updates CI Operation and end it if code scan is done
-     * @param codeProject CodeProject for CI Operation to be linked with
-     */
-    private void updateCiOperationsForDoneSastScan(CodeProject codeProject) {
-        Optional<CiOperations> operations = ciOperationsRepository.findByCodeProjectAndCommitId(codeProject,codeProject.getCommitid());
-        if (operations.isPresent()){
-            CiOperations operation = operations.get();
-            operation.setSastScan(true);
-            int sastCrit = vulnTemplate.projectVulnerabilityRepository.findByCodeProjectAndSeverityAndAnalysis(codeProject, Constants.VULN_CRITICALITY_CRITICAL, Constants.FORTIFY_ANALYSIS_EXPLOITABLE).size();
-            int sastHigh = vulnTemplate.projectVulnerabilityRepository.findByCodeProjectAndSeverityAndAnalysis(codeProject, Constants.VULN_CRITICALITY_HIGH, Constants.FORTIFY_ANALYSIS_EXPLOITABLE).size();
-            operation.setSastCrit(sastCrit);
-            operation.setSastHigh(sastHigh);
-            operation.setEnded(new Date());
-            operation.setResult((sastCrit + sastHigh) > 5 ? "Not Ok" : "Ok");
-            ciOperationsRepository.save(operation);
-            log.info("CI Operation updated for {} - {} settings SAST scan to true", codeProject.getCodeGroup().getProject().getName(),codeProject.getName());
-        }
-    }
 
     /**
      * Get the CodeProjects and CodeGroups with inQueue=true

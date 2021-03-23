@@ -3,11 +3,13 @@ package io.mixeway.integrations.opensourcescan.service;
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
+import io.mixeway.domain.service.cioperations.UpdateCiOperations;
 import io.mixeway.domain.service.vulnerability.VulnTemplate;
 import io.mixeway.integrations.opensourcescan.model.Projects;
 import io.mixeway.integrations.opensourcescan.plugins.mvndependencycheck.model.SASTRequestVerify;
 import io.mixeway.integrations.utils.CodeAccessVerifier;
 import io.mixeway.pojo.PermissionFactory;
+import io.mixeway.pojo.SecurityQualityGateway;
 import io.mixeway.pojo.VaultHelper;
 import io.mixeway.rest.cioperations.model.VulnerabilityModel;
 import io.mixeway.rest.cioperations.service.CiOperationsService;
@@ -57,14 +59,16 @@ public class OpenSourceScanService {
     private final SoftwarePacketRepository softwarePacketRepository;
     private final PermissionFactory permissionFactory;
     private final CxBranchRepository cxBranchRepository;
+    private final UpdateCiOperations updateCiOperations;
     private static final Logger log = LoggerFactory.getLogger(OpenSourceScanService.class);
     OpenSourceScanService(ProjectRepository projectRepository, CodeAccessVerifier codeAccessVerifier, ScannerRepository scannerRepository,
                           ScannerTypeRepository scannerTypeRepository, VaultHelper vaultHelper, List<OpenSourceScanClient> openSourceScanClients,
                           VulnTemplate vulnTemplate,CodeProjectRepository codeProjectRepository, @Lazy CodeService codeService,
                           SoftwarePacketRepository softwarePacketRepository, PermissionFactory permissionFactory,
-                          CxBranchRepository cxBranchRepository){
+                          CxBranchRepository cxBranchRepository, UpdateCiOperations updateCiOperations){
         this.projectRepository = projectRepository;
         this.cxBranchRepository = cxBranchRepository;
+        this.updateCiOperations = updateCiOperations;
         this.codeAccessVerifier = codeAccessVerifier;
         this.scannerRepository = scannerRepository;
         this.scannerTypeRepository =scannerTypeRepository;
@@ -259,13 +263,12 @@ public class OpenSourceScanService {
                     vulnTemplate.projectVulnerabilityRepository.updateVulnState(vulnsToUpdate,
                             vulnTemplate.STATUS_REMOVED.getId());
                 openSourceScanClient.loadVulnerabilities(codeProjectToVerify);
+                updateCiOperations.updateCiOperationsForOpenSource(codeProjectToVerify);
                 vulnTemplate.projectVulnerabilityRepository.deleteByStatusAndCodeProjectAndVulnerabilitySource(vulnTemplate.STATUS_REMOVED, codeProjectToVerify, vulnTemplate.SOURCE_OPENSOURCE);
                 break;
             }
         }
     }
-
-
 
     /**
      * Using configured OpenSource Vulnerability Scanner and geting defined properties
