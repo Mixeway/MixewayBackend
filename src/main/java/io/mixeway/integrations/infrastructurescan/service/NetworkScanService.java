@@ -538,7 +538,7 @@ public class NetworkScanService {
     @Transactional
     public void runScansFromQueue() throws Exception {
         // Take all Network scanners
-        try {
+
             List<Scanner> networkScanners = scannerRepository.findByScannerTypeInAndStatus(scannerTypeRepository.findByCategory(Constants.SCANER_CATEGORY_NETWORK), true);
             for (Scanner scanner : networkScanners) {
                 List<NessusScan> nessusScansInQueue = nessusScanRepository.findByNessusAndInQueue(scanner, true);
@@ -549,28 +549,31 @@ public class NetworkScanService {
                 }
                 if (scanner.getScannerType().getScanLimit() > nessusScansRunning.size()) {
                     for (NessusScan nessusScan : nessusScansInQueue.subList(0, Math.min(difference, nessusScansInQueue.size()))) {
-                        for (NetworkScanClient networkScanClient : networkScanClients) {
-                            if (networkScanClient.canProcessRequest(nessusScan)) {
-                                log.info("[NetworkScanService] Running {}n-th scan from queue for scanner {} with zone {}", nessusScansRunning.size() + 1, scanner.getApiUrl(), scanner.getRoutingDomain().getName());
-                                putRulesOnRfw(nessusScan);
-                                networkScanClient.runScan(nessusScan);
-                                nessusScan.setInQueue(false);
-                                nessusScan.setRunning(true);
-                                for (Interface i : nessusScan.getInterfaces()) {
-                                    i.getAsset().setRequestId(nessusScan.getRequestId());
-                                    i.setScanRunning(true);
-                                    //interfaceRepository.save(i);
-                                    //assetRepository.save(i.getAsset());
+                        try {
+                            for (NetworkScanClient networkScanClient : networkScanClients) {
+                                if (networkScanClient.canProcessRequest(nessusScan)) {
+                                    log.info("[NetworkScanService] Running {}n-th scan from queue for scanner {} with zone {}", nessusScansRunning.size() + 1, scanner.getApiUrl(), scanner.getRoutingDomain().getName());
+                                    putRulesOnRfw(nessusScan);
+                                    networkScanClient.runScan(nessusScan);
+                                    nessusScan.setInQueue(false);
+                                    nessusScan.setRunning(true);
+                                    for (Interface i : nessusScan.getInterfaces()) {
+                                        i.getAsset().setRequestId(nessusScan.getRequestId());
+                                        i.setScanRunning(true);
+                                        //interfaceRepository.save(i);
+                                        //assetRepository.save(i.getAsset());
+                                    }
+                                    //log.info("[NetworkScanService] {} Starting automatic scan for {}", nessusScan.getNessus().getScannerType().getName(), nessusScan.getProject().getName());
                                 }
-                                //log.info("[NetworkScanService] {} Starting automatic scan for {}", nessusScan.getNessus().getScannerType().getName(), nessusScan.getProject().getName());
                             }
+                        } catch (ResourceAccessException e){
+                            nessusScan.setInQueue(false);
+                            log.error("[NetworkScanService] Unable to perform scan");
                         }
                     }
                 }
             }
-        } catch (ResourceAccessException e){
-            log.error("[NetworkScanService] Unable to perform scan");
-        }
+
     }
 }
 
