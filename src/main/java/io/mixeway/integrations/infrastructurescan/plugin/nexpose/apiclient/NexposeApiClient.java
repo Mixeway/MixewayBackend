@@ -5,6 +5,7 @@ import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.entity.Vulnerability;
 import io.mixeway.db.repository.*;
+import io.mixeway.domain.service.intf.InterfaceOperations;
 import io.mixeway.domain.service.vulnerability.VulnTemplate;
 import io.mixeway.integrations.infrastructurescan.plugin.nexpose.model.*;
 import io.mixeway.integrations.infrastructurescan.service.NetworkScanClient;
@@ -35,6 +36,7 @@ public class NexposeApiClient implements NetworkScanClient, SecurityScanner {
     private final ScanHelper scanHelper;
     private final NessusScanRepository nessusScanRepository;
     private final InterfaceRepository interfaceRepository;
+    private final InterfaceOperations interfaceOperations;
     private final AssetRepository assetRepository;
     private final RoutingDomainRepository routingDomainRepository;
     private final ProxiesRepository proxiesRepository;
@@ -45,11 +47,13 @@ public class NexposeApiClient implements NetworkScanClient, SecurityScanner {
     NexposeApiClient(VaultHelper vaultHelper, SecureRestTemplate secureRestTemplate, ScannerRepository scannerRepository,
                      ScanHelper scanHelper, NessusScanRepository nessusScanRepository, InterfaceRepository interfaceRepository,
                      AssetRepository assetRepository, ScannerTypeRepository scannerTypeRepository, VulnTemplate vulnTemplate,
-                     ProxiesRepository proxiesRepository, RoutingDomainRepository routingDomainRepository){
+                     ProxiesRepository proxiesRepository, RoutingDomainRepository routingDomainRepository,
+                     InterfaceOperations interfaceOperations){
         this.vaultHelper = vaultHelper;
         this.secureRestTemplate = secureRestTemplate;
         this.scannerRepository = scannerRepository;
         this.scanHelper = scanHelper;
+        this.interfaceOperations = interfaceOperations;
         this.nessusScanRepository = nessusScanRepository;
         this.interfaceRepository = interfaceRepository;
         this.assetRepository = assetRepository;

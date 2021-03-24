@@ -6,6 +6,7 @@ import io.mixeway.db.entity.SoftwarePacket;
 import io.mixeway.db.repository.AssetRepository;
 import io.mixeway.db.repository.InterfaceRepository;
 import io.mixeway.db.repository.SoftwarePacketRepository;
+import io.mixeway.domain.service.intf.InterfaceOperations;
 import io.mixeway.integrations.audit.plugins.vulners.model.Packets;
 import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.Status;
@@ -22,9 +23,12 @@ public class VulnersService {
     private final AssetRepository assetRepository;
     private final SoftwarePacketRepository softwarePacketRepository;
     private final InterfaceRepository interfaceRepository;
+    private final InterfaceOperations interfaceOperations;
 
-    public VulnersService(AssetRepository assetRepository, SoftwarePacketRepository softwarePacketRepository, InterfaceRepository interfaceRepository){
+    public VulnersService(AssetRepository assetRepository, SoftwarePacketRepository softwarePacketRepository, InterfaceRepository interfaceRepository,
+                          InterfaceOperations interfaceOperations){
         this.interfaceRepository = interfaceRepository;
+        this.interfaceOperations = interfaceOperations;
         this.assetRepository = assetRepository;
         this.softwarePacketRepository = softwarePacketRepository;
     }
@@ -41,7 +45,7 @@ public class VulnersService {
             for (String ip: packets.getIps()) {
                 Optional<Interface> intf = interfaceRepository.findByAssetAndPrivateip(asset.get(), ip);
                 if (!intf.isPresent())
-                    createInterfaceForAsset(asset.get(), ip);
+                    interfaceOperations.createInterfaceForAsset(asset.get(), ip);
             }
             loadPackets(asset.get(),packets.getPackets());
         } else
@@ -67,14 +71,7 @@ public class VulnersService {
         assetRepository.save(asset);
 
     }
-    private void createInterfaceForAsset(Asset asset, String ip) {
-        Interface intf = new Interface();
-        intf.setAsset(asset);
-        intf.setActive(true);
-        intf.setPrivateip(ip);
-        interfaceRepository.save(intf);
 
-    }
     private void createAssetFromPacket(Packets packets) {
         final Asset asset = new Asset();
         asset.setActive(true);

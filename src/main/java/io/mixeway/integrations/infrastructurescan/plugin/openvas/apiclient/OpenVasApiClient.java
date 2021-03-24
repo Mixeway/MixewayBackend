@@ -17,6 +17,7 @@ import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.*;
+import io.mixeway.domain.service.intf.InterfaceOperations;
 import io.mixeway.domain.service.vulnerability.VulnTemplate;
 import io.mixeway.integrations.infrastructurescan.plugin.openvas.model.RestRequestBody;
 import io.mixeway.integrations.infrastructurescan.plugin.openvas.model.User;
@@ -76,12 +77,14 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 	private final ProxiesRepository proxiesRepository;
 	private final RoutingDomainRepository routingDomainRepository;
 	private final VulnTemplate vulnTemplate;
+	private final InterfaceOperations interfaceOperations;
 	OpenVasApiClient(VaultHelper vaultHelper, ScannerRepository nessusRepository, NessusScanRepository nessusScanRepository, InterfaceRepository interfaceRepository,
-					 AssetRepository assetRepository, ScanHelper scanHelper,
+					 AssetRepository assetRepository, ScanHelper scanHelper, InterfaceOperations interfaceOperations,
 					 SecureRestTemplate secureRestTemplate, ScannerRepository scannerRepository,
 					 ScannerTypeRepository scannerTypeRepository, ProxiesRepository proxiesRepository, RoutingDomainRepository routingDomainRepository,
 					 VulnTemplate vulnTemplate){
 		this.vaultHelper = vaultHelper;
+		this.interfaceOperations = interfaceOperations;
 		this.scanHelper = scanHelper;
 		this.nessusRepository = nessusRepository;
 		this.scannerRepository = scannerRepository;
@@ -331,14 +334,8 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 		a.setActive(true);
 		a.setRoutingDomain(ns.getProject().getAssets().iterator().next().getRoutingDomain());
 		assetRepository.save(a);
-		intf.setRoutingDomain(a.getRoutingDomain());
-		intf.setFloatingip(ip);
-		intf.setPrivateip(ip);
-		intf.setAsset(a);
-		intf.setAutoCreated(true);
-		intf.setActive(true);
-		interfaceRepository.save(intf);
-		return intf;
+
+		return interfaceOperations.createAndReturnInterfaceForAsset(a,ip);
 	}
 
 	private List<ProjectVulnerability> getProjectVulnerabilititiesByScan(NessusScan ns) {

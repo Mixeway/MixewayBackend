@@ -3,6 +3,7 @@ package io.mixeway.rest.project.service;
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
+import io.mixeway.domain.service.intf.InterfaceOperations;
 import io.mixeway.domain.service.vulnerability.VulnTemplate;
 import io.mixeway.pojo.PermissionFactory;
 import io.mixeway.pojo.ScanHelper;
@@ -10,13 +11,10 @@ import io.mixeway.rest.project.model.AssetCard;
 import io.mixeway.rest.project.model.AssetModel;
 import io.mixeway.rest.project.model.AssetPutModel;
 import io.mixeway.rest.project.model.RunScanForAssets;
-import io.mixeway.rest.utils.InterfaceOperations;
-import io.mixeway.rest.utils.IpAddressUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import io.mixeway.integrations.infrastructurescan.service.NetworkScanService;
 import io.mixeway.pojo.Status;
@@ -37,6 +35,7 @@ public class AssetService {
     private final NetworkScanService networkScanService;
     private final PermissionFactory permissionFactory;
     private final VulnTemplate vulnTemplate;
+    private final InterfaceOperations interfaceOperations;
     private List<String> logs = new ArrayList<String>(){{
         add(Constants.LOG_SEVERITY);
         add(Constants.INFO_SEVERITY);
@@ -44,9 +43,10 @@ public class AssetService {
 
     AssetService(ProjectRepository projectRepository, InterfaceRepository interfaceRepository,
                  RoutingDomainRepository routingDomainRepository, AssetRepository assetRepository,
-                 ScanHelper scanHelper, NetworkScanService networkScanService,
+                 ScanHelper scanHelper, NetworkScanService networkScanService, InterfaceOperations interfaceOperations,
                  PermissionFactory permissionFactory, VulnTemplate vulnTemplate){
         this.projectRepository = projectRepository;
+        this.interfaceOperations = interfaceOperations;
         this.interfaceRepository = interfaceRepository;
         this.permissionFactory = permissionFactory;
         this.routingDomainRepository = routingDomainRepository;
@@ -96,7 +96,7 @@ public class AssetService {
             asset.setOrigin("manual");
             asset.setActive(true);
             assetRepository.save(asset);
-            List<Interface> interfaces = InterfaceOperations.createInterfacesForModel(asset, routingDomain.get(), assetPutModel.getIpAddresses());
+            List<Interface> interfaces = interfaceOperations.createInterfacesForModel(asset, routingDomain.get(), assetPutModel.getIpAddresses());
             interfaces = interfaceRepository.saveAll(interfaces);
             //asset = assetRepository.findById(asset.getId()).get();
             log.info("{} - Created new asset [{}]{} ", principal.getName(), project.get().getName(), asset.getName());

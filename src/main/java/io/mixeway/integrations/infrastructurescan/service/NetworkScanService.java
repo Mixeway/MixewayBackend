@@ -7,18 +7,13 @@ import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.*;
+import io.mixeway.domain.service.intf.InterfaceOperations;
 import io.mixeway.integrations.infrastructurescan.model.NetworkScanRequestModel;
 import io.mixeway.integrations.infrastructurescan.plugin.remotefirewall.apiclient.RfwApiClient;
 import io.mixeway.pojo.*;
 import io.mixeway.pojo.Status;
-import io.mixeway.rest.model.KeyValue;
-import io.mixeway.rest.utils.InterfaceOperations;
 import io.mixeway.rest.utils.ProjectRiskAnalyzer;
 import one.util.streamex.StreamEx;
-import org.apache.commons.collections.MultiMap;
-import org.apache.commons.collections.map.MultiValueMap;
-import org.apache.commons.collections4.MultiValuedMap;
-import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
@@ -30,14 +25,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.UnexpectedRollbackException;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.util.HtmlUtils;
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.net.ConnectException;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.*;
@@ -45,7 +37,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import javax.xml.bind.JAXBException;
 
@@ -74,15 +65,16 @@ public class NetworkScanService {
     private final ProjectRiskAnalyzer projectRiskAnalyzer;
     private final PermissionFactory permissionFactory;
     private final ScannerRepository scannerRepository;
-
+    private final InterfaceOperations interfaceOperations;
 
     public NetworkScanService(ProjectRepository projectRepository, ScannerTypeRepository scannerTypeRepository, ScanHelper scanHelper,
                               List<NetworkScanClient> networkScanClients, NessusScanTemplateRepository nessusScanTemplateRepository, NessusScanRepository nessusScanRepository,
                               ScannerRepository nessusRepository, InterfaceRepository interfaceRepository, AssetRepository assetRepository,
-                              RoutingDomainRepository routingDomainRepository, RfwApiClient rfwApiClient, WebAppHelper webAppHelper,
+                              RoutingDomainRepository routingDomainRepository, RfwApiClient rfwApiClient, WebAppHelper webAppHelper,InterfaceOperations interfaceOperations,
                               ProjectRiskAnalyzer projectRiskAnalyzer, PermissionFactory permissionFactory, ScannerRepository scannerRepository) {
         this.projectRepository = projectRepository;
         this.scannerRepository = scannerRepository;
+        this.interfaceOperations = interfaceOperations;
         this.projectRiskAnalyzer = projectRiskAnalyzer;
         this.scannerTypeRepository = scannerTypeRepository;
         this.nessusRepository = nessusRepository;
@@ -319,7 +311,7 @@ public class NetworkScanService {
                 a.setOrigin("manual");
                 a.setRoutingDomain(routingDomainRepository.findByName(atc.getRoutingDomain()));
                 assetRepository.save(a);
-                List<Interface> interfacesToBeCreated = InterfaceOperations.createInterfacesForModel(a, a.getRoutingDomain(),atc.getIp());
+                List<Interface> interfacesToBeCreated = interfaceOperations.createInterfacesForModel(a, a.getRoutingDomain(),atc.getIp());
                 interfacesToBeCreated = interfaceRepository.saveAll(interfacesToBeCreated);
                 listtoScan.addAll(interfacesToBeCreated);
             }
