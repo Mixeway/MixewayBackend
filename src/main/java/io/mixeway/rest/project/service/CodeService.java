@@ -157,8 +157,9 @@ public class CodeService {
         cp.setTechnique(codeGroup.getTechnique());
         cp.setInQueue(false);
         cp.setdTrackUuid(codeGroupPutModel.getdTrackUuid());
-        cp = codeProjectRepository.saveAndFlush(cp);
-        cxBranchRepository.save(new CxBranch(cp, codeGroupPutModel.getBranch()));
+        cp = codeProjectRepository.save(cp);
+        log.info("[CodeService] Created new CodeProject [{}] for project {}", codeGroup.getName(), codeGroup.getProject().getName());
+        //cxBranchRepository.save(new CxBranch(cp, codeGroupPutModel.getBranch()));
     }
 
     public ResponseEntity<Status> saveCodeProject(Long id, CodeProjectPutModel codeProjectPutModel, Principal principal) {
