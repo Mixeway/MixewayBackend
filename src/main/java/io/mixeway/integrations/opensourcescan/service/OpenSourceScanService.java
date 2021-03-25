@@ -347,9 +347,13 @@ public class OpenSourceScanService {
     }
 
     public void removeOldVulns(CodeProject codeProject){
-        List<Long> toRemove = vulnTemplate.projectVulnerabilityRepository.findByCodeProjectAndVulnerabilitySource(codeProject, vulnTemplate.SOURCE_OPENSOURCE).filter(v -> v.getStatus().getId().equals(vulnTemplate.STATUS_REMOVED.getId())).map(ProjectVulnerability::getId).collect(Collectors.toList());
-        if (toRemove.size() > 0) {
-            vulnTemplate.projectVulnerabilityRepository.deleteProjectVulnerabilityIn(toRemove);
+        try {
+            List<Long> toRemove = vulnTemplate.projectVulnerabilityRepository.findByCodeProjectAndVulnerabilitySource(codeProject, vulnTemplate.SOURCE_OPENSOURCE).filter(v -> v.getStatus().getId().equals(vulnTemplate.STATUS_REMOVED.getId())).map(ProjectVulnerability::getId).collect(Collectors.toList());
+            if (toRemove.size() > 0) {
+                vulnTemplate.projectVulnerabilityRepository.deleteProjectVulnerabilityIn(toRemove);
+            }
+        } catch (Exception e){
+            log.error("[OpenSourceScanService] For some reason unable to delete old vulns for codeproject {} / {}", codeProject.getName(),codeProject.getCodeGroup().getProject().getName());
         }
     }
 }
