@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import io.mixeway.pojo.Status;
 
+import javax.validation.constraints.Null;
 import java.io.IOException;
 import java.security.*;
 import java.security.cert.CertificateException;
@@ -132,12 +133,17 @@ public class CodeService {
      * @return
      */
     private String setRepoUrl(CodeGroupPutModel codeGroupPutModel) {
-        Pattern pattern = Pattern.compile("https?:\\/\\/(.*:.*@).*");
-        Matcher matcher = pattern.matcher(codeGroupPutModel.getGiturl());
-        if (matcher.find())
-            return codeGroupPutModel.getGiturl().replace(matcher.group(1), "");
-        else
-           return codeGroupPutModel.getGiturl();
+        try {
+            Pattern pattern = Pattern.compile("https?:\\/\\/(.*:.*@).*");
+            Matcher matcher = pattern.matcher(codeGroupPutModel.getGiturl());
+            if (matcher.find())
+                return codeGroupPutModel.getGiturl().replace(matcher.group(1), "");
+            else
+                return codeGroupPutModel.getGiturl();
+        } catch (NullPointerException e){
+            log.error("[CodeService] Trying to save codeproject with name {} with blank repo url", codeGroupPutModel.getCodeGroupName());
+        }
+        return null;
     }
 
     private void createProjectForCodeGroup(CodeGroup codeGroup, CodeGroupPutModel codeGroupPutModel) {
