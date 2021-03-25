@@ -318,7 +318,7 @@ public class OpenSourceScanService {
      * @param codeProject project with vulns
      * @param openSourceVulns list of vulns
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+   // @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void loadVulnsFromCICDToCodeProject(CodeProject codeProject, List<VulnerabilityModel> openSourceVulns) {
         List<ProjectVulnerability> oldVulns = getOldVulnsForCodeProject(codeProject);
         List<ProjectVulnerability> vulnToPersist = new ArrayList<>();
