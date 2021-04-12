@@ -281,4 +281,8 @@ public class ProjectRestService {
         }
         return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
     }
+
+    public ResponseEntity<List<RoutingDomain>> showAllRoutingDomains() {
+        return new ResponseEntity<>(scannerRepository.getDistinctByRoutingDomain(), HttpStatus.OK);
+    }
 }

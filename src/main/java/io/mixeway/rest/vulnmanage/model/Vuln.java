@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -45,7 +46,7 @@ public class Vuln {
 			this.setType(Constants.API_SCANNER_PACKAGE);
 			this.setVulnerabilityName(projectVulnerability.getVulnerability().getName());
 			this.setSeverity(projectVulnerability.getVulnerability().getSeverity() == null ? projectVulnerability.getSeverity() : projectVulnerability.getVulnerability().getSeverity());
-			this.setDescription(projectVulnerability.getDescription());
+			this.setDescription(Objects.toString(projectVulnerability.getDescription(), "Description missing"));
 			this.setHostname(hostname);
 			this.setLocation(((Asset) target).getName());
 			this.setProject(projectVulnerability.getProject().getName());
@@ -59,7 +60,7 @@ public class Vuln {
 			this.setType(Constants.API_SCANNER_PACKAGE);
 			this.setVulnerabilityName(projectVulnerability.getVulnerability().getName());
 			this.setSeverity(projectVulnerability.getVulnerability().getSeverity() == null ? projectVulnerability.getSeverity() : projectVulnerability.getVulnerability().getSeverity());
-			this.setDescription(projectVulnerability.getRecommendation()+ " " + projectVulnerability.getDescription());
+			this.setDescription(Objects.toString(projectVulnerability.getDescription(), "")+ "\n\n " + Objects.toString(projectVulnerability.getRecommendation(), ""));
 			this.setProject(cp.getName());
 			if (cp.getCodeGroup().getProject().getCiid() != null)
 					this.setCiid(cp.getCodeGroup().getProject().getCiid());
@@ -89,7 +90,8 @@ public class Vuln {
 			this.setId(projectVulnerability.getId());
 			this.setVulnerabilityName(projectVulnerability.getVulnerability().getName());
 			this.setSeverity(projectVulnerability.getVulnerability().getSeverity() == null ? projectVulnerability.getSeverity() : projectVulnerability.getVulnerability().getSeverity());
-			this.setDescription(projectVulnerability.getDescription()+"\n\n"+projectVulnerability.getRecommendation());
+			//this.setDescription(projectVulnerability.getDescription()+"\n\n"+projectVulnerability.getRecommendation());
+			this.setDescription(Objects.toString(projectVulnerability.getDescription(), "Description missing")+"\n\n"+Objects.toString(projectVulnerability.getRecommendation(), ""));
 			this.setBaseURL(projectVulnerability.getWebApp().getUrl());
 			this.setLocation(projectVulnerability.getLocation());
 			if (projectVulnerability.getWebApp().getRoutingDomain() != null) {
@@ -112,7 +114,7 @@ public class Vuln {
 			this.setGrade(projectVulnerability.getGrade());
 			this.setVulnerabilityName(projectVulnerability.getVulnerability().getName());
 			this.setSeverity(projectVulnerability.getVulnerability().getSeverity() == null ? projectVulnerability.getSeverity() : projectVulnerability.getVulnerability().getSeverity());
-			this.setDescription(projectVulnerability.getDescription());
+			this.setDescription(Objects.toString(projectVulnerability.getDescription(), "Description missing"));
 			try {
 				if ( projectVulnerability.getAnInterface().getPrivateip() == null && projectVulnerability.getAnInterface().getPrivateip().equals("") )
 					this.setIpAddress(projectVulnerability.getAnInterface().getFloatingip());

@@ -36,6 +36,11 @@ public class ProjectRestController {
         return projectService.showRoutingDomains();
     }
     @PreAuthorize("hasAuthority('ROLE_USER')")
+    @GetMapping(value = "/allroutingdomains")
+    public ResponseEntity<List<RoutingDomain>> showAllRoutingDomains() {
+        return projectService.showAllRoutingDomains();
+    }
+    @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping(value = "/proxies")
     public ResponseEntity<List<Proxies>> showProxies() {
         return projectService.showProxies();
