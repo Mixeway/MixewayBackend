@@ -283,6 +283,6 @@ public class ProjectRestService {
     }
 
     public ResponseEntity<List<RoutingDomain>> showAllRoutingDomains() {
-        return new ResponseEntity<>(scannerRepository.getDistinctByRoutingDomain(), HttpStatus.OK);
+        return new ResponseEntity<>(routingDomainRepository.findAll(), HttpStatus.OK);
     }
 }
