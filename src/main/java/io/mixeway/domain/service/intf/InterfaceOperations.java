@@ -49,8 +49,11 @@ public class InterfaceOperations {
     }
 
     private boolean canCreateInterfaceForAsset(Asset asset, String ip) {
-        Optional<Interface> anInterface = interfaceRepository.findByAssetInAndPrivateip(asset.getProject().getAssets(), ip);
-        return !anInterface.isPresent();
+        if (asset.getProject().getAssets() != null) {
+            Optional<Interface> anInterface = interfaceRepository.findByAssetInAndPrivateip(asset.getProject().getAssets(), ip);
+            return !anInterface.isPresent();
+        } else
+            return true;
     }
 
     public List<Interface> createInterfacesForModel(Asset asset, RoutingDomain routingDomain, String ips) {
