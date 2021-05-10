@@ -310,7 +310,7 @@ public class NetworkScanService {
                 a.setProject(project);
                 a.setOrigin("manual");
                 a.setRoutingDomain(routingDomainRepository.findByName(atc.getRoutingDomain()));
-                a = assetRepository.save(a);
+                a = assetRepository.saveAndFlush(a);
                 List<Interface> interfacesToBeCreated = interfaceOperations.createInterfacesForModel(a, a.getRoutingDomain(),atc.getIp());
                 interfacesToBeCreated = interfaceRepository.saveAll(interfacesToBeCreated);
                 listtoScan.addAll(interfacesToBeCreated);
