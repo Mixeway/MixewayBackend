@@ -486,7 +486,7 @@ public class NetworkScanService {
         log.info("Starting Scheduled task for automatic test");
         List<Project> autoInfraProjectList = projectRepository.findByAutoInfraScan(true);
         for (Project project : autoInfraProjectList) {
-            configureAndRunManualScanForScope(project, interfaceRepository.findByAssetInAndActive((List<Asset>) project.getAssets(), true));
+            configureAndRunManualScanForScope(project, interfaceRepository.findByAssetInAndActive(new ArrayList<>(project.getAssets()), true));
         }
 
 //        for (Project project : autoInfraProjectList){
