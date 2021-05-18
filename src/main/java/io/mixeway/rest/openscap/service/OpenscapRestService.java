@@ -17,6 +17,7 @@ import io.mixeway.integrations.audit.plugins.openscap.OpenScapService;
 import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.PermissionFactory;
 import io.mixeway.pojo.Status;
+import org.apache.http.conn.util.InetAddressUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -59,8 +60,8 @@ public class OpenscapRestService {
         Optional<Project> project = projectRepository.findById(projectId);
 
         // Check if provided IP Address is correct
-        InetAddressValidator validator = InetAddressValidator.getInstance();
-        if (!validator.isValid(ipaddress)) {
+        //InetAddressValidator validator = InetAddressValidator.getInstance();
+        if (!InetAddressUtils.isIPv4Address(ipaddress)) {
             log.error("[Openscap] Trying to load OpenScap report for IP {} - invalid IP address",ipaddress );
             return new ResponseEntity<Status>(new Status("Incorrect IP Address"), HttpStatus.BAD_REQUEST);
         }
