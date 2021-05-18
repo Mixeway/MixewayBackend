@@ -60,9 +60,10 @@ public class OpenscapRestService {
 
         // Check if provided IP Address is correct
         InetAddressValidator validator = InetAddressValidator.getInstance();
-        if (!validator.isValid(ipaddress))
-            return new ResponseEntity<Status>( new Status("Incorrect IP Address"), HttpStatus.BAD_REQUEST);
-
+        if (!validator.isValid(ipaddress)) {
+            log.error("[Openscap] Trying to load OpenScap report for IP {} - invalid IP address",ipaddress );
+            return new ResponseEntity<Status>(new Status("Incorrect IP Address"), HttpStatus.BAD_REQUEST);
+        }
         // If provided ip address is correct proceed with more checks
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             Interface target = null;
