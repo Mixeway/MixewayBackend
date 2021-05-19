@@ -13,7 +13,7 @@ FROM openjdk:8-jre-alpine
 LABEL maintainer="gsiewruk@gmail.com"
 WORKDIR /app
 COPY --from=maven /app/app.jar ./app.jar
-COPY src/main/resources/ca.crt $JAVA_HOME/jre/lib/security
+COPY src/main/resources/ca.crt /usr/lib/jvm/java-1.8-openjdk/jre/lib/security
 RUN \
     cd /usr/lib/jvm/java-1.8-openjdk/jre/lib/security \
     && keytool -keystore cacerts -storepass changeit -noprompt -trustcacerts -importcert -alias signet -file ca.crt
