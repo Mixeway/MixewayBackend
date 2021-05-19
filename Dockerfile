@@ -15,7 +15,7 @@ WORKDIR /app
 COPY --from=maven /app/app.jar ./app.jar
 COPY src/main/resources/ca.crt $JAVA_HOME/jre/lib/security
 RUN \
-    cd $JAVA_HOME/jre/lib/security \
+    cd /usr/lib/jvm/java-1.8-openjdk/jre/lib/security \
     && keytool -keystore cacerts -storepass changeit -noprompt -trustcacerts -importcert -alias signet -file ca.crt
 
 ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom", "-Dspring.profiles.active=${PROFILE}","-jar", "/app/app.jar"]
