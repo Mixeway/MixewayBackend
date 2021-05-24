@@ -359,7 +359,7 @@ public class CodeScanService {
                             codeGroupRepository.save(codeProject.getCodeGroup());
                             codeProjectRepository.save(codeProject);
                             if (codeProject.isEnableJira()) {
-                                vulnTemplate.processBugTracking(codeProject, vulnTemplate.SOURCE_OPENSOURCE);
+                                vulnTemplate.processBugTracking(codeProject, vulnTemplate.SOURCE_SOURCECODE);
                             }
                         }
                     } catch (Exception e){
