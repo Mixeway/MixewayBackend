@@ -126,6 +126,10 @@ public class JiraService implements BugTracking {
                 stringBuilder.append("Severity: ");
                 stringBuilder.append(projectVulnerability.stream().findFirst().orElse(new ProjectVulnerability()).getSeverity());
                 stringBuilder.append("\n\n");
+                stringBuilder.append("Branch: ").append(projectVulnerability.stream().findFirst().orElse(new ProjectVulnerability()).getCodeProject().getBranch());
+                stringBuilder.append("\n");
+                stringBuilder.append("Commit: ").append(projectVulnerability.stream().findFirst().orElse(new ProjectVulnerability()).getCodeProject().getCommitid());
+                stringBuilder.append("\n\n");
                 stringBuilder.append("Description");
                 stringBuilder.append("\n");
                 stringBuilder.append(Objects.toString(projectVulnerability.stream().findFirst().orElse(new ProjectVulnerability()).getDescription(), "Description missing"));
@@ -146,6 +150,10 @@ public class JiraService implements BugTracking {
                 stringBuilder.append("\n\n");
                 stringBuilder.append("Severity: ");
                 stringBuilder.append(projectVulnerability.stream().findFirst().orElse(new ProjectVulnerability()).getSeverity());
+                stringBuilder.append("\n\n");
+                stringBuilder.append("Branch: ").append(projectVulnerability.stream().findFirst().orElse(new ProjectVulnerability()).getCodeProject().getBranch());
+                stringBuilder.append("\n");
+                stringBuilder.append("Commit: ").append(projectVulnerability.stream().findFirst().orElse(new ProjectVulnerability()).getCodeProject().getCommitid());
                 stringBuilder.append("\n\n");
                 stringBuilder.append("Descriptions");
                 stringBuilder.append("\n");
