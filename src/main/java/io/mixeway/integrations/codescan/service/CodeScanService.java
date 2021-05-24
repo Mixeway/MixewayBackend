@@ -16,9 +16,7 @@ import io.mixeway.rest.cioperations.model.VulnerabilityModel;
 import io.mixeway.rest.project.model.RunScanForCodeProject;
 import io.mixeway.rest.project.model.SASTProject;
 import io.mixeway.rest.utils.ProjectRiskAnalyzer;
-import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jettison.json.JSONException;
-import org.hibernate.sql.Update;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.jpa.repository.Modifying;
@@ -26,7 +24,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import io.mixeway.integrations.utils.CodeAccessVerifier;
-import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
@@ -136,7 +133,7 @@ public class CodeScanService {
      * @param codeScanRequest object passed from REST API
      * @return Status entity with proper HTTPStatus. CREATED when everytihng is ok and BAD_REQUEST if it is not
      */
-    public ResponseEntity<Status> performScanFromScanManager(CodeScanRequestModel codeScanRequest, Principal principal) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, JSONException, ParseException {
+    public ResponseEntity<Status> performScanFromScanManager(CodeScanRequestModel codeScanRequest, Principal principal) {
         if (codeScanRequest.getCiid() != null && !codeScanRequest.getCiid().equals("")){
             Optional<List<Project>> projects = projectRepository.findByCiid(codeScanRequest.getCiid());
             Project project;
@@ -171,7 +168,7 @@ public class CodeScanService {
      * @param project Project on which behalf request is being executed
      * @return requestId of created scan
      */
-    private String verifyAndCreateOrUpdateCodeProjectInformations(CodeScanRequestModel codeScanRequest, Project project) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, JSONException, ParseException {
+    private String verifyAndCreateOrUpdateCodeProjectInformations(CodeScanRequestModel codeScanRequest, Project project) {
         String requestId;
         Optional<CodeGroup> codeGroup = codeGroupRepository.findByProjectAndName(project,codeScanRequest.getCodeGroupName());
         if (codeGroup.isPresent()){
@@ -266,7 +263,7 @@ public class CodeScanService {
      *
      * @param codeScanRequest CodeScanRequest from REST API
      * @param codeGroup updated CodeGroup
-     * @return
+     * @return CodeGroup which was updated
      */
     @NotNull
     private CodeGroup updateCodeGroup(CodeScanRequestModel codeScanRequest, CodeGroup codeGroup) {
@@ -305,7 +302,7 @@ public class CodeScanService {
                 }
                 List<Long> toRemove = vulnTemplate.projectVulnerabilityRepository.findByProjectAndVulnerabilitySource(group.getProject(), vulnTemplate.SOURCE_SOURCECODE).filter(v -> v.getStatus().getId().equals(vulnTemplate.STATUS_REMOVED.getId())).map(ProjectVulnerability::getId).collect(Collectors.toList());
                 int removed =0;
-                if (toRemove !=null && toRemove.size() > 0) {
+                if (toRemove.size() > 0) {
                     removed = vulnTemplate.projectVulnerabilityRepository.deleteProjectVulnerabilityIn(toRemove);
                     log.info("Removed {} source code vulns for project {}", removed,group.getProject());
                 }
@@ -319,7 +316,7 @@ public class CodeScanService {
     /**
      * Method which put each codegroup in scan queue by Project.autoCodeScan = true
      */
-    public void schedulerRunAutoScans() throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
+    public void schedulerRunAutoScans() {
         log.info("Starting Fortify Scheduled Scans");
         //List<CodeGroup> groups = codeGroupRepository.findByAuto(true);
         List<Project> projects = projectRepository.findByAutoCodeScan(true);
@@ -341,7 +338,7 @@ public class CodeScanService {
      * Verify if scan is done, and if so loads vulnerabilities
      */
     @Transactional
-    public void getResultsForRunningScan() throws CertificateException, ParseException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, UnrecoverableKeyException, IOException, URISyntaxException {
+    public void getResultsForRunningScan() {
         Optional<Scanner> sastScanner = scannerRepository.findByScannerTypeInAndStatus(scannerTypeRepository.getCodeScanners(), true).stream().findFirst();
         if (sastScanner.isPresent()) {
             List<CodeProject> codeProjectsRunning =codeProjectRepository.findByRunning(true);
@@ -361,6 +358,9 @@ public class CodeScanService {
                             codeProject.setRisk(projectRiskAnalyzer.getCodeProjectRisk(codeProject) + projectRiskAnalyzer.getCodeProjectOpenSourceRisk(codeProject));
                             codeGroupRepository.save(codeProject.getCodeGroup());
                             codeProjectRepository.save(codeProject);
+                            if (codeProject.isEnableJira()) {
+                                vulnTemplate.processBugTracking(codeProject, vulnTemplate.SOURCE_OPENSOURCE);
+                            }
                         }
                     } catch (Exception e){
                         log.error("[CodeScanService] There is exception of {} during verifying codeproject off {}", e.getLocalizedMessage(), codeProject.getName());
@@ -373,20 +373,6 @@ public class CodeScanService {
                 }
                 vulnTemplate.projectVulnerabilityRepository.deleteByStatus(vulnTemplate.STATUS_REMOVED);
             }
-//            List<CodeGroup> codeGroups = codeGroupRepository.findByRunning(true);
-//            for (CodeGroup codeGroup : codeGroups) {
-//                for (CodeScanClient codeScanClient : codeScanClients) {
-//                    if (codeScanClient.canProcessRequest(sastScanner.get()) && codeScanClient.isScanDone(codeGroup,null) ) {
-//                        codeScanClient.loadVulnerabilities(sastScanner.get(), codeGroup, null, false, null, getOldVulnsForGroup(codeGroup));
-//                        codeGroup.setRunning(false);
-//                        codeGroup.setRequestid(null);
-//                        codeGroup.setScanid(null);
-//                        codeGroup.setScope(null);
-//                        codeGroupRepository.save(codeGroup);
-//                    }
-//                }
-//                vulnTemplate.projectVulnerabilityRepository.deleteByStatus(vulnTemplate.STATUS_REMOVED);
-//            }
         }
 
     }
@@ -447,9 +433,7 @@ public class CodeScanService {
             return false;
         else if (cp.getCodeGroup().getProjects().stream().anyMatch(CodeProject::getRunning))
             return false;
-        else if (cp.getCodeGroup().isRunning())
-            return false;
-        else return true;
+        else return !cp.getCodeGroup().isRunning();
     }
 
 
@@ -702,7 +686,6 @@ public class CodeScanService {
         vulnTemplate.vulnerabilityPersistList(oldVulnsForCodeProject, vulnToPersist);
 
         removeOldVulns(codeProject);
-        List<ProjectVulnerability> test = vulnTemplate.projectVulnerabilityRepository.findByCodeProjectAndVulnerabilitySource(codeProject, vulnTemplate.SOURCE_SOURCECODE).collect(Collectors.toList());
 
         vulnTemplate.projectVulnerabilityRepository.flush();
         log.info("[CICD] SourceCode - Loading Vulns for {} completed type of {}", codeProject.getName(), scannerType);

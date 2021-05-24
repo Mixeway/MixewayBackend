@@ -30,7 +30,7 @@ public class BugTrackerService {
     private final List<BugTracking> bugTrackings;
     private final VulnTemplate vulnTemplate;
     private final PermissionFactory permissionFactory;
-    private final List<String> types = Arrays.asList("infra", "code", "webapp","opensource");
+    private final List<String> types = Arrays.asList("Network", "WebApplication", "SourceCode","OpenSource");
     private final List<String> strategy = Arrays.asList("Manual", "High", "Medium","Low");
 
     BugTrackerService(BugTrackerTypeRepository bugTrackerTypeRepository, BugTrackerRepository bugTrackerRepository,

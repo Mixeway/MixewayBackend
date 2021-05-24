@@ -37,6 +37,15 @@ public class CodeProject implements VulnSource {
 	private String branch;
 	@JsonIgnore private String requestId;
 	private int risk;
+	private Boolean enableJira;
+	@Column(name = "enablejira")
+	public Boolean isEnableJira() {
+		return enableJira;
+	}
+
+	public void setEnableJira(Boolean enableJira) {
+		this.enableJira = enableJira;
+	}
 
 	/**
 	 * For CICD
@@ -221,5 +230,7 @@ public class CodeProject implements VulnSource {
 	void prePersist(){
 		if (running == null)
 			running = false;
+		if (enableJira==null)
+			enableJira=false;
 	}
 }

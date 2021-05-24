@@ -12,15 +12,12 @@ import io.mixeway.pojo.SecureRestTemplate;
 import io.mixeway.pojo.SecurityScanner;
 import io.mixeway.pojo.VaultHelper;
 import io.mixeway.rest.model.ScannerModel;
-import io.mixeway.rest.project.model.SASTProject;
 import org.apache.commons.lang3.StringUtils;
-import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
@@ -28,24 +25,22 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
-import javax.xml.bind.JAXBException;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.text.DateFormat;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Service
 public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScanClient {
     private final static Logger log = LoggerFactory.getLogger(DependencyTrackApiClient.class);
-    private DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private final ScannerRepository scannerRepository;
     private final ScannerTypeRepository scannerTypeRepository;
     private final SecureRestTemplate secureRestTemplate;
@@ -56,6 +51,7 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
     private final CodeProjectRepository codeProjectRepository;
     private final CiOperationsRepository ciOperationsRepository;
     private final VulnTemplate vulnTemplate;
+
 
     public DependencyTrackApiClient(ScannerRepository scannerRepository, ScannerTypeRepository scannerTypeRepository,
                                     SecureRestTemplate secureRestTemplate, VaultHelper vaultHelper, CodeProjectRepository codeProjectRepository,
@@ -104,7 +100,7 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
                 } else {
                     log.error("Unable to get Findings from Dependency Track for project {}", codeProject.getdTrackUuid());
                 }
-            } catch (HttpClientErrorException | HttpServerErrorException | ResourceAccessException e){
+            } catch (HttpClientErrorException | HttpServerErrorException | ResourceAccessException | URISyntaxException e){
                 log.error("Error during OpenSource loading vulnerabilities for {} with code {}", codeProject.getName(), e.getLocalizedMessage());
             }
         }
@@ -131,7 +127,7 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
     public boolean createProject(CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         List<Scanner> dTrack = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_DEPENDENCYTRACK));
         //Multiple dTrack instances not yet supported
-        if (dTrack.size() == 1 && !isProjectAlreadyDefined(codeProject,dTrack.get(0)) && (codeProject.getdTrackUuid() == null || codeProject.getdTrackUuid().isEmpty())){
+        if (dTrack.size() == 1 && !isProjectAlreadyDefined(codeProject) && (codeProject.getdTrackUuid() == null || codeProject.getdTrackUuid().isEmpty())){
             RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(dTrack.get(0));
             HttpHeaders headers = prepareAuthHeader(dTrack.get(0));
             HttpEntity<DTrackCreateProject> entity = new HttpEntity<>(new DTrackCreateProject(codeProject.getName()),headers);
@@ -154,7 +150,7 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
 
         return StringUtils.isNotBlank(codeProject.getdTrackUuid());
     }
-    private boolean isProjectAlreadyDefined(CodeProject codeProject, Scanner scanner) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+    private boolean isProjectAlreadyDefined(CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         List<Projects> sastProjects = getProjects();
         List<Projects> filteredProject = sastProjects.stream().filter(p -> p.getName().equals(codeProject.getName())).collect(Collectors.toList());
         if (filteredProject.size() == 1){
@@ -195,7 +191,7 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void createVulns(CodeProject codeProject, List<DTrackVuln> body) {
+    public void createVulns(CodeProject codeProject, List<DTrackVuln> body) throws URISyntaxException {
         List<ProjectVulnerability> oldVulns = vulnTemplate.projectVulnerabilityRepository
                 .findByVulnerabilitySourceAndCodeProject(vulnTemplate.SOURCE_OPENSOURCE, codeProject);
         List<ProjectVulnerability> vulnsToPersist = new ArrayList<>();
@@ -235,7 +231,12 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
             //codeProjectRepository.saveAndFlush(codeProject);
         }
         vulnTemplate.vulnerabilityPersistList(oldVulns,vulnsToPersist);
+        if (codeProject.isEnableJira()) {
+            vulnTemplate.processBugTracking(codeProject, vulnTemplate.SOURCE_OPENSOURCE);
+        }
     }
+
+
 
     private HttpHeaders prepareAuthHeader(Scanner scanner) {
         HttpHeaders headers = new HttpHeaders();
@@ -245,7 +246,7 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
 
     @Override
     @Transactional
-    public boolean initialize(Scanner scanner) throws JSONException, ParseException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, JAXBException, Exception {
+    public boolean initialize(Scanner scanner) throws Exception {
         List<Scanner> dTrack = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_DEPENDENCYTRACK));
         //Multiple dTrack instances not yet supported
         if (dTrack.size() == 1 ){

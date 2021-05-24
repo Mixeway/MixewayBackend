@@ -9,6 +9,7 @@ import io.mixeway.pojo.Status;
 import io.mixeway.pojo.Vulnerability;
 
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.Optional;
 
 public interface BugTracking {
@@ -16,5 +17,6 @@ public interface BugTracking {
     public Boolean canIssueTicket(boolean mode, ProjectVulnerability vulnerability, String issueStrategy);
     void closeIssue(String ticketId, BugTracker bugTracker) throws URISyntaxException;
     <T extends JpaRepository> ResponseEntity<Status> processRequest(T o, Optional<ProjectVulnerability> entity, BugTracker bugTracker, Project project, String vulnType, String principal, Boolean manual) throws URISyntaxException;
+    <T extends JpaRepository> ResponseEntity<Status> processRequestMultiVuln(T o, List<ProjectVulnerability> entity, BugTracker bugTracker, Project project, String vulnType, String principal, Boolean manual) throws URISyntaxException;
     boolean canProcessRequest(BugTracker bugTracker);
 }

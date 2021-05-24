@@ -1154,3 +1154,11 @@ update cisrequirement set severity = 'Medium';
 --changeset siewer:add_queue_to_nessuscan
 alter table nessusscan add column inqueue boolean;
 update scannertype set scanlimit=5 where name='OpenVAS';
+
+--changeset siewer:change_ticket_type
+update projectvulnerability set ticketid = null;
+alter table projectvulnerability alter column ticketid type text;
+
+--changeset siewer:add_jira_option_to_code_project
+alter table codeproject add column enablejira boolean;
+update codeproject set enablejira=false;

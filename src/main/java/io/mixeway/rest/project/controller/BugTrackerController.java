@@ -38,7 +38,7 @@ public class BugTrackerController {
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @DeleteMapping(value = "/{id}/getbugtrackers/{bugtracker}")
-    public ResponseEntity<Status> saveBugTracker(@PathVariable("id")Long id, @PathVariable("bugtracker")Long bugTrackerId, Principal principal) {
+    public ResponseEntity<Status> delteBugTracker(@PathVariable("id")Long id, @PathVariable("bugtracker")Long bugTrackerId, Principal principal) {
         return bugTrackerService.deleteBugTracker(id, bugTrackerId, principal);
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")

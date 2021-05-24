@@ -414,6 +414,7 @@ public class CiOperationsService {
      * @param principal user requesting
      * @return returning list of vulnerbilities
      */
+    // TODO Status & grade
     public ResponseEntity<SecurityGatewayResponse> getVulnerabilitiesForCodeProject(Long codeProjectId, Principal principal) throws IOException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException {
         Optional<CodeProject> codeProject = codeProjectRepository.findById(codeProjectId);
         if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getCodeGroup().getProject())) {
