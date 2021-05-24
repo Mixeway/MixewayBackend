@@ -359,6 +359,7 @@ public class CodeScanService {
                             codeGroupRepository.save(codeProject.getCodeGroup());
                             codeProjectRepository.save(codeProject);
                             if (codeProject.isEnableJira()) {
+                                log.info("[CodeScan] Automatic integration with BugTracker enabled, proceeding...");
                                 vulnTemplate.processBugTracking(codeProject, vulnTemplate.SOURCE_SOURCECODE);
                             }
                         }
