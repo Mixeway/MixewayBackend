@@ -57,13 +57,11 @@ public class JiraService implements BugTracking {
         if (bugTracker.getAsignee() != null) {
             newIssue = new IssueInputBuilder(bugTracker.getProjectId(), Long.valueOf(bugTracker.getIssueType()), title)
                     .setDescription(description)
-                    .setPriority(priority)
                     .setFieldInput(new FieldInput(IssueFieldId.ASSIGNEE_FIELD, ComplexIssueInputFieldValue.with("name", bugTracker.getAsignee())))
                     .build();
         } else {
             newIssue = new IssueInputBuilder(bugTracker.getProjectId(), Long.valueOf(bugTracker.getIssueType()), title)
                     .setDescription(description)
-                    .setPriority(priority)
                     .build();
         }
         //TODO uncomment it

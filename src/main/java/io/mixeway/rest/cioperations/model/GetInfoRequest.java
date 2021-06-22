@@ -11,7 +11,16 @@ public class GetInfoRequest {
     @NotNull String repoUrl;
     @NotNull String branch;
     @NotNull String scope;
+    Long projectId;
     String repoName;
+
+    public Long getProjectId() {
+        return projectId;
+    }
+
+    public void setProjectId(Long projectId) {
+        this.projectId = projectId;
+    }
 
     public String getRepoName() {
         return repoName;
