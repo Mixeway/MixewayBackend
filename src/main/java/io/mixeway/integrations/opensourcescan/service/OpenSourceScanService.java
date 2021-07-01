@@ -129,7 +129,6 @@ public class OpenSourceScanService {
     @Transactional
     public CodeProject getCodeProjectByRepoUrl(String url, String codeProjectName, String branch, Principal principal) throws Exception {
         //try {
-
             List<Long> projectForUserIds = permissionFactory.getProjectForPrincipal(principal).stream().map(Project::getId).collect(Collectors.toList());
             Optional<CodeProject> codeProject = codeProjectRepository.getCodeProjectByNameAndPermissions(codeProjectName, projectForUserIds);
             if (codeProject.isPresent()) {
