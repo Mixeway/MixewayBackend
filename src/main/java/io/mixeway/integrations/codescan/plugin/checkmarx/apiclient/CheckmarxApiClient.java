@@ -196,12 +196,10 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
         String passwordString = getPasswordStringForCodeProejct(codeProject);
         HttpEntity<CxSetGitRepo> cxSetGitRepoHttpEntity = new HttpEntity<>(new CxSetGitRepo(codeProject, passwordString), codeRequestHelper.getHttpEntity().getHeaders());
         codeRequestHelper.setHttpEntity(cxSetGitRepoHttpEntity);
-        log.info("Debug info: repourl string {}, branch {}, cxlink {}",cxSetGitRepoHttpEntity.getBody().getUrl(), cxSetGitRepoHttpEntity.getBody().getBranch(),
-                scanner.getApiUrl() + Constants.CX_GET_PROJECTS_API + "/" + codeProject.getCodeGroup().getVersionIdAll() + "/sourceCode/remoteSettings/git");
         try {
             ResponseEntity<String> response = codeRequestHelper
                     .getRestTemplate()
-                    .exchange(scanner.getApiUrl() + Constants.CX_GET_PROJECTS_API + "/" + codeProject.getCodeGroup().getVersionIdAll() + "/sourceCode/remoteSettings/git", HttpMethod.POST, codeRequestHelper.getHttpEntity(), String.class);
+                    .exchange(scanner.getApiUrl() + Constants.CX_GET_PROJECTS_API + "/" + codeProject.getCodeGroup().getRemoteid() + "/sourceCode/remoteSettings/git", HttpMethod.POST, codeRequestHelper.getHttpEntity(), String.class);
             log.info("[Checkmarx] Setting GIT repo for {} result {}", codeProject.getName(), response.getStatusCode());
         } catch (Exception e){
             log.error("[Checkmarx] Error setting GIT repo for project {} - {}",codeProject.getName(), e.getLocalizedMessage());
