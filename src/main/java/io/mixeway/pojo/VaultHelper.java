@@ -17,16 +17,22 @@ import java.util.Objects;
 public class VaultHelper {
     private final static Logger log = LoggerFactory.getLogger(VaultHelper.class);
     private String vaultHostname;
+    private String vaultPath;
+
 
     private final VaultOperations vaultOperations;
     @Autowired
-    public VaultHelper(@Value("${spring.cloud.vault.host}") String vaultHostname, VaultOperations vaultOperations){
+    public VaultHelper(@Value("${spring.cloud.vault.host}") String vaultHostname,
+                       @Value("${vault.path}") String vaultPath,
+                       VaultOperations vaultOperations){
         this.vaultOperations = vaultOperations;
         this.vaultHostname = vaultHostname;
+        this.vaultPath = vaultPath;
         warrning();
 
     }
     private void warrning() {
+        System.out.println("secretpath: "+ vaultPath);
         if (vaultHostname == null || vaultHostname.equals(Constants.DEFAULT)){
             System.out.println("####################################################################################################################");
             System.out.println("#                                                   WARRNING!                                                      #");
@@ -45,7 +51,7 @@ public class VaultHelper {
         } else {
             Map<String, String> upassMap = new HashMap<>();
             upassMap.put("password", password);
-            vaultOperations.write("secret/" + token, upassMap);
+            vaultOperations.write(vaultPath + token, upassMap);
             return true;
         }
     }
@@ -55,7 +61,7 @@ public class VaultHelper {
             if (vaultHostname.equals(Constants.DEFAULT)) {
                 return passwordLoc;
             } else {
-                VaultResponseSupport<Map<String, Object>> password = vaultOperations.read("secret/" + passwordLoc);
+                VaultResponseSupport<Map<String, Object>> password = vaultOperations.read(vaultPath + passwordLoc);
                 assert password != null;
                 return Objects.requireNonNull(password.getData()).get(Constants.PASSWORD).toString();
             }
