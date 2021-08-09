@@ -1,5 +1,6 @@
 package io.mixeway.db.entity;
 
+import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -233,4 +234,17 @@ public class CodeProject implements VulnSource {
 		if (enableJira==null)
 			enableJira=false;
 	}
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (!(o instanceof CodeProject)) return false;
+		CodeProject book = (CodeProject) o;
+		return Objects.equals(getId(), book.getId());
+	}
+
+	@Override
+	public int hashCode() {
+		return getClass().hashCode();
+	}
+
 }

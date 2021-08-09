@@ -230,7 +230,7 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
             }
             //codeProjectRepository.saveAndFlush(codeProject);
         }
-        vulnTemplate.vulnerabilityPersistList(oldVulns,vulnsToPersist);
+        vulnTemplate.vulnerabilityPersistListSoftware(oldVulns,vulnsToPersist);
         if (codeProject.isEnableJira()) {
             vulnTemplate.processBugTracking(codeProject, vulnTemplate.SOURCE_OPENSOURCE);
         }

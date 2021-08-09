@@ -1,5 +1,6 @@
 package io.mixeway.db.entity;
 
+import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
@@ -75,5 +76,18 @@ public class SoftwarePacket implements VulnSource {
 	}
 	public void setUptated(Boolean uptated) {
 		this.uptated = uptated;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (!(o instanceof SoftwarePacket)) return false;
+		SoftwarePacket packet = (SoftwarePacket) o;
+		return Objects.equals(getId(), packet.getId());
+	}
+
+	@Override
+	public int hashCode() {
+		return getClass().hashCode();
 	}
 }
