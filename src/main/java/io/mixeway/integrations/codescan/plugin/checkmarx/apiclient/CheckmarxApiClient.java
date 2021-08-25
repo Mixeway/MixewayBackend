@@ -116,7 +116,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
                 }
             }
         } catch (Exception e){
-            log.error("Error during loading projects from Checkmarx - {}", e.getLocalizedMessage());
+            log.error("[Checkmarx] Error Creating branch - {}", e.getLocalizedMessage());
         }
     }
 
@@ -328,7 +328,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
                 }
             }
         } catch (Exception e){
-            log.error("Error during loading projects from Checkmarx - {}", e.getLocalizedMessage());
+            log.error("[Checkmarx] Error during loading projects from Checkmarx - {}", e.getLocalizedMessage());
         }
         return sastProjects;
     }
@@ -354,7 +354,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
                 }
             }
         } catch (Exception e){
-            log.error("Error during loading projects from Checkmarx - {}", e.getLocalizedMessage());
+            log.error("[Checkmarx] Error creating project - {}", e.getLocalizedMessage());
         }
         return codeProject.getCodeGroup().getVersionIdAll() > 0;
     }
@@ -420,7 +420,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
                 return true;
             }
         } catch (HttpClientErrorException e){
-            log.error("Error during loading projects from Checkmarx - {}", e.getLocalizedMessage());
+            log.error("[Checkmarx] Error creating scan - {}", e.getLocalizedMessage());
         }
         return false;
     }
@@ -436,7 +436,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
                 return response.getBody();
             }
         } catch (HttpClientErrorException e){
-            log.error("Error during loading projects from Checkmarx - {}", e.getLocalizedMessage());
+            log.error("[Checkmarx] Error getting scan Infos - {}", e.getLocalizedMessage());
         }
         return null;
     }
@@ -455,7 +455,9 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
                 return true;
             }
         } catch (HttpClientErrorException e){
-            log.error("Error during loading projects from Checkmarx - {}", e.getLocalizedMessage());
+            log.error("[Checkmarx] Error during report generation - {}", e.getLocalizedMessage());
+        } finally {
+            codeGroup.setScanid(null);
         }
         return false;
     }

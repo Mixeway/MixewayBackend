@@ -326,8 +326,12 @@ public class JiraService implements BugTracking {
         Transition transition = StreamSupport.stream(transitions.spliterator(), false).filter(t->t.getName().equals("Gotowe")).findFirst().orElse(null);
         Comment closingMessage = Comment.valueOf("Vulnerabilities removed");
         assert transition != null;
-        TransitionInput transitionInput = new TransitionInput(transition.getId(), null, closingMessage);
-        client.getIssueClient().transition(issue.getTransitionsUri(), transitionInput).claim();
+        try {
+            TransitionInput transitionInput = new TransitionInput(transition.getId(), null, closingMessage);
+            client.getIssueClient().transition(issue.getTransitionsUri(), transitionInput).claim();
+        } catch (NullPointerException e){
+            log.warn("[Jira] Cannot close ticket id {} reason NullPointerException", ticketId);
+        }
     }
 
 
