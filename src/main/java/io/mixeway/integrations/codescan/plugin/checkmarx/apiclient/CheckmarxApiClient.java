@@ -592,9 +592,11 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
         Optional<io.mixeway.db.entity.Scanner> cxSast = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_CHECKMARX)).stream().findFirst();
         if (cxSast.isPresent()){
             CodeRequestHelper codeRequestHelper = prepareRestTemplate(cxSast.get());
+            String v = "";
+            String uri = "";
             try {
-                String v = cxResult.getDescription().substring(cxResult.getDescription().indexOf("pathid=") + 7);
-                String uri = "/cxrestapi/sast/scans/"+codeProject.getCodeGroup().getScanid()+"/results/"+v+"/shortDescription";
+                v = cxResult.getDescription().substring(cxResult.getDescription().indexOf("pathid=") + 7);
+                uri = "/cxrestapi/sast/scans/"+codeProject.getCodeGroup().getScanid()+"/results/"+v+"/shortDescription";
                 ResponseEntity<CxVulnShortDescription> response = codeRequestHelper
                         .getRestTemplate()
                         .exchange(cxSast.get().getApiUrl() + uri
@@ -603,7 +605,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
                                 CxVulnShortDescription.class);
                 return response.getBody();
             } catch (Exception e){
-                log.error("[Checkmarx] Error setting GIT repo for project {} - {}",codeProject.getName(), e.getLocalizedMessage());
+                log.error("[Checkmarx] Error setting GIT repo for project {} - v-{}, uri-{}",codeProject.getName(), v,uri);
             }
         }
         return null;

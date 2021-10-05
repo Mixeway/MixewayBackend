@@ -148,6 +148,7 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 						&& !statusStr.equals(Constants.STATUS_STOPPED) && !statusStr.equals(Constants.STATUS_QUEUEDGVM);
 				log.debug("Status of {} is {}, boolean status: {}, shouldClear: {}", nessusScan.getProject().getName(), statusStr, status, shouldStop);
 				if (shouldStop){
+					log.info("[OpenVas] Status of {} is {}, boolean status: {}, shouldClear: {}", nessusScan.getProject().getName(), statusStr, status, shouldStop);
 					nessusScan.setRunning(false);
 					nessusScan.setTaskId(null);
 					nessusScanRepository.save(nessusScan);
