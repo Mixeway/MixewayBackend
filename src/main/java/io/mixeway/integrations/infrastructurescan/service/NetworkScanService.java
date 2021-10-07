@@ -8,6 +8,7 @@ import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.*;
 import io.mixeway.domain.service.intf.InterfaceOperations;
+import io.mixeway.domain.service.routingdomain.CreateOrGetRoutingDomainService;
 import io.mixeway.integrations.infrastructurescan.model.NetworkScanRequestModel;
 import io.mixeway.integrations.infrastructurescan.plugin.remotefirewall.apiclient.RfwApiClient;
 import io.mixeway.pojo.*;
@@ -66,13 +67,16 @@ public class NetworkScanService {
     private final PermissionFactory permissionFactory;
     private final ScannerRepository scannerRepository;
     private final InterfaceOperations interfaceOperations;
+    private final CreateOrGetRoutingDomainService createOrGetRoutingDomainService;
 
     public NetworkScanService(ProjectRepository projectRepository, ScannerTypeRepository scannerTypeRepository, ScanHelper scanHelper,
                               List<NetworkScanClient> networkScanClients, NessusScanTemplateRepository nessusScanTemplateRepository, NessusScanRepository nessusScanRepository,
                               ScannerRepository nessusRepository, InterfaceRepository interfaceRepository, AssetRepository assetRepository,
                               RoutingDomainRepository routingDomainRepository, RfwApiClient rfwApiClient, WebAppHelper webAppHelper,InterfaceOperations interfaceOperations,
-                              ProjectRiskAnalyzer projectRiskAnalyzer, PermissionFactory permissionFactory, ScannerRepository scannerRepository) {
+                              ProjectRiskAnalyzer projectRiskAnalyzer, PermissionFactory permissionFactory, ScannerRepository scannerRepository,
+                              CreateOrGetRoutingDomainService createOrGetRoutingDomainService) {
         this.projectRepository = projectRepository;
+        this.createOrGetRoutingDomainService = createOrGetRoutingDomainService;
         this.scannerRepository = scannerRepository;
         this.interfaceOperations = interfaceOperations;
         this.projectRiskAnalyzer = projectRiskAnalyzer;
@@ -309,7 +313,7 @@ public class NetworkScanService {
                 a.setActive(true);
                 a.setProject(project);
                 a.setOrigin("manual");
-                a.setRoutingDomain(routingDomainRepository.findByName(atc.getRoutingDomain()));
+                a.setRoutingDomain(createOrGetRoutingDomainService.createOrGetRoutingDomain(atc.getRoutingDomain()));
                 a = assetRepository.saveAndFlush(a);
                 List<Interface> interfacesToBeCreated = interfaceOperations.createInterfacesForModel(a, a.getRoutingDomain(),atc.getIp());
                 interfacesToBeCreated = interfaceRepository.saveAll(interfacesToBeCreated);
