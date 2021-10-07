@@ -506,7 +506,7 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 	public boolean canProcessRequest(RoutingDomain routingDomain) {
 		List<Scanner> infraScanners = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase("OpenVAS"));
 		for (Scanner scanner : infraScanners) {
-			if (routingDomain.getName().startsWith(scanner.getRoutingDomain().getName())){
+			if (routingDomain != null && routingDomain.getName().startsWith(scanner.getRoutingDomain().getName())){
 				return true;
 			}
 		}
