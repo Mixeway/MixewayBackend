@@ -90,7 +90,7 @@ public class ScanManagerService {
             if (webAppScanRequest.getCiid().isPresent()) {
                 Optional<List<Project>> projectFromReq = projectRepository.findByCiid(webAppScanRequest.getCiid().get());
                 Project project;
-                if (projectFromReq.isPresent()) {
+                if ( projectFromReq.isPresent() && projectFromReq.get().size() > 0) {
                     project = projectFromReq.get().get(0);
                 } else {
                     project = new Project();
