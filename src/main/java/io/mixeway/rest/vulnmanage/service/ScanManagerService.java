@@ -111,6 +111,7 @@ public class ScanManagerService {
             }
         } catch (Exception ex){
             log.error("[Scan Manager] Error during WebApp Scan creation {}", ex.getLocalizedMessage());
+            ex.printStackTrace();
             return new ResponseEntity<>(new Status("Request contains no information about project. projectName and ciid are required."), HttpStatus.BAD_REQUEST);
         }
     }
