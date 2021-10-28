@@ -222,7 +222,7 @@ public class WebAppScanService {
         waRepository.save(webApp);
         webApp = setCodeProjectLink(webApp, webApp.getProject(), webAppScanModel);
         this.updateHeadersAndCookies(webAppScanModel.getHeaders(), webAppScanModel.getCookies(), webApp);
-        log.debug("Modified WebApp '{}' and set {} headers", webApp.getUrl(), webApp.getHeaders().size());
+        log.debug("Modified WebApp '{}' and set {} headers", webApp.getUrl(), webApp.getHeaders() == null? 0 : webApp.getHeaders().size());
         return webApp.getRequestId();
     }
 
