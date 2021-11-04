@@ -291,7 +291,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
         } catch (NullPointerException e){
             generateToken(scanner);
         }
-        RestTemplate restTemplate = secureRestTemplate.noVerificationClient(scanner);
+        RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(scanner);
         HttpHeaders headers = new HttpHeaders();
         headers.set(Constants.HEADER_AUTHORIZATION, Constants.BEARER_TOKEN + " " + scanner.getFortifytoken());
         HttpEntity entity = new HttpEntity(headers);
