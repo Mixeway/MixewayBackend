@@ -246,7 +246,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
     private boolean generateToken(io.mixeway.db.entity.Scanner scanner) {
         try {
             MultiValueMap<String, String> formEncodedForLogin = createFormForLogin(scanner);
-            RestTemplate restTemplate = secureRestTemplate.noVerificationClient(scanner);
+            RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(scanner);
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
             HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(formEncodedForLogin, headers);
