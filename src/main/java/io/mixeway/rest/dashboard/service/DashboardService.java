@@ -7,7 +7,7 @@ import io.mixeway.domain.service.project.FindProjectService;
 import io.mixeway.domain.service.vulnerability.VulnTemplate;
 import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.PermissionFactory;
-import io.mixeway.rest.dashboard.model.SearchRequest;
+import io.mixeway.rest.dashboard.model.*;
 import io.mixeway.rest.model.OverAllVulnTrendChartData;
 import io.mixeway.rest.model.Projects;
 import io.mixeway.rest.model.SourceDetectionChartData;
@@ -18,8 +18,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import io.mixeway.rest.dashboard.model.SearchResponse;
-import io.mixeway.rest.dashboard.model.SessionOwner;
 
 import javax.persistence.EntityNotFoundException;
 import java.security.Principal;
@@ -157,5 +155,22 @@ public class DashboardService {
             vulns.add(vuln);
         }
         return  vulns;
+    }
+
+    public ResponseEntity<DashboardTopStatistics> getRootStatistics(Principal principal) {
+        DashboardTopStatistics dashboardTopStatistics = new DashboardTopStatistics();
+
+        List<ProjectVulnerability> projectVulnerabilities = vulnTemplate.projectVulnerabilityRepository.getLatestVulnerabilitiesForProjects(permissionFactory.getProjectForPrincipal(principal));
+
+        StatisticCard statisticCard = new StatisticCard(
+          projectRepository.count(),
+          interfaceRepository.count(),
+          webAppRepository.count(),
+          codeProjectRepository.count(),
+          vulnTemplate.projectVulnerabilityRepository.count()
+        );
+        dashboardTopStatistics.setStatisticCard(statisticCard);
+        dashboardTopStatistics.setProjectVulnerabilityList(projectVulnerabilities.stream().limit(5).collect(Collectors.toList()));
+        return new ResponseEntity<>(dashboardTopStatistics, HttpStatus.OK);
     }
 }

@@ -1,6 +1,7 @@
 package io.mixeway.rest.dashboard.controller;
 
 
+import io.mixeway.rest.dashboard.model.DashboardTopStatistics;
 import io.mixeway.rest.dashboard.model.SearchRequest;
 import io.mixeway.rest.dashboard.service.DashboardService;
 import io.mixeway.rest.model.OverAllVulnTrendChartData;
@@ -82,6 +83,11 @@ public class DashboardController {
     @PostMapping(value = "/search")
     public ResponseEntity<SearchResponse> search(@RequestBody SearchRequest searchRequest, Principal principal) {
         return dashboardService.search(searchRequest);
+    }
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @GetMapping(value = "/statistics")
+    public ResponseEntity<DashboardTopStatistics> getRootStatistics(Principal principal) {
+        return dashboardService.getRootStatistics(principal);
     }
 
 }
