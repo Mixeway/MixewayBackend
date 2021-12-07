@@ -605,7 +605,8 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
                                 CxVulnShortDescription.class);
                 return response.getBody();
             } catch (Exception e){
-                log.error("[Checkmarx] Error setting GIT repo for project {} - v-{}, uri-{}",codeProject.getName(), v,uri);
+                log.error("[Checkmarx] Error getShortDescription project {} - v-{}, uri-{}",codeProject.getName(), v,uri);
+                e.printStackTrace();
             }
         }
         return null;
