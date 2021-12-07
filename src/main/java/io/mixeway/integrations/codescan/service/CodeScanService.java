@@ -356,6 +356,7 @@ public class CodeScanService {
                             codeProject.getCodeGroup().setScanid(null);
                             codeProject.getCodeGroup().setScope(null);
                             codeProject.setRisk(projectRiskAnalyzer.getCodeProjectRisk(codeProject) + projectRiskAnalyzer.getCodeProjectOpenSourceRisk(codeProject));
+                            codeProject.getCodeGroup().setScanid(null);
                             codeGroupRepository.save(codeProject.getCodeGroup());
                             codeProjectRepository.save(codeProject);
                             if (codeProject.isEnableJira()) {
@@ -365,7 +366,7 @@ public class CodeScanService {
                         }
                     } catch (Exception e){
                         log.error("[CodeScanService] There is exception of {} during verifying codeproject off {}", e.getLocalizedMessage(), codeProject.getName());
-                        e.printStackTrace();
+                        codeProject.getCodeGroup().setScanid(null);
                         codeProject.setRunning(false);
                         codeProject.setInQueue(false);
                         codeProjectRepository.save(codeProject);

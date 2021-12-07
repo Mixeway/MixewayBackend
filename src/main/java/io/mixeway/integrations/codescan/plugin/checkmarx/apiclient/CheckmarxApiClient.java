@@ -456,7 +456,6 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
             }
         } catch (HttpClientErrorException e){
             log.error("[Checkmarx] Error during report generation - {}", e.getStatusCode());
-        } finally {
             codeGroup.setScanid(null);
         }
         return false;
@@ -484,7 +483,6 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
             }
         } catch (HttpClientErrorException e){
             log.error("[Checkmarx] Error During checking report state - {}", e.getStatusCode());
-        } finally {
             codeGroup.setScanid(null);
         }
         return false;
@@ -506,9 +504,9 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
             }
         } catch (HttpClientErrorException e){
             log.error("[Checkmarx] Error during downloadig results for scan - {}", e.getStatusCode());
+            codeGroup.setScanid(null);
         } catch (NullPointerException npe ){
             log.warn("[Checkmarx] cannot download report for {} - no report Id avaliable", codeGroup.getName());
-        } finally {
             codeGroup.setScanid(null);
         }
         return new ArrayList<>();
