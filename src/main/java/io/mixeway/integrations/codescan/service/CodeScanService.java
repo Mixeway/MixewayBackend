@@ -365,6 +365,7 @@ public class CodeScanService {
                         }
                     } catch (Exception e){
                         log.error("[CodeScanService] There is exception of {} during verifying codeproject off {}", e.getLocalizedMessage(), codeProject.getName());
+                        e.printStackTrace();
                         codeProject.setRunning(false);
                         codeProject.setInQueue(false);
                         codeProjectRepository.save(codeProject);
