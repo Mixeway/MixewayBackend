@@ -17,22 +17,19 @@ import springfox.documentation.service.VendorExtension;
 import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
+import springfox.documentation.swagger2.annotations.EnableSwagger2WebMvc;
 
 import java.security.Principal;
 import java.util.*;
 
 @Configuration
 @EnableSwagger2
-@EnableWebMvc
 public class SwaggerConfig implements WebMvcConfigurer {
     private Contact contact = new Contact(
             "Info at",
             "https://github.com/Mixeway/MixeWayBackend",
             "gsiewruk@gmail.com"
     );
-
-
-
 
     private List<VendorExtension> vendorExtensions = new ArrayList<>();
     private ApiInfo apiInfo = new ApiInfo(
@@ -42,7 +39,7 @@ public class SwaggerConfig implements WebMvcConfigurer {
             "Apache 2.0", "http://www.apache.org/licenses/LICENSE-2.0",vendorExtensions);
     @Bean
     public Docket api() {
-
+        System.out.println("Loading swagger");
         Parameter headerParam = new ParameterBuilder()
                 .name("apiKey").defaultValue("").parameterType("header")
                 .modelRef(new ModelRef("string")).description("ApiKey").required(true).build();
@@ -58,7 +55,6 @@ public class SwaggerConfig implements WebMvcConfigurer {
     }
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        System.out.println("loading registry...");
         registry.addResourceHandler("swagger-ui.html")
                 .addResourceLocations("classpath:/META-INF/resources/");
 

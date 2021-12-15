@@ -44,4 +44,4 @@ jobs:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.DOCKER_TOKEN }}
           repository: mixeway/backend
-          tags: latest
+          tags: 1.5.0
