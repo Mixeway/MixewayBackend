@@ -33,6 +33,7 @@ public class ProjectRestService {
     private final ProxiesRepository proxiesRepository;
     private final ProjectRepository projectRepository;
     private final InterfaceRepository interfaceRepository;
+    private final WebAppRepository webAppRepository;
     private final ProjectRiskAnalyzer projectRiskAnalyzer;
     private final CodeProjectRepository codeProjectRepository;
     private final VulnHistoryRepository vulnHistoryRepository;
@@ -51,7 +52,8 @@ public class ProjectRestService {
                         ScannerRepository scannerRepository,
                        VulnTemplate vulnTemplate,
                        PermissionFactory permissionFactory,
-                       SoftwarePacketRepository softwarePacketRepository){
+                       SoftwarePacketRepository softwarePacketRepository,
+                       WebAppRepository webAppRepository){
         this.routingDomainRepository = routingDomainRepository;
         this.proxiesRepository = proxiesRepository;
         this.projectRepository = projectRepository;
@@ -63,6 +65,7 @@ public class ProjectRestService {
         this.vulnHistoryRepository = vulnHistoryRepository;
         this.scannerRepository = scannerRepository;
         this.vulnTemplate = vulnTemplate;
+        this.webAppRepository = webAppRepository;
     }
 
 
@@ -284,5 +287,29 @@ public class ProjectRestService {
 
     public ResponseEntity<List<RoutingDomain>> showAllRoutingDomains() {
         return new ResponseEntity<>(routingDomainRepository.findAll(), HttpStatus.OK);
+    }
+
+    public ResponseEntity<ProjectStats> showProjectStats(Long id, Principal principal) {
+        Optional<Project> project = projectRepository.findById(id);
+        if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
+            List<ProjectVulnerability> projectVulnerabilities = vulnTemplate.projectVulnerabilityRepository.findByProject(project.get()).collect(Collectors.toList());
+            ProjectStats projectStats = ProjectStats.builder()
+                    .libs(vulnTemplate.projectVulnerabilityRepository
+                            .findByProjectAndVulnerabilitySource(project.get(), vulnTemplate.SOURCE_OPENSOURCE)
+                            .map(ProjectVulnerability::getSoftwarePacket)
+                            .distinct()
+                            .count())
+                    .repos(codeProjectRepository.findByCodeGroupIn(project.get().getCodes()).size())
+                    .webApps(webAppRepository.findByProject(project.get()).size())
+                    .assets(interfaceRepository.findByAssetIn( new ArrayList<>(project.get().getAssets())).size())
+                    .vulnCrit(projectVulnerabilities.stream().filter(pv -> pv.getSeverity().equals(Constants.VULN_CRITICALITY_CRITICAL) || pv.getSeverity().equals(Constants.VULN_CRITICALITY_HIGH)).count())
+                    .vulnMedium(projectVulnerabilities.stream().filter(pv -> pv.getSeverity().equals(Constants.VULN_CRITICALITY_MEDIUM)).count())
+                    .vulnLow(projectVulnerabilities.stream().filter(pv -> pv.getSeverity().equals(Constants.VULN_CRITICALITY_LOW)).count())
+                    .build();
+            return new ResponseEntity<>(projectStats, HttpStatus.OK);
+
+        } else {
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
+        }
     }
 }

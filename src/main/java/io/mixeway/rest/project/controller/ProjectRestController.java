@@ -91,6 +91,11 @@ public class ProjectRestController {
     public ResponseEntity<Status> updateVulnAuditorSettings(@PathVariable("id")Long id, @Valid @RequestBody VulnAuditorSettings settings, Principal principal) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         return projectService.updateVulnAuditorSettings(id, settings, principal);
     }
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @GetMapping(value = "/{id}/stats")
+    public ResponseEntity<ProjectStats> showProjectStats(@PathVariable("id") Long id, Principal principal) {
+        return projectService.showProjectStats(id, principal);
+    }
     //endregion
 
 

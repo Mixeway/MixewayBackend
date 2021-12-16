@@ -5,7 +5,7 @@ on:
       - 'master'
 jobs:
   sonarprod:
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
       - name: Set up JDK
@@ -44,4 +44,4 @@ jobs:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.DOCKER_TOKEN }}
           repository: mixeway/backend
-          tags: latest
+          tags: 1.5.0
