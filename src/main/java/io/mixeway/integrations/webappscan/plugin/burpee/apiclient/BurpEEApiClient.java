@@ -132,6 +132,7 @@ public class BurpEEApiClient implements SecurityScanner, WebAppScanClient {
             scannerRepository.save(scanner);
             log.error ("Cannot check if scan is done for {} - server error {} ", webApp.getUrl(),e.getStatusCode());
         }
+        log.info("[BurpEE] Something went worng, returning false");
         return false;
     }
 
