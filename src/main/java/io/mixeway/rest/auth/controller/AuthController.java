@@ -2,9 +2,14 @@ package io.mixeway.rest.auth.controller;
 
 import io.mixeway.rest.model.PasswordAuthModel;
 import org.apache.commons.lang3.StringUtils;
+import org.keycloak.KeycloakPrincipal;
+import org.keycloak.KeycloakSecurityContext;
+import org.keycloak.representations.AccessToken;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.web.firewall.FirewalledRequest;
 import org.springframework.social.connect.Connection;
 import org.springframework.social.facebook.api.Facebook;
 import org.springframework.social.facebook.api.User;
@@ -24,6 +29,7 @@ import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.security.Principal;
 import java.util.UUID;
@@ -88,7 +94,11 @@ public class AuthController {
        authService.authenticateGitHubUser(authorizationCode,httpServletRequest,httpServletResponse);
     }
 
-    @PreAuthorize("permitAll()")
+    @GetMapping(value = "/v2/auth/keycloak")
+    public void authUsingKeycloakGet(FirewalledRequest request, HttpServletResponse httpServletResponse) throws IOException {
+        authService.authUsingKeycloak(request, httpServletResponse);
+    }
+
     @PostMapping(value = "/v2/auth/init")
     public ResponseEntity initialize(@Valid @RequestBody Password password) {
             return authService.initialize(password);

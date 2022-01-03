@@ -6,6 +6,7 @@ public class StatusEntity {
     Boolean cert;
     Boolean facebook;
     Boolean gitHub;
+    Boolean keycloak;
 
     public Boolean getFacebook() {
         return facebook;
@@ -39,12 +40,13 @@ public class StatusEntity {
         this.cert = cert;
     }
 
-    public StatusEntity(Boolean init, Boolean cert, Boolean password, Boolean facebook, Boolean gitHub){
+    public StatusEntity(Boolean init, Boolean cert, Boolean password, Boolean facebook, Boolean gitHub,Boolean keycloak){
         this.initialized = init;
         this.cert = cert;
         this.password = password;
         this.facebook = facebook;
         this.gitHub = gitHub;
+        this.keycloak = keycloak;
     }
 
     public Boolean getInitialized() {
@@ -53,5 +55,14 @@ public class StatusEntity {
 
     public void setInitialized(Boolean initialized) {
         this.initialized = initialized;
+    }
+
+
+    public Boolean getKeycloak() {
+        return keycloak;
+    }
+
+    public void setKeycloak(Boolean keycloak) {
+        this.keycloak = keycloak;
     }
 }
