@@ -120,7 +120,6 @@ public class CronScheduler {
     @Scheduled(initialDelay=3000,fixedDelay = 1500000)
     public void getDepTrackVulns() {
         try {
-            log.info("Starting to synchronize with OpenSource Vulns scanner");
             List<CodeProject> codeProjects = codeProjectRepository.getCodeProjectsWithOSIntegrationEnabled();
             for (CodeProject cp : codeProjects){
                     try {

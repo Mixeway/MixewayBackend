@@ -604,7 +604,6 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
                 return response.getBody();
             } catch (Exception e){
                 log.error("[Checkmarx] Error getShortDescription project {} - v-{}, uri-{}",codeProject.getName(), v,uri);
-                e.printStackTrace();
             }
         }
         return null;

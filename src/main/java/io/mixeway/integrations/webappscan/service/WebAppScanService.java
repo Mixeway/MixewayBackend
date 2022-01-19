@@ -394,6 +394,7 @@ public class WebAppScanService {
                 if (scanner != null ) {
                     for (WebAppScanClient webAppScanClient : webAppScanClients) {
                         if (webAppScanClient.canProcessRequest(scanner) && webAppScanClient.isScanDone(scanner, app)) {
+                            log.info("[WebAppScan] Scan for {} is done.", app.getUrl());
                             List<ProjectVulnerability> tmpVulns = vulnTemplate.projectVulnerabilityRepository.findByWebApp(app);
                             if (tmpVulns.size() > 0) {
                                 vulnTemplate.projectVulnerabilityRepository.updateVulnState(tmpVulns.stream().map(ProjectVulnerability::getId).collect(Collectors.toList()),
