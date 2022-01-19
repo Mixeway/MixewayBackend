@@ -123,6 +123,6 @@ In order to enable Facebook OAuth make sure to properly register mixeway applica
 * `KEYCLOAK_REALM`
 * `KEYCLOAK_URL` (ending with `/auth`)
 * `KEYCLOAK_CLIENT_ID`
-* `KEYCLOAK_SECRET`
+* `KEYCLOAK_SECRET`xq
 * `KEYCLOAK_AUTH_ROLE`
 * 
