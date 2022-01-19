@@ -96,3 +96,33 @@ java -jar --server.ssl.trust-store=/etc/pki/cacerts \
           --spring.cloud.vault.host=MixerVault
 ```
  REST API will be exposed on port `:8443`
+
+## Auth methods
+Mixeway supports multiple authentication methods:
+
+* GitHub OAuth
+* Facebook OAuth
+* Keycloak OAuth
+* x509 Smart Cards
+
+### GitHub OAuth
+In order to enable GitHub OAuth make sure to properly register mixeway application at GitHub and then set variable:
+
+* `GITHUB_APP_ID`
+* `GITHUB_SECRET`
+
+### Facebook SSO
+In order to enable Facebook OAuth make sure to properly register mixeway application at Facebook and then set variable:
+
+* `FACEBOOK_APP_ID`
+* `FACEBOOK_SECRET`
+
+### Keycloak SSO
+In order to enable Facebook OAuth make sure to properly register mixeway application at Facebook and then set variable:
+
+* `KEYCLOAK_REALM`
+* `KEYCLOAK_URL` (ending with `/auth`)
+* `KEYCLOAK_CLIENT_ID`
+* `KEYCLOAK_SECRET`xq
+* `KEYCLOAK_AUTH_ROLE`
+* 

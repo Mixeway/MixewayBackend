@@ -6,6 +6,9 @@ import io.mixeway.rest.model.PasswordAuthModel;
 import io.mixeway.rest.utils.JwtUserDetailsService;
 import io.mixeway.rest.utils.JwtUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.keycloak.KeycloakPrincipal;
+import org.keycloak.KeycloakSecurityContext;
+import org.keycloak.representations.AccessToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.firewall.FirewalledRequest;
 import org.springframework.social.connect.Connection;
 import org.springframework.social.facebook.api.Facebook;
 import org.springframework.social.facebook.connect.FacebookConnectionFactory;
@@ -36,6 +40,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.Principal;
 import java.util.List;
 import java.util.Optional;
 
@@ -50,7 +55,12 @@ public class AuthService {
     String gitHubClientId;
     @Value("${github.secret}")
     String gitHubSecret;
+    @Value("${keycloak.realm}")
+    private String keycloakRealm;
+    @Value("${frontend.url}")
+    private String frontendUrl;
     private boolean isFacebookEnabled = false;
+    private boolean isKeycloakEnabled = false;
     private boolean isGitHubEnabled = false;
     private GitHubConnectionFactory gitHubFactory;
     private FacebookConnectionFactory facebookFactory;
@@ -79,6 +89,9 @@ public class AuthService {
         if (StringUtils.isNotBlank(facebookClientId) && StringUtils.isNotBlank(facebookSecret)){
             facebookFactory = new FacebookConnectionFactory(facebookClientId, facebookClientId);
             isFacebookEnabled = true;
+        }
+        if (!keycloakRealm.equals("dummy")){
+            isKeycloakEnabled = true;
         }
     }
     
@@ -187,7 +200,7 @@ public class AuthService {
     public ResponseEntity<StatusEntity> getStatus() {
         Settings settings = settingsRepository.findAll().stream().findFirst().orElse(null);
         assert settings != null;
-        return new ResponseEntity<>(new StatusEntity(settings.getInitialized(), settings.getCertificateAuth(),settings.getPasswordAuth(), isFacebookEnabled, isGitHubEnabled), HttpStatus.OK);
+        return new ResponseEntity<>(new StatusEntity(settings.getInitialized(), settings.getCertificateAuth(),settings.getPasswordAuth(), isFacebookEnabled, isGitHubEnabled, isKeycloakEnabled), HttpStatus.OK);
 
     }
 
@@ -214,7 +227,7 @@ public class AuthService {
         userRepository.save(user);
         httpServletResponse.addCookie(jwt);
         httpServletResponse.addCookie(role);
-        httpServletResponse.setHeader("Location", "/pages/dashboard");
+        httpServletResponse.setHeader("Location", frontendUrl + "/pages/dashboard");
         httpServletResponse.setStatus(302);
         httpServletResponse.flushBuffer();
     }
@@ -286,5 +299,12 @@ public class AuthService {
         GitHubUserProfile profile = github.userOperations().getUserProfile();
 
         proceedWithSocialLogin(profile.getUsername(), httpServletResponse);
+    }
+
+    public void authUsingKeycloak(FirewalledRequest request, HttpServletResponse httpServletResponse) throws IOException {
+        KeycloakPrincipal principal=(KeycloakPrincipal) request.getUserPrincipal();
+        KeycloakSecurityContext session = principal.getKeycloakSecurityContext();
+        AccessToken accessToken = session.getToken();
+        proceedWithSocialLogin( accessToken.getEmail(), httpServletResponse);
     }
 }

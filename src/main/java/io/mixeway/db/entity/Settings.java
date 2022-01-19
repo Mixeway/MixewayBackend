@@ -23,6 +23,7 @@ public class Settings {
     private String smtpPassword;
     private Boolean passwordAuth;
     private Boolean certificateAuth;
+    private Boolean keycloakAuth;
     private String masterApiKey;
     private String infraAutoCron;
     private String webAppAutoCron;

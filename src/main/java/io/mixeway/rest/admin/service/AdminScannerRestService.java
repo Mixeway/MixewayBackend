@@ -85,7 +85,7 @@ public class AdminScannerRestService {
     }
     @Transactional
     public ResponseEntity<Status> deleteScanner(Long id, String name) {
-        Optional<io.mixeway.db.entity.Scanner> scanner = scannerRepository.getById(id);
+        Optional<io.mixeway.db.entity.Scanner> scanner = scannerRepository.getScannerById(id);
         if (scanner.isPresent()){
             scannerRepository.delete(scanner.get());
             log.info("{} - Deleted scanner {}", name, scanner.get().getApiUrl());
@@ -97,7 +97,7 @@ public class AdminScannerRestService {
 
     @Transactional
     public ResponseEntity<Status> testScanner(Long id) {
-        Optional<io.mixeway.db.entity.Scanner> scanner = scannerRepository.getById(id);
+        Optional<io.mixeway.db.entity.Scanner> scanner = scannerRepository.getScannerById(id);
         try {
             if (scanner.isPresent()) {
                 for (SecurityScanner securityScanner : securityScanners){
