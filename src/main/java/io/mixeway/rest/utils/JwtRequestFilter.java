@@ -34,11 +34,6 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
-        Enumeration<String> headerNames = request.getHeaderNames();
-        while(headerNames.hasMoreElements()) {
-            String headerName = headerNames.nextElement();
-            log.debug(headerName + " : " + request.getHeader(headerName));
-        }
         LoginUtil login = new LoginUtil(request, jwtTokenUtil);
         UserDetails userDetails = null;
         UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = null;
@@ -87,11 +82,6 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 "/v2/auth/",
                 "/api/packetdiscovery"
         };
-        Enumeration<String> headerNames = request.getHeaderNames();
-        while(headerNames.hasMoreElements()) {
-            String headerName = headerNames.nextElement();
-            log.debug(headerName + " : " + request.getHeader(headerName));
-        }
         String path = request.getServletPath();
         return (StringUtils.startsWithAny(path, AUTH_WHITELIST));
     }
