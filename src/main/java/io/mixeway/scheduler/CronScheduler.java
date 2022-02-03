@@ -135,7 +135,7 @@ public class CronScheduler {
 
     }
 
-    @Scheduled(cron="0 5 3 * * ?" )
+    @Scheduled(cron="0 */2 * * * ?" )
     @Transactional
     public void setRiskForProject() {
         for (Project p : projectRepository.findAll()){
