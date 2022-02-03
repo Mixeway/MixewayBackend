@@ -1,5 +1,6 @@
 package io.mixeway.integrations.codescan.plugin.checkmarx.apiclient;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.univocity.parsers.csv.CsvRoutines;
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
@@ -16,6 +17,7 @@ import io.mixeway.pojo.VaultHelper;
 import io.mixeway.rest.model.ScannerModel;
 import io.mixeway.rest.project.model.SASTProject;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.util.EntityUtils;
 import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -195,6 +197,8 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
         CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
         String passwordString = getPasswordStringForCodeProejct(codeProject);
         HttpEntity<CxSetGitRepo> cxSetGitRepoHttpEntity = new HttpEntity<>(new CxSetGitRepo(codeProject, passwordString), codeRequestHelper.getHttpEntity().getHeaders());
+        ObjectMapper mapper = new ObjectMapper();
+        log.debug("[Checkmarx] Setting git repo {}", mapper.writeValueAsString(cxSetGitRepoHttpEntity));
         codeRequestHelper.setHttpEntity(cxSetGitRepoHttpEntity);
         try {
             ResponseEntity<String> response = codeRequestHelper

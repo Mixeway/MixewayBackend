@@ -5,32 +5,36 @@
  */
 package io.mixeway.integrations;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mixeway.db.entity.CisRequirement;
+import io.mixeway.db.entity.CodeProject;
+import io.mixeway.integrations.codescan.plugin.checkmarx.model.CxSetGitRepo;
+import liquibase.pro.packaged.C;
+import org.apache.http.impl.client.BasicResponseHandler;
+import org.apache.http.util.EntityUtils;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 public class Test {
 
     @org.junit.Test
-    public void testvoid(){
-        List<CisRequirement> cisRequirementList = new ArrayList<>();
-        cisRequirementList.add(new CisRequirement("test1", "type1"));
-        cisRequirementList.add(new CisRequirement("test2", "type2"));
-        cisRequirementList.add(new CisRequirement("test3", "type3"));
-        cisRequirementList.add(new CisRequirement("test4", "type4"));
-        cisRequirementList.add(new CisRequirement("test5", "type5"));
-        cisRequirementList.add(new CisRequirement("test6", "type6"));
+    public void testvoid() throws IOException {
+        CodeProject cp = new CodeProject();
+        cp.setRepoUrl("http://test");
+        HttpEntity<CxSetGitRepo> cxSetGitRepoHttpEntity = new HttpEntity<>(new CxSetGitRepo(cp, "test:dsa"), new HttpHeaders());
+        ObjectMapper mapper = new ObjectMapper();
+        String jsonStr = mapper.writeValueAsString(cxSetGitRepoHttpEntity);
 
-        cisRequirementList.stream().forEach( cis -> cis.setSeverity(cis.getName() + " x "+cis.getType()));
+        System.out.println(jsonStr);
 
-        for (CisRequirement c : cisRequirementList){
-            System.out.println("Name: "+c.getName()+", severity: "+c.getSeverity());
-        }
     }
 }
