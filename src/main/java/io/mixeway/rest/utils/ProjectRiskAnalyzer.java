@@ -31,7 +31,7 @@ public class ProjectRiskAnalyzer {
     }
 
     public int getProjectCodeRisk(Project project) {
-        return vulnTemplate.projectVulnerabilityRepository.countCodeRiskForProject(project.getId(),CODE_CRITIC_WAGE, CODE_HIGH_WAGE,Constants.FORTIFY_ANALYSIS_EXPLOITABLE);
+        return vulnTemplate.projectVulnerabilityRepository.countCodeRiskForProject(project.getId(),CODE_CRITIC_WAGE, CODE_HIGH_WAGE);
     }
     public int getProjectInfraRisk(Project project){
         return vulnTemplate.projectVulnerabilityRepository.countNetworkRiskForProject(project.getId(),INFRA_HIGH_WAGE,INFRA_HIGH_WAGE,INFRA_MEDIUM_WAGE);
