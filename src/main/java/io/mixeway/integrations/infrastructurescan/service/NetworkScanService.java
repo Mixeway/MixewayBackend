@@ -306,7 +306,9 @@ public class NetworkScanService {
                 interfaceRepository.findByAssetInAndPrivateip(project.getAssets(), atc.getIp());
             }
            if (interfaceOptional.isPresent()){
-                listtoScan.add(interfaceOptional.get());
+               interfaceOptional.get().setRoutingDomain(createOrGetRoutingDomainService.createOrGetRoutingDomain(atc.getRoutingDomain()));
+               interfaceOptional.get().getAsset().setRoutingDomain(createOrGetRoutingDomainService.createOrGetRoutingDomain(atc.getRoutingDomain()));
+               listtoScan.add(interfaceOptional.get());
             } else {
                 Asset a = new Asset();
                 a.setName(atc.getHostname() != null ? atc.getHostname() : atc.getIp());
