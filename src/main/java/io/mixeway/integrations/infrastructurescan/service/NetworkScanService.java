@@ -308,6 +308,8 @@ public class NetworkScanService {
            if (interfaceOptional.isPresent()){
                interfaceOptional.get().setRoutingDomain(createOrGetRoutingDomainService.createOrGetRoutingDomain(atc.getRoutingDomain()));
                interfaceOptional.get().getAsset().setRoutingDomain(createOrGetRoutingDomainService.createOrGetRoutingDomain(atc.getRoutingDomain()));
+               interfaceRepository.save(interfaceOptional.get());
+               assetRepository.save(interfaceOptional.get().getAsset());
                listtoScan.add(interfaceOptional.get());
             } else {
                 Asset a = new Asset();
