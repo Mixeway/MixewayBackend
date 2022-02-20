@@ -28,4 +28,5 @@ public interface CodeGroupRepository extends JpaRepository<CodeGroup, Long>{
     void runUpdateScanGroupToSetScanId(@Param("id") Long id, @Param("scanid") String scanId);
 	@Query(value = "select count(*) from codegroup where versionidall > 0", nativeQuery = true)
 	Long getCodeGroupWithVersionIdSet();
+	Long countByInQueue(Boolean inQueue);
 }

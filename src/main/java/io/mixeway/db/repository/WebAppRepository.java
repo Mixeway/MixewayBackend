@@ -43,4 +43,6 @@ public interface WebAppRepository extends JpaRepository<WebApp, Long> {
 	List<WebApp> findByInQueue(boolean inQueue);
 	@Query(value="select * from webapp wa where (wa.url ilike :urlSimiliar or wa.url ~ :urlRegex) and project_id=:id", nativeQuery = true)
 	List<WebApp> getWebAppBySimiliarUrlOrRegexUrl(@Param("urlSimiliar") String urlSimiliar,@Param("urlRegex") String urlRegex, @Param("id") Long project_id);
+	Long countByInQueue(Boolean inQueue);
+	Long countByRunning(Boolean running);
 }

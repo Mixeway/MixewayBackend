@@ -29,4 +29,7 @@ public interface NessusScanRepository extends JpaRepository<NessusScan, Long>{
 	List<NessusScan> findByProjectAndRunning(Project project, boolean running);
 	List<NessusScan> findByNessusAndInQueue(Scanner scanner, Boolean inQueue);
 	List<NessusScan> findByNessusAndRunning(Scanner scanner, Boolean running);
+	Long countByInQueue(Boolean inQueue);
+	Long countByRunning(Boolean running);
+	List<NessusScan> findByInQueue(Boolean inQueue);
 }

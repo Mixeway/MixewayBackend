@@ -4,6 +4,7 @@ import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
 import io.mixeway.domain.service.project.CreateProjectService;
 import io.mixeway.domain.service.project.FindProjectService;
+import io.mixeway.domain.service.scan.GetScanNumberService;
 import io.mixeway.domain.service.vulnerability.VulnTemplate;
 import io.mixeway.pojo.LogUtil;
 import io.mixeway.pojo.PermissionFactory;
@@ -39,11 +40,12 @@ public class DashboardService {
     private final CodeProjectRepository codeProjectRepository;
     private final PermissionFactory permissionFactory;
     private final VulnTemplate vulnTemplate;
+    private final GetScanNumberService getScanNumberService;
 
     DashboardService(VulnTemplate vulnTemplate,
                      CodeProjectRepository codeProjectRepository, WebAppRepository webAppRepository, InterfaceRepository interfaceRepository,
                      UserRepository userRepository, ProjectRepository projectRepository, VulnHistoryRepository vulnHistoryRepository,
-                     CreateProjectService createProjectService,PermissionFactory permissionFactory){
+                     CreateProjectService createProjectService,PermissionFactory permissionFactory, GetScanNumberService getScanNumberService){
         this.createProjectService = createProjectService;
         this.userRepository = userRepository;
         this.permissionFactory = permissionFactory;
@@ -53,6 +55,7 @@ public class DashboardService {
         this.webAppRepository = webAppRepository;
         this.interfaceRepository = interfaceRepository;
         this.vulnTemplate = vulnTemplate;
+        this.getScanNumberService = getScanNumberService;
     }
 
     private static final Logger log = LoggerFactory.getLogger(DashboardService.class);
@@ -164,9 +167,8 @@ public class DashboardService {
 
         StatisticCard statisticCard = new StatisticCard(
           projectRepository.count(),
-          interfaceRepository.count(),
-          webAppRepository.count(),
-          codeProjectRepository.count(),
+          getScanNumberService.getNumberOfScansRunning(),
+          getScanNumberService.getNumberOfScansInQueue(),
           vulnTemplate.projectVulnerabilityRepository.count()
         );
         dashboardTopStatistics.setStatisticCard(statisticCard);

@@ -183,7 +183,7 @@ public class ProjectRestService {
             for (String severity : severityList){
                 pieData.put(severity,
                         (vulnTemplate.projectVulnerabilityRepository.countByAnInterfaceInAndSeverity(interfaceRepository.findByAssetIn(new ArrayList<>(project.get().getAssets())),severity)
-                        + vulnTemplate.projectVulnerabilityRepository.countByCodeProjectInAndSeverityAndAnalysis(codeProjectRepository.findByCodeGroupIn(project.get().getCodes()),severity,Constants.FORTIFY_ANALYSIS_EXPLOITABLE)
+                        + vulnTemplate.projectVulnerabilityRepository.countByCodeProjectInAndSeverityAndAnalysisNot(codeProjectRepository.findByCodeGroupIn(project.get().getCodes()),severity,Constants.FORTIFY_NOT_AN_ISSUE)
                         + vulnTemplate.projectVulnerabilityRepository.countByWebAppInAndSeverity(new ArrayList<>(project.get().getWebapps()),severity)
                         + vulnTemplate.projectVulnerabilityRepository.getSoftwareVulnsForProjectAndSeverity(project.get().getId(), severity).size()));
             }
