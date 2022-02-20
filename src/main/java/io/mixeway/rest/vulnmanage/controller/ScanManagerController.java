@@ -1,6 +1,7 @@
 package io.mixeway.rest.vulnmanage.controller;
 
 import io.mixeway.rest.vulnmanage.model.CreateScanManageRequest;
+import io.mixeway.rest.vulnmanage.model.SecurityScans;
 import io.mixeway.rest.vulnmanage.service.ScanManagerService;
 import org.codehaus.jettison.json.JSONException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,7 @@ import java.net.UnknownHostException;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.text.ParseException;
+import java.util.List;
 
 @Controller
 @RequestMapping("/v2/api/scanmanage")
@@ -76,7 +78,17 @@ public class ScanManagerController {
         } else {
             return scanManagerService.getVulnerabilitiesForScanByReqeustId(requestId.toString(), principal);
         }
+    }
 
+    @PreAuthorize("hasAuthority('ROLE_API')")
+    @GetMapping(value="/running/scans")
+    public ResponseEntity<List<SecurityScans>> getRunningSecurityScans(){
+        return scanManagerService.getRunningSecurityScans();
+    }
+    @PreAuthorize("hasAuthority('ROLE_API')")
+    @GetMapping(value="/inqueue/scans")
+    public ResponseEntity<List<SecurityScans>> getInQueueSecurityScans(){
+        return scanManagerService.getInQueueSecurityScans();
     }
 
 }

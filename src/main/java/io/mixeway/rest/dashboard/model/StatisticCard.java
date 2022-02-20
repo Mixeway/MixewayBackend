@@ -5,16 +5,14 @@ package io.mixeway.rest.dashboard.model;
  */
 public class StatisticCard {
     Long projects;
-    Long assets;
-    Long webApps;
-    Long repos;
+    Long scanRunning;
+    Long scanInQueue;
     Long vulnerabilities;
 
-    public StatisticCard(Long projects, Long assets, Long webApps, Long repos, Long vulnerabilities) {
+    public StatisticCard(Long projects, Long scanRunning, Long scanInQueue, Long vulnerabilities) {
         this.projects = projects;
-        this.assets = assets;
-        this.webApps = webApps;
-        this.repos = repos;
+        this.scanInQueue = scanInQueue;
+        this.scanRunning = scanRunning;
         this.vulnerabilities = vulnerabilities;
     }
 
@@ -26,35 +24,27 @@ public class StatisticCard {
         this.projects = projects;
     }
 
-    public Long getAssets() {
-        return assets;
-    }
-
-    public void setAssets(Long assets) {
-        this.assets = assets;
-    }
-
-    public Long getWebApps() {
-        return webApps;
-    }
-
-    public void setWebApps(Long webApps) {
-        this.webApps = webApps;
-    }
-
-    public Long getRepos() {
-        return repos;
-    }
-
-    public void setRepos(Long repos) {
-        this.repos = repos;
-    }
-
     public Long getVulnerabilities() {
         return vulnerabilities;
     }
 
     public void setVulnerabilities(Long vulnerabilities) {
         this.vulnerabilities = vulnerabilities;
+    }
+
+    public Long getScanRunning() {
+        return scanRunning;
+    }
+
+    public void setScanRunning(Long scanRunning) {
+        this.scanRunning = scanRunning;
+    }
+
+    public Long getScanInQueue() {
+        return scanInQueue;
+    }
+
+    public void setScanInQueue(Long scanInQueue) {
+        this.scanInQueue = scanInQueue;
     }
 }

@@ -50,7 +50,7 @@ public class ProjectRiskAnalyzer {
         return vulnTemplate.projectVulnerabilityRepository.countRiskForWebApp(webApp.getId(),WEBAPP_HIGH_WAGE,WEBAPP_HIGH_WAGE,WEBAPP_MEDIUM_WAGE);
     }
     public int getCodeProjectRisk(CodeProject cp){
-        return vulnTemplate.projectVulnerabilityRepository.countRiskForCodeProject(cp.getId(),CODE_CRITIC_WAGE,CODE_HIGH_WAGE,Constants.FORTIFY_ANALYSIS_EXPLOITABLE);
+        return vulnTemplate.projectVulnerabilityRepository.countRiskForCodeProject(cp.getId(),CODE_CRITIC_WAGE,CODE_HIGH_WAGE,Constants.FORTIFY_NOT_AN_ISSUE);
     }
 
     public int getCodeProjectOpenSourceRisk(CodeProject codeProject){

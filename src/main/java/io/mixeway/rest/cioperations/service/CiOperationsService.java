@@ -166,9 +166,9 @@ public class CiOperationsService {
         List<VulnManageResponse> vulnManageResponses = new ArrayList<>();
         List<ProjectVulnerability> codeVulns = null;
         try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository
-                .findByCodeProjectAndVulnerabilitySourceAndSeverityAndAnalysis(cp, vulnTemplate.SOURCE_SOURCECODE,
+                .findByCodeProjectAndVulnerabilitySourceAndSeverityAndAnalysisNot(cp, vulnTemplate.SOURCE_SOURCECODE,
                         Constants.VULN_CRITICALITY_CRITICAL,
-                        Constants.FORTIFY_ANALYSIS_EXPLOITABLE)) {
+                        Constants.FORTIFY_NOT_AN_ISSUE)) {
             codeVulns.addAll(vulnsForProject.collect(Collectors.toList()));
         }
         try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository

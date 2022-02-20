@@ -5,6 +5,7 @@ import io.mixeway.db.repository.*;
 import io.mixeway.domain.service.vulnerability.VulnTemplate;
 import io.mixeway.pojo.PermissionFactory;
 import io.mixeway.rest.vulnmanage.model.CreateScanManageRequest;
+import io.mixeway.rest.vulnmanage.model.SecurityScans;
 import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,6 +53,7 @@ public class ScanManagerService {
     private final CodeScanService codeScanService;
     private final VulnTemplate vulnTemplate;
     private final PermissionFactory permissionFactory;
+    private final NessusScanRepository nessusScanRepository;
     ArrayList<String> severitiesNot = new ArrayList<String>() {{
         add("Log");
         add("Info");
@@ -61,7 +63,8 @@ public class ScanManagerService {
                               InterfaceRepository interfaceRepository,CodeProjectRepository codeProjectRepository,
                               WebAppRepository webAppRepository, VulnTemplate vulnTemplate, NetworkScanService networkScanService,
                               ProjectRepository projectRepository, WebAppScanService acunetixService,
-                              CodeScanService codeScanService, PermissionFactory permissionFactory){
+                              CodeScanService codeScanService, PermissionFactory permissionFactory,
+                              NessusScanRepository nessusScanRepository){
         this.assetRepository = assetRepository;
         this.interfaceRepository = interfaceRepository;
         this.webAppRepository = webAppRepository;
@@ -72,6 +75,7 @@ public class ScanManagerService {
         this.codeScanService = codeScanService;
         this.vulnTemplate = vulnTemplate;
         this.permissionFactory = permissionFactory;
+        this.nessusScanRepository = nessusScanRepository;
     }
     public ResponseEntity<Status> createScanManageRequest(CreateScanManageRequest createScanManageRequest, Principal principal) throws Exception {
         if (createScanManageRequest.getTestType().equals(Constants.REQUEST_SCAN_NETWORK)){
@@ -209,4 +213,80 @@ public class ScanManagerService {
         }
         return vulns;
     }
+
+    /**
+     * @return list of all security scans with status running
+     */
+    public ResponseEntity<List<SecurityScans>> getRunningSecurityScans() {
+        List<NessusScan> nessusScans = nessusScanRepository.findByRunning(true);
+        List<WebApp> webApps = webAppRepository.findByRunning(true);
+        List<CodeProject> codeProjects = codeProjectRepository.findByRunning(true);
+        List<SecurityScans> securityScans = new ArrayList<>();
+        for (NessusScan nessusScan : nessusScans){
+            securityScans.add(
+                    SecurityScans
+                            .builder()
+                            .scanType("Network Scan")
+                            .scope(String.join(",",nessusScan.getInterfaces().stream().map(Interface::getPrivateip).collect(Collectors.toList())))
+                            .project(nessusScan.getProject().getName())
+                            .build());
+        }
+        for (WebApp webApp : webApps) {
+            securityScans.add(
+                    SecurityScans
+                            .builder()
+                            .scanType("Web App Scan")
+                            .scope(webApp.getUrl())
+                            .project(webApp.getProject().getName())
+                            .build());
+        }
+        for (CodeProject codeProject : codeProjects) {
+            securityScans.add(
+                    SecurityScans
+                            .builder()
+                            .scanType("Code Repository")
+                            .scope(codeProject.getRepoUrl())
+                            .project(codeProject.getCodeGroup().getProject().getName())
+                            .build());
+        }
+        return new ResponseEntity<>(securityScans, HttpStatus.OK);
+    }
+    /**
+     * @return list of all security scans with status running
+     */
+    public ResponseEntity<List<SecurityScans>> getInQueueSecurityScans() {
+        List<NessusScan> nessusScans = nessusScanRepository.findByInQueue(true);
+        List<WebApp> webApps = webAppRepository.findByInQueue(true);
+        List<CodeProject> codeProjects = codeProjectRepository.findByInQueue(true);
+        List<SecurityScans> securityScans = new ArrayList<>();
+        for (NessusScan nessusScan : nessusScans){
+            securityScans.add(
+                    SecurityScans
+                            .builder()
+                            .scanType("Network Scan")
+                            .scope(String.join(",",nessusScan.getInterfaces().stream().map(Interface::getPrivateip).collect(Collectors.toList())))
+                            .project(nessusScan.getProject().getName())
+                            .build());
+        }
+        for (WebApp webApp : webApps) {
+            securityScans.add(
+                    SecurityScans
+                            .builder()
+                            .scanType("Web App Scan")
+                            .scope(webApp.getUrl())
+                            .project(webApp.getProject().getName())
+                            .build());
+        }
+        for (CodeProject codeProject : codeProjects) {
+            securityScans.add(
+                    SecurityScans
+                            .builder()
+                            .scanType("Code Repository")
+                            .scope(codeProject.getRepoUrl())
+                            .project(codeProject.getCodeGroup().getProject().getName())
+                            .build());
+        }
+        return new ResponseEntity<>(securityScans, HttpStatus.OK);
+    }
+
 }

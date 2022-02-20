@@ -229,7 +229,7 @@ public class CronScheduler {
     }
     @Transactional
     public Long createCodeVulnHistory(Project p){
-        return vulnTemplate.projectVulnerabilityRepository.findByProjectAndVulnerabilitySourceAndAnalysis(p,vulnTemplate.SOURCE_SOURCECODE, Constants.FORTIFY_ANALYSIS_EXPLOITABLE).count();
+        return vulnTemplate.projectVulnerabilityRepository.findByProjectAndVulnerabilitySourceAndAnalysisNot(p,vulnTemplate.SOURCE_SOURCECODE, Constants.FORTIFY_NOT_AN_ISSUE).count();
     }
     private Long createInfraVulnHistory(Project p){
         return getInfraVulnsForProject(p);
