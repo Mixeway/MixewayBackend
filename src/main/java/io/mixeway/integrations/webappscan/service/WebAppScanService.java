@@ -387,7 +387,7 @@ public class WebAppScanService {
      */
     @Transactional
     public void scheduledCheckAndDownloadResults() throws Exception {
-        List<WebApp> apps = waRepository.findByRunning(true);
+        List<WebApp> apps = waRepository.findByRunning(true).stream().limit(10).collect(Collectors.toList());
         for (WebApp app : apps) {
             Scanner scanner = getScannerForWebApp(app);
             try {
@@ -424,6 +424,8 @@ public class WebAppScanService {
                 }
             }
         }
+        vulnTemplate.projectVulnerabilityRepository.flush();
+        waRepository.flush();
     }
 
     private void deactivateWebApp(WebApp app) {
