@@ -2,12 +2,12 @@ package io.mixeway.db.repository;
 
 import java.util.List;
 
+import io.mixeway.api.protocol.OverAllVulnTrendChartData;
+import io.mixeway.api.protocol.SourceDetectionChartData;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import io.mixeway.db.entity.VulnHistory;
-import io.mixeway.rest.model.OverAllVulnTrendChartData;
-import io.mixeway.rest.model.SourceDetectionChartData;
 import org.springframework.data.repository.query.Param;
 
 public interface VulnHistoryRepository extends JpaRepository<VulnHistory, Long>{

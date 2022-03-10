@@ -1,6 +1,6 @@
 package io.mixeway.config;
 
-import io.mixeway.rest.utils.JwtRequestFilter;
+import io.mixeway.jwt.JwtRequestFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;

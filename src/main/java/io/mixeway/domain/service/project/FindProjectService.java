@@ -1,9 +1,9 @@
 package io.mixeway.domain.service.project;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 import io.mixeway.db.entity.Project;
 import io.mixeway.db.repository.ProjectRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,10 +20,18 @@ public class FindProjectService {
 
     public Optional<Long> findProjectIdByCiid(String ciid) {
         Optional<List<Project>> projects = projectRepository.findByCiid(ciid);
-        return Optional.of(projects.get().get(0).getId());
+        if (projects.isPresent() && projects.get().size() > 0){
+            return Optional.of(projects.get().get(0).getId());
+        } else {
+            return Optional.empty();
+        }
     }
     public Optional<Long> findProjectIdByName(String name) {
         Optional<List<Project>> projects = projectRepository.findByName(name);
-        return Optional.of(projects.get().get(0).getId());
+        if (projects.isPresent() && projects.get().size() > 0) {
+            return Optional.of(projects.get().get(0).getId());
+        } else {
+            return Optional.empty();
+        }
     }
 }

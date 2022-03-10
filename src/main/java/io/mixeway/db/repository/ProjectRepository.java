@@ -5,7 +5,6 @@ import java.util.Optional;
 
 import io.mixeway.db.entity.Project;
 import io.mixeway.db.entity.User;
-import io.mixeway.pojo.BarChartProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

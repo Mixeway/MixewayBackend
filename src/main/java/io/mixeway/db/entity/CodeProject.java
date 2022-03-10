@@ -5,7 +5,7 @@ import java.util.Set;
 
 import javax.persistence.*;
 
-import io.mixeway.pojo.VulnSource;
+import io.mixeway.utils.VulnSource;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.boot.autoconfigure.domain.EntityScan;

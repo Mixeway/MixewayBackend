@@ -3,7 +3,7 @@ package io.mixeway.db.repository;
 import java.util.List;
 import java.util.Set;
 
-import io.mixeway.pojo.BarChartProjection;
+import io.mixeway.db.projection.BarChartProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import org.springframework.data.jpa.repository.Query;

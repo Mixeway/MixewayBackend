@@ -1,11 +1,11 @@
 package io.mixeway.domain.service.project;
 
-import io.mixeway.pojo.PermissionFactory;
+import io.mixeway.db.entity.Project;
+import io.mixeway.db.repository.ProjectRepository;
+import io.mixeway.utils.PermissionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import io.mixeway.db.entity.Project;
-import io.mixeway.db.repository.ProjectRepository;
 
 import java.security.Principal;
 

@@ -8,26 +8,23 @@ package io.mixeway.domain.service.cioperations;
 import io.mixeway.db.entity.CiOperations;
 import io.mixeway.db.entity.CodeProject;
 import io.mixeway.db.repository.CiOperationsRepository;
-import io.mixeway.domain.service.vulnerability.VulnTemplate;
-import io.mixeway.pojo.SecurityGatewayEntry;
-import io.mixeway.pojo.SecurityQualityGateway;
+import io.mixeway.domain.service.vulnmanager.VulnTemplate;
+import io.mixeway.utils.SecurityGatewayEntry;
+import io.mixeway.utils.SecurityQualityGateway;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
 @Service
+@AllArgsConstructor
 public class UpdateCiOperations {
 
     private final SecurityQualityGateway securityQualityGateway;
     private final CiOperationsRepository ciOperationsRepository;
     private final VulnTemplate vulnTemplate;
-    public UpdateCiOperations(SecurityQualityGateway securityQualityGateway, CiOperationsRepository ciOperationsRepository,
-                              VulnTemplate vulnTemplate){
-        this.ciOperationsRepository = ciOperationsRepository;
-        this.securityQualityGateway = securityQualityGateway;
-        this.vulnTemplate = vulnTemplate;
-    }
+
 
     @Transactional
     public void updateCiOperationsForOpenSource(CodeProject codeProject){
