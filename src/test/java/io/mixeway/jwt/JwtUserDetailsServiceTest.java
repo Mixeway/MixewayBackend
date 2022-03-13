@@ -15,6 +15,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import java.util.Arrays;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -33,15 +34,18 @@ class JwtUserDetailsServiceTest {
         Settings settings = settingsRepository.findAll().get(0);
         settings.setMasterApiKey("master_key");
         settingsRepository.save(settings);
-        User user = new User();
-        user.setUsername("jwt_admin");
-        user.setPermisions("ROLE_ADMIN");
-        userRepository.save(user);
-        User user2 = new User();
-        user2.setUsername("jwt_user");
-        user2.setPermisions("ROLE_USER");
-        user2.setApiKey("user_key");
-        userRepository.save(user2);
+        Optional<User> testUser = userRepository.findByUsername("jwt_admin");
+        if (!testUser.isPresent()) {
+            User user = new User();
+            user.setUsername("jwt_admin");
+            user.setPermisions("ROLE_ADMIN");
+            userRepository.save(user);
+            User user2 = new User();
+            user2.setUsername("jwt_user");
+            user2.setPermisions("ROLE_USER");
+            user2.setApiKey("user_key");
+            userRepository.save(user2);
+        }
     }
 
     @Test
@@ -58,7 +62,7 @@ class JwtUserDetailsServiceTest {
     @Test
     void loadUserByApiKeyAndRequestUri() {
         UserDetails masterUser = jwtUserDetailsService.loadUserByApiKeyAndRequestUri("master_key", null);
-        assertEquals("jwt_admin", masterUser.getUsername());
+        assertEquals("admin", masterUser.getUsername());
         assertTrue(masterUser.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN")));
 
         UserDetails user = jwtUserDetailsService.loadUserByApiKeyAndRequestUri("user_key", null);

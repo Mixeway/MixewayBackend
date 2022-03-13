@@ -1,5 +1,6 @@
 package io.mixeway.domain.service.project;
 
+import io.mixeway.db.entity.Project;
 import io.mixeway.db.entity.Settings;
 import io.mixeway.db.entity.User;
 import io.mixeway.db.repository.ProjectRepository;
@@ -25,9 +26,9 @@ import static org.junit.jupiter.api.Assertions.*;
 class GetProjectsServiceTest {
     private final ProjectRepository projectRepository;
     private final GetOrCreateProjectService getOrCreateProjectService;
-    private final GetProjectsService getProjectsService;
     private final SettingsRepository settingsRepository;
     private final UserRepository userRepository;
+    private final GetProjectsService getProjectsService;
 
     @Mock
     Principal principal;
@@ -52,6 +53,15 @@ class GetProjectsServiceTest {
         for (int i=0; i <5; i++){
             getOrCreateProjectService.getProjectId("ciid","project"+i,principal);
         }
-        assertEquals(5, projectRepository.findAll().size());
+        assertTrue(projectRepository.findAll().size() >= 5);
+    }
+
+    @Test
+    void getProject() {
+        long id = getOrCreateProjectService.getProjectId("test_get_project","test_get_project",principal);
+        Project project = getProjectsService.getProject(id);
+        Project projectNotExisting = getProjectsService.getProject(9000L);
+        assertNotNull(project);
+        assertNull(projectNotExisting);
     }
 }

@@ -21,4 +21,8 @@ public class GetProjectsService {
 
         return projectRepository.findAll();
     }
+
+    public Project getProject(long id){
+        return projectRepository.findById(id).orElse(null);
+    }
 }

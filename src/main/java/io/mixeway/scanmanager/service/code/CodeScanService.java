@@ -5,6 +5,8 @@ import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.*;
 import io.mixeway.domain.service.cioperations.UpdateCiOperations;
+import io.mixeway.domain.service.projectvulnerability.GetProjectVulnerabilitiesService;
+import io.mixeway.domain.service.scanmanager.code.CreateOrGetCodeProjectService;
 import io.mixeway.domain.service.vulnmanager.VulnTemplate;
 import io.mixeway.scanmanager.model.CodeAccessVerifier;
 import io.mixeway.scanmanager.model.CodeScanRequestModel;
@@ -14,9 +16,8 @@ import io.mixeway.utils.*;
 import io.mixeway.utils.ScannerType;
 import io.mixeway.utils.Status;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.codehaus.jettison.json.JSONException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -39,8 +40,8 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
+@Log4j2
 public class CodeScanService {
-    private static  Logger log = LoggerFactory.getLogger(CodeScanService.class);
     private final ProjectRepository projectRepository;
     private final CodeGroupRepository codeGroupRepository;
     private final CodeProjectRepository codeProjectRepository;
@@ -53,6 +54,8 @@ public class CodeScanService {
     private final VulnTemplate vulnTemplate;
     private final UpdateCiOperations updateCiOperations;
     private final PermissionFactory permissionFactory;
+    private final CreateOrGetCodeProjectService createOrGetCodeProjectService;
+    private final GetProjectVulnerabilitiesService getProjectVulnerabilitiesService;
 
     /**
      * Method for getting CodeVulns for given names
@@ -67,10 +70,9 @@ public class CodeScanService {
         if (codeAccessVerifier.verifyPermissions(projectId,groupName,projectName,false).getValid() &&
                 project.isPresent() &&
                 permissionFactory.canUserAccessProject(principal, project.get())){
-            CodeProject cp = codeProjectRepository.findByCodeGroupAndName(codeGroupRepository
-                    .findByProjectAndName(project.get(),groupName).orElse(null),projectName).orElse(null);
-            List<ProjectVulnerability> codeVulns = vulnTemplate.projectVulnerabilityRepository.findByCodeProjectAndAnalysisNot(cp,"Not an Issue");
-            new ResponseEntity<>(codeVulns, HttpStatus.OK);
+            CodeProject cp = createOrGetCodeProjectService.createOrGetCodeProjectWithGroupName(projectId, groupName, projectName, Constants.CODE_DEFAULT_BRANCH);
+
+            new ResponseEntity<>(getProjectVulnerabilitiesService.getProjectVulnerabilitiesForSource(cp, Constants.FORTIFY_NOT_AN_ISSUE), HttpStatus.OK);
 
         } else
             new ResponseEntity<List<ProjectVulnerability>>(new ArrayList<>(), HttpStatus.PRECONDITION_FAILED);

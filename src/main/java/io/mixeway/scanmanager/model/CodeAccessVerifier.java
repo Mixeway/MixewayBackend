@@ -1,72 +1,48 @@
 package io.mixeway.scanmanager.model;
 
 import io.mixeway.db.entity.CodeGroup;
-import io.mixeway.db.entity.CodeProject;
 import io.mixeway.db.entity.Project;
 import io.mixeway.db.repository.CodeGroupRepository;
-import io.mixeway.db.repository.CodeProjectRepository;
 import io.mixeway.db.repository.ProjectRepository;
-import io.mixeway.utils.LogUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.mixeway.domain.service.scanmanager.code.VerifySASTPermissionsService;
+import lombok.AllArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
 @Service
+@Log4j2
+@AllArgsConstructor
 public class CodeAccessVerifier {
     private final ProjectRepository projectRepository;
-    private final CodeProjectRepository codeProjectRepository;
     private final CodeGroupRepository codeGroupRepository;
-    private final static Logger log = LoggerFactory.getLogger(CodeAccessVerifier.class);
+    private final VerifySASTPermissionsService verifySASTPermissionsService;
 
-    CodeAccessVerifier(ProjectRepository projectRepository, CodeProjectRepository codeProjectRepository, CodeGroupRepository codeGroupRepository){
-        this.projectRepository = projectRepository;
-        this.codeProjectRepository = codeProjectRepository;
-        this.codeGroupRepository = codeGroupRepository;
-    }
+
+
     public SASTRequestVerify verifyPermissions(long projectId, String groupName, String projectName, boolean depCheck){
-        SASTRequestVerify sastRequestVerify= new SASTRequestVerify();
         Optional<Project> project = projectRepository.findById(projectId);
         if (project.isPresent()){
             if( projectName != null){
                 Optional<CodeGroup> cg = codeGroupRepository.findByProjectAndName(project.get(),groupName);
                 if (cg.isPresent()){
-                    Optional<CodeProject> cp = codeProjectRepository.findByCodeGroupAndName(cg.get(),projectName);
-                    if (cp.isPresent() && (cp.get().getCodeGroup().getVersionIdsingle() > 0 || depCheck)){
-                        sastRequestVerify.setValid(true);
-                        sastRequestVerify.setCg(cg.get());
-                        sastRequestVerify.setCp(cp.get());
-                        return sastRequestVerify;
-                    }
-                    else{
-                        sastRequestVerify.setValid(false);
-                        sastRequestVerify.setCg(cg.get());
-                        return sastRequestVerify;
-                    }
-
+                    return verifySASTPermissionsService.verifyIfCodeGroupIsPresent(cg,projectName,depCheck);
                 } else{
-                    sastRequestVerify.setValid(false);
-                    return sastRequestVerify;
+                    return verifySASTPermissionsService.verifyIfCodeGroupIsNotPresent();
                 }
             } else{
                 Optional<CodeGroup> cg = codeGroupRepository.findByProjectAndName(project.get(),groupName);
                 if (cg.isPresent()){
-                    sastRequestVerify.setValid(false);
-                    sastRequestVerify.setCg(cg.get());
-                    return sastRequestVerify;
+                    return verifySASTPermissionsService.returnNotValidRequestWithGroup(cg);
                 }
                 else{
-                    log.info("Has no group {}", LogUtil.prepare(groupName));
-                    sastRequestVerify.setValid(false);
-                    return sastRequestVerify;
+                    return verifySASTPermissionsService.returnNotValidRequestWithLog(groupName, "CodeProject request Has no group");
                 }
             }
 
         } else{
-            log.info("Has no project {} ", projectId);
-            sastRequestVerify.setValid(false);
-            return sastRequestVerify;
+            return verifySASTPermissionsService.returnNotValidRequestWithLog(Long.toString(projectId), "Request has no project assigned");
         }
     }
 }
