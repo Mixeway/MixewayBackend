@@ -1,5 +1,6 @@
 package io.mixeway.domain.service.project;
 
+import io.mixeway.db.entity.Project;
 import io.mixeway.db.entity.Settings;
 import io.mixeway.db.entity.User;
 import io.mixeway.db.repository.ProjectRepository;
@@ -50,15 +51,15 @@ class FindProjectServiceTest {
 
     @Test
     void findProjectIdByCiid() {
-        Long id = createProjectService.createProject("testProject", "findProjectIdByCiid_empty", principal);
-        assertEquals(Optional.of(id), findProjectService.findProjectIdByCiid("findProjectIdByCiid_empty"));
-        assertEquals(Optional.empty(), findProjectService.findProjectIdByCiid("anotherEmpty"));
+        Project project = createProjectService.createProject("testProject", "findProjectIdByCiid_empty", principal);
+        assertEquals(Optional.of(project), findProjectService.findProjectByCiid("findProjectIdByCiid_empty"));
+        assertEquals(Optional.empty(), findProjectService.findProjectByCiid("anotherEmpty"));
     }
 
     @Test
     void findProjectIdByName() {
-        Long id = createProjectService.createProject("findProjectIdByName_testProject2", "empty", principal);
-        assertEquals(Optional.of(id), findProjectService.findProjectIdByName("findProjectIdByName_testProject2"));
-        assertEquals(Optional.empty(), findProjectService.findProjectIdByName("not found name"));
+        Project project = createProjectService.createProject("findProjectIdByName_testProject2", "empty", principal);
+        assertEquals(Optional.of(project), findProjectService.findProjectByName("findProjectIdByName_testProject2"));
+        assertEquals(Optional.empty(), findProjectService.findProjectByName("not found name"));
     }
 }

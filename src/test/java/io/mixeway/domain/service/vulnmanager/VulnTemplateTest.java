@@ -58,7 +58,7 @@ class VulnTemplateTest {
     @Transactional
     void vulnerabilityPersist() {
         Mockito.when(principal.getName()).thenReturn("admin");
-        Project project = projectRepository.getOne(createProjectService.createProject("project","empty",principal));
+        Project project = createProjectService.createProject("project","empty",principal);
         ProjectVulnerability projectVulnerability = new ProjectVulnerability();
         projectVulnerability.setProject(project);
         projectVulnerability.setSeverity("High");
@@ -72,7 +72,7 @@ class VulnTemplateTest {
     @Transactional
     void vulnerabilityPersistList() {
         Mockito.when(principal.getName()).thenReturn("admin");
-        Project project = projectRepository.getOne(createProjectService.createProject("project2","empty2",principal));
+        Project project = createProjectService.createProject("project2","empty2",principal);
         List<ProjectVulnerability> projectVulns =new ArrayList<>();
         for (int i=0; i<10; i++){
             ProjectVulnerability projectVulnerability = new ProjectVulnerability();

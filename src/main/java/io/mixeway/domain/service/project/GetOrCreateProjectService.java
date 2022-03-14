@@ -1,5 +1,6 @@
 package io.mixeway.domain.service.project;
 
+import io.mixeway.db.entity.Project;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,9 +18,9 @@ public class GetOrCreateProjectService {
         this.createProjectService = createProjectService;
     }
 
-    public Long getProjectId(String ciid, String projectName, Principal principal) {
+    public Project getProjectId(String ciid, String projectName, Principal principal) {
         return findProjectService
-                .findProjectIdByCiid(ciid)
-                .orElse(createProjectService.createProject(projectName, ciid, principal));
+                .findProjectByCiid(ciid)
+                .orElse(createProjectService.createAndReturnProject(projectName, ciid, principal));
     }
 }

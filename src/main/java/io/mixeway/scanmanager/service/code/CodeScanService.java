@@ -5,6 +5,7 @@ import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.*;
 import io.mixeway.domain.service.cioperations.UpdateCiOperations;
+import io.mixeway.domain.service.project.FindProjectService;
 import io.mixeway.domain.service.projectvulnerability.GetProjectVulnerabilitiesService;
 import io.mixeway.domain.service.scanmanager.code.CreateOrGetCodeProjectService;
 import io.mixeway.domain.service.vulnmanager.VulnTemplate;
@@ -56,6 +57,7 @@ public class CodeScanService {
     private final PermissionFactory permissionFactory;
     private final CreateOrGetCodeProjectService createOrGetCodeProjectService;
     private final GetProjectVulnerabilitiesService getProjectVulnerabilitiesService;
+    private final FindProjectService findProjectService;
 
     /**
      * Method for getting CodeVulns for given names
@@ -66,11 +68,11 @@ public class CodeScanService {
      * @return List of a CodeVulns for a given CodeProject
      */
     public ResponseEntity<List<Vulnerability>> getResultsForProject(long projectId, String groupName, String projectName, Principal principal){
-        Optional<Project> project = projectRepository.findById(projectId);
+        Optional<Project> project = findProjectService.findProjectById(projectId);
         if (codeAccessVerifier.verifyPermissions(projectId,groupName,projectName,false).getValid() &&
                 project.isPresent() &&
                 permissionFactory.canUserAccessProject(principal, project.get())){
-            CodeProject cp = createOrGetCodeProjectService.createOrGetCodeProjectWithGroupName(projectId, groupName, projectName, Constants.CODE_DEFAULT_BRANCH);
+            CodeProject cp = createOrGetCodeProjectService.createOrGetCodeProjectWithGroupName(project.get(), groupName, projectName, Constants.CODE_DEFAULT_BRANCH);
 
             new ResponseEntity<>(getProjectVulnerabilitiesService.getProjectVulnerabilitiesForSource(cp, Constants.FORTIFY_NOT_AN_ISSUE), HttpStatus.OK);
 

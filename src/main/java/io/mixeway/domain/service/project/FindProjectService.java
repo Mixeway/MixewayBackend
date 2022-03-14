@@ -18,20 +18,24 @@ public class FindProjectService {
         this.projectRepository = projectRepository;
     }
 
-    public Optional<Long> findProjectIdByCiid(String ciid) {
+    public Optional<Project> findProjectByCiid(String ciid) {
         Optional<List<Project>> projects = projectRepository.findByCiid(ciid);
         if (projects.isPresent() && projects.get().size() > 0){
-            return Optional.of(projects.get().get(0).getId());
+            return Optional.of(projects.get().get(0));
         } else {
             return Optional.empty();
         }
     }
-    public Optional<Long> findProjectIdByName(String name) {
+    public Optional<Project> findProjectByName(String name) {
         Optional<List<Project>> projects = projectRepository.findByName(name);
         if (projects.isPresent() && projects.get().size() > 0) {
-            return Optional.of(projects.get().get(0).getId());
+            return Optional.of(projects.get().get(0));
         } else {
             return Optional.empty();
         }
+    }
+    public Optional<Project> findProjectById(Long id) {
+        Optional<Project> projects = projectRepository.findById(id);
+        return projects;
     }
 }

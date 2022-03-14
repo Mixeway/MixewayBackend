@@ -22,14 +22,25 @@ public class CreateProjectService {
     }
 
     @Transactional
-    public Long createProject(String projectName, String ciid, Principal principal) {
+    public Project createProject(String projectName, String ciid, Principal principal) {
         Project project = new Project();
         project.setName(projectName);
         project.setCiid(ciid);
         project.setOwner(permissionFactory.getUserFromPrincipal(principal));
         project = projectRepository.save(project);
         permissionFactory.grantPermissionToProjectForUser(project,principal);
-        return project.getId();
+        return project;
+    }
+
+    @Transactional
+    public Project createAndReturnProject(String projectName, String ciid, Principal principal) {
+        Project project = new Project();
+        project.setName(projectName);
+        project.setCiid(ciid);
+        project.setOwner(permissionFactory.getUserFromPrincipal(principal));
+        project = projectRepository.saveAndFlush(project);
+        permissionFactory.grantPermissionToProjectForUser(project,principal);
+        return project;
     }
 
     @Transactional

@@ -50,9 +50,7 @@ class GetOrCreateProjectServiceTest {
 
     @Test
     void getProjectId() {
-        Long id = createProjectService.getProjectId("empty","testProject",principal);
-        Optional<Project> project = projectRepository.getProjectByName("testProject");
-        assertTrue(project.isPresent());
-        assertEquals(project.get().getId(),id);
+        Project project = createProjectService.getProjectId("empty","testProject",principal);
+        assertNotNull(project);
     }
 }

@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.security.Principal;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -28,7 +29,7 @@ class GetProjectsServiceTest {
     private final GetOrCreateProjectService getOrCreateProjectService;
     private final SettingsRepository settingsRepository;
     private final UserRepository userRepository;
-    private final GetProjectsService getProjectsService;
+    private final FindProjectService findProjectService;
 
     @Mock
     Principal principal;
@@ -58,10 +59,9 @@ class GetProjectsServiceTest {
 
     @Test
     void getProject() {
-        long id = getOrCreateProjectService.getProjectId("test_get_project","test_get_project",principal);
-        Project project = getProjectsService.getProject(id);
-        Project projectNotExisting = getProjectsService.getProject(9000L);
+        Project project= getOrCreateProjectService.getProjectId("test_get_project","test_get_project",principal);
+        Optional<Project> projectNotExisting = findProjectService.findProjectById(9000L);
         assertNotNull(project);
-        assertNull(projectNotExisting);
+        assertFalse(projectNotExisting.isPresent());
     }
 }

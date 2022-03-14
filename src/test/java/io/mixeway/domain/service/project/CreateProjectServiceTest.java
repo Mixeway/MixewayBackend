@@ -47,8 +47,8 @@ class CreateProjectServiceTest {
 
     @Test
     void createProject() {
-        Long project = createProjectService.createProject("createProject_testProject","empty", principal);
-        assertEquals(projectRepository.findByName("createProject_testProject").get().stream().findFirst().get().getId(), project);
+        Project project = createProjectService.createProject("createProject_testProject","empty", principal);
+        assertEquals(projectRepository.findByName("createProject_testProject").get().stream().findFirst().get(), project);
     }
 
     @Test
@@ -57,4 +57,10 @@ class CreateProjectServiceTest {
         assertEquals(1, projectRepository.findByName("testProject2").get().stream().count());
 
     }
+
+    @Test
+    void createAndReturnProject() {
+        assertNotNull(createProjectService.createAndReturnProject("createProject_testProject2","empty", principal));
+    }
+
 }

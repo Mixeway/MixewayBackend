@@ -52,9 +52,9 @@ class VerifySASTPermissionsServiceTest {
             user.setUsername("sast_verify_tester");
             user.setPermisions("ROLE_ADMIN");
             userRepository.save(user);
-            Project projectExisting = projectRepository.getOne(createProjectService.createProject("sast_verify_name", "sast_verify_name", principal));
+            Project projectToCreate = createProjectService.createProject("sast_verify_name","sast_verify_name",principal);
             CodeGroup codeGroup = createOrGetCodeGroupService
-                    .createOrGetCodeGroupService(principal, "sast_verify_permissions", "http://dummy.com/git", projectExisting, "", "", "");
+                    .createOrGetCodeGroupService(principal, "sast_verify_permissions", "http://dummy.com/git", projectToCreate, "", "", "");
             createOrGetCodeProjectService.createOrGetCodeProject(codeGroup, "sast_verify_project", "master");
         }
     }
@@ -64,7 +64,7 @@ class VerifySASTPermissionsServiceTest {
         List<User> users = userRepository.findAll();
         Principal principal = Mockito.mock(Principal.class);
         Mockito.when(principal.getName()).thenReturn("sast_verify_tester");
-        Optional<CodeGroup> codeGroup = codeGroupRepository.findByProjectAndName( projectRepository.getOne(getOrCreateProjectService.getProjectId("sast_verify_name", "sast_verify_name", principal)), "sast_verify_permissions");
+        Optional<CodeGroup> codeGroup = codeGroupRepository.findByProjectAndName( getOrCreateProjectService.getProjectId("sast_verify_name", "sast_verify_name", principal), "sast_verify_permissions");
         assertEquals(true, verifySASTPermissionsService.verifyIfCodeGroupIsPresent(codeGroup, "sast_verify_project", true).getValid());
         assertEquals(false, verifySASTPermissionsService.verifyIfCodeGroupIsPresent(codeGroup, "sast_verify_project", false).getValid());
         assertEquals(false, verifySASTPermissionsService.verifyIfCodeGroupIsPresent(codeGroup, "sast_verify_project2", false).getValid());
@@ -79,7 +79,7 @@ class VerifySASTPermissionsServiceTest {
     void returnNotValidRequestWithGroup() {
         Principal principal = Mockito.mock(Principal.class);
         Mockito.when(principal.getName()).thenReturn("sast_verify_tester");
-        Optional<CodeGroup> codeGroup = codeGroupRepository.findByProjectAndName( projectRepository.getOne(getOrCreateProjectService.getProjectId("sast_verify_name", "sast_verify_name", principal)), "sast_verify_permissions");
+        Optional<CodeGroup> codeGroup = codeGroupRepository.findByProjectAndName( getOrCreateProjectService.getProjectId("sast_verify_name", "sast_verify_name", principal), "sast_verify_permissions");
         assertFalse(verifySASTPermissionsService.returnNotValidRequestWithGroup(codeGroup).getValid());
         assertEquals(codeGroup.get(), verifySASTPermissionsService.returnNotValidRequestWithGroup(codeGroup).getCg());
     }
