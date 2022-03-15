@@ -18,6 +18,7 @@ public interface CodeGroupRepository extends JpaRepository<CodeGroup, Long>{
 	List<CodeGroup> findByRunningAndRequestidNotNullAndScanidNull(Boolean running);
 	List<CodeGroup> findByRunningAndRequestidNotNullAndScanidNotNull(Boolean running);
 	List<CodeGroup> findByRunningAndScanidNotNull(Boolean running);
+	List<CodeGroup> findByScanidNotNull();
 	Long countByRunning(Boolean running);
 	List<CodeGroup> findByInQueue(Boolean inqueue);
 	List<CodeGroup> findByAuto(Boolean auto);

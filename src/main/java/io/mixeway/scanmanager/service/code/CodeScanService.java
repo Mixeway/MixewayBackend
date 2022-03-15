@@ -7,8 +7,10 @@ import io.mixeway.db.repository.*;
 import io.mixeway.domain.service.cioperations.UpdateCiOperations;
 import io.mixeway.domain.service.project.FindProjectService;
 import io.mixeway.domain.service.project.GetOrCreateProjectService;
+import io.mixeway.domain.service.projectvulnerability.DeleteProjectVulnerabilityService;
 import io.mixeway.domain.service.projectvulnerability.GetProjectVulnerabilitiesService;
 import io.mixeway.domain.service.scanmanager.code.*;
+import io.mixeway.domain.service.scanner.GetScannerService;
 import io.mixeway.domain.service.vulnmanager.VulnTemplate;
 import io.mixeway.scanmanager.model.CodeAccessVerifier;
 import io.mixeway.scanmanager.model.CodeScanRequestModel;
@@ -65,6 +67,8 @@ public class CodeScanService {
     private final UpdateCodeGroupService updateCodeGroupService;
     private final UpdateCodeProjectService updateCodeProjectService;
     private final CreateOrGetCodeGroupService createOrGetCodeGroupService;
+    private final DeleteProjectVulnerabilityService deleteProjectVulnerabilityService;
+    private final GetScannerService getScannerService;
 
     /**
      * Method for getting CodeVulns for given names
@@ -181,48 +185,37 @@ public class CodeScanService {
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void schedulerReportSynchro() throws CertificateException, ParseException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, UnrecoverableKeyException, IOException, URISyntaxException {
-        List<CodeGroup> groups = codeGroupRepository.findByVersionIdAllGreaterThan(0);
-        log.info("SAST Offline synchronization Started");
+        List<CodeGroup> groups = findCodeGroupService.findCodeGroupsWithScanIds();
+        log.info("Code Service - Offline synchronization of vulnerabilities started");
         Optional<Scanner> sastScanner = scannerRepository.findByScannerTypeInAndStatus(scannerTypeRepository.getCodeScanners(), true).stream().findFirst();
         if (sastScanner.isPresent() && sastScanner.get().getStatus()) {
             for (CodeGroup group : groups) {
-                List<ProjectVulnerability> tmpVulns = getOldVulnsForGroup(group);
-                if (group.getVersionIdAll() > 0) {
-                    for(CodeScanClient codeScanClient : codeScanClients){
-                        if (codeScanClient.canProcessRequest(sastScanner.get())){
-                            log.info("Starting loading SAST vulns for - {}", group.getName());
-                            codeScanClient.loadVulnerabilities(sastScanner.get(),group,null,false,null,tmpVulns);
-                            log.info("Loaded SAST vulns for - {}", group.getName());
-                        }
+                List<ProjectVulnerability> tmpVulns = getProjectVulnerabilitiesService.getOldVulnsForGroup(group, vulnTemplate.STATUS_REMOVED);
+                for(CodeScanClient codeScanClient : codeScanClients){
+                    if (codeScanClient.canProcessRequest(sastScanner.get())) {
+                        log.info("Starting loading Code Vulnerabilities for - {}", group.getName());
+                        codeScanClient.loadVulnerabilities(sastScanner.get(), group, null, false, null, tmpVulns);
+                        log.info("Ended loading Code Vulnerabilities for - {}", group.getName());
                     }
                 }
-                List<Long> toRemove = vulnTemplate.projectVulnerabilityRepository.findByProjectAndVulnerabilitySource(group.getProject(), vulnTemplate.SOURCE_SOURCECODE).filter(v -> v.getStatus().getId().equals(vulnTemplate.STATUS_REMOVED.getId())).map(ProjectVulnerability::getId).collect(Collectors.toList());
-                int removed =0;
-                if (toRemove.size() > 0) {
-                    removed = vulnTemplate.projectVulnerabilityRepository.deleteProjectVulnerabilityIn(toRemove);
-                    log.info("Removed {} source code vulns for project {}", removed,group.getProject());
-                }
+                deleteProjectVulnerabilityService.deleteProjectVulnerabilityWithStatus(group.getProject(), vulnTemplate.STATUS_REMOVED);
             }
         }
-
-        //vulnTemplate.projectVulnerabilityRepository.deleteByStatus(vulnTemplate.STATUS_REMOVED);
-        log.info("SAST Offline synchronization completed");
+        log.info("Code Service - Offline synchronization of vulnerabilities completed");
     }
 
     /**
      * Method which put each codegroup in scan queue by Project.autoCodeScan = true
      */
     public void schedulerRunAutoScans() {
-        log.info("Starting Fortify Scheduled Scans");
-        //List<CodeGroup> groups = codeGroupRepository.findByAuto(true);
-        List<Project> projects = projectRepository.findByAutoCodeScan(true);
-        Optional<Scanner> sastScanner = scannerRepository.findByScannerTypeInAndStatus(scannerTypeRepository.getCodeScanners(), true).stream().findFirst();
+        log.info("Starting to run scheduled scans - scope Source Code [SAST]");
+        List<Project> projects = findProjectService.findProjectsWithAutoCodeScan();
+        Optional<Scanner> sastScanner = getScannerService.getCodeScanners();
         if ( sastScanner.isPresent() &&  sastScanner.get().getStatus()) {
             for (Project p : projects){
                 for (CodeGroup cg : p.getCodes()){
                     for (CodeProject cp : cg.getProjects()){
-                        cp.setInQueue(true);
-                        codeProjectRepository.save(cp);
+                        updateCodeProjectService.putCodeProjectToQueue(cp);
                     }
                 }
             }
@@ -335,29 +328,6 @@ public class CodeScanService {
         else return !cp.getCodeGroup().isRunning();
     }
 
-
-    /**
-     * Getting old vulnerabilities for CodeGroup and set status to removed
-     *
-     * @param group codeGroup to delate vulns for
-     * @return List of deleted vulns to set proper status
-     */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public List<ProjectVulnerability> getOldVulnsForGroup(CodeGroup group) {
-        List<ProjectVulnerability> tmpVulns = new ArrayList<>();
-        if (group.getHasProjects()) {
-            for (CodeProject cp : group.getProjects()) {
-                tmpVulns.addAll(vulnTemplate.projectVulnerabilityRepository.findByCodeProject(cp));
-
-            }
-        } else{
-            tmpVulns.addAll(vulnTemplate.projectVulnerabilityRepository.findByCodeProjectIn(new ArrayList<>(group.getProjects())));
-        }
-        if (tmpVulns.size()>0)
-            vulnTemplate.projectVulnerabilityRepository.updateVulnState(tmpVulns.stream().map(ProjectVulnerability::getId).collect(Collectors.toList()),
-                    vulnTemplate.STATUS_REMOVED.getId());
-        return tmpVulns;
-    }
     /**
      * Getting old vulnerabilities for CodeProject, and set status to removed
      *

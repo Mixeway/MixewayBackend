@@ -62,4 +62,9 @@ class FindProjectServiceTest {
         assertEquals(Optional.of(project), findProjectService.findProjectByName("findProjectIdByName_testProject2"));
         assertEquals(Optional.empty(), findProjectService.findProjectByName("not found name"));
     }
+
+    @Test
+    void findProjectsWithAutoCodeScan() {
+        assertTrue(false);
+    }
 }

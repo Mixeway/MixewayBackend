@@ -38,4 +38,7 @@ public class FindProjectService {
         Optional<Project> projects = projectRepository.findById(id);
         return projects;
     }
+    public List<Project> findProjectsWithAutoCodeScan() {
+        return projectRepository.findByAutoCodeScan(true);
+    }
 }

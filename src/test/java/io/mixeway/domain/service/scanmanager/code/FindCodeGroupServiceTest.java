@@ -67,4 +67,8 @@ class FindCodeGroupServiceTest {
         assertTrue(codeGroupFind.isPresent());
     }
 
+    @Test
+    void findCodeGroupsWithScanIds() {
+        assertTrue(false);
+    }
 }
