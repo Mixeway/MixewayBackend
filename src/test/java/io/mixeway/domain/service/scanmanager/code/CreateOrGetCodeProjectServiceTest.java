@@ -59,7 +59,7 @@ class CreateOrGetCodeProjectServiceTest {
     void createOrGetCodeProject() {
         Optional<Project> project = findProjectService.findProjectByCiid("test_create_cp");
         assertTrue(project.isPresent());
-        CodeGroup codeGroup = createOrGetCodeGroupService.createOrGetCodeGroupService(principal,"test_cp","http://repo",project.get(),"","","");
+        CodeGroup codeGroup = createOrGetCodeGroupService.createOrGetCodeGroup(principal,"test_cp","http://repo",project.get(),"","","");
         assertNotNull(codeGroup);
         CodeProject codeProject = createOrGetCodeProjectService.createOrGetCodeProject(codeGroup,"test_cp","master");
         assertNotNull(codeProject);
@@ -72,7 +72,7 @@ class CreateOrGetCodeProjectServiceTest {
     void createOrGetCodeProjectWithGroupName() {
         Optional<Project> project = findProjectService.findProjectByCiid("test_create_cp");
         assertTrue(project.isPresent());
-        CodeGroup codeGroup = createOrGetCodeGroupService.createOrGetCodeGroupService(principal,"create_cp_2","http://repo",project.get(),"","","");
+        CodeGroup codeGroup = createOrGetCodeGroupService.createOrGetCodeGroup(principal,"create_cp_2","http://repo",project.get(),"","","");
         assertNotNull(codeGroup);
         CodeProject codeProject = createOrGetCodeProjectService.createOrGetCodeProjectWithGroupName(project.get(),"create_cp_2","create_cp_2","master");
         Optional<CodeGroup> codeGroupFromRepo = codeGroupRepository.findByProjectAndName(project.get(),"create_cp_2");
@@ -94,5 +94,10 @@ class CreateOrGetCodeProjectServiceTest {
         Optional<CodeProject> codeProjectFromRepo = codeProjectRepository.findByCodeGroupAndName(codeGroupFromRepo.get(),"test_cp_3");
         assertTrue(codeProjectFromRepo.isPresent());
 
+    }
+
+    @Test
+    void testCreateCodeProject() {
+        assertTrue(false);
     }
 }

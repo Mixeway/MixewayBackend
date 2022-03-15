@@ -6,8 +6,9 @@ import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.*;
 import io.mixeway.domain.service.cioperations.UpdateCiOperations;
 import io.mixeway.domain.service.project.FindProjectService;
+import io.mixeway.domain.service.project.GetOrCreateProjectService;
 import io.mixeway.domain.service.projectvulnerability.GetProjectVulnerabilitiesService;
-import io.mixeway.domain.service.scanmanager.code.CreateOrGetCodeProjectService;
+import io.mixeway.domain.service.scanmanager.code.*;
 import io.mixeway.domain.service.vulnmanager.VulnTemplate;
 import io.mixeway.scanmanager.model.CodeAccessVerifier;
 import io.mixeway.scanmanager.model.CodeScanRequestModel;
@@ -58,6 +59,12 @@ public class CodeScanService {
     private final CreateOrGetCodeProjectService createOrGetCodeProjectService;
     private final GetProjectVulnerabilitiesService getProjectVulnerabilitiesService;
     private final FindProjectService findProjectService;
+    private final GetOrCreateProjectService getOrCreateProjectService;
+    private final FindCodeProjectService findCodeProjectService;
+    private final FindCodeGroupService findCodeGroupService;
+    private final UpdateCodeGroupService updateCodeGroupService;
+    private final UpdateCodeProjectService updateCodeProjectService;
+    private final CreateOrGetCodeGroupService createOrGetCodeGroupService;
 
     /**
      * Method for getting CodeVulns for given names
@@ -94,15 +101,17 @@ public class CodeScanService {
     public ResponseEntity<List<ProjectVulnerability>> getResultsForGroup(long projectId, String groupName){
 
         if (codeAccessVerifier.verifyPermissions(projectId,groupName,null, false).getValid()){
-            CodeGroup cg = codeGroupRepository
-                    .findByProjectAndName(projectRepository.findById(projectId).orElse(null),groupName).orElse(null);
-            List<ProjectVulnerability> codeVulns = vulnTemplate.projectVulnerabilityRepository.findByCodeProjectInAndAnalysisNot(new ArrayList<>(cg.getProjects()),"Not an Issue");
-            new ResponseEntity<>(codeVulns, HttpStatus.OK);
+            Optional<Project> project = findProjectService.findProjectById(projectId);
+            if (project.isPresent()) {
+                Optional<CodeGroup> codeGroup = findCodeGroupService.findCodeGroup(project.get(), groupName);
+                if (codeGroup.isPresent()){
+                    List<ProjectVulnerability> projectVulnerabilities = getProjectVulnerabilitiesService.getProjectVulnerablitiesForCodeGroup(codeGroup.get(), Constants.FORTIFY_NOT_AN_ISSUE);
+                    new ResponseEntity<>(projectVulnerabilities, HttpStatus.OK);
+                }
+            }
 
         } else
             new ResponseEntity<List<ProjectVulnerability>>(new ArrayList<>(), HttpStatus.PRECONDITION_FAILED);
-
-
         return null;
     }
 
@@ -118,18 +127,11 @@ public class CodeScanService {
         if (codeScanRequest.getCiid() != null && !codeScanRequest.getCiid().equals("")){
             Optional<List<Project>> projects = projectRepository.findByCiid(codeScanRequest.getCiid());
             Project project;
-            if (projects.isPresent()){
+            if (projects.isPresent() && projects.get().size()>0){
                 project = projects.get().stream().findFirst().orElse(null);
             } else {
-                project = new Project();
-                project.setName(codeScanRequest.getProjectName());
-                project.setCiid(codeScanRequest.getCiid());
-                project.setEnableVulnManage(codeScanRequest.getEnableVulnManage().isPresent() ? codeScanRequest.getEnableVulnManage().get() : true);
-                project.setOwner(permissionFactory.getUserFromPrincipal(() -> Constants.ORIGIN_SCHEDULER));
-                project = projectRepository.save(project);
-                permissionFactory.grantPermissionToProjectForUser(project, principal);
+                project = getOrCreateProjectService.getProjectId(codeScanRequest.getCiid(),codeScanRequest.getProjectName(),principal);
             }
-
             String requestId = verifyAndCreateOrUpdateCodeProjectInformations(codeScanRequest,project);
             return new ResponseEntity<>(new Status("Scan requested",requestId), HttpStatus.CREATED);
 
@@ -151,114 +153,27 @@ public class CodeScanService {
      */
     private String verifyAndCreateOrUpdateCodeProjectInformations(CodeScanRequestModel codeScanRequest, Project project) {
         String requestId;
-        Optional<CodeGroup> codeGroup = codeGroupRepository.findByProjectAndName(project,codeScanRequest.getCodeGroupName());
+        Optional<CodeGroup> codeGroup = findCodeGroupService.findCodeGroup(project, codeScanRequest.getCodeGroupName());
+
         if (codeGroup.isPresent()){
-            Optional<CodeProject> codeProject = codeProjectRepository.findByCodeGroupAndName(codeGroup.get(),codeScanRequest.getCodeProjectName());
+            Optional<CodeProject> codeProject = findCodeProjectService.findCodeProject(codeGroup.get(), codeScanRequest.getCodeProjectName());
             if (codeProject.isPresent()){
-                CodeGroup updatedCodeGroup = updateCodeGroup(codeScanRequest,codeGroup.get());
-                CodeProject updatedCodeProject = updateCodeProject(codeScanRequest,project,codeProject.get());
-                updatedCodeProject.setInQueue(true);
-                codeProjectRepository.save(updatedCodeProject);
-                requestId = Objects.requireNonNull(codeProjectRepository.findById(updatedCodeProject.getId()).orElse(null)).getRequestId();
+                updateCodeGroupService.updateCodeGroup(codeScanRequest, codeGroup.get());
+                CodeProject updatedCodeProject = updateCodeProjectService.updateCodeProjectAndPutToQueue(codeScanRequest,codeProject.get());
+                requestId = updatedCodeProject.getRequestId();
             } else {
-                CodeGroup updatedCodeGroup = updateCodeGroup(codeScanRequest,codeGroup.get());
-                CodeProject newCodeProject = createNewCodeProject(codeScanRequest,project,updatedCodeGroup);
-                newCodeProject.setInQueue(true);
-                codeProjectRepository.save(newCodeProject);
-                requestId = Objects.requireNonNull(codeProjectRepository.findById(newCodeProject.getId()).orElse(null)).getRequestId();
+                CodeGroup updatedCodeGroup = updateCodeGroupService.updateCodeGroup(codeScanRequest, codeGroup.get());
+                CodeProject newCodeProject = createOrGetCodeProjectService.createCodeProject(codeScanRequest, updatedCodeGroup);
+                newCodeProject = updateCodeProjectService.putCodeProjectToQueue(newCodeProject);
+                requestId = newCodeProject.getRequestId();
             }
         } else {
-            CodeGroup newCodeGroup = createNewCodeGroup(codeScanRequest,project);
-            CodeProject newCodeProject = createNewCodeProject(codeScanRequest,project,newCodeGroup);
-            newCodeProject.setInQueue(true);
-            codeProjectRepository.save(newCodeProject);
-            requestId = Objects.requireNonNull(codeProjectRepository.findById(newCodeProject.getId()).orElse(null)).getRequestId();
+            CodeGroup newCodeGroup = createOrGetCodeGroupService.createOrGetCodeGroup(codeScanRequest, project);
+            CodeProject newCodeProject = createOrGetCodeProjectService.createCodeProject(codeScanRequest, newCodeGroup);
+            newCodeProject = updateCodeProjectService.putCodeProjectToQueue(newCodeProject);
+            requestId = newCodeProject.getRequestId();
         }
         return requestId;
-    }
-
-    /**
-     * Creates new CodeProjcet base on configuration from CodeScanRequest
-     *
-     * @param codeScanRequest CodeScanRequest from REST API
-     * @param project Project on which behalf request is being executed
-     * @param newCodeGroup CodeGroup to be linked with
-     * @return created CodeProject
-     */
-    private CodeProject createNewCodeProject(CodeScanRequestModel codeScanRequest, Project project, CodeGroup newCodeGroup) {
-        CodeProject codeProject = new CodeProject();
-        codeProject.setName(codeScanRequest.getCodeProjectName());
-        codeProject.setCodeGroup(newCodeGroup);
-        codeProject.setTechnique(codeScanRequest.getTech());
-        codeProject.setBranch(codeScanRequest.getBranch());
-        codeProject.setRepoUrl(codeScanRequest.getRepoUrl());
-        codeProject = codeProjectRepository.save(codeProject);
-        log.info("{} - Created new CodeProject [{}] {}", "ScanManager", project.getName(), codeProject.getName());
-        return codeProject;
-    }
-    /**
-     * Updates CodeProjcet base on configuration from CodeScanRequest
-     * Fields to update:
-     * 1. Branch
-     * 2. Repo URL
-     * 3. Technique
-     *
-     * @param codeScanRequest CodeScanRequest from REST API
-     * @param project Project on which behalf request is being executed
-     * @param codeProject CodeProject to update
-     * @return created CodeProject
-     */
-    private CodeProject updateCodeProject(CodeScanRequestModel codeScanRequest, Project project, CodeProject codeProject) {
-        codeProject.setTechnique(codeScanRequest.getTech());
-        codeProject.setBranch(codeScanRequest.getBranch());
-        codeProject.setRepoUrl(codeScanRequest.getRepoUrl());
-        codeProject = codeProjectRepository.save(codeProject);
-        log.info("{} - Updated CodeProject [{}] {}", "ScanManager", project.getName(), codeProject.getName());
-        return codeProject;
-    }
-
-    /**
-     * Creates new CodeGroup base on configuration from CodeScanRequest
-     *
-     * @param codeScanRequest CodeScanRequest from REST API
-     * @param project Project on which behalf request is being done
-     * @return created CodeGroup
-     */
-    private CodeGroup createNewCodeGroup(CodeScanRequestModel codeScanRequest, Project project){
-        CodeGroup newCodeGroup = new CodeGroup();
-        newCodeGroup.setProject(project);
-        newCodeGroup.setName(codeScanRequest.getCodeGroupName());
-        newCodeGroup.setHasProjects(false);
-        newCodeGroup.setAuto(false);
-        newCodeGroup = updateCodeGroup(codeScanRequest, newCodeGroup);
-        log.info("{} - Created new CodeGroup [{}] {}", "ScanManager", project.getName(), newCodeGroup.getName());
-        return newCodeGroup;
-    }
-
-    /**
-     * Method which update CodeGroup with values from CodeScanRequest
-     * Update fields:
-     * 1. Technique
-     * 2. RepoURL
-     * 3. versionIdAll
-     *
-     * @param codeScanRequest CodeScanRequest from REST API
-     * @param codeGroup updated CodeGroup
-     * @return CodeGroup which was updated
-     */
-    @NotNull
-    private CodeGroup updateCodeGroup(CodeScanRequestModel codeScanRequest, CodeGroup codeGroup) {
-        codeGroup.setTechnique(codeScanRequest.getTech());
-        codeGroup.setRepoUrl(codeScanRequest.getRepoUrl());
-        codeGroup.setVersionIdAll(codeScanRequest.getFortifySSCVersionId());
-        codeGroup = codeGroupRepository.save(codeGroup);
-        String uuidToken = UUID.randomUUID().toString();
-        if (vaultHelper.savePassword(codeScanRequest.getRepoPassword(), uuidToken)){
-            codeGroup.setRepoPassword(uuidToken);
-        } else {
-            codeGroup.setRepoPassword(codeScanRequest.getRepoPassword());
-        }
-        return codeGroup;
     }
 
     /**

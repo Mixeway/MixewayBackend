@@ -1,9 +1,6 @@
 package io.mixeway.domain.service.scanmanager.code;
 
-import io.mixeway.db.entity.CodeGroup;
-import io.mixeway.db.entity.Project;
-import io.mixeway.db.entity.Settings;
-import io.mixeway.db.entity.User;
+import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.CodeGroupRepository;
 import io.mixeway.db.repository.SettingsRepository;
 import io.mixeway.db.repository.UserRepository;
@@ -27,12 +24,15 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @SpringBootTest
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
-class CreateOrGetCodeGroupServiceTest {
+
+class FindCodeProjectServiceTest {
     private final CreateOrGetCodeGroupService createOrGetCodeGroupService;
     private final CreateProjectService createProjectService;
     private final UserRepository userRepository;
     private final SettingsRepository settingsRepository;
     private final FindProjectService findProjectService;
+    private final FindCodeProjectService findCodeProjectService;
+    private final CreateOrGetCodeProjectService createOrGetCodeProjectService;
     private final CodeGroupRepository codeGroupRepository;
 
     @Mock
@@ -40,33 +40,30 @@ class CreateOrGetCodeGroupServiceTest {
 
     @BeforeEach
     private void prepareDB() {
-        Optional<User> user = userRepository.findByUsername("test_create_cg");
+        Optional<User> user = userRepository.findByUsername("test_find_cp");
         Settings settings = settingsRepository.findAll().get(0);
         settings.setMasterApiKey("test");
         settingsRepository.save(settings);
-        Mockito.when(principal.getName()).thenReturn("test_create_cg");
+        Mockito.when(principal.getName()).thenReturn("test_find_cp");
         if (!user.isPresent()){
             User userToCreate = new User();
-            userToCreate.setUsername("test_create_cg");
+            userToCreate.setUsername("test_find_cp");
             userToCreate.setPermisions("ROLE_ADMIN");
             userRepository.save(userToCreate);
-            Project project = createProjectService.createAndReturnProject("test_create_cg","test_create_cg",principal);
+            createProjectService.createAndReturnProject("test_find_cp","test_find_cp",principal);
 
         }
     }
 
     @Test
-    void createOrGetCodeGroupService() {
-        Optional<Project> project = findProjectService.findProjectByCiid("test_create_cg");
+    void findCodeProject() {
+        Optional<Project> project = findProjectService.findProjectByCiid("test_find_cp");
         assertTrue(project.isPresent());
-        CodeGroup codeGroup = createOrGetCodeGroupService.createOrGetCodeGroup(principal,"test_cg","http://repo",project.get(),"","","");
-        Optional<CodeGroup> codeGroupFromRepo = codeGroupRepository.findByProjectAndName(project.get(),"test_cg");
+        createOrGetCodeProjectService.
+                createCodeProject("url","username","password","master","mvn","test_find_cp", project.get(), principal);
+        Optional<CodeGroup> codeGroupFromRepo = codeGroupRepository.findByProjectAndName(project.get(), "test_find_cp");
         assertTrue(codeGroupFromRepo.isPresent());
-        assertEquals(codeGroupFromRepo.get().getId(), codeGroup.getId());
-    }
-
-    @Test
-    void createOrGetCodeGroup() {
-        assertTrue(false);
+        Optional<CodeProject> codeProject = findCodeProjectService.findCodeProject(codeGroupFromRepo.get(),"test_find_cp");
+        assertTrue(codeProject.isPresent());
     }
 }

@@ -5,6 +5,7 @@ import io.mixeway.db.entity.CodeProject;
 import io.mixeway.db.entity.Project;
 import io.mixeway.db.repository.CodeGroupRepository;
 import io.mixeway.db.repository.CodeProjectRepository;
+import io.mixeway.scanmanager.model.CodeScanRequestModel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
@@ -68,7 +69,23 @@ public class CreateOrGetCodeProjectService {
      */
     public CodeProject createCodeProject(String repoUrl, String repoUsername, String repoPassword, String branch, String tech,
                                          String name, Project project, Principal principal) {
-        CodeGroup codeGroup = createOrGetCodeGroupService.createOrGetCodeGroupService(principal,name,repoUrl,project,repoUsername,repoPassword,tech);
+        CodeGroup codeGroup = createOrGetCodeGroupService.createOrGetCodeGroup(principal,name,repoUrl,project,repoUsername,repoPassword,tech);
         return createCodeProject(codeGroup,name,branch);
+    }
+    /**
+     *
+     * Create CodeGroup and CodeProject based on CodeScanRequestModel
+     *
+     */
+    public CodeProject createCodeProject(CodeScanRequestModel codeScanRequest, CodeGroup codeGroup) {
+        CodeProject codeProject = new CodeProject();
+        codeProject.setName(codeScanRequest.getCodeProjectName());
+        codeProject.setCodeGroup(codeGroup);
+        codeProject.setTechnique(codeScanRequest.getTech());
+        codeProject.setBranch(codeScanRequest.getBranch());
+        codeProject.setRepoUrl(codeScanRequest.getRepoUrl());
+        codeProject = codeProjectRepository.save(codeProject);
+        log.info("{} - Created new CodeProject [{}] {}", "ScanManager", codeGroup.getProject().getName(), codeProject.getName());
+        return codeProject;
     }
 }

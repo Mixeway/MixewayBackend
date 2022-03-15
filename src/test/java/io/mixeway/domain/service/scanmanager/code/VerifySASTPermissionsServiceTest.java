@@ -54,7 +54,7 @@ class VerifySASTPermissionsServiceTest {
             userRepository.save(user);
             Project projectToCreate = createProjectService.createProject("sast_verify_name","sast_verify_name",principal);
             CodeGroup codeGroup = createOrGetCodeGroupService
-                    .createOrGetCodeGroupService(principal, "sast_verify_permissions", "http://dummy.com/git", projectToCreate, "", "", "");
+                    .createOrGetCodeGroup(principal, "sast_verify_permissions", "http://dummy.com/git", projectToCreate, "", "", "");
             createOrGetCodeProjectService.createOrGetCodeProject(codeGroup, "sast_verify_project", "master");
         }
     }
