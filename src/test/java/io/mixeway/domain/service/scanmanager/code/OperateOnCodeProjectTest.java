@@ -1,4 +1,4 @@
-package io.mixeway.domain.service.projectvulnerability;
+package io.mixeway.domain.service.scanmanager.code;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -9,15 +9,10 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author gsiewruk
  */
 @SpringBootTest
-class DeleteProjectVulnerabilityServiceTest {
+class OperateOnCodeProjectTest {
 
     @Test
-    void deleteProjectVulnerabilityWithStatus() {
-        assertTrue(false);
-    }
-
-    @Test
-    void removeByCodeProject() {
+    void canScanCodeProject() {
         assertTrue(false);
     }
 }

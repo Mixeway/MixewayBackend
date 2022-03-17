@@ -1,6 +1,7 @@
 package io.mixeway.domain.service.scanmanager.code;
 
 import io.mixeway.db.entity.CodeGroup;
+import io.mixeway.db.entity.CodeProject;
 import io.mixeway.db.repository.CodeGroupRepository;
 import io.mixeway.scanmanager.model.CodeScanRequestModel;
 import io.mixeway.utils.VaultHelper;
@@ -43,5 +44,14 @@ public class UpdateCodeGroupService {
         }
         codeGroup = codeGroupRepository.save(codeGroup);
         return codeGroup;
+    }
+
+    public void endScan(CodeGroup codeGroup) {
+        codeGroup.setRunning(false);
+        codeGroup.setRequestid(null);
+        codeGroup.setScanid(null);
+        codeGroup.setScope(null);
+        codeGroup.setScanid(null);
+        codeGroupRepository.save(codeGroup);
     }
 }

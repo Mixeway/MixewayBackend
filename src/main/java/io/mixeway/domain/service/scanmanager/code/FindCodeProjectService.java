@@ -6,6 +6,7 @@ import io.mixeway.db.repository.CodeProjectRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -18,5 +19,11 @@ public class FindCodeProjectService {
 
     public Optional<CodeProject> findCodeProject(CodeGroup codeGroup, String codeProjectName){
         return codeProjectRepository.findByCodeGroupAndName(codeGroup,codeProjectName);
+    }
+    public List<CodeProject> findRunningCodeProjects(){
+        return codeProjectRepository.findByRunning(true);
+    }
+    public Optional<CodeProject> findById(long id){
+        return codeProjectRepository.findById(id);
     }
 }

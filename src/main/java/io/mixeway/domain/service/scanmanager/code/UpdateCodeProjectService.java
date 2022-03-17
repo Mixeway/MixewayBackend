@@ -1,9 +1,9 @@
 package io.mixeway.domain.service.scanmanager.code;
 
 import io.mixeway.db.entity.CodeProject;
-import io.mixeway.db.entity.Project;
 import io.mixeway.db.repository.CodeProjectRepository;
 import io.mixeway.scanmanager.model.CodeScanRequestModel;
+import io.mixeway.utils.ProjectRiskAnalyzer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
@@ -19,6 +19,7 @@ import java.util.UUID;
 @Log4j2
 public class UpdateCodeProjectService {
     private final CodeProjectRepository codeProjectRepository;
+    private final ProjectRiskAnalyzer projectRiskAnalyzer;
 
     /**
      * Updates CodeProjcet base on configuration from CodeScanRequest
@@ -63,5 +64,15 @@ public class UpdateCodeProjectService {
         codeProject.setRequestId(UUID.randomUUID().toString());
         codeProject = codeProjectRepository.save(codeProject);
         return codeProject;
+    }
+
+    public void endScan(CodeProject codeProject) {
+        codeProject.setRunning(false);
+        codeProject.setRisk(projectRiskAnalyzer.getCodeProjectRisk(codeProject) + projectRiskAnalyzer.getCodeProjectOpenSourceRisk(codeProject));
+        codeProjectRepository.save(codeProject);
+    }
+    public CodeProject removeFromQueue(CodeProject codeProject){
+        codeProject.setInQueue(false);
+        return codeProjectRepository.saveAndFlush(codeProject);
     }
 }

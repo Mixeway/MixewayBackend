@@ -28,4 +28,9 @@ class UpdateCodeProjectServiceTest {
     void putCodeProjectToQueue() {
         assertTrue(false);
     }
+
+    @Test
+    void removeFromQueue() {
+        assertTrue(false);
+    }
 }

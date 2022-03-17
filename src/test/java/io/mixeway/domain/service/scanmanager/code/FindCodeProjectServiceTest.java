@@ -66,4 +66,14 @@ class FindCodeProjectServiceTest {
         Optional<CodeProject> codeProject = findCodeProjectService.findCodeProject(codeGroupFromRepo.get(),"test_find_cp");
         assertTrue(codeProject.isPresent());
     }
+
+    @Test
+    void findRunningCodeProjects() {
+        assertTrue(false);
+    }
+
+    @Test
+    void findById() {
+        assertTrue(false);
+    }
 }
