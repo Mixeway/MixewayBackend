@@ -25,4 +25,9 @@ class GetScannerServiceTest {
     void getScannerForInfraScan() {
         assertTrue(false);
     }
+
+    @Test
+    void getOpenSourceScanner() {
+        assertTrue(false);
+    }
 }

@@ -49,4 +49,10 @@ public class GetScannerService {
     public List<Scanner> getScannerForInfraScan(){
         return scannerRepository.findByScannerTypeInAndStatus(scannerTypeRepository.findByCategory(Constants.SCANER_CATEGORY_NETWORK), true);
     }
+    public Scanner getOpenSourceScanner(){
+        return scannerRepository
+                .findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_DEPENDENCYTRACK)).stream()
+                .findFirst()
+                .orElse(null);
+    }
 }

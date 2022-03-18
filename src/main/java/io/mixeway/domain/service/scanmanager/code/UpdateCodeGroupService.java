@@ -2,10 +2,13 @@ package io.mixeway.domain.service.scanmanager.code;
 
 import io.mixeway.db.entity.CodeGroup;
 import io.mixeway.db.entity.CodeProject;
+import io.mixeway.db.entity.Project;
 import io.mixeway.db.repository.CodeGroupRepository;
+import io.mixeway.domain.service.projectvulnerability.UpdateProjectVulnerabilityService;
 import io.mixeway.scanmanager.model.CodeScanRequestModel;
 import io.mixeway.utils.VaultHelper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 
 import javax.validation.constraints.NotNull;
@@ -16,9 +19,11 @@ import java.util.UUID;
  */
 @Service
 @RequiredArgsConstructor
+@Log4j2
 public class UpdateCodeGroupService {
     private final CodeGroupRepository codeGroupRepository;
     private final VaultHelper vaultHelper;
+    private final UpdateProjectVulnerabilityService updateProjectVulnerabilityService;
 
     /**
      * Method which update CodeGroup with values from CodeScanRequest
@@ -53,5 +58,14 @@ public class UpdateCodeGroupService {
         codeGroup.setScope(null);
         codeGroup.setScanid(null);
         codeGroupRepository.save(codeGroup);
+    }
+    public void transferCodeGroup(CodeGroup codeGroup, Project project) {
+        Project oldProject = codeGroup.getProject();
+        log.info("Transfering CodeGroup {}, from Project {} to {}", codeGroup.getName(), oldProject.getName(), project.getName());
+        codeGroup.setProject(project);
+        codeGroupRepository.save(codeGroup);
+        for (CodeProject codeProject : codeGroup.getProjects()){
+            updateProjectVulnerabilityService.transferCodeGroup(codeProject,project,oldProject);
+        }
     }
 }

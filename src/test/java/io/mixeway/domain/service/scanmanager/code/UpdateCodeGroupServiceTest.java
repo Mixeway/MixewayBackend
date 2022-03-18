@@ -20,4 +20,14 @@ class UpdateCodeGroupServiceTest {
     void endScan() {
         assertTrue(false);
     }
+
+    @Test
+    void transferCodeGroup() {
+        assertTrue(false);
+    }
+
+    @Test
+    void testTransferCodeGroup() {
+        assertTrue(false);
+    }
 }

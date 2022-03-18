@@ -5,11 +5,16 @@ import io.mixeway.db.entity.CodeProject;
 import io.mixeway.db.entity.Project;
 import io.mixeway.db.repository.CodeGroupRepository;
 import io.mixeway.db.repository.CodeProjectRepository;
+import io.mixeway.domain.service.project.FindProjectService;
+import io.mixeway.domain.service.project.GetOrCreateProjectService;
 import io.mixeway.scanmanager.model.CodeScanRequestModel;
+import io.mixeway.utils.PermissionFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.security.Principal;
 import java.util.Optional;
 
@@ -24,6 +29,9 @@ public class CreateOrGetCodeProjectService {
     private final CodeProjectRepository codeProjectRepository;
     private final CodeGroupRepository codeGroupRepository;
     private final CreateOrGetCodeGroupService createOrGetCodeGroupService;
+    private final FindProjectService findProjectService;
+    private final PermissionFactory permissionFactory;
+    private final GetOrCreateProjectService getOrCreateProjectService;
 
     /**
      *
@@ -87,5 +95,56 @@ public class CreateOrGetCodeProjectService {
         codeProject = codeProjectRepository.save(codeProject);
         log.info("{} - Created new CodeProject [{}] {}", "ScanManager", codeGroup.getProject().getName(), codeProject.getName());
         return codeProject;
+    }
+
+    /**
+     * Based on Repo URL create project, codeproject or return already existing
+     *
+     * @param url repo url
+     * @return codeproject
+     */
+    public CodeProject createOrGetCodeProject(String url, String codeProjectName, String branch, Principal principal){
+        Optional<Project> project = findProjectService.findProjectByName(codeProjectName);
+        Optional<CodeProject> codeProject = codeProjectRepository.findByRepoUrl( url);
+        if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getCodeGroup().getProject())){
+            codeProject.get().setBranch(branch);
+            return codeProjectRepository.saveAndFlush(codeProject.get());
+        } else if (codeProject.isPresent() && !permissionFactory.canUserAccessProject(principal, codeProject.get().getCodeGroup().getProject())){
+            log.error("[Code] User {} is trying to reach code project with repo {} without permissions", principal.getName(), url);
+            return null;
+        } else if (project.isPresent() && permissionFactory.canUserAccessProject(principal,project.get()) && !codeProject.isPresent()){
+            CodeGroup codeGroup = createOrGetCodeGroupService.createOrGetCodeGroup(principal,codeProjectName,url, project.get(),null,null, null);
+            return this.createOrGetCodeProject(codeGroup, codeProjectName, branch);
+        } else if (!project.isPresent()){
+            //create project
+            Project newProject = getOrCreateProjectService.getProjectId("unknown",codeProjectName,principal);
+            CodeGroup codeGroup = createOrGetCodeGroupService.createOrGetCodeGroup(principal,codeProjectName,url, project.get(),null,null, null);
+            return this.createOrGetCodeProject(codeGroup, codeProjectName, branch);
+        } else {
+            log.warn("[CODE] There is a problem with procesing CodeProject get, unknown option, codeproject name {}, branch {}, url {} - executed by {}", codeProjectName, branch, url, principal.getName());
+            return null;
+        }
+    }
+
+    /**
+     * Based on Repo URL create project, codeproject or return already existing
+     *
+     * @param url repo url
+     * @return codeproject
+     */
+    public CodeProject createOrGetCodeProject(String url, String branch, Principal principal, Project project) throws MalformedURLException {
+        URL repoUrl = new URL(url.split("\\.git")[0]);
+        String path = repoUrl.getPath();
+        String repoName = path.substring(path.lastIndexOf('/') + 1).replace(".git","");
+
+        Optional<CodeProject> codeProject = codeProjectRepository.findByRepoUrl(url);
+        if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getCodeGroup().getProject())){
+            codeProject.get().setBranch(branch);
+            return codeProjectRepository.saveAndFlush(codeProject.get());
+        }  else {
+            //create project
+            CodeGroup codeGroup = createOrGetCodeGroupService.createOrGetCodeGroup(principal,repoName,url, project,null,null, null);
+            return this.createOrGetCodeProject(codeGroup, repoName, branch);
+        }
     }
 }

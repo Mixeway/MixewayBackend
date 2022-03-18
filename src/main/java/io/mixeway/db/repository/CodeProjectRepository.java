@@ -43,4 +43,6 @@ public interface CodeProjectRepository extends JpaRepository<CodeProject, Long> 
 	Optional<CodeProject> getCodeProjectByProjectName(@Param("project") Long project, @Param("name") String name);
 	@Query(value = "select cp.* from codeproject cp where cp.codegroup_id in (select id from codegroup where project_id in :projects) and cp.name ilike :name", nativeQuery = true)
 	Optional<CodeProject> getCodeProjectByNameAndPermissions(@Param("name") String codeProjectName, @Param("projects") List<Long> projectIds);
+
+    Optional<CodeProject> findByRepoUrl(String url);
 }
