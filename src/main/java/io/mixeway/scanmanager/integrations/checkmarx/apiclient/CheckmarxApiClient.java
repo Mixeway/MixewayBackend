@@ -10,7 +10,7 @@ import io.mixeway.domain.service.vulnmanager.VulnTemplate;
 import io.mixeway.scanmanager.integrations.checkmarx.model.*;
 import io.mixeway.scanmanager.model.CodeRequestHelper;
 import io.mixeway.scanmanager.model.TokenValidator;
-import io.mixeway.scanmanager.service.CodeScanClient;
+import io.mixeway.scanmanager.service.code.CodeScanClient;
 import io.mixeway.scanmanager.service.SecurityScanner;
 import io.mixeway.utils.SASTProject;
 import io.mixeway.utils.ScannerModel;

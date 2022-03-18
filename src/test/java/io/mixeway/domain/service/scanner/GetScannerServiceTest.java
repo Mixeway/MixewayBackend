@@ -15,4 +15,9 @@ class GetScannerServiceTest {
     void getCodeScanners() {
         assertTrue(false);
     }
+
+    @Test
+    void getScannerForWebApp() {
+        assertTrue(false);
+    }
 }

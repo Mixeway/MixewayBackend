@@ -15,7 +15,6 @@ import io.mixeway.domain.service.vulnmanager.VulnTemplate;
 import io.mixeway.scanmanager.model.CodeAccessVerifier;
 import io.mixeway.scanmanager.model.CodeScanRequestModel;
 import io.mixeway.scanmanager.model.SASTRequestVerify;
-import io.mixeway.scanmanager.service.CodeScanClient;
 import io.mixeway.utils.*;
 import io.mixeway.utils.ScannerType;
 import io.mixeway.utils.Status;

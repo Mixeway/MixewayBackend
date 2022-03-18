@@ -27,7 +27,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 @EntityScan
 @Table(name = "nessusscan")
 @EntityListeners(AuditingEntityListener.class)
-public class NessusScan {
+public class InfraScan {
 	
 	private Long id;
 	private Project project;

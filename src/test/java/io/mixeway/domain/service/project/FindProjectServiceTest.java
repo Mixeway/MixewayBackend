@@ -67,4 +67,9 @@ class FindProjectServiceTest {
     void findProjectsWithAutoCodeScan() {
         assertTrue(false);
     }
+
+    @Test
+    void findProjectsWithAutoWebAppScan() {
+        assertTrue(false);
+    }
 }

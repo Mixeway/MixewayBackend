@@ -32,7 +32,7 @@ public class Interface implements VulnSource {
 	@JsonIgnore private Boolean active;
 	private Asset asset;
 	@JsonIgnore private String networkTag;
-	@JsonIgnore private Set<NessusScan> scans;
+	@JsonIgnore private Set<InfraScan> scans;
 	@JsonIgnore private Set<Service> services;
 	private RoutingDomain routingDomain;
 	@JsonIgnore private int hostid;
@@ -168,10 +168,10 @@ public class Interface implements VulnSource {
 		this.networkTag = networkTag;
 	}
 	@ManyToMany(mappedBy = "interfaces", cascade = {CascadeType.PERSIST,CascadeType.MERGE,CascadeType.DETACH})
-	public Set<NessusScan> getScans() {
+	public Set<InfraScan> getScans() {
 		return scans;
 	}
-	public void setScans(Set<NessusScan> scans) {
+	public void setScans(Set<InfraScan> scans) {
 		this.scans = scans;
 	}
 	@ManyToOne(fetch = FetchType.EAGER, optional = false)

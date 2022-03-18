@@ -7,8 +7,6 @@ import java.util.Set;
 import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 import org.hibernate.annotations.Proxy;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -35,7 +33,7 @@ public class Project implements Serializable{
 
 	@JsonIgnore private Set<Asset> assets;
 	@JsonIgnore private Set<Node> nodes;
-	@JsonIgnore private Set<NessusScan> scans;
+	@JsonIgnore private Set<InfraScan> scans;
 	@JsonIgnore private Set<CodeGroup> codes;
 	@JsonIgnore private Set<WebApp> webapps;
 	@JsonIgnore private Set<WebAppScan> webAppScan;
@@ -254,11 +252,11 @@ public class Project implements Serializable{
 		this.nodes = nodes;
 	}
 	@OneToMany(mappedBy = "project", cascade = CascadeType.ALL)
-	public Set<NessusScan> getScans() {
+	public Set<InfraScan> getScans() {
 		return scans;
 	}
 
-	public void setScans(Set<NessusScan> scans) {
+	public void setScans(Set<InfraScan> scans) {
 		this.scans = scans;
 	}
 	@OneToMany(mappedBy = "project", cascade = CascadeType.ALL, fetch=FetchType.EAGER)

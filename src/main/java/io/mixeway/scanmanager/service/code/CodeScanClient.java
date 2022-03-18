@@ -1,4 +1,4 @@
-package io.mixeway.scanmanager.service;
+package io.mixeway.scanmanager.service.code;
 
 import io.mixeway.db.entity.CodeGroup;
 import io.mixeway.db.entity.CodeProject;
