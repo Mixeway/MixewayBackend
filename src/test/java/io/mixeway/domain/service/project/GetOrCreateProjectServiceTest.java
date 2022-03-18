@@ -53,4 +53,8 @@ class GetOrCreateProjectServiceTest {
         Project project = createProjectService.getProjectId("empty","testProject",principal);
         assertNotNull(project);
     }
+
+    @Test
+    void getProject() {
+    }
 }

@@ -1,15 +1,15 @@
 package io.mixeway.domain.service.scanner;
 
 import io.mixeway.config.Constants;
-import io.mixeway.db.entity.Scanner;
-import io.mixeway.db.entity.WebApp;
-import io.mixeway.db.entity.WebAppScanStrategy;
+import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.ScannerRepository;
 import io.mixeway.db.repository.ScannerTypeRepository;
 import io.mixeway.db.repository.WebAppScanStrategyRepository;
+import io.mixeway.domain.service.scannertype.FindScannerTypeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -21,6 +21,7 @@ public class GetScannerService {
     private final ScannerRepository scannerRepository;
     private final ScannerTypeRepository scannerTypeRepository;
     private final WebAppScanStrategyRepository webAppScanStrategyRepository;
+    private final FindScannerTypeService findScannerTypeService;
 
     public Optional<Scanner> getCodeScanners() {
         return scannerRepository.findByScannerTypeInAndStatus(scannerTypeRepository.getCodeScanners(), true).stream().findFirst();
@@ -41,5 +42,11 @@ public class GetScannerService {
             }
         }
         return scanner;
+    }
+    public List<Scanner> getScannerForInfraScan(RoutingDomain routingDomain){
+        return scannerRepository.findByRoutingDomainAndStatusAndScannerTypeIn(routingDomain, true, findScannerTypeService.findInfraScannerTypes());
+    }
+    public List<Scanner> getScannerForInfraScan(){
+        return scannerRepository.findByScannerTypeInAndStatus(scannerTypeRepository.findByCategory(Constants.SCANER_CATEGORY_NETWORK), true);
     }
 }

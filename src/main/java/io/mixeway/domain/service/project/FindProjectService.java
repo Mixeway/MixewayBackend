@@ -44,4 +44,12 @@ public class FindProjectService {
     public List<Project> findProjectsWithAutoWebAppScan(){
         return projectRepository.findByAutoWebAppScan(true);
     }
+
+    public List<Project> findProjectsWithAutoInfraScan() {
+        return projectRepository.findByAutoInfraScan(true);
+    }
+
+    public List<Project> findProjectsWithInfraScanRunning(){
+        return projectRepository.getProjectWithInterfaceRunning();
+    }
 }

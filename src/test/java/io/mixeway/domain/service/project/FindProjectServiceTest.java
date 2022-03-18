@@ -72,4 +72,9 @@ class FindProjectServiceTest {
     void findProjectsWithAutoWebAppScan() {
         assertTrue(false);
     }
+
+    @Test
+    void findProjectsWithAutoInfraScan() {
+        assertTrue(false);
+    }
 }

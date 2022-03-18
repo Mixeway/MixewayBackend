@@ -16,6 +16,7 @@ import io.mixeway.db.entity.Asset;
 @Repository
 public interface AssetRepository extends JpaRepository<Asset,Long> {
 	Asset findByAssetId(String assetId);
+	Optional<Asset> findByProjectAndName(Project project, String name);
 	List<Asset> findByProjectId(Long id);
 	List<Asset> findByProject(Project project);
 	List<Asset> findByProjectIdAndOrigin(Long id, String origin);

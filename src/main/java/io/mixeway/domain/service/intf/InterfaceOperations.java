@@ -2,8 +2,10 @@ package io.mixeway.domain.service.intf;
 
 
 import io.mixeway.db.entity.Asset;
+import io.mixeway.db.entity.InfraScan;
 import io.mixeway.db.entity.Interface;
 import io.mixeway.db.entity.RoutingDomain;
+import io.mixeway.db.repository.InfraScanRepository;
 import io.mixeway.db.repository.InterfaceRepository;
 import io.mixeway.utils.IpAddressUtils;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class InterfaceOperations {
     private final InterfaceRepository interfaceRepository;
+    private final InfraScanRepository infraScanRepository;
 
 
     public void createInterfaceForAsset(Asset asset, String ip) {
@@ -80,7 +83,7 @@ public class InterfaceOperations {
             inf.setPrivateip(ip);
             inf.setAutoCreated(false);
             inf.setRoutingDomain(asset.getRoutingDomain());
-            interfaces.add(inf);
+            interfaces.add(interfaceRepository.saveAndFlush(inf));
         } else {
             interfaces.add(interfaceRepository.findByAssetInAndPrivateip(asset.getProject().getAssets(),ip).get());
         }
@@ -110,5 +113,20 @@ public class InterfaceOperations {
             log.warn("[Interface Operations] Nullpointer for got during checking if interface is already defined");
             return false;
         }
+    }
+    /**
+     * Double check for already running scan on interface
+     *
+     * @param intfs
+     * @return
+     */
+    public Boolean verifyInterfacesBeforeScan(List<Interface> intfs) {
+        List<InfraScan> manualRunningScans = infraScanRepository.findByIsAutomaticAndRunning(false, true);
+        for (InfraScan ns : manualRunningScans) {
+            if (org.springframework.util.CollectionUtils.containsAny(intfs, ns.getInterfaces()))
+                return true;
+
+        }
+        return false;
     }
 }
