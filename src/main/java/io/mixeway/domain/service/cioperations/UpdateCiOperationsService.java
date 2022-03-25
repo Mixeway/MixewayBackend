@@ -5,6 +5,8 @@
  */
 package io.mixeway.domain.service.cioperations;
 
+import io.mixeway.api.cioperations.model.CIVulnManageResponse;
+import io.mixeway.api.cioperations.service.CiOperationsService;
 import io.mixeway.db.entity.CiOperations;
 import io.mixeway.db.entity.CodeProject;
 import io.mixeway.db.repository.CiOperationsRepository;
@@ -12,14 +14,16 @@ import io.mixeway.domain.service.vulnmanager.VulnTemplate;
 import io.mixeway.utils.SecurityGatewayEntry;
 import io.mixeway.utils.SecurityQualityGateway;
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Date;
 import java.util.Optional;
 
 @Service
 @AllArgsConstructor
-public class UpdateCiOperations {
+public class UpdateCiOperationsService {
 
     private final SecurityQualityGateway securityQualityGateway;
     private final CiOperationsRepository ciOperationsRepository;
@@ -45,5 +49,21 @@ public class UpdateCiOperations {
             ciOperations.get().setOpenSourceHigh(gateway.getSastHigh());
             ciOperations.get().setResult(gateway.isPassed() ? "Ok":"Not Ok");
         }
+    }
+    public void updateCiOperations(CiOperations ciOperations, CIVulnManageResponse ciVulnManageResponse){
+        ciOperations.setEnded(new Date());
+        ciOperations.setResult(ciVulnManageResponse.getResult());
+        ciOperationsRepository.save(ciOperations);
+    }
+
+    public void updateCiOperations(CiOperations ciOperations, SecurityGatewayEntry securityGatewayEntry, CodeProject codeProject){
+        ciOperations.setResult(securityGatewayEntry.isPassed()?"Ok":"Not Ok");
+        ciOperations.setOpenSourceScan(StringUtils.isNotBlank(codeProject.getdTrackUuid()));
+        ciOperations.setSastScan(securityGatewayEntry.countSastVulns() > 0);
+        ciOperations.setOpenSourceHigh(securityGatewayEntry.getOsHigh());
+        ciOperations.setOpenSourceCrit(securityGatewayEntry.getOsCritical());
+        ciOperations.setSastCrit(securityGatewayEntry.getSastCritical());
+        ciOperations.setSastHigh(securityGatewayEntry.getSastHigh());
+        ciOperationsRepository.save(ciOperations);
     }
 }

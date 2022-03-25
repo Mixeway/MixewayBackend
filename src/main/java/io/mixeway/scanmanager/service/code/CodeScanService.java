@@ -4,7 +4,7 @@ import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.*;
-import io.mixeway.domain.service.cioperations.UpdateCiOperations;
+import io.mixeway.domain.service.cioperations.UpdateCiOperationsService;
 import io.mixeway.domain.service.project.FindProjectService;
 import io.mixeway.domain.service.project.GetOrCreateProjectService;
 import io.mixeway.domain.service.projectvulnerability.DeleteProjectVulnerabilityService;
@@ -47,7 +47,7 @@ public class CodeScanService {
     private final CodeAccessVerifier codeAccessVerifier;
     private final List<CodeScanClient> codeScanClients;
     private final VulnTemplate vulnTemplate;
-    private final UpdateCiOperations updateCiOperations;
+    private final UpdateCiOperationsService updateCiOperations;
     private final PermissionFactory permissionFactory;
     private final CreateOrGetCodeProjectService createOrGetCodeProjectService;
     private final GetProjectVulnerabilitiesService getProjectVulnerabilitiesService;

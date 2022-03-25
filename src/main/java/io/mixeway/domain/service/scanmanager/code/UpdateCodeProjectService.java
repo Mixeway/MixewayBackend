@@ -75,4 +75,8 @@ public class UpdateCodeProjectService {
         codeProject.setInQueue(false);
         return codeProjectRepository.saveAndFlush(codeProject);
     }
+    public void changeCommitId(String commitId, CodeProject codeProject){
+        codeProject.setCommitid(commitId);
+        codeProjectRepository.save(codeProject);
+    }
 }

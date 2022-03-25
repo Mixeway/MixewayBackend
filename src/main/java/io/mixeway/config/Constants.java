@@ -297,6 +297,8 @@ public class Constants {
     public static final String STATUS_QUEUEDGVM = "Queued";
     public static final String DUMMY_PASSWORD2 = "******";
     public static final String ADMIN_USERNAME = "admin";
+    public static final String NOT_OK = "Not Ok";
+    public static final String OK = "Ok";
 }
 
 

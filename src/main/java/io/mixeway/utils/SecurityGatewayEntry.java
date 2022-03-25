@@ -29,4 +29,12 @@ public class SecurityGatewayEntry {
     private int webMedium;
     private int webLow;
     private boolean passed;
+
+    public int countSastVulns(){
+        return this.sastCritical + sastHigh + sastMedium;
+    }
+    public int countOpenSourceVulns(){
+        return this.osCritical + this.osHigh + this.osMedium;
+    }
+
 }

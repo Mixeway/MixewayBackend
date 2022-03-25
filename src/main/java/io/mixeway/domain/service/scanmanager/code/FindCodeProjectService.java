@@ -26,4 +26,7 @@ public class FindCodeProjectService {
     public Optional<CodeProject> findById(long id){
         return codeProjectRepository.findById(id);
     }
+    public Optional<CodeProject> findByRepoUrl(String repoUrl){
+        return codeProjectRepository.findByRepoUrl(repoUrl);
+    }
 }

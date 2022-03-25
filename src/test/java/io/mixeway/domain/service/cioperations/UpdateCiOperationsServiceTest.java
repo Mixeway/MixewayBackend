@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author gsiewruk
  */
 @SpringBootTest
-class UpdateCiOperationsTest {
+class UpdateCiOperationsServiceTest {
 
     @Test
     void updateCiOperationsForOpenSource() {

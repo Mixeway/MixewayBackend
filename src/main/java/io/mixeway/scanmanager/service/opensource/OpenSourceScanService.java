@@ -2,7 +2,7 @@ package io.mixeway.scanmanager.service.opensource;
 
 import io.mixeway.api.protocol.OpenSourceConfig;
 import io.mixeway.db.entity.*;
-import io.mixeway.domain.service.cioperations.UpdateCiOperations;
+import io.mixeway.domain.service.cioperations.UpdateCiOperationsService;
 import io.mixeway.domain.service.opensource.CreateOpenSourceConfigService;
 import io.mixeway.domain.service.project.FindProjectService;
 import io.mixeway.domain.service.projectvulnerability.GetProjectVulnerabilitiesService;
@@ -14,6 +14,7 @@ import io.mixeway.scanmanager.model.OSSVulnerabilityModel;
 import io.mixeway.scanmanager.model.Projects;
 import io.mixeway.scanmanager.model.SASTRequestVerify;
 import io.mixeway.utils.PermissionFactory;
+import io.mixeway.utils.VulnerabilityModel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
@@ -37,7 +38,7 @@ public class OpenSourceScanService {
     private final List<OpenSourceScanClient> openSourceScanClients;
     private final VulnTemplate vulnTemplate;
     private final PermissionFactory permissionFactory;
-    private final UpdateCiOperations updateCiOperations;
+    private final UpdateCiOperationsService updateCiOperations;
     private final FindProjectService findProjectService;
     private final GetScannerService getScannerService;
     private final CreateOpenSourceConfigService createOpenSourceConfigService;
@@ -125,10 +126,10 @@ public class OpenSourceScanService {
      * @param openSourceVulns list of vulns
      */
    // @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void loadVulnsFromCICDToCodeProject(CodeProject codeProject, List<OSSVulnerabilityModel> openSourceVulns) {
+    public void loadVulnsFromCICDToCodeProject(CodeProject codeProject, List<VulnerabilityModel> openSourceVulns) {
         List<ProjectVulnerability> oldVulns = getProjectVulnerabilitiesService.getOldVulnsForCodeProjectAndSource(codeProject, vulnTemplate.SOURCE_OPENSOURCE);
         List<ProjectVulnerability> vulnToPersist = new ArrayList<>();
-        for (OSSVulnerabilityModel oSSVulnerabilityModel : openSourceVulns){
+        for (VulnerabilityModel oSSVulnerabilityModel : openSourceVulns){
             SoftwarePacket softwarePacket = getOrCreateSoftwarePacketService.getOrCreateSoftwarePacket(oSSVulnerabilityModel.getName(), oSSVulnerabilityModel.getPackageVersion());
 
             Vulnerability vuln = vulnTemplate.createOrGetVulnerabilityService.createOrGetVulnerabilityWithDescAndReferences(
