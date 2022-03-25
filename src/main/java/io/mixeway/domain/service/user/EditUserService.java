@@ -1,6 +1,7 @@
 package io.mixeway.domain.service.user;
 
 import io.mixeway.api.admin.model.EditUserModel;
+import io.mixeway.api.auth.model.Password;
 import io.mixeway.api.protocol.user.UserModel;
 import io.mixeway.db.entity.User;
 import io.mixeway.db.repository.UserRepository;
@@ -45,6 +46,21 @@ public class EditUserService {
         userRepository.save(user);
         if (userModel.getProjects().size()>0)
             getOrCreateUserService.loadProjectPermissionsForUser(userModel.getProjects(),user);
+        userRepository.save(user);
+    }
+
+    public void increaseLogins(User user){
+        user.setLogins(user.getLogins() + 1);
+        userRepository.save(user);
+    }
+    public void increaseFailedLogins(User user){
+        user.setFailedLogins(user.getFailedLogins()+1);
+        if (user.getFailedLogins() > 5)
+            user.setEnabled(false);
+        userRepository.save(user);
+    }
+    public void changePassword(User user, Password password){
+        user.setPassword(bCryptPasswordEncoder.encode(password.getPassword()));
         userRepository.save(user);
     }
 }

@@ -78,4 +78,9 @@ public class UpdateSettingsService {
         settings.setVulnAuditorUrl(vulnAuditorEditSettings.getUrl());
         settingsRepository.save(settings);
     }
+
+    public void initialize(Settings settings) {
+        settings.setInitialized(true);
+        settingsRepository.save(settings);
+    }
 }
