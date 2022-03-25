@@ -21,4 +21,16 @@ public class FindScannerTypeService {
         return Arrays.asList(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_OPENVAS),
                 scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_NESSUS), scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_NEXPOSE));
     }
+
+    public List<ScannerType> findAll() {
+        return scannerTypeRepository.findAll();
+    }
+
+    public ScannerType findByName(String name) {
+        return scannerTypeRepository.findByNameIgnoreCase(name);
+    }
+
+    public ScannerType findByNameIgnoreCase(String name) {
+        return scannerTypeRepository.findByNameIgnoreCase(name);
+    }
 }

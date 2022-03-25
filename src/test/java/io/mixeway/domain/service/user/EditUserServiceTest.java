@@ -1,4 +1,4 @@
-package io.mixeway.domain.service.scannertype;
+package io.mixeway.domain.service.user;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -9,20 +9,20 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author gsiewruk
  */
 @SpringBootTest
-class FindScannerTypeServiceTest {
+class EditUserServiceTest {
 
     @Test
-    void findInfraScannerTypes() {
-        assertFalse(true);
+    void enable() {
+        assertTrue(false);
     }
 
     @Test
-    void findAll() {
-        assertFalse(true);
+    void disable() {
+        assertTrue(false);
     }
 
     @Test
-    void findByName() {
-        assertFalse(true);
+    void edit() {
+        assertTrue(false);
     }
 }

@@ -52,4 +52,7 @@ public class FindProjectService {
     public List<Project> findProjectsWithInfraScanRunning(){
         return projectRepository.getProjectWithInterfaceRunning();
     }
+    public List<Project> findAll() {
+        return projectRepository.findAll();
+    }
 }

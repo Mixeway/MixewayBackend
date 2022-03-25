@@ -77,4 +77,9 @@ class FindProjectServiceTest {
     void findProjectsWithAutoInfraScan() {
         assertTrue(false);
     }
+
+    @Test
+    void findAll() {
+        assertTrue(false);
+    }
 }
