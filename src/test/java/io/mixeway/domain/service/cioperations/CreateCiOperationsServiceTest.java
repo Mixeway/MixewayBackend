@@ -1,0 +1,28 @@
+package io.mixeway.domain.service.cioperations;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * @author gsiewruk
+ */
+@SpringBootTest
+class CreateCiOperationsServiceTest {
+
+    @Test
+    void create() {
+        assertFalse(true);
+    }
+
+    @Test
+    void testCreate() {
+        assertFalse(true);
+    }
+
+    @Test
+    void testCreate1() {
+        assertFalse(true);
+    }
+}

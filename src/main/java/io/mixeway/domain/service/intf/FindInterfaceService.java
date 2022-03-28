@@ -1,5 +1,6 @@
 package io.mixeway.domain.service.intf;
 
+import io.mixeway.db.entity.Asset;
 import io.mixeway.db.entity.Interface;
 import io.mixeway.db.entity.Project;
 import io.mixeway.db.entity.RoutingDomain;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -31,5 +33,17 @@ public class FindInterfaceService {
 
     public List<Interface> getInterfacesInProject(Project project){
         return interfaceRepository.findByAssetInAndActive(new ArrayList<>(project.getAssets()), true);
+    }
+
+    public Optional<Interface> getInterfacesForProjectAndWithIP(Project project, String ipaddress) {
+        return  interfaceRepository.findByAssetInAndPrivateip(project.getAssets(), ipaddress);
+    }
+
+    public List<Interface> findByAssetIn(ArrayList<Asset> assets) {
+        return interfaceRepository.findByAssetIn(assets);
+    }
+
+    public Optional<Interface> findById(Long assetId) {
+        return interfaceRepository.findById(assetId);
     }
 }

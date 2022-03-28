@@ -129,4 +129,8 @@ public class InterfaceOperations {
         }
         return false;
     }
+
+    public void storeInterfaces(List<Interface> interfaceList){
+        interfaceRepository.saveAll(interfaceList);
+    }
 }

@@ -19,4 +19,8 @@ public class FindRoutingDomainService {
     public Optional<RoutingDomain> findById(Long id) {
         return routingDomainRepository.findById(id);
     }
+
+    public RoutingDomain findByName(String defaultRoutingDomain) {
+        return routingDomainRepository.findByName(defaultRoutingDomain);
+    }
 }

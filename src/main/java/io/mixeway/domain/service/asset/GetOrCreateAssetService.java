@@ -1,7 +1,9 @@
 package io.mixeway.domain.service.asset;
 
+import io.mixeway.config.Constants;
 import io.mixeway.db.entity.Asset;
 import io.mixeway.db.entity.Project;
+import io.mixeway.db.entity.RoutingDomain;
 import io.mixeway.db.repository.AssetRepository;
 import io.mixeway.db.repository.InterfaceRepository;
 import io.mixeway.domain.service.routingdomain.CreateOrGetRoutingDomainService;
@@ -35,5 +37,9 @@ public class GetOrCreateAssetService {
             return assetRepository.saveAndFlush(a);
         }
 
+    }
+
+    public Asset getOrCreateAsset(String name, RoutingDomain routingDomain, Project project) {
+        return assetRepository.save(new Asset(name,routingDomain, project));
     }
 }
