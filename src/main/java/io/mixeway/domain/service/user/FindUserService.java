@@ -31,4 +31,8 @@ public class FindUserService {
     public Optional<User> findByUsername(String username){
         return userRepository.findByUsername(username);
     }
+
+    public Optional<User> findByUsernameOrCommonName(String name, String name1) {
+        return userRepository.findByUsernameOrCommonName(name,name);
+    }
 }

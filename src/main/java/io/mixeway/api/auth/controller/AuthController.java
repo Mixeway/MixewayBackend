@@ -5,6 +5,7 @@ import io.mixeway.api.auth.model.PasswordAuthModel;
 import io.mixeway.api.auth.model.StatusEntity;
 import io.mixeway.api.auth.service.AuthService;
 import io.mixeway.domain.exceptions.NotValidRoleException;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.web.firewall.FirewalledRequest;
@@ -17,13 +18,11 @@ import java.io.IOException;
 import java.security.Principal;
 
 @RestController
+@RequiredArgsConstructor
 public class AuthController {
 
     private final AuthService authService;
 
-    AuthController (AuthService authService){
-        this.authService = authService;
-    }
 
     @PreAuthorize("permitAll()")
     @GetMapping(value = "/v2/auth/x509")

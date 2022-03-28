@@ -55,4 +55,12 @@ public class FindProjectService {
     public List<Project> findAll() {
         return projectRepository.findAll();
     }
+
+    public Optional<Project> getProjectByName(String projectName) {
+        return projectRepository.getProjectByName(projectName);
+    }
+
+    public Long count() {
+        return projectRepository.count();
+    }
 }
