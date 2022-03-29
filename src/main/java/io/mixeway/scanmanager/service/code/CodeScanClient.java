@@ -1,6 +1,5 @@
 package io.mixeway.scanmanager.service.code;
 
-import io.mixeway.db.entity.CodeGroup;
 import io.mixeway.db.entity.CodeProject;
 import io.mixeway.db.entity.ProjectVulnerability;
 import io.mixeway.db.entity.Scanner;
@@ -18,13 +17,13 @@ import java.text.ParseException;
 import java.util.List;
 
 public interface CodeScanClient {
-    void loadVulnerabilities(Scanner scanner, CodeGroup codeGroup, String urlToGetNext, Boolean single, CodeProject codeProject, List<ProjectVulnerability> codeVulns) throws ParseException, JSONException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, URISyntaxException;
-    Boolean runScan(CodeGroup cg,CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, JSONException, ParseException;
-    boolean isScanDone(CodeGroup cg, CodeProject cp) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, ParseException, JSONException;
-    boolean canProcessRequest(CodeGroup cg);
+    void loadVulnerabilities(Scanner scanner, String urlToGetNext, Boolean single, CodeProject codeProject, List<ProjectVulnerability> codeVulns) throws ParseException, JSONException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, URISyntaxException;
+    Boolean runScan(CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, JSONException, ParseException;
+    boolean isScanDone(CodeProject cp) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, ParseException, JSONException;
+    boolean canProcessRequest(CodeProject cp);
     boolean canProcessRequest(Scanner scanner);
     List<SASTProject> getProjects(Scanner scanner) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException;
     boolean createProject(Scanner scanner, CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException;
-    void putInformationAboutScanFromRemote(CodeProject codeProject, CodeGroup codeGroup, String jobId);
+    void putInformationAboutScanFromRemote(CodeProject codeProject, String jobId);
 
     }

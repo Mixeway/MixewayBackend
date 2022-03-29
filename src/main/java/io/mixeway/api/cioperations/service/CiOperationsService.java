@@ -17,7 +17,8 @@ import io.mixeway.db.repository.ProjectRepository;
 import io.mixeway.domain.service.cioperations.CreateCiOperationsService;
 import io.mixeway.domain.service.cioperations.FindCiOperationsService;
 import io.mixeway.domain.service.cioperations.UpdateCiOperationsService;
-import io.mixeway.domain.service.scanmanager.code.CreateOrGetCodeGroupService;
+import io.mixeway.domain.service.project.FindProjectService;
+import io.mixeway.domain.service.project.GetOrCreateProjectService;
 import io.mixeway.domain.service.scanmanager.code.CreateOrGetCodeProjectService;
 import io.mixeway.domain.service.scanmanager.code.FindCodeProjectService;
 import io.mixeway.domain.service.scanmanager.code.UpdateCodeProjectService;
@@ -66,7 +67,8 @@ public class CiOperationsService {
     private final UpdateCiOperationsService updateCiOperationsService;
     private final FindCodeProjectService findCodeProjectService;
     private final CreateOrGetCodeProjectService createOrGetCodeProjectService;
-    private final CreateOrGetCodeGroupService createOrGetCodeGroupService;
+    private final GetOrCreateProjectService getOrCreateProjectService;
+    private final FindProjectService findProjectService;
     ArrayList<String> severitiesHigh = new ArrayList<String>() {{
         add("Critical");
         add("High");
@@ -90,10 +92,10 @@ public class CiOperationsService {
         return new ResponseEntity<>(findCiOperationsService.findByProjects(permissionFactory.getProjectForPrincipal(principal)), HttpStatus.OK);
     }
 
-    public ResponseEntity<Status> startPipeline(Long projectId, String groupName, String codeProjectName, String commitId, Principal principal) {
+    public ResponseEntity<Status> startPipeline(Long projectId, String codeProjectName, String commitId, Principal principal) {
         Optional<Project> project = projectRepository.findById(projectId);
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())) {
-            SASTRequestVerify verifyRequest = codeAccessVerifier.verifyPermissions(projectId, groupName, codeProjectName, true);
+            SASTRequestVerify verifyRequest = codeAccessVerifier.verifyIfCodeProjectInProject(projectId, codeProjectName);
             if (verifyRequest.getValid()) {
                 Optional<CiOperations> operation = findCiOperationsService.findByCodeProjectAndCommitId(verifyRequest.getCp(), commitId);
                 if (operation.isPresent()){
@@ -110,13 +112,13 @@ public class CiOperationsService {
     }
 
     public ResponseEntity<Status> codeScan(Long id, String groupName, String projectName, String commitId, Principal principal) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, ParseException, IOException, JSONException {
-        return codeScanService.createScanForCodeProject(id,groupName,projectName);
+        return codeScanService.createScanForCodeProject(id,projectName);
     }
 
     public ResponseEntity<CIVulnManageResponse> codeVerify(String codeGroup, String codeProject, Long id, String commitid, Principal principal) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         Optional<Project> project = projectRepository.findById(id);
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal,project.get())) {
-            SASTRequestVerify sastRequestVerify = codeAccessVerifier.verifyPermissions(id,codeGroup,codeProject,false);
+            SASTRequestVerify sastRequestVerify = codeAccessVerifier.verifyIfCodeProjectInProject(id,codeProject);
             if (sastRequestVerify.getValid()){
                 CodeProject codeProjectToVerify =sastRequestVerify.getCp();
                 CIVulnManageResponse ciVulnManageResponse = new CIVulnManageResponse();
@@ -199,16 +201,17 @@ public class CiOperationsService {
      * @return info about scanners
      */
     public ResponseEntity<PrepareCIOperation> getInfoForCI(GetInfoRequest getInfoRequest, Principal principal) throws Exception {
+        Project project = getOrCreateProjectService.getProjectId(Constants.CIID_NONE, getInfoRequest.getRepoName(), principal);
         try {
             switch (getInfoRequest.getScope()) {
                 case Constants.CI_SCOPE_OPENSOURCE:
-                    CodeProject codeProject = createOrGetCodeProjectService.createOrGetCodeProject(getInfoRequest.getRepoUrl(), getInfoRequest.getRepoName(), getInfoRequest.getBranch(), principal);
+                    CodeProject codeProject = createOrGetCodeProjectService.createCodeProject(getInfoRequest.getRepoUrl(), getInfoRequest.getRepoName(), getInfoRequest.getBranch(), principal, project);
                     if (StringUtils.isBlank(codeProject.getdTrackUuid())) {
                         openSourceScanService.createProjectOnOpenSourceScanner(codeProject);
                     }
                     OpenSourceConfig openSourceConfig = openSourceScanService
                             .getOpenSourceScannerConfiguration(
-                                    codeProject.getCodeGroup().getProject().getId(),
+                                    codeProject.getProject().getId(),
                                     codeProject.getName(),
                                     codeProject.getName(),
                                     principal)
@@ -242,17 +245,9 @@ public class CiOperationsService {
     public ResponseEntity<Status> loadVulnerabilitiesFromCICDToProject(List<VulnerabilityModel> vulns, Long projectId,
                                                                        String codeProjectName, String branch,
                                                                        String commitId, Principal principal) throws Exception {
-        Optional<Project> project;
-        if (projectId == null){
-            CodeProject codeProject = createOrGetCodeProjectService.createOrGetCodeProject(null, codeProjectName, branch, principal);
-            project = Optional.ofNullable(codeProject.getCodeGroup().getProject());
-        }else {
-            project = projectRepository.findById(projectId);
-        }
-
-        if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
-            CodeProject codeProject = createOrGetCodeProjectService.createOrGetCodeProject(null, codeProjectName, branch, principal);
-            log.info("[CICD] Get results for {}, proceeding with load", codeProject.getName());
+        Optional<Project> project = findProjectService.findProjectById(projectId);
+        if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())) {
+            CodeProject codeProject = createOrGetCodeProjectService.getOrCreateCodeProject(project.get(),codeProjectName, branch);
             codeProject.setCommitid(commitId);
 
             List<VulnerabilityModel> sastVulns = vulns.stream().filter(v -> v.getScannerType().equals(ScannerType.SAST)).collect(Collectors.toList());
@@ -275,9 +270,11 @@ public class CiOperationsService {
             }
 
             return new ResponseEntity<>(new Status(createCIOperationsForCICDRequest(codeProject).getResult()), HttpStatus.OK);
+
         } else {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
+
     }
 
     public ResponseEntity<Status> loadVulnerabilitiesForAnonymousProject(List<VulnerabilityModel> vulns, String codeProjectName, Principal principal) {
@@ -301,8 +298,7 @@ public class CiOperationsService {
             if (codeProjectToCheck.isPresent()){
                 codeProject = codeProjectToCheck.get();
             } else {
-                CodeGroup codeGroup = createOrGetCodeGroupService.createOrGetCodeGroup(principal, codeProjectName, null, unknownProject, null, null, null);
-                codeProject = createOrGetCodeProjectService.createCodeProject(null, null, null, null, null, codeProjectName, unknownProject,principal);
+                codeProject = createOrGetCodeProjectService.createCodeProject(unknownProject, codeProjectName, "");
             }
             List<VulnerabilityModel> sastVulns = vulns.stream().filter(v -> v.getScannerType().equals(ScannerType.SAST)).collect(Collectors.toList());
             if (sastVulns.size() > 0 ){
@@ -338,7 +334,7 @@ public class CiOperationsService {
                     }
                     OpenSourceConfig openSourceConfig = openSourceScanService
                             .getOpenSourceScannerConfiguration(
-                                    codeProject.getCodeGroup().getProject().getId(),
+                                    codeProject.getProject().getId(),
                                     codeProject.getName(),
                                     codeProject.getName(),
                                     principal)
@@ -354,7 +350,7 @@ public class CiOperationsService {
 
     public ResponseEntity<Status> performSastScanForCodeProject(Long codeProjectId, Principal principal) {
         Optional<CodeProject> codeProject = codeProjectRepository.findById(codeProjectId);
-        if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getCodeGroup().getProject())) {
+        if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getProject())) {
             codeProject.get().setInQueue(true);
             codeProjectRepository.save(codeProject.get());
             log.info("{} put SAST Project in queue - {}", principal.getName(), codeProject.get().getName());
@@ -367,7 +363,7 @@ public class CiOperationsService {
 
     public ResponseEntity<CIVulnManageResponse> verifyCodeProject(Long codeProjectId, Principal principal) {
         Optional<CodeProject> codeProject = codeProjectRepository.findById(codeProjectId);
-        if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getCodeGroup().getProject())) {
+        if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getProject())) {
             SecurityGatewayEntry securityGatewayEntry = securityQualityGateway.buildGatewayResponse(vulnTemplate.projectVulnerabilityRepository.findByCodeProject(codeProject.get()));
             return new ResponseEntity<CIVulnManageResponse>(CIVulnManageResponse
                     .builder()
@@ -390,7 +386,7 @@ public class CiOperationsService {
     // TODO Status & grade
     public ResponseEntity<SecurityGatewayResponse> getVulnerabilitiesForCodeProject(Long codeProjectId, Principal principal) throws IOException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException {
         Optional<CodeProject> codeProject = codeProjectRepository.findById(codeProjectId);
-        if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getCodeGroup().getProject())) {
+        if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getProject())) {
             List<ProjectVulnerability> vulns = vulnTemplate.projectVulnerabilityRepository.findByCodeProject(codeProject.get());
             openSourceScanService.loadVulnerabilities(codeProject.get());
             List<Vuln> vulnList = new ArrayList<>();

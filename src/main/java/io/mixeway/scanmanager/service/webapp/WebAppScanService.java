@@ -71,7 +71,7 @@ public class WebAppScanService {
                     for (WebAppScanModel webAppScanModel : webAppScanModelList) {
                         WebApp webApp = getOrCreateWebAppService.getOrCreateWebApp(webAppScanModel.getUrl(), project.get(),webAppScanModel,origin,requestId);
                         updateWebAppService.updateAndPutWebAppToQueue(webApp,webAppScanModel,requestId,true);
-                        updateWebAppService.setCodeProjectLink(webApp,project.get(),webAppScanModel);
+                        //updateWebAppService.setCodeProjectLink(webApp,project.get(),webAppScanModel);
                         log.info("WebApp {} in project {} added to queue", webApp.getUrl(), project.get().getName());
                     }
                     return new ResponseEntity<>(new Status("Scan is requested", requestId), HttpStatus.CREATED);

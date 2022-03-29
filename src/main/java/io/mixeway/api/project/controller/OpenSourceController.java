@@ -1,7 +1,7 @@
 package io.mixeway.api.project.controller;
 
-import io.mixeway.rest.project.model.SoftVuln;
-import io.mixeway.rest.project.service.OpenSourceService;
+import io.mixeway.api.project.model.SoftVuln;
+import io.mixeway.api.project.service.OpenSourceService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;

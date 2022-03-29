@@ -18,12 +18,12 @@ public class CxGitCreate {
          if (codeProject.getRepoUrl() != null){
              urlToParse = codeProject.getRepoUrl().split("://");
          } else {
-             urlToParse = codeProject.getCodeGroup().getRepoUrl().split("://");
+             urlToParse = codeProject.getRepoUrl().split("://");
          }
-         if (codeProject.getCodeGroup().getRepoUsername() ==null && codeProject.getCodeGroup().getRepoPassword() == null){
+         if (codeProject.getRepoUsername() ==null && codeProject.getRepoPassword() == null){
              this.url = urlToParse[0] + "://" + urlToParse[1];
          } else {
-             this.url = urlToParse[0] + "://" + (codeProject.getCodeGroup().getRepoUsername() != null ? codeProject.getCodeGroup().getRepoUsername() + ":" + pass + "@" : pass + "@") + urlToParse[1];
+             this.url = urlToParse[0] + "://" + (codeProject.getRepoUsername() != null ? codeProject.getRepoUsername() + ":" + pass + "@" : pass + "@") + urlToParse[1];
          }
      }
 }

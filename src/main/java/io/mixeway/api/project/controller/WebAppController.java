@@ -1,11 +1,11 @@
 package io.mixeway.api.project.controller;
 
+import io.mixeway.api.project.model.WebAppCard;
+import io.mixeway.api.project.model.WebAppPutModel;
+import io.mixeway.api.project.service.WebAppService;
 import io.mixeway.db.entity.ProjectVulnerability;
-import io.mixeway.pojo.Status;
-import io.mixeway.rest.project.model.RunScanForWebApps;
-import io.mixeway.rest.project.model.WebAppCard;
-import io.mixeway.rest.project.model.WebAppPutModel;
-import io.mixeway.rest.project.service.WebAppService;
+import io.mixeway.utils.RunScanForWebApps;
+import io.mixeway.utils.Status;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;

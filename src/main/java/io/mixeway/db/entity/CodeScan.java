@@ -11,7 +11,6 @@ import javax.persistence.*;
 @EntityListeners(AuditingEntityListener.class)
 public class CodeScan {
     private Long id;
-    private CodeGroup codeGroup;
     private CodeProject codeProject;
     private String inserted;
     private boolean inQueue;
@@ -23,16 +22,6 @@ public class CodeScan {
 
     public void setRunning(boolean running) {
         this.running = running;
-    }
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "codegroup_id", nullable = false)
-    public CodeGroup getCodeGroup() {
-        return codeGroup;
-    }
-
-    public void setCodeGroup(CodeGroup codeGroup) {
-        this.codeGroup = codeGroup;
     }
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "codeproject_id", nullable = false)

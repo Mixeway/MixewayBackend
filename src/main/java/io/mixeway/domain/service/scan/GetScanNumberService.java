@@ -1,6 +1,7 @@
 package io.mixeway.domain.service.scan;
 
-import io.mixeway.db.repository.CodeGroupRepository;
+import io.mixeway.db.entity.CodeProject;
+import io.mixeway.db.repository.CodeProjectRepository;
 import io.mixeway.db.repository.InfraScanRepository;
 import io.mixeway.db.repository.WebAppRepository;
 import lombok.RequiredArgsConstructor;
@@ -14,13 +15,13 @@ import org.springframework.stereotype.Service;
 public class GetScanNumberService {
     private final WebAppRepository webAppRepository;
     private final InfraScanRepository infraScanRepository;
-    private final CodeGroupRepository codeGroupRepository;
+    private final CodeProjectRepository codeProjectRepository;
 
 
     public Long getNumberOfScansInQueue() {
-        return (webAppRepository.countByInQueue(true) + codeGroupRepository.countByInQueue(true) + infraScanRepository.countByInQueue(true));
+        return (webAppRepository.countByInQueue(true) + codeProjectRepository.countByInQueue(true) + infraScanRepository.countByInQueue(true));
     }
     public Long getNumberOfScansRunning() {
-        return (webAppRepository.countByRunning(true) + codeGroupRepository.countByRunning(true) + infraScanRepository.countByRunning(true));
+        return (webAppRepository.countByRunning(true) + codeProjectRepository.countByRunning(true) + infraScanRepository.countByRunning(true));
     }
 }

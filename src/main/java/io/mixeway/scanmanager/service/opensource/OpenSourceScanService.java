@@ -59,7 +59,7 @@ public class OpenSourceScanService {
      */
     public ResponseEntity<OpenSourceConfig> getOpenSourceScannerConfiguration(Long id, String codeGroup, String codeProject, Principal principal) {
         Optional<Project> project = findProjectService.findProjectById(id);
-        SASTRequestVerify sastRequestVerify = codeAccessVerifier.verifyPermissions(id,codeGroup,codeProject,true);
+        SASTRequestVerify sastRequestVerify = codeAccessVerifier.verifyIfCodeProjectInProject(id,codeProject);
         Scanner openSourceScanner = getScannerService.getOpenSourceScanner();
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal,project.get()) && sastRequestVerify.getValid() && openSourceScanner!=null) {
             //TODO Fix it so it can be flexible ATM works only for dTrack
@@ -152,7 +152,7 @@ public class OpenSourceScanService {
                 vulnTemplate.projectVulnerabilityRepository.deleteProjectVulnerabilityIn(toRemove);
             }
         } catch (Exception e){
-            log.error("[OpenSourceScanService] For some reason unable to delete old vulns for codeproject {} / {}", codeProject.getName(),codeProject.getCodeGroup().getProject().getName());
+            log.error("[OpenSourceScanService] For some reason unable to delete old vulns for codeproject {} / {}", codeProject.getName(),codeProject.getProject().getName());
         }
     }
 }

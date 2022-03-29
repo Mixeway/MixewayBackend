@@ -1,13 +1,22 @@
 package io.mixeway.api.project.service;
 
+import io.mixeway.api.project.model.*;
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
-import io.mixeway.db.repository.*;
-import io.mixeway.domain.service.vulnerability.VulnTemplate;
-import io.mixeway.pojo.PermissionFactory;
-import io.mixeway.rest.project.model.*;
-import io.mixeway.rest.utils.ProjectRiskAnalyzer;
-import org.apache.commons.lang3.StringUtils;
+import io.mixeway.domain.service.intf.FindInterfaceService;
+import io.mixeway.domain.service.project.FindProjectService;
+import io.mixeway.domain.service.project.UpdateProjectService;
+import io.mixeway.domain.service.proxy.GetOrCreateProxyService;
+import io.mixeway.domain.service.routingdomain.FindRoutingDomainService;
+import io.mixeway.domain.service.scanmanager.code.FindCodeProjectService;
+import io.mixeway.domain.service.scanner.FindScannerService;
+import io.mixeway.domain.service.softwarepackage.FindSoftwarePacketService;
+import io.mixeway.domain.service.vulnhistory.OperateOnVulnHistoryService;
+import io.mixeway.domain.service.vulnmanager.VulnTemplate;
+import io.mixeway.utils.PermissionFactory;
+import io.mixeway.utils.ProjectRiskAnalyzer;
+import io.mixeway.utils.Status;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -25,47 +34,21 @@ import java.util.stream.Stream;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class ProjectRestService {
     private static final Logger log = LoggerFactory.getLogger(ProjectRestService.class);
 
-    private final RoutingDomainRepository routingDomainRepository;
-    private final ProxiesRepository proxiesRepository;
-    private final ProjectRepository projectRepository;
-    private final InterfaceRepository interfaceRepository;
-    private final WebAppRepository webAppRepository;
     private final ProjectRiskAnalyzer projectRiskAnalyzer;
-    private final CodeProjectRepository codeProjectRepository;
-    private final VulnHistoryRepository vulnHistoryRepository;
     private final PermissionFactory permissionFactory;
-    private final SoftwarePacketRepository softwarePacketRepository;
-    private final ScannerRepository scannerRepository;
     private final VulnTemplate vulnTemplate;
-
-    ProjectRestService(RoutingDomainRepository routingDomainRepository,
-                        ProxiesRepository proxiesRepository,
-                        ProjectRepository projectRepository,
-                        InterfaceRepository interfaceRepository,
-                        ProjectRiskAnalyzer projectRiskAnalyzer,
-                        CodeProjectRepository codeProjectRepository,
-                        VulnHistoryRepository vulnHistoryRepository,
-                        ScannerRepository scannerRepository,
-                       VulnTemplate vulnTemplate,
-                       PermissionFactory permissionFactory,
-                       SoftwarePacketRepository softwarePacketRepository,
-                       WebAppRepository webAppRepository){
-        this.routingDomainRepository = routingDomainRepository;
-        this.proxiesRepository = proxiesRepository;
-        this.projectRepository = projectRepository;
-        this.interfaceRepository = interfaceRepository;
-        this.projectRiskAnalyzer = projectRiskAnalyzer;
-        this.softwarePacketRepository = softwarePacketRepository;
-        this.permissionFactory = permissionFactory;
-        this.codeProjectRepository = codeProjectRepository;
-        this.vulnHistoryRepository = vulnHistoryRepository;
-        this.scannerRepository = scannerRepository;
-        this.vulnTemplate = vulnTemplate;
-        this.webAppRepository = webAppRepository;
-    }
+    private final FindProjectService findProjectService;
+    private final FindInterfaceService findInterfaceService;
+    private final FindSoftwarePacketService findSoftwarePacketService;
+    private final FindScannerService findScannerService;
+    private final GetOrCreateProxyService getOrCreateProxyService;
+    private final OperateOnVulnHistoryService operateOnVulnHistoryService;
+    private final UpdateProjectService updateProjectService;
+    private final FindRoutingDomainService findRoutingDomainService;
 
 
     private ArrayList<String> severityList = new ArrayList<String>() {{
@@ -77,25 +60,25 @@ public class ProjectRestService {
 
 
     public ResponseEntity<RiskCards> showProjectRisk(Long id, Principal principal) {
-        Optional<Project> project = projectRepository.findById(id);
+        Optional<Project> project = findProjectService.findProjectById(id);
         if ( project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             int webAppRisk = projectRiskAnalyzer.getProjectWebAppRisk(project.get());
             int assetRisk = projectRiskAnalyzer.getProjectInfraRisk(project.get());
             int codeRisk = projectRiskAnalyzer.getProjectCodeRisk(project.get());
             int auditRisk = projectRiskAnalyzer.getProjectAuditRisk(project.get());
             int openSourceRisk = projectRiskAnalyzer.getProjectOpenSourceRisk(project.get());
-            int codeProjects = codeProjectRepository.findByCodeGroupIn(project.get().getCodes()).size();
+            int codeProjects = project.get().getCodes().size();
             RiskCards riskCards = new RiskCards();
             riskCards.setEnableVulnAuditor(project.get().isVulnAuditorEnable());
             riskCards.setWebAppNumber(project.get().getWebapps().size());
             riskCards.setWebAppRisk(Math.min(webAppRisk, 100));
             riskCards.setAudit(project.get().getNodes().size());
             riskCards.setAuditRisk(Math.min(auditRisk, 100));
-            riskCards.setAssetNumber(interfaceRepository.findByAssetIn(new ArrayList<>(project.get().getAssets())).size());
+            riskCards.setAssetNumber(findInterfaceService.findByAssetIn(new ArrayList<>(project.get().getAssets())).size());
             riskCards.setAssetRisk(Math.min(assetRisk, 100));
             riskCards.setCodeRepoNumber(codeProjects == 0 ? project.get().getCodes().size() : codeProjects);
             riskCards.setCodeRisk(Math.min(codeRisk, 100));
-            riskCards.setOpenSourceLibs(softwarePacketRepository.getSoftwarePacketForProject(project.get().getId()).size());
+            riskCards.setOpenSourceLibs(findSoftwarePacketService.getSoftwarePacketForProject(project.get().getId()).size());
             riskCards.setOpenSourceRisk(Math.min(openSourceRisk, 100));
             riskCards.setProjectName(project.get().getName());
             riskCards.setProjectDescription(project.get().getDescription());
@@ -108,81 +91,32 @@ public class ProjectRestService {
 
 
     public ResponseEntity<List<RoutingDomain>> showRoutingDomains() {
-        return new ResponseEntity<>(scannerRepository.getDistinctByRoutingDomain(), HttpStatus.OK);
+        return new ResponseEntity<>(findScannerService.getDistinctByRoutingDomain(), HttpStatus.OK);
     }
 
     public ResponseEntity<List<Proxies>> showProxies() {
-        return new ResponseEntity<>(proxiesRepository.findAll(), HttpStatus.OK);
+        return new ResponseEntity<>(getOrCreateProxyService.findAll(), HttpStatus.OK);
     }
 
 
 
     public ResponseEntity<ProjectVulnTrendChart> showVulnTrendChart(Long id, Principal principal) {
-        Optional<Project> project = projectRepository.findById(id) ;
-        LinkedList<Integer> infraVulnTrend = new LinkedList<>();
-        LinkedList<Integer> webAppVulnTrend = new LinkedList<>();
-        LinkedList<Integer> codeVulnTrend = new LinkedList<>();
-        LinkedList<Integer> auditVulnTrend = new LinkedList<>();
-        LinkedList<Integer> softwareVulnTrend = new LinkedList<>();
-        LinkedList<String> dates = new LinkedList<>();
-        List<ProjectVulnTrendChartSerie>series = new ArrayList<>();
+        Optional<Project> project = findProjectService.findProjectById(id) ;
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())) {
-            List<VulnHistory> vulnHistories = vulnHistoryRepository.getLastTwoVulnForProject(project.get().getId()) ;
-            for(VulnHistory vulnHistory : vulnHistories){
-                infraVulnTrend.add(vulnHistory.getInfrastructureVulnHistory().intValue());
-                webAppVulnTrend.add(vulnHistory.getWebAppVulnHistory().intValue());
-                codeVulnTrend.add(vulnHistory.getCodeVulnHistory().intValue());
-                auditVulnTrend.add(vulnHistory.getAuditVulnHistory().intValue());
-                softwareVulnTrend.add(vulnHistory.getSoftwarePacketVulnNumber().intValue());
-                dates.add(vulnHistory.getInserted().split(" ")[0]);
-            }
-            if (infraVulnTrend.stream().mapToInt(i-> i).sum() >0){
-                ProjectVulnTrendChartSerie infraSerie = new ProjectVulnTrendChartSerie();
-                infraSerie.setName(Constants.INFRA_VULN_TREND_LABEL);
-                infraSerie.setValues(infraVulnTrend);
-                series.add(infraSerie);
-            }
-            if (webAppVulnTrend.stream().mapToInt(i-> i).sum() >0){
-                ProjectVulnTrendChartSerie webAPpSerie = new ProjectVulnTrendChartSerie();
-                webAPpSerie.setName(Constants.WEBAPP_VULN_TREND_LABEL);
-                webAPpSerie.setValues(webAppVulnTrend);
-                series.add(webAPpSerie);
-            }
-            if (codeVulnTrend.stream().mapToInt(i-> i).sum() >0){
-                ProjectVulnTrendChartSerie codeSerie = new ProjectVulnTrendChartSerie();
-                codeSerie.setName(Constants.CODE_VULN_TREND_LABEL);
-                codeSerie.setValues(codeVulnTrend);
-                series.add(codeSerie);
-            }
-            if (auditVulnTrend.stream().mapToInt(i-> i).sum() >0){
-                ProjectVulnTrendChartSerie auditSerie = new ProjectVulnTrendChartSerie();
-                auditSerie.setName(Constants.AUDIT_VULN_TREND_LABEL);
-                auditSerie.setValues(auditVulnTrend);
-                series.add(auditSerie);
-            }
-            if (softwareVulnTrend.stream().mapToInt(i -> i).sum() > 0){
-                ProjectVulnTrendChartSerie softSerie = new ProjectVulnTrendChartSerie();
-                softSerie.setName(Constants.SOFT_VULN_TREND_LABEL);
-                softSerie.setValues(softwareVulnTrend);
-                series.add(softSerie);
-            }
-            ProjectVulnTrendChart projectVulnTrendChart = new ProjectVulnTrendChart();
-            projectVulnTrendChart.setDates(dates);
-            projectVulnTrendChart.setSeries(series);
-            return new ResponseEntity<>(projectVulnTrendChart,HttpStatus.OK);
+            return new ResponseEntity<>(operateOnVulnHistoryService.getVulnTrendChart(project.get()),HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
     }
 
     public ResponseEntity<HashMap<String,Long>> showSeverityChart(Long id, Principal principal) {
-        Optional<Project> project = projectRepository.findById(id);
+        Optional<Project> project = findProjectService.findProjectById(id);
         HashMap<String,Long> pieData = new HashMap<>();
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             for (String severity : severityList){
                 pieData.put(severity,
-                        (vulnTemplate.projectVulnerabilityRepository.countByAnInterfaceInAndSeverity(interfaceRepository.findByAssetIn(new ArrayList<>(project.get().getAssets())),severity)
-                        + vulnTemplate.projectVulnerabilityRepository.countByCodeProjectInAndSeverityAndAnalysisNot(codeProjectRepository.findByCodeGroupIn(project.get().getCodes()),severity,Constants.FORTIFY_NOT_AN_ISSUE)
+                        (vulnTemplate.projectVulnerabilityRepository.countByAnInterfaceInAndSeverity(findInterfaceService.findByAssetIn(new ArrayList<>(project.get().getAssets())),severity)
+                        + vulnTemplate.projectVulnerabilityRepository.countByCodeProjectInAndSeverityAndAnalysisNot(new ArrayList<>(project.get().getCodes()),severity,Constants.FORTIFY_NOT_AN_ISSUE)
                         + vulnTemplate.projectVulnerabilityRepository.countByWebAppInAndSeverity(new ArrayList<>(project.get().getWebapps()),severity)
                         + vulnTemplate.projectVulnerabilityRepository.getSoftwareVulnsForProjectAndSeverity(project.get().getId(), severity).size()));
             }
@@ -193,12 +127,11 @@ public class ProjectRestService {
     }
 
     public ResponseEntity<Status> updateContactList(Long id, ContactList contactList, Principal principal) {
-        Optional<Project> project = projectRepository.findById(id);
+        Optional<Project> project = findProjectService.findProjectById(id);
         if (project.isPresent() &&
                 permissionFactory.canUserAccessProject(principal,project.get()) &&
                 verifyContactList(contactList) ){
-            project.get().setContactList(contactList.getContactList());
-            projectRepository.save(project.get());
+            updateProjectService.updateContactList(project.get(), contactList);
             return new ResponseEntity<>(HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
@@ -219,11 +152,11 @@ public class ProjectRestService {
     }
 
     public ResponseEntity<List<ScannerType>> scannersAvaliable() {
-        return new ResponseEntity<>(scannerRepository.getDistinctScannerTypes(), HttpStatus.OK);
+        return new ResponseEntity<>(findScannerService.getDistinctScannerTypes(), HttpStatus.OK);
     }
 
     public ResponseEntity<List<ProjectVulnerability>> showVulnerabilitiesForProject(Long id, Principal principal) {
-        Optional<Project> project = projectRepository.findById(id);
+        Optional<Project> project = findProjectService.findProjectById(id);
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             List<ProjectVulnerability> vulns;
             try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository.findByProject(project.get())) {
@@ -235,7 +168,7 @@ public class ProjectRestService {
     }
 
     public ResponseEntity<ProjectVulnerability> showVulnerability(Long id, Long vulnId, Principal principal) {
-        Optional<Project> project = projectRepository.findById(id);
+        Optional<Project> project = findProjectService.findProjectById(id);
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             Optional<ProjectVulnerability> projectVulnerability = vulnTemplate.projectVulnerabilityRepository.findById(vulnId);
             if (projectVulnerability.isPresent() && projectVulnerability.get().getProject().getId().equals(project.get().getId()))
@@ -247,7 +180,7 @@ public class ProjectRestService {
     }
 
     public ResponseEntity<Project> showProject(Long id, Principal principal) {
-        Optional<Project> project = projectRepository.findById(id);
+        Optional<Project> project = findProjectService.findProjectById(id);
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
            return new ResponseEntity<>(project.get(), HttpStatus.OK);
         } else {
@@ -256,21 +189,17 @@ public class ProjectRestService {
     }
     @Transactional(propagation = Propagation.REQUIRED)
     public ResponseEntity<Status> updateVulnAuditorSettings(Long id, VulnAuditorSettings settings, Principal principal) {
-        Optional<Project> project = projectRepository.findById(id);
+        Optional<Project> project = findProjectService.findProjectById(id);
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
-            project.get().setVulnAuditorEnable(settings.isEnableVulnAuditor());
-            if (StringUtils.isNotBlank(settings.getAppClient()))
-                project.get().setAppClient(settings.getAppClient());
-            if (StringUtils.isNotBlank(settings.getDclocation()))
-                project.get().setNetworkdc(settings.getDclocation());
+            updateProjectService.setVulnAuditor(project.get(), settings);
             return new ResponseEntity<>(HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
     }
 
-    public ResponseEntity<io.mixeway.pojo.Status> setGradeForVulnerability(Long id, Long vulnId,int grade, Principal principal) {
-        Optional<Project> project = projectRepository.findById(id);
+    public ResponseEntity<Status> setGradeForVulnerability(Long id, Long vulnId,int grade, Principal principal) {
+        Optional<Project> project = findProjectService.findProjectById(id);
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             Optional<ProjectVulnerability> projectVulnerability = vulnTemplate.projectVulnerabilityRepository.findById(vulnId);
             if (projectVulnerability.isPresent() && projectVulnerability.get().getProject().getId().equals(project.get().getId()) && (grade==1 || grade==0)) {
@@ -285,11 +214,11 @@ public class ProjectRestService {
     }
 
     public ResponseEntity<List<RoutingDomain>> showAllRoutingDomains() {
-        return new ResponseEntity<>(routingDomainRepository.findAll(), HttpStatus.OK);
+        return new ResponseEntity<>(findRoutingDomainService.findAll(), HttpStatus.OK);
     }
 
     public ResponseEntity<ProjectStats> showProjectStats(Long id, Principal principal) {
-        Optional<Project> project = projectRepository.findById(id);
+        Optional<Project> project = findProjectService.findProjectById(id);
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             List<ProjectVulnerability> projectVulnerabilities = vulnTemplate.projectVulnerabilityRepository.findByProject(project.get()).collect(Collectors.toList());
             ProjectStats projectStats = ProjectStats.builder()
@@ -298,9 +227,9 @@ public class ProjectRestService {
                             .map(ProjectVulnerability::getSoftwarePacket)
                             .distinct()
                             .count())
-                    .repos(codeProjectRepository.findByCodeGroupIn(project.get().getCodes()).size())
-                    .webApps(webAppRepository.findByProject(project.get()).size())
-                    .assets(interfaceRepository.findByAssetIn( new ArrayList<>(project.get().getAssets())).size())
+                    .repos(project.get().getCodes().size())
+                    .webApps(project.get().getWebapps().size())
+                    .assets(project.get().getAssets().size())
                     .vulnCrit(projectVulnerabilities.stream().filter(pv -> pv.getSeverity().equals(Constants.VULN_CRITICALITY_CRITICAL) || pv.getSeverity().equals(Constants.VULN_CRITICALITY_HIGH)).count())
                     .vulnMedium(projectVulnerabilities.stream().filter(pv -> pv.getSeverity().equals(Constants.VULN_CRITICALITY_MEDIUM)).count())
                     .vulnLow(projectVulnerabilities.stream().filter(pv -> pv.getSeverity().equals(Constants.VULN_CRITICALITY_LOW)).count())

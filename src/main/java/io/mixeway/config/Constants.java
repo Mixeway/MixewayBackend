@@ -299,6 +299,7 @@ public class Constants {
     public static final String ADMIN_USERNAME = "admin";
     public static final String NOT_OK = "Not Ok";
     public static final String OK = "Ok";
+    public static final String CIID_NONE = "none";
 }
 
 

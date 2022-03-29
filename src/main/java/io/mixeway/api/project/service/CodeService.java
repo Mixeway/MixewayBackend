@@ -1,23 +1,28 @@
 package io.mixeway.api.project.service;
 
+import io.mixeway.api.project.model.CodeCard;
+import io.mixeway.api.project.model.CodeModel;
+import io.mixeway.api.project.model.CodeProjectPutModel;
+import io.mixeway.api.project.model.EditCodeProjectModel;
+import io.mixeway.api.protocol.OpenSourceConfig;
 import io.mixeway.config.Constants;
-import io.mixeway.db.entity.*;
-import io.mixeway.db.repository.CodeGroupRepository;
-import io.mixeway.db.repository.CodeProjectRepository;
-import io.mixeway.db.repository.CxBranchRepository;
-import io.mixeway.db.repository.ProjectRepository;
-import io.mixeway.domain.service.vulnerability.VulnTemplate;
-import io.mixeway.integrations.codescan.service.CodeScanService;
-import io.mixeway.integrations.opensourcescan.model.Projects;
-import io.mixeway.integrations.opensourcescan.service.OpenSourceScanService;
-import io.mixeway.pojo.LogUtil;
-import io.mixeway.pojo.PermissionFactory;
-import io.mixeway.pojo.VaultHelper;
-import io.mixeway.rest.project.model.*;
+import io.mixeway.db.entity.CodeProject;
+import io.mixeway.db.entity.Project;
+import io.mixeway.db.entity.ProjectVulnerability;
+import io.mixeway.domain.service.project.FindProjectService;
+import io.mixeway.domain.service.project.UpdateProjectService;
+import io.mixeway.domain.service.scanmanager.code.CreateOrGetCodeProjectService;
+import io.mixeway.domain.service.scanmanager.code.FindCodeProjectService;
+import io.mixeway.domain.service.scanmanager.code.OperateOnCodeProject;
+import io.mixeway.domain.service.vulnmanager.VulnTemplate;
+import io.mixeway.scanmanager.model.Projects;
+import io.mixeway.scanmanager.service.code.CodeScanService;
+import io.mixeway.scanmanager.service.opensource.OpenSourceScanService;
+import io.mixeway.utils.*;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jettison.json.JSONException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -30,58 +35,41 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
+@Log4j2
+@RequiredArgsConstructor
 public class CodeService {
-    private static final Logger log = LoggerFactory.getLogger(CodeService.class);
-    private final ProjectRepository projectRepository;
-    private final CodeProjectRepository codeProjectRepository;
-    private final CodeGroupRepository codeGroupRepository;
-    private final VaultHelper vaultHelper;
     private final PermissionFactory permissionFactory;
     private final CodeScanService codeScanService;
     private final OpenSourceScanService openSourceScanService;
     private final VulnTemplate vulnTemplate;
-    private final CxBranchRepository cxBranchRepository;
-
-    CodeService(ProjectRepository projectRepository, CodeProjectRepository codeProjectRepository, CodeGroupRepository codeGroupRepository,
-                VaultHelper vaultHelper, VulnTemplate vulnTemplate, PermissionFactory permissionFactory,
-                CodeScanService  codeScanService, OpenSourceScanService openSourceScanService, CxBranchRepository cxBranchRepository) {
-        this.projectRepository = projectRepository;
-        this.cxBranchRepository = cxBranchRepository;
-        this.codeProjectRepository = codeProjectRepository;
-        this.vaultHelper = vaultHelper;
-        this.codeGroupRepository = codeGroupRepository;
-        this.vulnTemplate = vulnTemplate;
-        this.permissionFactory = permissionFactory;
-        this.openSourceScanService = openSourceScanService;
-        this.codeScanService = codeScanService;
-    }
+    private final FindProjectService findProjectService;
+    private final FindCodeProjectService findCodeProjectService;
+    private final CreateOrGetCodeProjectService createOrGetCodeProjectService;
+    private final OperateOnCodeProject operateOnCodeProject;
+    private final UpdateProjectService updateProjectService;
 
     public ResponseEntity<CodeCard> showCodeRepos(Long id, Principal principal) {
-        Optional<Project> project = projectRepository.findById(id);
+        Optional<Project> project = findProjectService.findProjectById(id);
         if ( project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             CodeCard codeCard = new CodeCard();
             codeCard.setCodeAutoScan(project.get().isAutoCodeScan());
             List<CodeModel> codeModels = new ArrayList<>();
-            for (CodeProject cp : codeProjectRepository.findByCodeGroupIn(project.get().getCodes())){
-                CodeModel codeModel = new CodeModel();
-                codeModel.setVersionId(cp.getCodeGroup().getVersionIdAll());
-                codeModel.setCodeProject(cp.getName());
-                codeModel.setCodeGroup(cp.getCodeGroup().getName());
-                codeModel.setBranch(cp.getBranch());
-                codeModel.setId(cp.getId());
-                codeModel.setdTrackUuid(cp.getdTrackUuid());
-                codeModel.setRunning(cp.getCodeGroup().isRunning());
-                codeModel.setRisk(cp.getRisk());
-                codeModel.setRepoUrl(cp.getRepoUrl());
-                codeModel.setRepoUsername(cp.getRepoUsername());
-                codeModel.setRepoPassword(StringUtils.isNoneBlank(cp.getRepoPassword()) ? Constants.DUMMY_PASSWORD : "");
+            for (CodeProject cp : findCodeProjectService.findByProject(project.get())) {
+                CodeModel codeModel = CodeModel.builder()
+                        .versionId(cp.getVersionIdAll())
+                        .codeProject(cp.getName())
+                        .branch(cp.getBranch())
+                        .id(cp.getId())
+                        .dTrackUuid(cp.getdTrackUuid())
+                        .running(cp.getRunning())
+                        .risk(cp.getRisk())
+                        .repoUsername(cp.getRepoUsername())
+                        .repoPassword(StringUtils.isNoneBlank(cp.getRepoPassword()) ? Constants.DUMMY_PASSWORD : "")
+                        .build();
                 codeModels.add(codeModel);
             }
             codeCard.setCodeModels(codeModels);
@@ -90,99 +78,24 @@ public class CodeService {
             return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
     }
-    public ResponseEntity<List<CodeGroup>> showCodeGroups(Long id, Principal principal) {
-        Optional<Project> project = projectRepository.findById(id);
-        if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
-            return new ResponseEntity<>(new ArrayList<>(project.get().getCodes()),HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
-        }
-    }
-    public ResponseEntity<Status> saveCodeGroup(Long id, CodeGroupPutModel codeGroupPutModel, Principal principal) {
-        Optional<Project> project = projectRepository.findById(id);
+
+    public ResponseEntity<Status> saveCodeProject(Long id, CodeGroupPutModel codeGroupPutModel, Principal principal) {
+        Optional<Project> project = findProjectService.findProjectById(id);
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal,project.get())){
-            CodeGroup codeGroup = new CodeGroup();
-            codeGroup.setBasePath("");
-            codeGroup.setName(codeGroupPutModel.getCodeGroupName());
-            codeGroup.setRepoUrl(setRepoUrl(codeGroupPutModel));
-            codeGroup.setRepoUsername(codeGroupPutModel.getGitusername());
-            codeGroup.setTechnique(codeGroupPutModel.getTech());
-            codeGroup.setHasProjects(codeGroupPutModel.isChilds());
-            codeGroup.setAuto(codeGroupPutModel.isAutoScan());
-            codeGroup.setVersionIdAll(codeGroupPutModel.getVersionIdAll());
-            codeGroup.setVersionIdsingle(codeGroupPutModel.getVersionIdSingle());
-            codeGroup.setProject(project.get());
-            codeGroup.setAppClient(codeGroupPutModel.getAppClient());
-            codeGroupRepository.saveAndFlush(codeGroup);
-            codeGroup.setVersionIdsingle(codeGroupPutModel.getVersionIdAll());
-            createProjectForCodeGroup(codeGroup, codeGroupPutModel);
-            String uuidToken = UUID.randomUUID().toString();
-            if (StringUtils.isNotBlank(codeGroupPutModel.getGitpassword()) && vaultHelper.savePassword(codeGroupPutModel.getGitpassword(), uuidToken)) {
-                codeGroup.setRepoPassword(uuidToken);
-            } else {
-                codeGroup.setRepoPassword(codeGroupPutModel.getGitpassword());
-            }
-            codeGroupRepository.saveAndFlush(codeGroup);
-            log.info("{} - Created new CodeGroup [{}] {}", principal.getName(), project.get().getName(), codeGroup.getName());
+            createOrGetCodeProjectService.createCodeProject(project.get(), codeGroupPutModel);
+            log.info("{} - Created new CodeGroup [{}] {}", principal.getName(), project.get().getName(), codeGroupPutModel.getCodeGroupName());
             return new ResponseEntity<>(HttpStatus.CREATED);
         } else {
             return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
     }
 
-    /**
-     * Removing auth info from model
-     * @param codeGroupPutModel
-     * @return
-     */
-    private String setRepoUrl(CodeGroupPutModel codeGroupPutModel) {
-        try {
-            Pattern pattern = Pattern.compile("https?:\\/\\/(.*:.*@).*");
-            Matcher matcher = pattern.matcher(codeGroupPutModel.getGiturl());
-            if (matcher.find())
-                return codeGroupPutModel.getGiturl().replace(matcher.group(1), "");
-            else
-                return codeGroupPutModel.getGiturl();
-        } catch (NullPointerException e){
-            log.error("[CodeService] Trying to save codeproject with name {} with blank repo url", codeGroupPutModel.getCodeGroupName());
-        }
-        return null;
-    }
-
-    private void createProjectForCodeGroup(CodeGroup codeGroup, CodeGroupPutModel codeGroupPutModel) {
-        CodeProject cp = new CodeProject();
-        cp.setName(codeGroup.getName());
-        cp.setCodeGroup(codeGroup);
-        cp.setBranch(codeGroupPutModel.getBranch()!=null ?  codeGroupPutModel.getBranch() : Constants.CODE_DEFAULT_BRANCH);
-        cp.setRepoUrl(codeGroup.getRepoUrl());
-        cp.setRepoPassword(codeGroup.getRepoPassword());
-        cp.setRepoUsername(codeGroup.getRepoUsername());
-        cp.setTechnique(codeGroup.getTechnique());
-        cp.setInQueue(false);
-        cp.setdTrackUuid(codeGroupPutModel.getdTrackUuid());
-        cp = codeProjectRepository.save(cp);
-        log.info("[CodeService] Created new CodeProject [{}] for project {}", codeGroup.getName(), codeGroup.getProject().getName());
-        //cxBranchRepository.save(new CxBranch(cp, codeGroupPutModel.getBranch()));
-    }
-
     public ResponseEntity<Status> saveCodeProject(Long id, CodeProjectPutModel codeProjectPutModel, Principal principal) {
-        Optional<Project> project = projectRepository.findById(id);
-        Optional<CodeGroup> codeGroup = codeGroupRepository.findById(codeProjectPutModel.getCodeGroup());
+        Optional<Project> project = findProjectService.findProjectById(id);
         if (project.isPresent() &&
-                permissionFactory.canUserAccessProject(principal,project.get()) &&
-                codeGroup.isPresent() &&
-                codeGroup.get().getProject().getId().equals(project.get().getId())){
-            CodeProject codeProject = new CodeProject();
-            codeProject.setCodeGroup(codeGroup.get());
-            codeProject.setName(codeProjectPutModel.getCodeProjectName());
-            codeProject.setSkipAllScan(false);
-            codeProject.setdTrackUuid(codeProjectPutModel.getdTrackUuid());
-            codeProject.setBranch(codeProjectPutModel.getBranch()!=null && !codeProjectPutModel.getBranch().equals("") ? codeProjectPutModel.getBranch() : Constants.CODE_DEFAULT_BRANCH);
-            codeProject.setAdditionalPath(codeProjectPutModel.getAdditionalPath());
-            codeProject.setRepoUrl(codeProjectPutModel.getProjectGiturl());
-            codeProject.setTechnique(codeProjectPutModel.getProjectTech());
-            codeProjectRepository.save(codeProject);
-            log.info("{} - Created new CodeProject [{} / {} ] {}", principal.getName(), project.get().getName(), codeGroup.get().getName(), codeProject.getName());
+                permissionFactory.canUserAccessProject(principal,project.get())){
+            createOrGetCodeProjectService.createCodeProject(project.get(), codeProjectPutModel);
+            log.info("{} - Created new CodeProject [{} / {} ]", principal.getName(), project.get().getName(), codeProjectPutModel.getCodeProjectName());
             return new ResponseEntity<>(HttpStatus.CREATED);
         } else {
             return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
@@ -194,14 +107,10 @@ public class CodeService {
     }
 
     public ResponseEntity<Status> enableAutoScanForCodeProjects(Long id, Principal principal) {
-        Optional<Project> project = projectRepository.findById(id);
+        Optional<Project> project = findProjectService.findProjectById(id);
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())) {
-            for (CodeGroup codeGroup : project.get().getCodes()){
-                codeGroup.setAuto(true);
-                codeGroupRepository.save(codeGroup);
-            }
-            project.get().setAutoCodeScan(true);
-            projectRepository.save(project.get());
+            updateProjectService.enableCodeAutoScan(project.get());
+
             log.info("{} - Enabled auto SAST scan for {}", principal.getName(), project.get().getName());
             return new ResponseEntity<>(HttpStatus.OK);
         } else {
@@ -209,7 +118,7 @@ public class CodeService {
         }
     }
 
-    public ResponseEntity<Status> runSingleCodeProjectScan(Long codeProjectId, Principal principal) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+    public ResponseEntity<Status> runSingleCodeProjectScan(Long codeProjectId, Principal principal) {
         boolean putToQueue = codeScanService.putCodeProjectToQueue(codeProjectId, principal);
         if (putToQueue){
             log.info("{} - Run SAST scan for {} - scope single", LogUtil.prepare(principal.getName()), LogUtil.prepare(codeProjectId.toString()));
@@ -220,17 +129,17 @@ public class CodeService {
 
     @Transactional
     public ResponseEntity<Status> deleteCodeProject(Long codeProjectId, Principal principal) {
-        Optional<CodeProject> codeProject = codeProjectRepository.findById(codeProjectId);
-        if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getCodeGroup().getProject())){
-            codeProjectRepository.removeCodeGroup(codeProject.get().getId());
-            log.info("{} - Deleted codeproject [{}] {}", principal.getName(), codeProject.get().getCodeGroup().getProject().getName(), codeProject.get().getName());
+        Optional<CodeProject> codeProject = findCodeProjectService.findById(codeProjectId);
+        if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getProject())){
+            operateOnCodeProject.deleteCodeProject(codeProject.get());
+            log.info("{} - Deleted codeproject [{}] {}", principal.getName(), codeProject.get().getProject().getName(), codeProject.get().getName());
             return new ResponseEntity<>(HttpStatus.OK);
         }
         return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
     }
     @Transactional
     public ResponseEntity<List<ProjectVulnerability>> showCodeVulns(Long id, Principal principal) {
-        Optional<Project> project = projectRepository.findById(id);
+        Optional<Project> project = findProjectService.findProjectById(id);
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             List<ProjectVulnerability> codeVulns;
             try(Stream<ProjectVulnerability> vulns = vulnTemplate.projectVulnerabilityRepository
@@ -244,14 +153,9 @@ public class CodeService {
     }
 
     public ResponseEntity<Status> disableAutoScanForCodeProjects(Long id, Principal principal) {
-        Optional<Project> project = projectRepository.findById(id);
+        Optional<Project> project = findProjectService.findProjectById(id);
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
-            for (CodeGroup codeGroup : project.get().getCodes()){
-                codeGroup.setAuto(false);
-                codeGroupRepository.save(codeGroup);
-            }
-            project.get().setAutoCodeScan(false);
-            projectRepository.save(project.get());
+            updateProjectService.disableCodeAutoScan(project.get());
             log.info("{} - Disabled auto SAST scan for {}", principal.getName(), project.get().getName());
             return new ResponseEntity<>(HttpStatus.OK);
         } else {
@@ -260,48 +164,36 @@ public class CodeService {
     }
 
     public ResponseEntity<Status> editCodeProject(Long id, EditCodeProjectModel editCodeProjectModel, Principal principal) {
-        Optional<CodeProject> codeProject = codeProjectRepository.findById(id);
+        Optional<CodeProject> codeProject = findCodeProjectService.findById(id);
         try{
-            if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getCodeGroup().getProject())){
-                if (StringUtils.isNotBlank(editCodeProjectModel.getdTrackUuid()) && !codeProject.get().getdTrackUuid().equals(editCodeProjectModel.getdTrackUuid())) {
-                    UUID uuid = UUID.fromString(editCodeProjectModel.getdTrackUuid());
-                    codeProject.get().setdTrackUuid(editCodeProjectModel.getdTrackUuid());
-                    codeProjectRepository.save(codeProject.get());
+            if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getProject())){
+                if (StringUtils.isNotBlank(editCodeProjectModel.getDTrackUuid()) && !codeProject.get().getdTrackUuid().equals(editCodeProjectModel.getDTrackUuid())) {
+                    operateOnCodeProject.setDtrackUUID(codeProject.get(),editCodeProjectModel);
                     log.info("{} Edited CodeProject {} scope DtrackUUID", principal.getName(), codeProject.get().getName());
                 }
-                if (editCodeProjectModel.getSastProject() > 0 && codeProject.get().getCodeGroup().getVersionIdAll() != editCodeProjectModel.getSastProject() ) {
-                    codeProject.get().getCodeGroup().setVersionIdAll(editCodeProjectModel.getSastProject());
-                    if (!codeProject.get().getCodeGroup().getHasProjects()){
-                        codeProject.get().getCodeGroup().setVersionIdsingle(editCodeProjectModel.getSastProject());
-                        codeProject.get().getCodeGroup().setVersionIdAll(editCodeProjectModel.getSastProject());
-                    }
-                    codeGroupRepository.save(codeProject.get().getCodeGroup());
+                if (editCodeProjectModel.getSastProject() > 0 && codeProject.get().getVersionIdAll() != editCodeProjectModel.getSastProject() ) {
+                    codeProject.get().setVersionIdAll(editCodeProjectModel.getSastProject());
+                    operateOnCodeProject.setVersionId(codeProject.get(), editCodeProjectModel);
                     log.info("{} Edited CodeProject {} scope SAST scanner integration", principal.getName(), codeProject.get().getName());
                 }
                 if (StringUtils.isNotBlank(editCodeProjectModel.getBranch()) && !codeProject.get().getBranch().equals(editCodeProjectModel.getBranch())){
-                    codeProject.get().setBranch(editCodeProjectModel.getBranch());
+                    operateOnCodeProject.setBranch(codeProject.get(), editCodeProjectModel.getBranch());
                     log.info("{} Edited CodeProject {} scope Branch, new value: {}", principal.getName(), codeProject.get().getName(), LogUtil.prepare(editCodeProjectModel.getBranch()));
                 }
                 if (StringUtils.isNotBlank(editCodeProjectModel.getRepoUrl()) && !codeProject.get().getRepoUrl().equals(editCodeProjectModel.getRepoUrl())){
-                    codeProject.get().setRepoUrl(editCodeProjectModel.getRepoUrl());
+                    operateOnCodeProject.setRepoUrl(codeProject.get(), editCodeProjectModel);
                     log.info("{} Edited CodeProject {} scope RepoURL, new value: {}", principal.getName(), codeProject.get().getName(), LogUtil.prepare(editCodeProjectModel.getRepoUrl()));
 
                 }
                 if (StringUtils.isNotBlank(editCodeProjectModel.getRepoUsername()) && !codeProject.get().getRepoUsername().equals(editCodeProjectModel.getRepoUsername())){
-                    codeProject.get().setRepoUsername(editCodeProjectModel.getRepoUsername());
+                    operateOnCodeProject.setRepoUsername(codeProject.get(), editCodeProjectModel);
                     log.info("{} Edited CodeProject {} scope RepoUsername, new value: {}", principal.getName(), codeProject.get().getName(), LogUtil.prepare(editCodeProjectModel.getRepoUsername()));
 
                 }
                 if (!editCodeProjectModel.getRepoPassword().equals(Constants.DUMMY_PASSWORD) && !editCodeProjectModel.getRepoPassword().equals(Constants.DUMMY_PASSWORD2)){
-                    String uuidToken = UUID.randomUUID().toString();
-                    if (vaultHelper.savePassword(editCodeProjectModel.getRepoPassword(), uuidToken)) {
-                        codeProject.get().setRepoPassword(uuidToken);
-                    } else {
-                        codeProject.get().setRepoPassword(editCodeProjectModel.getRepoPassword());
-                    }
+                    operateOnCodeProject.setRepoPassword(codeProject.get(), editCodeProjectModel);
                     log.info("{} Edited CodeProject {} scope Password", principal.getName(), codeProject.get().getName());
                 }
-                codeProjectRepository.save(codeProject.get());
                 return new ResponseEntity<>(HttpStatus.OK);
             }
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -312,10 +204,10 @@ public class CodeService {
     }
 
     public ResponseEntity<Status> createDTrackProject(Long id, Principal principal) {
-        Optional<CodeProject> codeProject = codeProjectRepository.findById(id);
+        Optional<CodeProject> codeProject = findCodeProjectService.findById(id);
         try{
             if (codeProject.isPresent() &&
-                    permissionFactory.canUserAccessProject(principal, codeProject.get().getCodeGroup().getProject()) &&
+                    permissionFactory.canUserAccessProject(principal, codeProject.get().getProject()) &&
                     openSourceScanService.createProjectOnOpenSourceScanner(codeProject.get()) ) {
 
                 log.info("{} Successfully Created dTrack Project {}", principal.getName(), codeProject.get().getName());

@@ -16,7 +16,7 @@ public class CxCreateScan {
     public CxCreateScan(){}
 
     public CxCreateScan(CodeProject codeProject){
-        this.projectId = codeProject.getCodeGroup().getVersionIdAll() > 0 ? codeProject.getCodeGroup().getVersionIdAll() : codeProject.getCodeGroup().getRemoteid();
+        this.projectId = codeProject.getVersionIdAll() > 0 ? codeProject.getVersionIdAll() : codeProject.getRemoteid();
         this.isIncremental = false;
         this.isPublic = true;
         this.forceScan = true;

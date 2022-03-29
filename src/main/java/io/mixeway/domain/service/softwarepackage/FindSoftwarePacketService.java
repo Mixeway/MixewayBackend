@@ -5,6 +5,7 @@ import io.mixeway.db.repository.SoftwarePacketRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -17,5 +18,9 @@ public class FindSoftwarePacketService {
 
     public Optional<SoftwarePacket> findByName (String name, String version){
         return softwarePacketRepository.findByName(name+":"+version);
+    }
+
+    public List<SoftwarePacket> getSoftwarePacketForProject(Long id) {
+        return softwarePacketRepository.getSoftwarePacketForProject(id);
     }
 }

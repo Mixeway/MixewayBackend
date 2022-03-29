@@ -2,35 +2,27 @@ package io.mixeway.db.repository;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
+import io.mixeway.db.entity.Project;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import io.mixeway.db.entity.CodeGroup;
 import io.mixeway.db.entity.CodeProject;
-import org.springframework.security.core.parameters.P;
 
 public interface CodeProjectRepository extends JpaRepository<CodeProject, Long> {
-	Optional<CodeProject> findByCodeGroupAndName(CodeGroup codeGroup, String name);
-	Optional<CodeProject> findByCodeGroupAndNameIgnoreCase(CodeGroup codeGroup, String name);
-	List<CodeProject> findByCodeGroupIn(Set<CodeGroup> groups);
 	@Query(value="select cp.* from codeproject cp, codegroup cg where cp.codegroup_id=cg.id and cg.project_id=?3 and cg.name=?2 and cp.name=?1", nativeQuery =true)
 	Optional<CodeProject> getCodeProjectByNameCodeGroupNameAndProjectId(String codeProjectName,String codeGroupName,Long projectId);
 	List<CodeProject> findByInQueue(Boolean inqueue);
-	@Query(value = "select * from codeproject where name ilike %?1%", nativeQuery = true)
-	List<CodeProject> searchForName(@Param("name") String name);
 	@Query(value = "delete from codeproject where id=?1", nativeQuery = true)
 	@Modifying
 	int removeCodeGroup(Long id);
 	List<CodeProject> findByRequestId(String requestId);
-	List<CodeProject> findByCodeGroup(CodeGroup codeGroup);
 	List<CodeProject> findBydTrackUuidNotNull();
 	List<CodeProject> findByRunning(boolean running);
-	List<CodeProject> findByCodeGroupAndRunning(CodeGroup codeGroup, boolean running);
-
+	List<CodeProject> findByProjectAndRunning(Project project, boolean running);
+	List<CodeProject> findByProject(Project project);
 	@Query(value = "Select * from codeproject where dtrackuuid != ''", nativeQuery = true)
 	List<CodeProject> getCodeProjectsWithOSIntegrationEnabled();
 	Optional<CodeProject> findByName(String name);
@@ -45,4 +37,14 @@ public interface CodeProjectRepository extends JpaRepository<CodeProject, Long> 
 	Optional<CodeProject> getCodeProjectByNameAndPermissions(@Param("name") String codeProjectName, @Param("projects") List<Long> projectIds);
 
     Optional<CodeProject> findByRepoUrl(String url);
+	@Query(value = "select count(*) from codeproject where versionidall > 0", nativeQuery = true)
+	Long getCodeGroupWithVersionIdSet();
+
+	Optional<CodeProject> findByProjectAndName(Project project, String groupName);
+
+    Long countByInQueue(boolean b);
+
+	Long countByRunning(boolean b);
+
+	Optional<CodeProject> findByProjectAndRepoUrl(Project project, String repoUrl);
 }

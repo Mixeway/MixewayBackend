@@ -1,7 +1,6 @@
 package io.mixeway.domain.service.scanmanager.code;
 
 import io.mixeway.db.entity.*;
-import io.mixeway.db.repository.CodeGroupRepository;
 import io.mixeway.db.repository.SettingsRepository;
 import io.mixeway.db.repository.UserRepository;
 import io.mixeway.domain.service.project.CreateProjectService;
@@ -24,16 +23,13 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @SpringBootTest
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
-
 class FindCodeProjectServiceTest {
-    private final CreateOrGetCodeGroupService createOrGetCodeGroupService;
     private final CreateProjectService createProjectService;
     private final UserRepository userRepository;
     private final SettingsRepository settingsRepository;
     private final FindProjectService findProjectService;
     private final FindCodeProjectService findCodeProjectService;
     private final CreateOrGetCodeProjectService createOrGetCodeProjectService;
-    private final CodeGroupRepository codeGroupRepository;
 
     @Mock
     Principal principal;
@@ -53,18 +49,6 @@ class FindCodeProjectServiceTest {
             createProjectService.createAndReturnProject("test_find_cp","test_find_cp",principal);
 
         }
-    }
-
-    @Test
-    void findCodeProject() {
-        Optional<Project> project = findProjectService.findProjectByCiid("test_find_cp");
-        assertTrue(project.isPresent());
-        createOrGetCodeProjectService.
-                createCodeProject("url","username","password","master","mvn","test_find_cp", project.get(), principal);
-        Optional<CodeGroup> codeGroupFromRepo = codeGroupRepository.findByProjectAndName(project.get(), "test_find_cp");
-        assertTrue(codeGroupFromRepo.isPresent());
-        Optional<CodeProject> codeProject = findCodeProjectService.findCodeProject(codeGroupFromRepo.get(),"test_find_cp");
-        assertTrue(codeProject.isPresent());
     }
 
     @Test

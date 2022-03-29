@@ -1,5 +1,7 @@
 package io.mixeway.domain.service.scanmanager.webapp;
 
+import io.mixeway.api.project.model.WebAppPutModel;
+import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
 import io.mixeway.scanmanager.model.CustomCookie;
@@ -170,4 +172,36 @@ public class GetOrCreateWebAppService {
     }
 
 
+    public WebApp createWebApp(Project project, WebAppPutModel webAppPutMode) {
+        WebApp webApp = new WebApp();
+        webApp.setUrl(webAppPutMode.getWebAppUrl());
+        webApp.setRunning(false);
+        webApp.setInQueue(false);
+        webApp.setAppClient(webAppPutMode.getAppClient());
+        webApp.setRoutingDomain(routingDomainRepository.getOne(webAppPutMode.getRoutingDomainForAsset()));
+        webApp.setOrigin(Constants.STRATEGY_GUI);
+        webApp.setPublicscan(webAppPutMode.isScanPublic());
+        webApp.setProject(project);
+        if (webAppPutMode.isPasswordAuthSet()){
+            webApp.setUsername(webAppPutMode.getWebAppUsername());
+            String uuidToken = UUID.randomUUID().toString();
+            if (vaultHelper.savePassword(webAppPutMode.getWebAppPassword(), uuidToken)){
+                webApp.setPassword(uuidToken);
+            } else {
+                webApp.setPassword(webAppPutMode.getWebAppPassword());
+            }
+        }
+        webApp = webAppRepository.saveAndFlush(webApp);
+        for (String header : webAppPutMode.getWebAppHeaders().split(",")) {
+            String[] headerValues = header.split(":");
+            if (headerValues.length == 2) {
+                WebAppHeader waHeader = new WebAppHeader();
+                waHeader.setHeaderName(headerValues[0]);
+                waHeader.setHeaderValue(headerValues[1]);
+                waHeader.setWebApp(webApp);
+                webAppHeaderRepository.save(waHeader);
+            }
+        }
+        return webApp;
+    }
 }

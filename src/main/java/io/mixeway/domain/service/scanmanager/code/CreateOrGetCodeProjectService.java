@@ -1,22 +1,26 @@
 package io.mixeway.domain.service.scanmanager.code;
 
-import io.mixeway.db.entity.CodeGroup;
+import io.mixeway.api.project.model.CodeProjectPutModel;
+import io.mixeway.config.Constants;
 import io.mixeway.db.entity.CodeProject;
 import io.mixeway.db.entity.Project;
-import io.mixeway.db.repository.CodeGroupRepository;
 import io.mixeway.db.repository.CodeProjectRepository;
-import io.mixeway.domain.service.project.FindProjectService;
-import io.mixeway.domain.service.project.GetOrCreateProjectService;
 import io.mixeway.scanmanager.model.CodeScanRequestModel;
-import io.mixeway.utils.PermissionFactory;
+import io.mixeway.utils.CodeGroupPutModel;
+import io.mixeway.utils.VaultHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.StringUtils;
+import org.checkerframework.checker.nullness.Opt;
 import org.springframework.stereotype.Service;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.Principal;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author gsiewruk
@@ -25,126 +29,115 @@ import java.util.Optional;
 @Log4j2
 @RequiredArgsConstructor
 public class CreateOrGetCodeProjectService {
-
     private final CodeProjectRepository codeProjectRepository;
-    private final CodeGroupRepository codeGroupRepository;
-    private final CreateOrGetCodeGroupService createOrGetCodeGroupService;
-    private final FindProjectService findProjectService;
-    private final PermissionFactory permissionFactory;
-    private final GetOrCreateProjectService getOrCreateProjectService;
+    private final VaultHelper vaultHelper;
 
-    /**
-     *
-     * Creating CodeProject based on given CodeGroup
-     *
-     */
-    public CodeProject createOrGetCodeProject(CodeGroup codeGroup, String name, String branch){
-        Optional<CodeProject> codeProject = codeProjectRepository.findByCodeGroupAndName(codeGroup,name);
-        return codeProject.orElseGet(() -> createCodeProject(codeGroup, name, branch));
+
+    public CodeProject getOrCreateCodeProject(Project project, String projectName, String codeDefaultBranch) {
+        Optional<CodeProject> codeProject = codeProjectRepository.findByProjectAndName(project, projectName);
+        return codeProject.orElseGet(() -> createCodeProject(project, projectName, codeDefaultBranch));
     }
 
-    /**
-     *
-     * Create CodeProject or return existing based on existing codeGroup name
-     *
-     */
-    public CodeProject createOrGetCodeProjectWithGroupName(Project project, String codeGroupName, String codeProjectName, String branch){
-        Optional<CodeGroup> codeGroup = codeGroupRepository.findByProjectAndName(project,codeGroupName);
-        return codeGroup.map(group -> createOrGetCodeProject(group, codeGroupName, branch)).orElse(null);
-    }
-
-    /**
-     *
-     * Create Code project based on given Code Group
-     *
-     */
-    private CodeProject createCodeProject(CodeGroup codeGroup, String codeProjectName, String branch){
-        CodeProject codeProjectToCreate = new CodeProject();
-        codeProjectToCreate.setName(codeProjectName);
-        codeProjectToCreate.setCodeGroup(codeGroup);
-        codeProjectToCreate.setTechnique(codeGroup.getTechnique());
-        codeProjectToCreate.setBranch(branch);
-        codeProjectToCreate.setRepoUrl(codeGroup.getRepoUrl());
-        codeProjectToCreate = codeProjectRepository.saveAndFlush(codeProjectToCreate);
-        log.info("Creating new CodeProject {} in group {}", codeProjectName,codeGroup.getName());
-        return codeProjectToCreate;
-    }
-
-    /**
-     *
-     * Create CodeGroup and CodeProject based on given parameters
-     *
-     */
-    public CodeProject createCodeProject(String repoUrl, String repoUsername, String repoPassword, String branch, String tech,
-                                         String name, Project project, Principal principal) {
-        CodeGroup codeGroup = createOrGetCodeGroupService.createOrGetCodeGroup(principal,name,repoUrl,project,repoUsername,repoPassword,tech);
-        return createCodeProject(codeGroup,name,branch);
-    }
-    /**
-     *
-     * Create CodeGroup and CodeProject based on CodeScanRequestModel
-     *
-     */
-    public CodeProject createCodeProject(CodeScanRequestModel codeScanRequest, CodeGroup codeGroup) {
+    public CodeProject createCodeProject(Project project, String projectName, String codeDefaultBranch) {
         CodeProject codeProject = new CodeProject();
-        codeProject.setName(codeScanRequest.getCodeProjectName());
-        codeProject.setCodeGroup(codeGroup);
-        codeProject.setTechnique(codeScanRequest.getTech());
+        codeProject.setProject(project);
+        codeProject.setName(projectName);
+        codeProject.setBranch(codeDefaultBranch);
+        return codeProjectRepository.saveAndFlush(codeProject);
+    }
+
+    public CodeProject createCodeProject(CodeScanRequestModel codeScanRequest, Project project) {
+        CodeProject codeProject = new CodeProject();
         codeProject.setBranch(codeScanRequest.getBranch());
         codeProject.setRepoUrl(codeScanRequest.getRepoUrl());
-        codeProject = codeProjectRepository.save(codeProject);
-        log.info("{} - Created new CodeProject [{}] {}", "ScanManager", codeGroup.getProject().getName(), codeProject.getName());
-        return codeProject;
+        codeProject.setName(codeScanRequest.getCodeProjectName());
+        codeProject.setProject(project);
+        codeProject.setRepoUsername(codeScanRequest.getRepoUsername());
+        codeProject.setRepoPassword(codeScanRequest.getRepoPassword());
+        codeProject.setTechnique(codeScanRequest.getTech());
+        return codeProjectRepository.saveAndFlush(codeProject);
     }
 
-    /**
-     * Based on Repo URL create project, codeproject or return already existing
-     *
-     * @param url repo url
-     * @return codeproject
-     */
-    public CodeProject createOrGetCodeProject(String url, String codeProjectName, String branch, Principal principal){
-        Optional<Project> project = findProjectService.findProjectByName(codeProjectName);
-        Optional<CodeProject> codeProject = codeProjectRepository.findByRepoUrl( url);
-        if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getCodeGroup().getProject())){
-            codeProject.get().setBranch(branch);
-            return codeProjectRepository.saveAndFlush(codeProject.get());
-        } else if (codeProject.isPresent() && !permissionFactory.canUserAccessProject(principal, codeProject.get().getCodeGroup().getProject())){
-            log.error("[Code] User {} is trying to reach code project with repo {} without permissions", principal.getName(), url);
-            return null;
-        } else if (project.isPresent() && permissionFactory.canUserAccessProject(principal,project.get()) && !codeProject.isPresent()){
-            CodeGroup codeGroup = createOrGetCodeGroupService.createOrGetCodeGroup(principal,codeProjectName,url, project.get(),null,null, null);
-            return this.createOrGetCodeProject(codeGroup, codeProjectName, branch);
-        } else if (!project.isPresent()){
-            //create project
-            Project newProject = getOrCreateProjectService.getProjectId("unknown",codeProjectName,principal);
-            CodeGroup codeGroup = createOrGetCodeGroupService.createOrGetCodeGroup(principal,codeProjectName,url, project.get(),null,null, null);
-            return this.createOrGetCodeProject(codeGroup, codeProjectName, branch);
+    public CodeProject createCodeProject(String repoUrl, String repoName, String branch, Principal principal, Project project) {
+        CodeProject codeProject = new CodeProject();
+        codeProject.setRepoUrl(repoUrl);
+        codeProject.setName(repoName);
+        codeProject.setBranch(branch);
+        codeProject.setProject(project);
+        return codeProjectRepository.saveAndFlush(codeProject);
+    }
+
+    public CodeProject createOrGetCodeProject(String repoUrl, String branch, Principal principal, Project project) throws MalformedURLException {
+        Optional<CodeProject> codeProject = codeProjectRepository.findByProjectAndRepoUrl(project, repoUrl);
+        if (codeProject.isPresent()){
+            return codeProject.get();
         } else {
-            log.warn("[CODE] There is a problem with procesing CodeProject get, unknown option, codeproject name {}, branch {}, url {} - executed by {}", codeProjectName, branch, url, principal.getName());
-            return null;
+            URL repo = new URL(repoUrl.split("\\.git")[0]);
+            String projectName, codeProjectName = null;
+            String[] repoUrlParts = repo.getPath().split("/");
+            String name = repoUrlParts[repoUrlParts.length-1];
+            CodeProject codeProject1 = createCodeProject(project, name, "master");
+            codeProject1.setBranch(branch);
+            codeProject1.setRepoUrl(repoUrl);
+            return codeProjectRepository.saveAndFlush(codeProject1);
+        }
+    }
+
+    public void createCodeProject(Project project, CodeGroupPutModel codeGroupPutModel) {
+        Optional<CodeProject> codeProjectOptional = codeProjectRepository.findByProjectAndName(project, codeGroupPutModel.getCodeGroupName());
+        if (!codeProjectOptional.isPresent()){
+            CodeProject codeProject = new CodeProject();
+            codeProject.setName(codeGroupPutModel.getCodeGroupName());
+            codeProject.setRepoUrl(setRepoUrl(codeGroupPutModel));
+            codeProject.setRepoUsername(codeGroupPutModel.getGitusername());
+            codeProject.setTechnique(codeGroupPutModel.getTech());
+            codeProject.setVersionIdAll(codeGroupPutModel.getVersionIdAll());
+            codeProject.setVersionIdsingle(codeGroupPutModel.getVersionIdSingle());
+            codeProject.setProject(project);
+            codeProject.setAppClient(codeGroupPutModel.getAppClient());
+            String uuidToken = UUID.randomUUID().toString();
+            if (StringUtils.isNotBlank(codeGroupPutModel.getGitpassword()) && vaultHelper.savePassword(codeGroupPutModel.getGitpassword(), uuidToken)) {
+                codeProject.setRepoPassword(uuidToken);
+            } else {
+                codeProject.setRepoPassword(codeGroupPutModel.getGitpassword());
+            }
+            codeProjectRepository.saveAndFlush(codeProject);
         }
     }
 
     /**
-     * Based on Repo URL create project, codeproject or return already existing
-     *
-     * @param url repo url
-     * @return codeproject
+     * Removing auth info from model
+     * @param codeGroupPutModel
+     * @return
      */
-    public CodeProject createOrGetCodeProject(String url, String branch, Principal principal, Project project) throws MalformedURLException {
-        URL repoUrl = new URL(url.split("\\.git")[0]);
-        String path = repoUrl.getPath();
-        String repoName = path.substring(path.lastIndexOf('/') + 1).replace(".git","");
-
-        Optional<CodeProject> codeProject = codeProjectRepository.findByRepoUrl(url);
-        if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getCodeGroup().getProject())){
-            codeProject.get().setBranch(branch);
-            return codeProjectRepository.saveAndFlush(codeProject.get());
-        }  else {
-            //create project
-            CodeGroup codeGroup = createOrGetCodeGroupService.createOrGetCodeGroup(principal,repoName,url, project,null,null, null);
-            return this.createOrGetCodeProject(codeGroup, repoName, branch);
+    private String setRepoUrl(CodeGroupPutModel codeGroupPutModel) {
+        try {
+            Pattern pattern = Pattern.compile("https?:\\/\\/(.*:.*@).*");
+            Matcher matcher = pattern.matcher(codeGroupPutModel.getGiturl());
+            if (matcher.find())
+                return codeGroupPutModel.getGiturl().replace(matcher.group(1), "");
+            else
+                return codeGroupPutModel.getGiturl();
+        } catch (NullPointerException e){
+            log.error("[CodeService] Trying to save codeproject with name {} with blank repo url", codeGroupPutModel.getCodeGroupName());
         }
+        return null;
+    }
+
+    public void createCodeProject(Project project, CodeProjectPutModel codeProjectPutModel) {
+        Optional<CodeProject> codeProjectOptional = codeProjectRepository.findByProjectAndName(project, codeProjectPutModel.getCodeProjectName());
+        if (!codeProjectOptional.isPresent()){
+            CodeProject codeProject = new CodeProject();
+            codeProject.setName(codeProjectPutModel.getCodeProjectName());
+            codeProject.setSkipAllScan(false);
+            codeProject.setdTrackUuid(codeProjectPutModel.getDTrackUuid());
+            codeProject.setBranch(codeProjectPutModel.getBranch()!=null && !codeProjectPutModel.getBranch().equals("") ? codeProjectPutModel.getBranch() : Constants.CODE_DEFAULT_BRANCH);
+            codeProject.setAdditionalPath(codeProjectPutModel.getAdditionalPath());
+            codeProject.setRepoUrl(codeProjectPutModel.getProjectGiturl());
+            codeProject.setTechnique(codeProjectPutModel.getProjectTech());
+            codeProjectRepository.save(codeProject);
+        }
+
+
     }
 }

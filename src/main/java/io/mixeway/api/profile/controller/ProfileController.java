@@ -5,10 +5,10 @@
  */
 package io.mixeway.api.profile.controller;
 
-import io.mixeway.pojo.Status;
-import io.mixeway.rest.profile.model.UpdateProfileModel;
-import io.mixeway.rest.profile.model.UserProfile;
-import io.mixeway.rest.profile.service.ProfileService;
+import io.mixeway.api.profile.model.UpdateProfileModel;
+import io.mixeway.api.profile.model.UserProfile;
+import io.mixeway.api.profile.service.ProfileService;
+import io.mixeway.utils.Status;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;

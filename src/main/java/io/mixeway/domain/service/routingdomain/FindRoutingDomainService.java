@@ -5,6 +5,7 @@ import io.mixeway.db.repository.RoutingDomainRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -22,5 +23,9 @@ public class FindRoutingDomainService {
 
     public RoutingDomain findByName(String defaultRoutingDomain) {
         return routingDomainRepository.findByName(defaultRoutingDomain);
+    }
+
+    public List<RoutingDomain> findAll() {
+        return routingDomainRepository.findAll();
     }
 }

@@ -1,9 +1,9 @@
 package io.mixeway.api.project.controller;
 
+import io.mixeway.api.project.service.BugTrackerService;
 import io.mixeway.db.entity.BugTracker;
 import io.mixeway.db.entity.BugTrackerType;
-import io.mixeway.pojo.Status;
-import io.mixeway.rest.project.service.BugTrackerService;
+import io.mixeway.utils.Status;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;

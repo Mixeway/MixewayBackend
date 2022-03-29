@@ -1,13 +1,15 @@
 package io.mixeway.api.project.service;
 
+import io.mixeway.api.project.model.SoftVuln;
 import io.mixeway.db.entity.CodeProject;
 import io.mixeway.db.entity.Project;
 import io.mixeway.db.entity.ProjectVulnerability;
-import io.mixeway.db.repository.CodeProjectRepository;
-import io.mixeway.db.repository.ProjectRepository;
-import io.mixeway.domain.service.vulnerability.VulnTemplate;
-import io.mixeway.pojo.PermissionFactory;
-import io.mixeway.rest.project.model.SoftVuln;
+import io.mixeway.domain.service.project.FindProjectService;
+import io.mixeway.domain.service.scanmanager.code.FindCodeProjectService;
+import io.mixeway.domain.service.vulnmanager.VulnTemplate;
+import io.mixeway.utils.PermissionFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -18,26 +20,19 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@Log4j2
+@RequiredArgsConstructor
 public class OpenSourceService {
-    private final ProjectRepository projectRepository;
-    private final CodeProjectRepository codeProjectRepository;
     private final PermissionFactory permissionFactory;
     private final VulnTemplate vulnTemplate;
-    OpenSourceService(ProjectRepository projectRepository,
-                      CodeProjectRepository codeProjectRepository,
-                      VulnTemplate vulnTemplate,
-                      PermissionFactory permissionFactory){
-        this.projectRepository = projectRepository;
-        this.codeProjectRepository = codeProjectRepository;
-        this.permissionFactory = permissionFactory;
-        this.vulnTemplate = vulnTemplate;
-    }
+    private final FindProjectService findProjectService;
+    private final FindCodeProjectService findCodeProjectService;
 
     public ResponseEntity<List<SoftVuln>> showSoft(Long id, Principal principal) {
-        Optional<Project> project = projectRepository.findById(id);
+        Optional<Project> project = findProjectService.findProjectById(id);
         List<SoftVuln> softVulns = new ArrayList<>();
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal,project.get())){
-            for (CodeProject cp : codeProjectRepository.findByCodeGroupIn(project.get().getCodes())){
+            for (CodeProject cp : findCodeProjectService.findByProject(project.get())){
                 List<ProjectVulnerability> softwarePacketVulnerabilities = vulnTemplate.projectVulnerabilityRepository.getSoftwareVulnsForCodeProject(cp.getId());
                 for (ProjectVulnerability spv : softwarePacketVulnerabilities){
                     SoftVuln softVuln = new SoftVuln();

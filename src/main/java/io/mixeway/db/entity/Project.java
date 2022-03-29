@@ -34,7 +34,7 @@ public class Project implements Serializable{
 	@JsonIgnore private Set<Asset> assets;
 	@JsonIgnore private Set<Node> nodes;
 	@JsonIgnore private Set<InfraScan> scans;
-	@JsonIgnore private Set<CodeGroup> codes;
+	@JsonIgnore private Set<CodeProject> codes;
 	@JsonIgnore private Set<WebApp> webapps;
 	@JsonIgnore private Set<WebAppScan> webAppScan;
 	@JsonIgnore private int highVuln;
@@ -259,12 +259,13 @@ public class Project implements Serializable{
 	public void setScans(Set<InfraScan> scans) {
 		this.scans = scans;
 	}
+
 	@OneToMany(mappedBy = "project", cascade = CascadeType.ALL, fetch=FetchType.EAGER)
-	public Set<CodeGroup> getCodes() {
+	public Set<CodeProject> getCodes() {
 		return codes;
 	}
 
-	public void setCodes(Set<CodeGroup> codes) {
+	public void setCodes(Set<CodeProject> codes) {
 		this.codes = codes;
 	}
 	@OneToMany(mappedBy = "project", cascade = CascadeType.ALL, fetch=FetchType.LAZY)

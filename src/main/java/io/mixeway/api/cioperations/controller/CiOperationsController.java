@@ -60,7 +60,7 @@ public class CiOperationsController {
                                                 @PathVariable("projectName") String codeProjectName,
                                                 @PathVariable("commitId") String commitId,
                                                 Principal principal)  {
-        return ciOperationsService.startPipeline(projectId,groupName,codeProjectName,commitId, principal);
+        return ciOperationsService.startPipeline(projectId,codeProjectName,commitId, principal);
     }
     @PreAuthorize("hasAuthority('ROLE_API')")
     @RequestMapping(value = "/project/{projectId}/code/scan/{groupName}/{projectName}/{commitId}", method = RequestMethod.PUT,produces= MediaType.APPLICATION_JSON_VALUE)

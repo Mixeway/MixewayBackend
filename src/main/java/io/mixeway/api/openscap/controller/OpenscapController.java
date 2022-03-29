@@ -5,8 +5,8 @@
  */
 package io.mixeway.api.openscap.controller;
 
-import io.mixeway.pojo.Status;
-import io.mixeway.rest.openscap.service.OpenscapRestService;
+import io.mixeway.api.openscap.service.OpenscapRestService;
+import io.mixeway.utils.Status;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;

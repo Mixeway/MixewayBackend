@@ -18,7 +18,6 @@ import java.util.Date;
 public class CiOperations {
     Long id;
     Project project;
-    CodeGroup codeGroup;
     CodeProject codeProject;
     Date inserted;
     Date ended;
@@ -40,8 +39,7 @@ public class CiOperations {
 
     public CiOperations(CodeProject codeProject, InfoScanPerformed infoScanPerformed) {
         this.codeProject = codeProject;
-        this.codeGroup = codeProject.getCodeGroup();
-        this.project = codeProject.getCodeGroup().getProject();
+        this.project = codeProject.getProject();
         this.commitId = infoScanPerformed.getCommitId();
         this.openSourceScan = true;
     }
@@ -180,16 +178,6 @@ public class CiOperations {
 
     public void setProject(Project project) {
         this.project = project;
-    }
-    @ManyToOne(fetch = FetchType.EAGER, optional = true)
-    @JoinColumn(name = "codegroup_id", nullable = true)
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    public CodeGroup getCodeGroup() {
-        return codeGroup;
-    }
-
-    public void setCodeGroup(CodeGroup codeGroup) {
-        this.codeGroup = codeGroup;
     }
 
     @ManyToOne(fetch = FetchType.EAGER, optional = true)

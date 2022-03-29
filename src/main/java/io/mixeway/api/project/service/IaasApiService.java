@@ -1,17 +1,19 @@
 package io.mixeway.api.project.service;
 
+import io.mixeway.api.project.model.IaasApiPutModel;
+import io.mixeway.api.project.model.IaasModel;
 import io.mixeway.db.entity.IaasApi;
 import io.mixeway.db.entity.IaasApiType;
 import io.mixeway.db.entity.Project;
-import io.mixeway.db.repository.IaasApiRepository;
-import io.mixeway.db.repository.IaasApiTypeRepisotory;
-import io.mixeway.db.repository.ProjectRepository;
-import io.mixeway.pojo.PermissionFactory;
-import io.mixeway.pojo.Status;
-import io.mixeway.rest.project.model.IaasApiPutModel;
-import io.mixeway.rest.project.model.IaasModel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.mixeway.domain.service.iaasapi.DeleteIaasApiService;
+import io.mixeway.domain.service.iaasapi.GetOrCreateIaasApiService;
+import io.mixeway.domain.service.iaasapi.UpdateIaasApiService;
+import io.mixeway.domain.service.project.FindProjectService;
+import io.mixeway.servicediscovery.service.IaasService;
+import io.mixeway.utils.PermissionFactory;
+import io.mixeway.utils.Status;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -22,27 +24,18 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@Log4j2
+@RequiredArgsConstructor
 public class IaasApiService {
-    private static final Logger log = LoggerFactory.getLogger(IaasApiService.class);
-    private final ProjectRepository projectRepository;
-    private final IaasApiRepository iaasApiRepository;
-    private final IaasApiTypeRepisotory iaasApiTypeRepisotory;
     private final PermissionFactory permissionFactory;
-    private final io.mixeway.integrations.servicediscovery.service.IaasService iaasApiService;
-
-
-    IaasApiService(ProjectRepository projectRepository, IaasApiTypeRepisotory iaasApiTypeRepisotory,
-                   IaasApiRepository iaasApiRepository, io.mixeway.integrations.servicediscovery.service.IaasService iaasApiService,
-                   PermissionFactory permissionFactory){
-        this.projectRepository = projectRepository;
-        this.iaasApiRepository = iaasApiRepository;
-        this.iaasApiTypeRepisotory = iaasApiTypeRepisotory;
-        this.iaasApiService = iaasApiService;
-        this.permissionFactory = permissionFactory;
-    }
+    private final IaasService iaasApiService;
+    private final FindProjectService findProjectService;
+    private final UpdateIaasApiService updateIaasApiService;
+    private final DeleteIaasApiService deleteIaasApiService;
+    private final GetOrCreateIaasApiService getOrCreateIaasApiService;
 
     public ResponseEntity<IaasModel> showIaasApi(Long id, Principal principal) {
-        Optional<Project> project = projectRepository.findById(id);
+        Optional<Project> project = findProjectService.findProjectById(id);
         if ( project.isPresent() &&
                 permissionFactory.canUserAccessProject(principal, project.get()) &&
                 project.get().getIaasApis().size() == 1){
@@ -66,7 +59,7 @@ public class IaasApiService {
     }
 
     public ResponseEntity<Status> saveIaasApi(Long id, IaasApiPutModel iaasApiPutModel, Principal principal) {
-        Optional<Project> project = projectRepository.findById(id);
+        Optional<Project> project = findProjectService.findProjectById(id);
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             if (project.get().getIaasApis().size() >0){
                 return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
@@ -82,7 +75,7 @@ public class IaasApiService {
 
     public ResponseEntity<Status> testIaasApi(Long id, Principal principal) {
 
-        Optional<Project> project = projectRepository.findById(id);
+        Optional<Project> project = findProjectService.findProjectById(id);
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             Optional<IaasApi> api = project.get().getIaasApis().stream().findFirst();
             if (api.isPresent() && api.get().getProject().getId().equals(project.get().getId())) {
@@ -101,12 +94,11 @@ public class IaasApiService {
     }
 
     public ResponseEntity<Status> iaasApiEnableSynchro(Long id, Principal principal) {
-        Optional<Project> project = projectRepository.findById(id);
+        Optional<Project> project = findProjectService.findProjectById(id);
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             Optional<IaasApi> api = project.get().getIaasApis().stream().findFirst();
             if (api.isPresent() && api.get().getProject().getId().equals(project.get().getId()) && api.get().getStatus()) {
-                api.get().setEnabled(true);
-                iaasApiRepository.save(api.get());
+                updateIaasApiService.enable(api.get());
                 log.info("{} - Enabled auto synchro of IaasApi for project {}", principal.getName(), project.get().getName());
                 return new ResponseEntity<>(HttpStatus.OK);
             }
@@ -117,12 +109,11 @@ public class IaasApiService {
     }
 
     public ResponseEntity<Status> iaasApiDisableSynchro(Long id, Principal principal) {
-        Optional<Project> project = projectRepository.findById(id);
+        Optional<Project> project = findProjectService.findProjectById(id);
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             Optional<IaasApi> api = project.get().getIaasApis().stream().findFirst();
             if (api.isPresent() && api.get().getProject().getId().equals(project.get().getId())) {
-                api.get().setEnabled(false);
-                iaasApiRepository.save(api.get());
+                updateIaasApiService.disable(api.get());
                 log.info("{} - Disabled auto synchro of IaasApi for project {}", principal.getName(), project.get().getName());
                 return new ResponseEntity<>(HttpStatus.OK);
             }
@@ -133,11 +124,11 @@ public class IaasApiService {
     }
     @Transactional
     public ResponseEntity<Status> iaasApiDelete(Long id, Principal principal) {
-        Optional<Project> project = projectRepository.findById(id);
+        Optional<Project> project = findProjectService.findProjectById(id);
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             Optional<IaasApi> api = project.get().getIaasApis().stream().findFirst();
             if (api.isPresent() && api.get().getProject() == project.get()) {
-                iaasApiRepository.delete(api.get());
+                deleteIaasApiService.delete(api.get());
                 log.info("{} - deleted IaasApi for project {}", principal.getName(), project.get().getName());
                 return new ResponseEntity<>(HttpStatus.OK);
             }
@@ -148,6 +139,6 @@ public class IaasApiService {
     }
 
     public ResponseEntity<List<IaasApiType>> getIaasApiTypes(Principal principal) {
-        return new ResponseEntity<>(iaasApiTypeRepisotory.findAll(),HttpStatus.OK);
+        return new ResponseEntity<>(getOrCreateIaasApiService.findAllTypes(),HttpStatus.OK);
     }
 }

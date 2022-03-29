@@ -1,7 +1,6 @@
 package io.mixeway.domain.service.scanmanager.code;
 
 import io.mixeway.db.entity.*;
-import io.mixeway.db.repository.CodeGroupRepository;
 import io.mixeway.db.repository.CodeProjectRepository;
 import io.mixeway.db.repository.SettingsRepository;
 import io.mixeway.db.repository.UserRepository;
@@ -15,6 +14,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.net.MalformedURLException;
 import java.security.Principal;
 import java.util.Optional;
 
@@ -27,13 +27,11 @@ import static org.junit.jupiter.api.Assertions.*;
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 class CreateOrGetCodeProjectServiceTest {
     private final CreateOrGetCodeProjectService createOrGetCodeProjectService;
-    private final CreateOrGetCodeGroupService createOrGetCodeGroupService;
     private final CreateProjectService createProjectService;
     private final UserRepository userRepository;
     private final SettingsRepository settingsRepository;
     private final FindProjectService findProjectService;
     private final CodeProjectRepository codeProjectRepository;
-    private final CodeGroupRepository codeGroupRepository;
 
     @Mock
     Principal principal;
@@ -56,45 +54,17 @@ class CreateOrGetCodeProjectServiceTest {
     }
 
     @Test
-    void createOrGetCodeProject() {
+    void createOrGetCodeProject() throws MalformedURLException {
         Optional<Project> project = findProjectService.findProjectByCiid("test_create_cp");
         assertTrue(project.isPresent());
-        CodeGroup codeGroup = createOrGetCodeGroupService.createOrGetCodeGroup(principal,"test_cp","http://repo",project.get(),"","","");
-        assertNotNull(codeGroup);
-        CodeProject codeProject = createOrGetCodeProjectService.createOrGetCodeProject(codeGroup,"test_cp","master");
+        CodeProject codeProject = createOrGetCodeProjectService.createOrGetCodeProject("https://test/test_cp","master",principal, project.get());
         assertNotNull(codeProject);
-        Optional<CodeProject> codeProjectFromRepo = codeProjectRepository.findByCodeGroupAndName(codeGroup,"test_cp");
+        Optional<CodeProject> codeProjectFromRepo = codeProjectRepository.findByProjectAndName(project.get(), "test_cp");
         assertTrue(codeProjectFromRepo.isPresent());
         assertEquals(codeProjectFromRepo.get().getId(), codeProject.getId());
     }
 
-    @Test
-    void createOrGetCodeProjectWithGroupName() {
-        Optional<Project> project = findProjectService.findProjectByCiid("test_create_cp");
-        assertTrue(project.isPresent());
-        CodeGroup codeGroup = createOrGetCodeGroupService.createOrGetCodeGroup(principal,"create_cp_2","http://repo",project.get(),"","","");
-        assertNotNull(codeGroup);
-        CodeProject codeProject = createOrGetCodeProjectService.createOrGetCodeProjectWithGroupName(project.get(),"create_cp_2","create_cp_2","master");
-        Optional<CodeGroup> codeGroupFromRepo = codeGroupRepository.findByProjectAndName(project.get(),"create_cp_2");
-        assertTrue(codeGroupFromRepo.isPresent());
-        Optional<CodeProject> codeProjectFromRepo = codeProjectRepository.findByCodeGroupAndName(codeGroupFromRepo.get(),"create_cp_2");
-        assertTrue(codeProjectFromRepo.isPresent());
-        assertEquals(codeProjectFromRepo.get().getId(), codeProject.getId());
-    }
 
-    @Test
-    void createCodeProject() {
-        Optional<Project> project = findProjectService.findProjectByCiid("test_create_cp");
-        assertTrue(project.isPresent());
-        CodeProject codeProject = createOrGetCodeProjectService.
-                createCodeProject("url","username","password","master","mvn","test_cp_3", project.get(), principal);
-        assertNotNull(codeProject);
-        Optional<CodeGroup> codeGroupFromRepo = codeGroupRepository.findByProjectAndName(project.get(), "test_cp_3");
-        assertTrue(codeGroupFromRepo.isPresent());
-        Optional<CodeProject> codeProjectFromRepo = codeProjectRepository.findByCodeGroupAndName(codeGroupFromRepo.get(),"test_cp_3");
-        assertTrue(codeProjectFromRepo.isPresent());
-
-    }
 
     @Test
     void testCreateCodeProject() {

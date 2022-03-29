@@ -6,26 +6,24 @@ import io.mixeway.db.entity.User;
 import io.mixeway.db.repository.ProjectRepository;
 import io.mixeway.db.repository.SettingsRepository;
 import io.mixeway.db.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.security.Principal;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@Component
+@Service
+@RequiredArgsConstructor
 public class PermissionFactory {
     private final UserRepository userRepository;
     private final ProjectRepository projectRepository;
     private final SettingsRepository settingsRepository;
-    @Autowired
-    public PermissionFactory(UserRepository userRepository, ProjectRepository projectRepository,
-                             SettingsRepository settingsRepository){
-        this.userRepository = userRepository;
-        this.projectRepository = projectRepository;
-        this.settingsRepository = settingsRepository;
-    }
+
 
     /**
      * Verification if given Principal has authority to access project details

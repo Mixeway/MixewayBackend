@@ -33,7 +33,7 @@ public class PrepareCIOperation {
             this.openSourceScannerIntegration = false;
         }
         this.scannerType = type;
-        this.projectId = codeProject.getCodeGroup().getProject().getId();
+        this.projectId = codeProject.getProject().getId();
         this.codeProjectId = codeProject.getId();
     }
 }

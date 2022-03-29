@@ -1,10 +1,8 @@
 package io.mixeway.domain.service.scanmanager.webapp;
 
-import io.mixeway.db.entity.CodeGroup;
 import io.mixeway.db.entity.CodeProject;
 import io.mixeway.db.entity.Project;
 import io.mixeway.db.entity.WebApp;
-import io.mixeway.db.repository.CodeGroupRepository;
 import io.mixeway.db.repository.CodeProjectRepository;
 import io.mixeway.db.repository.WebAppRepository;
 import io.mixeway.scanmanager.model.CustomCookie;
@@ -31,7 +29,6 @@ import java.util.concurrent.TimeUnit;
 public class UpdateWebAppService {
     private final WebAppRepository webAppRepository;
     private final CodeProjectRepository codeProjectRepository;
-    private final CodeGroupRepository codeGroupRepository;
     private final GetOrCreateWebAppService getOrCreateWebAppService;
     private final ProjectRiskAnalyzer projectRiskAnalyzer;
 
@@ -65,7 +62,7 @@ public class UpdateWebAppService {
         webApp.setInQueue(canPutWebAppToQueueDueToLastExecuted(webApp) && inQueue);
         webApp.setRequestId(requestId);
         webAppRepository.save(webApp);
-        webApp = setCodeProjectLink(webApp, webApp.getProject(), webAppScanModel);
+        //webApp = setCodeProjectLink(webApp, webApp.getProject(), webAppScanModel);
         this.updateHeadersAndCookies(webAppScanModel.getHeaders(), webAppScanModel.getCookies(), webApp);
         log.debug("Modified WebApp '{}' and set {} headers", webApp.getUrl(), webApp.getHeaders() == null? 0 : webApp.getHeaders().size());
         return webApp.getRequestId();
@@ -95,24 +92,24 @@ public class UpdateWebAppService {
      * @param sd model of application
      * @return webapplication with link
      */
-    public WebApp setCodeProjectLink(WebApp webApp, Project project, WebAppScanModel sd) {
-        if (sd.getCodeGroup() != null) {
-            Optional<CodeGroup> codeGroup = codeGroupRepository.findByProjectAndName(project, sd.getCodeGroup());
-            if (codeGroup.isPresent()) {
-                webApp.setCodeGroup(codeGroup.get());
-                log.info("Created link between CodeGroup {} and webapp {}", codeGroup.get().getName(), webApp.getUrl());
-                if (sd.getCodeProject() != null) {
-                    Optional<CodeProject> codeProject = codeProjectRepository.findByCodeGroupAndName(codeGroup.get(), sd.getCodeProject());
-                    if (codeProject.isPresent()) {
-                        webApp.setCodeProject(codeProject.get());
-                        log.info("Created link between CodeProject {} and webapp {}", codeProject.get().getName(), webApp.getUrl());
-                    }
-                }
-            }
-            webApp = webAppRepository.save(webApp);
-        }
-        return webApp;
-    }
+//    public WebApp setCodeProjectLink(WebApp webApp, Project project, WebAppScanModel sd) {
+//        if (sd.getCodeGroup() != null) {
+//            Optional<CodeGroup> codeGroup = codeGroupRepository.findByProjectAndName(project, sd.getCodeGroup());
+//            if (codeGroup.isPresent()) {
+//                webApp.setCodeGroup(codeGroup.get());
+//                log.info("Created link between CodeGroup {} and webapp {}", codeGroup.get().getName(), webApp.getUrl());
+//                if (sd.getCodeProject() != null) {
+//                    Optional<CodeProject> codeProject = codeProjectRepository.findByCodeGroupAndName(codeGroup.get(), sd.getCodeProject());
+//                    if (codeProject.isPresent()) {
+//                        webApp.setCodeProject(codeProject.get());
+//                        log.info("Created link between CodeProject {} and webapp {}", codeProject.get().getName(), webApp.getUrl());
+//                    }
+//                }
+//            }
+//            webApp = webAppRepository.save(webApp);
+//        }
+//        return webApp;
+//    }
 
     /**
      * Method which update WebAppHeaders and WebAppCoookie for existing webapp

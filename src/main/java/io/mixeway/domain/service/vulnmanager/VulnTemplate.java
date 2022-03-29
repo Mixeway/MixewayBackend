@@ -127,7 +127,7 @@ public class VulnTemplate {
 
     public void processBugTracking(CodeProject codeProject, VulnerabilitySource vulnerabilitySource) throws URISyntaxException {
 
-        Optional<BugTracker> bugTracker = bugTrackerRepository.findByProjectAndVulns(codeProject.getCodeGroup().getProject(), vulnerabilitySource.getName());
+        Optional<BugTracker> bugTracker = bugTrackerRepository.findByProjectAndVulns(codeProject.getProject(), vulnerabilitySource.getName());
         if (SOURCE_OPENSOURCE.equals(vulnerabilitySource)) {
             List<ProjectVulnerability> projectVulnerabilities = projectVulnerabilityRepository
                     .findByCodeProjectAndVulnerabilitySourceAndTicketIdIsNullAndSeverityIn(codeProject, vulnerabilitySource, Collections.singletonList("Critical"));
@@ -151,7 +151,7 @@ public class VulnTemplate {
             if (projectVulnerabilities.size() > 0 && bugTracker.isPresent()) {
                 for (BugTracking bugTracking : bugTrackings) {
                     if (bugTracking.canProcessRequest(bugTracker.get())) {
-                        bugTracking.processRequestMultiVuln(projectVulnerabilityRepository, vulnsToIssue,bugTracker.get(), codeProject.getCodeGroup().getProject(),"SourceCode","Autoaction",false);
+                        bugTracking.processRequestMultiVuln(projectVulnerabilityRepository, vulnsToIssue,bugTracker.get(), codeProject.getProject(),"SourceCode","Autoaction",false);
                     }
                 }
             }
@@ -166,7 +166,7 @@ public class VulnTemplate {
             if (projectVulnerabilities.size() > 0 && bugTracker.isPresent()) {
                 for (BugTracking bugTracking : bugTrackings) {
                     if (bugTracking.canProcessRequest(bugTracker.get())) {
-                        bugTracking.processRequestMultiVuln(projectVulnerabilityRepository, vulnsToIssue,bugTracker.get(), codeProject.getCodeGroup().getProject(),"OpenSource","Autoaction",false);
+                        bugTracking.processRequestMultiVuln(projectVulnerabilityRepository, vulnsToIssue,bugTracker.get(), codeProject.getProject(),"OpenSource","Autoaction",false);
                     }
                 }
             }

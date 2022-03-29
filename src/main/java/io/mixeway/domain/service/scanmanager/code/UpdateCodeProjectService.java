@@ -37,7 +37,7 @@ public class UpdateCodeProjectService {
         codeProject.setTechnique(codeScanRequest.getTech());
         codeProject.setBranch(codeScanRequest.getBranch());
         codeProject.setRepoUrl(codeScanRequest.getRepoUrl());
-        log.info("{} - Updated CodeProject [{}] {}", "ScanManager", codeProject.getCodeGroup().getProject().getName(), codeProject.getName());
+        log.info("{} - Updated CodeProject [{}] {}", "ScanManager", codeProject.getProject().getName(), codeProject.getName());
         return codeProject;
     }
 
@@ -52,7 +52,7 @@ public class UpdateCodeProjectService {
         codeProject.setInQueue(true);
         codeProject.setRequestId(UUID.randomUUID().toString());
         codeProject = codeProjectRepository.save(codeProject);
-        log.info("{} - Updated CodeProject [{}] {}", "ScanManager", codeProject.getCodeGroup().getProject().getName(), codeProject.getName());
+        log.info("{} - Updated CodeProject [{}] {}", "ScanManager", codeProject.getProject().getName(), codeProject.getName());
         return codeProject;
     }
 

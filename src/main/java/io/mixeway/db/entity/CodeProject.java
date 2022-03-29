@@ -22,7 +22,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 		})@EntityListeners(AuditingEntityListener.class)
 public class CodeProject implements VulnSource {
 	private Long id;
-	private CodeGroup codeGroup;
 	private String name;
 	private String dTrackUuid;
 	@JsonIgnore private Set<ProjectVulnerability> vulns;
@@ -36,11 +35,93 @@ public class CodeProject implements VulnSource {
 	@JsonIgnore private Boolean inQueue;
 	@JsonIgnore private Set<SoftwarePacket> softwarePackets;
 	private String branch;
-	@JsonIgnore private String requestId;
+	@JsonIgnore
+	private String requestId;
 	private int risk;
 	private Boolean enableJira;
+	@JsonIgnore
+	private int versionIdAll;
+	@JsonIgnore
+	private int versionIdsingle;
+	@JsonIgnore
+	private String jobId;
+	@JsonIgnore
+	private String scanid;
+	@JsonIgnore private String scope;
+	@JsonIgnore private int remoteid;
+	private String appClient;
+
+	@JsonIgnore
+	private Project project;
+
+	public void setProject(Project project) {
+		this.project = project;
+	}
+
+
+	@Column(name="versionidall")
+	public int getVersionIdAll() {
+		return versionIdAll;
+	}
+
+	public void setVersionIdAll(int versionIdAll) {
+		this.versionIdAll = versionIdAll;
+	}
+
+	@Column(name="versionidsingle")
+	public int getVersionIdsingle() {
+		return versionIdsingle;
+	}
+
+	public void setVersionIdsingle(int versionIdsingle) {
+		this.versionIdsingle = versionIdsingle;
+	}
+
+	@Column(name="jobid")
+	public String getJobId() {
+		return jobId;
+	}
+
+	public void setJobId(String jobId) {
+		this.jobId = jobId;
+	}
+
+
+	public String getScanid() {
+		return scanid;
+	}
+
+	public void setScanid(String scanid) {
+		this.scanid = scanid;
+	}
+
+	public String getScope() {
+		return scope;
+	}
+
+	public void setScope(String scope) {
+		this.scope = scope;
+	}
+
+	public int getRemoteid() {
+		return remoteid;
+	}
+
+	public void setRemoteid(int remoteid) {
+		this.remoteid = remoteid;
+	}
+
+	@Column(name="appclient")
+	public String getAppClient() {
+		return appClient;
+	}
+
+	public void setAppClient(String appClient) {
+		this.appClient = appClient;
+	}
+
 	@Column(name = "enablejira")
-	public Boolean isEnableJira() {
+	public Boolean getEnableJira() {
 		return enableJira;
 	}
 
@@ -51,10 +132,9 @@ public class CodeProject implements VulnSource {
 	/**
 	 * For CICD
 	 */
-	public CodeProject(String projectName, String branch, CodeGroup codeGroup, String commitid) {
+	public CodeProject(String projectName, String branch, String commitid) {
 		this.name = projectName;
 		this.branch = branch;
-		this.codeGroup = codeGroup;
 		this.commitid = commitid;
 		this.skipAllScan = true;
 		this.inQueue = false;
@@ -112,6 +192,13 @@ public class CodeProject implements VulnSource {
 	}
 
 	private Boolean running;
+
+	@ManyToOne(fetch = FetchType.LAZY, optional = false)
+	@JoinColumn(name = "project_id", nullable = false)
+	@OnDelete(action = OnDeleteAction.CASCADE)
+	public Project getProject() {
+		return project;
+	}
 
 	public Boolean getRunning() {
 		return running;
@@ -197,15 +284,6 @@ public class CodeProject implements VulnSource {
 	}
 	public void setId(Long id) {
 		this.id = id;
-	}
-	@ManyToOne(fetch = FetchType.EAGER, optional = false)
-    @JoinColumn(name = "codegroup_id", nullable = false)
-    @OnDelete(action = OnDeleteAction.CASCADE)
-	public CodeGroup getCodeGroup() {
-		return codeGroup;
-	}
-	public void setCodeGroup(CodeGroup codeGroup) {
-		this.codeGroup = codeGroup;
 	}
 	public String getName() {
 		return name;

@@ -1,8 +1,9 @@
 package io.mixeway.api.project.controller;
 
+import io.mixeway.api.project.model.*;
+import io.mixeway.api.project.service.ProjectRestService;
 import io.mixeway.db.entity.*;
-import io.mixeway.rest.project.model.*;
-import io.mixeway.rest.project.service.ProjectRestService;
+import io.mixeway.utils.Status;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -61,12 +62,12 @@ public class ProjectRestController {
     }
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping(value = "/{id}/vulnerabilities/{vulnId}")
-    public ResponseEntity<ProjectVulnerability> showVulnerability(@PathVariable("id")Long id,@PathVariable("vulnId")Long vulnId, Principal principal) {
+    public ResponseEntity<ProjectVulnerability> showVulnerability(@PathVariable("id")Long id, @PathVariable("vulnId")Long vulnId, Principal principal) {
         return projectService.showVulnerability(id,vulnId, principal);
     }
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping(value = "/{id}/vulnerabilities/{vulnId}/grade/{grade}")
-    public ResponseEntity<io.mixeway.pojo.Status> setGradeForVulnerability(@PathVariable("id")Long id, @PathVariable("vulnId")Long vulnId,
+    public ResponseEntity<Status> setGradeForVulnerability(@PathVariable("id")Long id, @PathVariable("vulnId")Long vulnId,
                                                                            @PathVariable("grade") int grade, Principal principal) {
         return projectService.setGradeForVulnerability(id,vulnId,grade, principal);
     }

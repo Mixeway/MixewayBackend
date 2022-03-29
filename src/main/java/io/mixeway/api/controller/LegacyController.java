@@ -51,7 +51,7 @@ public class LegacyController {
                                                        Principal principal) throws IOException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, JSONException, ParseException {
         Optional<Project> project = findProjectService.findProjectById(id);
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal,project.get())) {
-            return codeScanService.createScanForCodeProject(id, groupName, projectName);
+            return codeScanService.createScanForCodeProject(id, projectName);
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
@@ -65,7 +65,7 @@ public class LegacyController {
                                                          Principal principal) throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, JSONException, ParseException {
         Optional<Project> project = findProjectService.findProjectById(id);
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal,project.get())) {
-            return codeScanService.putInformationAboutJob(id, groupName, projectName, jobId);
+            return codeScanService.putInformationAboutJob(id, projectName, jobId);
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
@@ -79,7 +79,7 @@ public class LegacyController {
                                                                         Principal principal)  {
         Optional<Project> project = findProjectService.findProjectById(id);
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal,project.get())) {
-            return codeScanService.getResultsForProject(id, groupName, projectName, principal);
+            return codeScanService.getResultsForProject(id, projectName, principal);
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }

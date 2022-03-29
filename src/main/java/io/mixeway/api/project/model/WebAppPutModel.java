@@ -20,6 +20,10 @@ public class WebAppPutModel {
     @Min(1)
     private Long routingDomainForAsset;
 
+    public boolean isPasswordAuthSet(){
+        return StringUtils.isNotBlank(webAppPassword) && StringUtils.isNotBlank(webAppUsername);
+    }
+
 
 
 }

@@ -1,7 +1,7 @@
 package io.mixeway.api.project.controller;
 
+import io.mixeway.api.project.service.AuditService;
 import io.mixeway.db.entity.NodeAudit;
-import io.mixeway.rest.project.service.AuditService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;

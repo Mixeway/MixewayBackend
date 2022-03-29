@@ -1,13 +1,14 @@
 package io.mixeway.domain.service.scanmanager.code;
 
-import io.mixeway.db.entity.CodeGroup;
 import io.mixeway.db.entity.CodeProject;
+import io.mixeway.db.entity.Project;
 import io.mixeway.db.repository.CodeProjectRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * @author gsiewruk
@@ -17,8 +18,9 @@ import java.util.Optional;
 public class FindCodeProjectService {
     private final CodeProjectRepository codeProjectRepository;
 
-    public Optional<CodeProject> findCodeProject(CodeGroup codeGroup, String codeProjectName){
-        return codeProjectRepository.findByCodeGroupAndName(codeGroup,codeProjectName);
+
+    public Optional<CodeProject> findCodeProject(Project project, String codeProjectName){
+        return codeProjectRepository.findByProjectAndName(project,codeProjectName);
     }
     public List<CodeProject> findRunningCodeProjects(){
         return codeProjectRepository.findByRunning(true);
@@ -28,5 +30,21 @@ public class FindCodeProjectService {
     }
     public Optional<CodeProject> findByRepoUrl(String repoUrl){
         return codeProjectRepository.findByRepoUrl(repoUrl);
+    }
+
+    public List<CodeProject> findByProject(Project project) {
+        return codeProjectRepository.findByProject(project);
+    }
+
+    public List<CodeProject> findByInQueue(boolean b) {
+        return codeProjectRepository.findByInQueue(b);
+    }
+
+    public List<CodeProject> findByRequestId(String requestId) {
+        return codeProjectRepository.findByRequestId(requestId);
+    }
+
+    public List<CodeProject> findByRunning(boolean b) {
+        return codeProjectRepository.findByRunning(b);
     }
 }

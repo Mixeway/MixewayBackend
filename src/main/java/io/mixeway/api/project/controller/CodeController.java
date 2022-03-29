@@ -1,11 +1,15 @@
 package io.mixeway.api.project.controller;
 
-import io.mixeway.db.entity.CodeGroup;
+import io.mixeway.api.project.model.CodeCard;
+import io.mixeway.api.project.model.CodeProjectPutModel;
+import io.mixeway.api.project.model.EditCodeProjectModel;
+import io.mixeway.api.project.service.CodeService;
+import io.mixeway.api.protocol.OpenSourceConfig;
 import io.mixeway.db.entity.ProjectVulnerability;
-import io.mixeway.integrations.opensourcescan.model.Projects;
-import io.mixeway.pojo.Status;
-import io.mixeway.rest.project.model.*;
-import io.mixeway.rest.project.service.CodeService;
+import io.mixeway.scanmanager.model.Projects;
+import io.mixeway.utils.RunScanForCodeProject;
+import io.mixeway.utils.SASTProject;
+import io.mixeway.utils.Status;
 import org.codehaus.jettison.json.JSONException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -33,16 +37,7 @@ public class CodeController {
     public ResponseEntity<CodeCard> showCodeRepos(@PathVariable("id")Long id, Principal principal) {
         return codeService.showCodeRepos(id, principal);
     }
-    @PreAuthorize("hasAuthority('ROLE_USER')")
-    @GetMapping(value = "/{id}/codegroups")
-    public ResponseEntity<List<CodeGroup>> showCodeGroups(@PathVariable("id")Long id, Principal principal) {
-        return codeService.showCodeGroups(id, principal);
-    }
-    @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
-    @PutMapping(value = "/{id}/add/codegroup")
-    public ResponseEntity<Status> saveCodeGroup(@PathVariable("id")Long id, @RequestBody CodeGroupPutModel codeGroupPutModel, Principal principal) {
-        return codeService.saveCodeGroup(id, codeGroupPutModel, principal);
-    }
+
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @PutMapping(value = "/{id}/add/codeproject")
     public ResponseEntity<Status> saveCodeProject(@PathVariable("id")Long id, @RequestBody CodeProjectPutModel codeProjectPutModel, Principal principal) {
@@ -105,7 +100,7 @@ public class CodeController {
     }
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping(value = "/{projectId}/opensource/{codeGroup}/{codeProject}")
-    public ResponseEntity<OpenSourceConfig> getOpenSourceConfig(@PathVariable("projectId")Long id,@PathVariable("codeGroup")String codeGroup,
+    public ResponseEntity<OpenSourceConfig> getOpenSourceConfig(@PathVariable("projectId")Long id, @PathVariable("codeGroup")String codeGroup,
                                                                 @PathVariable("codeProject")String codeProject,
                                                                 Principal principal) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, JSONException, ParseException {
         return codeService.getOpenSourceConfig(id, codeGroup, codeProject, principal);

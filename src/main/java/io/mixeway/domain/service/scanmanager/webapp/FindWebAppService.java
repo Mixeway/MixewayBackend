@@ -26,4 +26,16 @@ public class FindWebAppService {
     public Optional<WebApp> findById(Long id){
         return webAppRepository.findById(id);
     }
+
+    public List<WebApp> findByRequestId(String requestId) {
+        return webAppRepository.findByRequestId(requestId);
+    }
+
+    public List<WebApp> findByRunning(boolean b) {
+        return webAppRepository.findByRunning(b);
+    }
+
+    public List<WebApp> findByInQueue(boolean b) {
+        return webAppRepository.findByInQueue(b);
+    }
 }

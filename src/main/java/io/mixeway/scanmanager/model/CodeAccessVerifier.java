@@ -1,8 +1,8 @@
 package io.mixeway.scanmanager.model;
 
-import io.mixeway.db.entity.CodeGroup;
+import io.mixeway.db.entity.CodeProject;
 import io.mixeway.db.entity.Project;
-import io.mixeway.db.repository.CodeGroupRepository;
+import io.mixeway.db.repository.CodeProjectRepository;
 import io.mixeway.db.repository.ProjectRepository;
 import io.mixeway.domain.service.scanmanager.code.VerifySASTPermissionsService;
 import lombok.AllArgsConstructor;
@@ -16,33 +16,26 @@ import java.util.Optional;
 @AllArgsConstructor
 public class CodeAccessVerifier {
     private final ProjectRepository projectRepository;
-    private final CodeGroupRepository codeGroupRepository;
+    private final CodeProjectRepository codeProjectRepository;
     private final VerifySASTPermissionsService verifySASTPermissionsService;
 
-
-
-    public SASTRequestVerify verifyPermissions(long projectId, String groupName, String projectName, boolean depCheck){
+    public SASTRequestVerify verifyIfCodeProjectInProject(long projectId, String codeProjectName){
         Optional<Project> project = projectRepository.findById(projectId);
         if (project.isPresent()){
-            if( projectName != null){
-                Optional<CodeGroup> cg = codeGroupRepository.findByProjectAndName(project.get(),groupName);
-                if (cg.isPresent()){
-                    return verifySASTPermissionsService.verifyIfCodeGroupIsPresent(cg,projectName,depCheck);
-                } else{
-                    return verifySASTPermissionsService.verifyIfCodeGroupIsNotPresent();
-                }
-            } else{
-                Optional<CodeGroup> cg = codeGroupRepository.findByProjectAndName(project.get(),groupName);
-                if (cg.isPresent()){
-                    return verifySASTPermissionsService.returnNotValidRequestWithGroup(cg);
-                }
-                else{
-                    return verifySASTPermissionsService.returnNotValidRequestWithLog(groupName, "CodeProject request Has no group");
-                }
+            Optional<CodeProject> codeProject = codeProjectRepository.findByProjectAndName(project.get(),codeProjectName);
+            if (codeProject.isPresent()){
+                return SASTRequestVerify.builder()
+                        .valid(true)
+                        .cp(codeProject.get())
+                        .build();
             }
 
-        } else{
-            return verifySASTPermissionsService.returnNotValidRequestWithLog(Long.toString(projectId), "Request has no project assigned");
         }
+
+        return SASTRequestVerify.builder()
+                .valid(false)
+                .build();
     }
+
+
 }

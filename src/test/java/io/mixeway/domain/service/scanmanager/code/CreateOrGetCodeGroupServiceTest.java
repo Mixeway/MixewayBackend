@@ -1,10 +1,8 @@
 package io.mixeway.domain.service.scanmanager.code;
 
-import io.mixeway.db.entity.CodeGroup;
 import io.mixeway.db.entity.Project;
 import io.mixeway.db.entity.Settings;
 import io.mixeway.db.entity.User;
-import io.mixeway.db.repository.CodeGroupRepository;
 import io.mixeway.db.repository.SettingsRepository;
 import io.mixeway.db.repository.UserRepository;
 import io.mixeway.domain.service.project.CreateProjectService;
@@ -28,12 +26,10 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 class CreateOrGetCodeGroupServiceTest {
-    private final CreateOrGetCodeGroupService createOrGetCodeGroupService;
     private final CreateProjectService createProjectService;
     private final UserRepository userRepository;
     private final SettingsRepository settingsRepository;
     private final FindProjectService findProjectService;
-    private final CodeGroupRepository codeGroupRepository;
 
     @Mock
     Principal principal;
@@ -55,15 +51,6 @@ class CreateOrGetCodeGroupServiceTest {
         }
     }
 
-    @Test
-    void createOrGetCodeGroupService() {
-        Optional<Project> project = findProjectService.findProjectByCiid("test_create_cg");
-        assertTrue(project.isPresent());
-        CodeGroup codeGroup = createOrGetCodeGroupService.createOrGetCodeGroup(principal,"test_cg","http://repo",project.get(),"","","");
-        Optional<CodeGroup> codeGroupFromRepo = codeGroupRepository.findByProjectAndName(project.get(),"test_cg");
-        assertTrue(codeGroupFromRepo.isPresent());
-        assertEquals(codeGroupFromRepo.get().getId(), codeGroup.getId());
-    }
 
     @Test
     void createOrGetCodeGroup() {

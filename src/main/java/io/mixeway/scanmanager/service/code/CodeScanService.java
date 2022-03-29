@@ -25,12 +25,10 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.text.ParseException;
@@ -43,7 +41,6 @@ import java.util.*;
 @RequiredArgsConstructor
 @Log4j2
 public class CodeScanService {
-    private final CodeProjectRepository codeProjectRepository;
     private final CodeAccessVerifier codeAccessVerifier;
     private final List<CodeScanClient> codeScanClients;
     private final VulnTemplate vulnTemplate;
@@ -54,10 +51,7 @@ public class CodeScanService {
     private final FindProjectService findProjectService;
     private final GetOrCreateProjectService getOrCreateProjectService;
     private final FindCodeProjectService findCodeProjectService;
-    private final FindCodeGroupService findCodeGroupService;
-    private final UpdateCodeGroupService updateCodeGroupService;
     private final UpdateCodeProjectService updateCodeProjectService;
-    private final CreateOrGetCodeGroupService createOrGetCodeGroupService;
     private final DeleteProjectVulnerabilityService deleteProjectVulnerabilityService;
     private final GetScannerService getScannerService;
     private final OperateOnCodeProject operateOnCodeProject;
@@ -66,16 +60,15 @@ public class CodeScanService {
      * Method for getting CodeVulns for given names
      *
      * @param projectId id of a Project entity
-     * @param groupName name of CodeGroup entity
      * @param projectName name of CodeProject entity
      * @return List of a CodeVulns for a given CodeProject
      */
-    public ResponseEntity<List<Vulnerability>> getResultsForProject(long projectId, String groupName, String projectName, Principal principal){
+    public ResponseEntity<List<Vulnerability>> getResultsForProject(long projectId, String projectName, Principal principal){
         Optional<Project> project = findProjectService.findProjectById(projectId);
-        if (codeAccessVerifier.verifyPermissions(projectId,groupName,projectName,false).getValid() &&
+        if (codeAccessVerifier.verifyIfCodeProjectInProject(projectId,projectName).getValid() &&
                 project.isPresent() &&
                 permissionFactory.canUserAccessProject(principal, project.get())){
-            CodeProject cp = createOrGetCodeProjectService.createOrGetCodeProjectWithGroupName(project.get(), groupName, projectName, Constants.CODE_DEFAULT_BRANCH);
+            CodeProject cp = createOrGetCodeProjectService.getOrCreateCodeProject(project.get(), projectName, Constants.CODE_DEFAULT_BRANCH);
 
             new ResponseEntity<>(getProjectVulnerabilitiesService.getProjectVulnerabilitiesForSource(cp, Constants.FORTIFY_NOT_AN_ISSUE), HttpStatus.OK);
 
@@ -87,6 +80,21 @@ public class CodeScanService {
     }
 
     /**
+     * Method of putting CodeProject into scan queue by codeproject.id
+     *
+     * @param id of CodeProject entity
+     * @return true if scan is properly put into queue and false if there is no such CodeProject
+     */
+    public boolean putCodeProjectToQueue(Long id, Principal principal) {
+        Optional<CodeProject> codeProject = findCodeProjectService.findById(id);
+        if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getProject())){
+            updateCodeProjectService.putCodeProjectToQueue(codeProject.get());
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Method to return CodeVulns for given CodeGroup. It contains CodeVulns for each CodeProject
      * which is related with given CodeGroup
      *
@@ -94,14 +102,14 @@ public class CodeScanService {
      * @param groupName name of CodeGroup entity
      * @return List of CodeVulns for given CodeGroup
      */
-    public ResponseEntity<List<ProjectVulnerability>> getResultsForGroup(long projectId, String groupName){
+    public ResponseEntity<List<ProjectVulnerability>> getResultsForProject(long projectId, String groupName){
 
-        if (codeAccessVerifier.verifyPermissions(projectId,groupName,null, false).getValid()){
+        if (codeAccessVerifier.verifyIfCodeProjectInProject(projectId,groupName).getValid()){
             Optional<Project> project = findProjectService.findProjectById(projectId);
             if (project.isPresent()) {
-                Optional<CodeGroup> codeGroup = findCodeGroupService.findCodeGroup(project.get(), groupName);
-                if (codeGroup.isPresent()){
-                    List<ProjectVulnerability> projectVulnerabilities = getProjectVulnerabilitiesService.getProjectVulnerablitiesForCodeGroup(codeGroup.get(), Constants.FORTIFY_NOT_AN_ISSUE);
+                Optional<CodeProject> codeProject = findCodeProjectService.findCodeProject(project.get(), groupName);
+                if (codeProject.isPresent()){
+                    List<ProjectVulnerability> projectVulnerabilities = getProjectVulnerabilitiesService.getProjectVulnerablitiesForCodeProject(codeProject.get(), Constants.FORTIFY_NOT_AN_ISSUE);
                     new ResponseEntity<>(projectVulnerabilities, HttpStatus.OK);
                 }
             }
@@ -143,52 +151,20 @@ public class CodeScanService {
      */
     private String verifyAndCreateOrUpdateCodeProjectInformations(CodeScanRequestModel codeScanRequest, Project project) {
         String requestId;
-        Optional<CodeGroup> codeGroup = findCodeGroupService.findCodeGroup(project, codeScanRequest.getCodeGroupName());
+        Optional<CodeProject> codeProject = findCodeProjectService.findCodeProject(project, codeScanRequest.getCodeProjectName());
 
-        if (codeGroup.isPresent()){
-            Optional<CodeProject> codeProject = findCodeProjectService.findCodeProject(codeGroup.get(), codeScanRequest.getCodeProjectName());
-            if (codeProject.isPresent()){
-                updateCodeGroupService.updateCodeGroup(codeScanRequest, codeGroup.get());
-                CodeProject updatedCodeProject = updateCodeProjectService.updateCodeProjectAndPutToQueue(codeScanRequest,codeProject.get());
-                requestId = updatedCodeProject.getRequestId();
-            } else {
-                CodeGroup updatedCodeGroup = updateCodeGroupService.updateCodeGroup(codeScanRequest, codeGroup.get());
-                CodeProject newCodeProject = createOrGetCodeProjectService.createCodeProject(codeScanRequest, updatedCodeGroup);
-                newCodeProject = updateCodeProjectService.putCodeProjectToQueue(newCodeProject);
-                requestId = newCodeProject.getRequestId();
-            }
+        if (codeProject.isPresent()){
+            updateCodeProjectService.updateCodeProject(codeScanRequest,codeProject.get());
+            CodeProject updatedCodeProject = updateCodeProjectService.updateCodeProjectAndPutToQueue(codeScanRequest,codeProject.get());
+            requestId = updatedCodeProject.getRequestId();
         } else {
-            CodeGroup newCodeGroup = createOrGetCodeGroupService.createOrGetCodeGroup(codeScanRequest, project);
-            CodeProject newCodeProject = createOrGetCodeProjectService.createCodeProject(codeScanRequest, newCodeGroup);
+            CodeProject newCodeProject = createOrGetCodeProjectService.createCodeProject(codeScanRequest, project);
             newCodeProject = updateCodeProjectService.putCodeProjectToQueue(newCodeProject);
             requestId = newCodeProject.getRequestId();
         }
         return requestId;
     }
 
-    /**
-     * Method executed by scheduler to load Vulnerabilities Reports for each entity within database
-     */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void schedulerReportSynchro() throws CertificateException, ParseException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, UnrecoverableKeyException, IOException, URISyntaxException {
-        List<CodeGroup> groups = findCodeGroupService.findCodeGroupsWithScanIds();
-        log.info("Code Service - Offline synchronization of vulnerabilities started");
-        Optional<Scanner> sastScanner = getScannerService.getCodeScanners();
-        if (sastScanner.isPresent() && sastScanner.get().getStatus()) {
-            for (CodeGroup group : groups) {
-                List<ProjectVulnerability> tmpVulns = getProjectVulnerabilitiesService.getOldVulnsForGroup(group, vulnTemplate.STATUS_REMOVED);
-                for(CodeScanClient codeScanClient : codeScanClients){
-                    if (codeScanClient.canProcessRequest(sastScanner.get())) {
-                        log.info("Starting loading Code Vulnerabilities for - {}", group.getName());
-                        codeScanClient.loadVulnerabilities(sastScanner.get(), group, null, false, null, tmpVulns);
-                        log.info("Ended loading Code Vulnerabilities for - {}", group.getName());
-                    }
-                }
-                deleteProjectVulnerabilityService.deleteProjectVulnerabilityWithStatus(group.getProject(), vulnTemplate.STATUS_REMOVED);
-            }
-        }
-        log.info("Code Service - Offline synchronization of vulnerabilities completed");
-    }
 
     /**
      * Method which put each codegroup in scan queue by Project.autoCodeScan = true
@@ -199,10 +175,8 @@ public class CodeScanService {
         Optional<Scanner> sastScanner = getScannerService.getCodeScanners();
         if ( sastScanner.isPresent() &&  sastScanner.get().getStatus()) {
             for (Project p : projects){
-                for (CodeGroup cg : p.getCodes()){
-                    for (CodeProject cp : cg.getProjects()){
-                        updateCodeProjectService.putCodeProjectToQueue(cp);
-                    }
+                for (CodeProject cp : p.getCodes()){
+                    updateCodeProjectService.putCodeProjectToQueue(cp);
                 }
             }
         }
@@ -221,11 +195,11 @@ public class CodeScanService {
                 List<ProjectVulnerability> codeVulns = getProjectVulnerabilitiesService.getOldVulnsForCodeProject(codeProject);
                 for (CodeScanClient codeScanClient : codeScanClients) {
                     try {
-                        if (codeScanClient.canProcessRequest(sastScanner.get()) && codeScanClient.isScanDone(null, codeProject)) {
-                            codeScanClient.loadVulnerabilities(sastScanner.get(), codeProject.getCodeGroup(), null, true, codeProject, codeVulns);
-                            log.info("Vulerabilities for codescan for {} with scope of {} loaded", codeProject.getCodeGroup().getName(), codeProject.getName());
+                        if (codeScanClient.canProcessRequest(sastScanner.get()) && codeScanClient.isScanDone(codeProject)) {
+                            codeScanClient.loadVulnerabilities(sastScanner.get(), null, true, codeProject, codeVulns);
+                            log.info("Vulerabilities for codescan for {}", codeProject.getName());
                             updateCiOperations.updateCiOperationsForSAST(codeProject);
-                            if (codeProject.isEnableJira()) {
+                            if (codeProject.getEnableJira()) {
                                 log.info("[CodeScan] Automatic integration with BugTracker enabled, proceeding...");
                                 vulnTemplate.processBugTracking(codeProject, vulnTemplate.SOURCE_SOURCECODE);
                             }
@@ -234,7 +208,6 @@ public class CodeScanService {
                         log.error("[CodeScanService] There is exception of {} during verifying codeproject off {}", e.getLocalizedMessage(), codeProject.getName());
                     } finally {
                         updateCodeProjectService.endScan(codeProject);
-                        updateCodeGroupService.endScan(codeProject.getCodeGroup());
                     }
                 }
                 vulnTemplate.projectVulnerabilityRepository.deleteByStatus(vulnTemplate.STATUS_REMOVED);
@@ -251,13 +224,13 @@ public class CodeScanService {
         Optional<Scanner> codeScanner = getScannerService.getCodeScanners();
         if (codeScanner.isPresent() && codeScanner.get().getStatus()) {
             try {
-                for (CodeProject cp : codeProjectRepository.findByInQueue(true)) {
+                for (CodeProject cp : findCodeProjectService.findByInQueue(true)) {
                     if (operateOnCodeProject.canScanCodeProject(cp)) {
                         for (CodeScanClient codeScanClient : codeScanClients) {
-                            if (codeScanClient.canProcessRequest(cp.getCodeGroup())) {
-                                log.info("Ready to scan [scope {}] {}, taking it from the queue", cp.getName(), cp.getCodeGroup().getName());
+                            if (codeScanClient.canProcessRequest(cp)) {
+                                log.info("Ready to scan [scope {}] {}, taking it from the queue", cp.getName(), cp.getName());
                                 cp = updateCodeProjectService.removeFromQueue(cp);
-                                codeScanClient.runScan(cp.getCodeGroup(), cp);
+                                codeScanClient.runScan( cp);
                             }
                         }
                     }
@@ -278,17 +251,16 @@ public class CodeScanService {
      * Method which run scan for given parameters
      *
      * @param id of project from REST API
-     * @param groupName of CodeGroup from REST API
      * @param projectName of CodeProject from REST API
      * @return ResponseEntity with HttpStatus.CREATED when scan is properly scheduled, HttpStatus.PRECONDITION_FAILED if it can be not queued.
      */
     @Deprecated
-    public ResponseEntity<Status> createScanForCodeProject(Long id, String groupName, String projectName) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
-        SASTRequestVerify sastRequestVerify = codeAccessVerifier.verifyPermissions(id,groupName,projectName,false);
+    public ResponseEntity<Status> createScanForCodeProject(Long id, String projectName) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
+        SASTRequestVerify sastRequestVerify = codeAccessVerifier.verifyIfCodeProjectInProject(id,projectName);
         if (sastRequestVerify.getValid()){
             for(CodeScanClient codeScanClient : codeScanClients){
-                if (codeScanClient.canProcessRequest(sastRequestVerify.getCg())){
-                    if (codeScanClient.runScan(sastRequestVerify.getCg(),sastRequestVerify.getCp())){
+                if (codeScanClient.canProcessRequest(sastRequestVerify.getCp())){
+                    if (codeScanClient.runScan(sastRequestVerify.getCp())){
                         return new ResponseEntity<>(new Status("OK"), HttpStatus.CREATED);
                     } else {
                         return new ResponseEntity<>(new Status("Queued"), HttpStatus.CREATED);
@@ -306,18 +278,17 @@ public class CodeScanService {
      * to get properly vulnerabilities detected by Fortify SSC and CloudScan
      *
      * @param id of project from REST API
-     * @param groupName of CodeGroup from REST API
      * @param projectName of CodeProject from REST API
      * @param jobId of CloudScan job
      * @return ResponseEntity with HttpStatus.OK when jobId is properly set, HttpStatus.PRECONDITION_FAILED if not.
      */
     @Deprecated
-    public ResponseEntity<Status> putInformationAboutJob(Long id, String groupName, String projectName, String jobId) {
-        SASTRequestVerify sastRequestVerify = codeAccessVerifier.verifyPermissions(id,groupName,projectName,false);
+    public ResponseEntity<Status> putInformationAboutJob(Long id, String projectName, String jobId) {
+        SASTRequestVerify sastRequestVerify = codeAccessVerifier.verifyIfCodeProjectInProject(id,projectName);
         if (sastRequestVerify.getValid()){
             for(CodeScanClient codeScanClient : codeScanClients){
-                if (codeScanClient.canProcessRequest(sastRequestVerify.getCg())){
-                    codeScanClient.putInformationAboutScanFromRemote(sastRequestVerify.getCp(), sastRequestVerify.getCg(), jobId);
+                if (codeScanClient.canProcessRequest(sastRequestVerify.getCp())){
+                    codeScanClient.putInformationAboutScanFromRemote(sastRequestVerify.getCp(), jobId);
                     return new ResponseEntity<>(new Status("OK"), HttpStatus.OK);
                 }
             }
@@ -341,10 +312,10 @@ public class CodeScanService {
             if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())) {
                 for (RunScanForCodeProject runScun : runScanForCodeProjects) {
                     Optional<CodeProject> codeProject = findCodeProjectService.findById(runScun.getId());
-                    if (codeProject.isPresent() && codeProject.get().getCodeGroup().getProject() == project.get()) {
+                    if (codeProject.isPresent() && codeProject.get().getProject() == project.get()) {
                         for(CodeScanClient codeScanClient : codeScanClients){
-                            if (codeScanClient.canProcessRequest(codeProject.get().getCodeGroup())){
-                                codeScanClient.runScan(codeProject.get().getCodeGroup(), codeProject.get());
+                            if (codeScanClient.canProcessRequest(codeProject.get())){
+                                codeScanClient.runScan( codeProject.get());
                                 break;
                             }
                         }
@@ -393,7 +364,7 @@ public class CodeScanService {
         if (project.isPresent()
                 && permissionFactory.canUserAccessProject(principal, project.get())
                 && codeProject.isPresent()
-                && project.get().getId().equals(codeProject.get().getCodeGroup().getProject().getId())
+                && project.get().getId().equals(codeProject.get().getProject().getId())
                 && scanners.isPresent()){
             for (CodeScanClient csc : codeScanClients){
                 if (csc.canProcessRequest(scanners.get()) && csc.createProject(scanners.get(), codeProject.get())){

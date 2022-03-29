@@ -40,4 +40,12 @@ public class FindInfraScanService {
     public List<InfraScan> findInQueue(Scanner scanner){
         return infraScanRepository.findByNessusAndInQueue(scanner, true);
     }
+
+    public List<InfraScan> findByRunning(boolean b) {
+        return infraScanRepository.findByRunning(b);
+    }
+
+    public List<InfraScan> findByInQueue(boolean b) {
+        return infraScanRepository.findByInQueue(b);
+    }
 }

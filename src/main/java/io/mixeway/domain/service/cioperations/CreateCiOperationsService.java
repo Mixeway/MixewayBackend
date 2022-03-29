@@ -25,7 +25,6 @@ public class CreateCiOperationsService {
     public void create(SASTRequestVerify verifyRequest, Project project, String commitId){
         CiOperations newOperation = new CiOperations();
         newOperation.setProject(project);
-        newOperation.setCodeGroup(verifyRequest.getCg());
         newOperation.setCodeProject(verifyRequest.getCp());
         newOperation.setCommitId(commitId);
         ciOperationsRepository.save(newOperation);
@@ -37,13 +36,12 @@ public class CreateCiOperationsService {
     public CiOperations create(SecurityGatewayEntry securityGatewayEntry, CodeProject codeProject, Optional<CiOperations> optionalCiOperations){
         CiOperations ciOperations = optionalCiOperations.orElseGet(CiOperations::new);
         ciOperations.setResult(securityGatewayEntry.isPassed() ? "Ok" : "Not Ok");
-        ciOperations.setCodeGroup(codeProject.getCodeGroup());
         ciOperations.setCodeProject(codeProject);
         ciOperations.setInserted(new Date());
         ciOperations.setEnded(new Date());
         ciOperations.setOpenSourceScan(true);
         ciOperations.setSastScan(true);
-        ciOperations.setProject(codeProject.getCodeGroup().getProject());
+        ciOperations.setProject(codeProject.getProject());
         ciOperations.setCommitId(codeProject.getCommitid()!=null? codeProject.getCommitid() : "unknown");
         ciOperations.setSastHigh(securityGatewayEntry.getSastHigh());
         ciOperations.setSastCrit(securityGatewayEntry.getSastCritical());
