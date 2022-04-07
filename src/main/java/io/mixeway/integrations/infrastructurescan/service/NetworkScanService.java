@@ -533,7 +533,7 @@ public class NetworkScanService {
     public void verifyInteraceState() {
         List<Project> projectRunning = projectRepository.getProjectWithInterfaceRunning();
         for (Project p : projectRunning){
-            if (nessusScanRepository.findByProjectAndRunning(p,true).size() == 0){
+            if (nessusScanRepository.findByProjectAndRunningOrInQueue(p,true,true).size() == 0){
                 interfaceRepository.updateInterfaceStateForNotRunningScan(p);
                 log.info("[Network Scan] Detected interface with status ScanRunning=true for project {}, disabling it.", p.getName());
             }
