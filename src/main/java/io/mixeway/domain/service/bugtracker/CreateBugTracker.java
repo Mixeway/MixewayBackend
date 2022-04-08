@@ -18,12 +18,13 @@ public class CreateBugTracker {
     private final BugTrackerRepository bugTrackerRepository;
     private final VaultHelper vaultHelper;
 
-    public void save(BugTracker bugTracker, Project project){
+    public BugTracker save(BugTracker bugTracker, Project project){
         String uuidPass = UUID.randomUUID().toString();
         if (vaultHelper.savePassword(bugTracker.getPassword(),uuidPass)){
             bugTracker.setPassword(uuidPass);
         }
         bugTracker.setProject(project);
         bugTrackerRepository.save(bugTracker);
+        return bugTracker;
     }
 }

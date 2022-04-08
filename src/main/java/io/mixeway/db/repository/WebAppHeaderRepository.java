@@ -8,9 +8,12 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import io.mixeway.db.entity.WebApp;
 import io.mixeway.db.entity.WebAppHeader;
+import org.springframework.transaction.annotation.Transactional;
 
 public interface WebAppHeaderRepository extends JpaRepository<WebAppHeader, Long>{
 
+	@Transactional
+	@Modifying
 	Long deleteByWebApp(WebApp webApp);
 	Optional<WebAppHeader> findByWebAppAndHeaderName(WebApp webApp, String headerName);
 	@Modifying

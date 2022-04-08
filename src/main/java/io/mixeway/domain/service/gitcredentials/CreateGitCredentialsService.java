@@ -17,11 +17,11 @@ public class CreateGitCredentialsService {
     private final GitCredentialsRepository gitCredentialsRepository;
     private final VaultHelper vaultHelper;
 
-    public void create(GitCredentials gitCredentials){
+    public GitCredentials create(GitCredentials gitCredentials){
         String repoPasswordToken = UUID.randomUUID().toString();
         if (vaultHelper.savePassword(gitCredentials.getPassword(),repoPasswordToken)){
             gitCredentials.setPassword(repoPasswordToken);
         }
-        gitCredentialsRepository.save(gitCredentials);
+        return gitCredentialsRepository.saveAndFlush(gitCredentials);
     }
 }

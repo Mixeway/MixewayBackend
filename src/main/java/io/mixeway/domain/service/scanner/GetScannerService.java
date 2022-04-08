@@ -55,4 +55,8 @@ public class GetScannerService {
                 .findFirst()
                 .orElse(null);
     }
+
+    public List<Scanner> findAll() {
+        return scannerRepository.findAll();
+    }
 }

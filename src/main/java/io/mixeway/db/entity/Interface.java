@@ -185,7 +185,7 @@ public class Interface implements VulnSource {
 	public void setRoutingDomain(RoutingDomain routingDomain) {
 		this.routingDomain = routingDomain;
 	}
-	@OneToMany(mappedBy = "anInterface", cascade = CascadeType.REMOVE,orphanRemoval=true,fetch=FetchType.LAZY)
+	@OneToMany(mappedBy = "anInterface", cascade = CascadeType.ALL,fetch=FetchType.LAZY)
 	public Set<Service> getServices() {
 		return services;
 	}

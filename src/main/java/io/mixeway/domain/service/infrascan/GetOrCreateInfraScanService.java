@@ -43,7 +43,6 @@ public class GetOrCreateInfraScanService {
         scan.setNessusScanTemplate(findNessusScanTemplateService.findTemplateFor(scanner));
         scan.setProject(project);
         scan.setPublicip(false);
-        scan.setRunning(false);
 
         return infraScanRepository.saveAndFlush(scan);
     }

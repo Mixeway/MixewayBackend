@@ -7,8 +7,10 @@ import io.mixeway.db.repository.ProjectRepository;
 import io.mixeway.db.repository.SettingsRepository;
 import io.mixeway.db.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @SpringBootTest
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class GetOrCreateProjectServiceTest {
 
     private final GetOrCreateProjectService createProjectService;
@@ -34,7 +37,7 @@ class GetOrCreateProjectServiceTest {
     @Mock
     Principal principal;
 
-    @BeforeEach
+    @BeforeAll
     public void prepare(){
         Settings settings = settingsRepository.findAll().get(0);
         settings.setMasterApiKey("test");

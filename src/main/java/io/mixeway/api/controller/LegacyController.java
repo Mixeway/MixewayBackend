@@ -41,49 +41,6 @@ public class LegacyController {
     private final PermissionFactory permissionFactory;
     private final FindProjectService findProjectService;
 
-
-    @Deprecated
-    @PreAuthorize("hasAuthority('ROLE_API')")
-    @RequestMapping(value = "/api/sast/{projectId}/create/{groupName}/{projectName}", method = RequestMethod.PUT,produces= MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Status> createScanForProject(@PathVariable(value = "projectId") Long id,
-                                                       @PathVariable(value="groupName") String groupName,
-                                                       @PathVariable(value="projectName") String projectName,
-                                                       Principal principal) throws IOException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, JSONException, ParseException {
-        Optional<Project> project = findProjectService.findProjectById(id);
-        if (project.isPresent() && permissionFactory.canUserAccessProject(principal,project.get())) {
-            return codeScanService.createScanForCodeProject(id, projectName);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-    }
-    @PreAuthorize("hasAuthority('ROLE_API')")
-    @RequestMapping(value = "/api/sast/{projectId}/running/{groupName}/{projectName}/{jobId}", method = RequestMethod.PUT,produces= MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Status> putInformationAboutJob(@PathVariable(value = "projectId") Long id,
-                                                         @PathVariable(value="groupName") String groupName,
-                                                         @PathVariable(value="projectName") String projectName,
-                                                         @PathVariable(value="jobId") String jobId,
-                                                         Principal principal) throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, JSONException, ParseException {
-        Optional<Project> project = findProjectService.findProjectById(id);
-        if (project.isPresent() && permissionFactory.canUserAccessProject(principal,project.get())) {
-            return codeScanService.putInformationAboutJob(id, projectName, jobId);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-    }
-
-    @PreAuthorize("hasAuthority('ROLE_API')")
-    @GetMapping("/api/sast/show/{projectId}/{groupName}/{projectNane}")
-    public ResponseEntity<List<io.mixeway.db.entity.Vulnerability>> getResultsForProjectScan(@PathVariable(value = "projectId") Long id,
-                                                                        @PathVariable(value="groupName") String groupName,
-                                                                        @PathVariable(value="projectNane") String projectName,
-                                                                        Principal principal)  {
-        Optional<Project> project = findProjectService.findProjectById(id);
-        if (project.isPresent() && permissionFactory.canUserAccessProject(principal,project.get())) {
-            return codeScanService.getResultsForProject(id, projectName, principal);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-    }
     @PreAuthorize("hasAuthority('ROLE_API')")
     @RequestMapping(value = "/api/koordynator/network",method = RequestMethod.POST)
     public ResponseEntity<Status> createAndRunNetworkscan(@RequestBody NetworkScanRequestModel req, Principal principal) throws Exception {

@@ -12,7 +12,9 @@ import io.mixeway.utils.VaultHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -125,6 +127,8 @@ public class GetOrCreateWebAppService {
      * @param webApp to get cookies
      */
     public void removeCookiesForWebApp(WebApp webApp) {
+        webApp.setWebAppCookies(new HashSet<>());
+        webAppRepository.save(webApp);
         webAppCookieRepository.deleteCookiesForWebApp(webApp.getId());
     }
 
@@ -133,8 +137,13 @@ public class GetOrCreateWebAppService {
      *
      * @param webApp to get headers
      */
+    @Transactional
     public void removeHeadersForWebApp(WebApp webApp) {
-        webAppHeaderRepository.deleteHeaderForWebApp(webApp.getId());
+        //webAppHeaderRepository.deleteHeaderForWebApp(webApp.getId());
+        webApp.setHeaders(new HashSet<>());
+        webAppRepository.save(webApp);
+        webAppHeaderRepository.deleteByWebApp(webApp);
+
     }
 
     public void createWebAppHeader(String headerName, String headerValue, WebApp webApp) {

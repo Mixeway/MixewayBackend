@@ -63,20 +63,17 @@ public class CodeScanService {
      * @param projectName name of CodeProject entity
      * @return List of a CodeVulns for a given CodeProject
      */
-    public ResponseEntity<List<Vulnerability>> getResultsForProject(long projectId, String projectName, Principal principal){
+    public ResponseEntity<List<ProjectVulnerability>> getResultsForProject(long projectId, String projectName, Principal principal){
         Optional<Project> project = findProjectService.findProjectById(projectId);
         if (codeAccessVerifier.verifyIfCodeProjectInProject(projectId,projectName).getValid() &&
                 project.isPresent() &&
                 permissionFactory.canUserAccessProject(principal, project.get())){
             CodeProject cp = createOrGetCodeProjectService.getOrCreateCodeProject(project.get(), projectName, Constants.CODE_DEFAULT_BRANCH);
 
-            new ResponseEntity<>(getProjectVulnerabilitiesService.getProjectVulnerabilitiesForSource(cp, Constants.FORTIFY_NOT_AN_ISSUE), HttpStatus.OK);
+            return new ResponseEntity<>(getProjectVulnerabilitiesService.getProjectVulnerabilitiesForSource(cp, Constants.FORTIFY_NOT_AN_ISSUE), HttpStatus.OK);
 
         } else
-            new ResponseEntity<List<ProjectVulnerability>>(new ArrayList<>(), HttpStatus.PRECONDITION_FAILED);
-
-
-        return null;
+            return new ResponseEntity<List<ProjectVulnerability>>(new ArrayList<>(), HttpStatus.PRECONDITION_FAILED);
     }
 
     /**
@@ -188,6 +185,7 @@ public class CodeScanService {
      */
     @Transactional
     public void getResultsForRunningScan() {
+        List<Scanner> scanners = getScannerService.findAll();
         Optional<Scanner> sastScanner = getScannerService.getCodeScanners();
         if (sastScanner.isPresent()) {
             List<CodeProject> codeProjectsRunning = findCodeProjectService.findRunningCodeProjects();

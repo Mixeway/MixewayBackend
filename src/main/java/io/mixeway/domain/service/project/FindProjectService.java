@@ -63,4 +63,12 @@ public class FindProjectService {
     public Long count() {
         return projectRepository.count();
     }
+
+    public List<String> getUniqueContactListEmails() {
+        return projectRepository.getUniqueContactListEmails();
+    }
+
+    public List<Project> getUniqueContactListEmails(String email) {
+        return projectRepository.getUniqueContactListEmails(email);
+    }
 }

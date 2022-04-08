@@ -7,10 +7,13 @@ import io.mixeway.db.entity.Interface;
 import io.mixeway.db.entity.RoutingDomain;
 import io.mixeway.db.repository.InfraScanRepository;
 import io.mixeway.db.repository.InterfaceRepository;
+import io.mixeway.db.repository.ProjectRepository;
 import io.mixeway.utils.IpAddressUtils;
+import io.mixeway.utils.ProjectRiskAnalyzer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +25,7 @@ import java.util.Optional;
 public class InterfaceOperations {
     private final InterfaceRepository interfaceRepository;
     private final InfraScanRepository infraScanRepository;
+    private final ProjectRiskAnalyzer projectRiskAnalyzer;
 
 
     public void createInterfaceForAsset(Asset asset, String ip) {
@@ -132,5 +136,13 @@ public class InterfaceOperations {
 
     public void storeInterfaces(List<Interface> interfaceList){
         interfaceRepository.saveAll(interfaceList);
+    }
+
+    @Transactional
+    public void setRiskForInterfaces() {
+        for (Interface i : interfaceRepository.findByActive(true)){
+            int risk = projectRiskAnalyzer.getInterfaceRisk(i);
+            i.setRisk(Math.min(risk, 100));
+        }
     }
 }

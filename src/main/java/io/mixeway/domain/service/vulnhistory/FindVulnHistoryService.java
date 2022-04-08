@@ -37,4 +37,8 @@ public class FindVulnHistoryService {
     public List<VulnHistory> recentHistoryForAllProjects() {
         return vulnHistoryRepository.recentHistoryForAllProjects();
     }
+
+    public List<VulnHistory> getLastTwoVulnForProject(Long id) {
+        return vulnHistoryRepository.getLastTwoVulnForProject(id);
+    }
 }

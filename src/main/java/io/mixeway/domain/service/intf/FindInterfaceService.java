@@ -46,4 +46,8 @@ public class FindInterfaceService {
     public Optional<Interface> findById(Long assetId) {
         return interfaceRepository.findById(assetId);
     }
+
+    public List<Interface> findByActive(boolean b) {
+        return interfaceRepository.findByActive(b);
+    }
 }

@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 public class FindInfraScanService {
     private final InfraScanRepository infraScanRepository;
 
-    public List<InfraScan> findByProjectAndRunning(Project project){
+    public List<InfraScan> findByProjectAndIsAutomatic(Project project){
         return infraScanRepository.findByProjectAndIsAutomatic(project,false).stream().filter(InfraScan::getRunning).collect(Collectors.toList());
     }
 

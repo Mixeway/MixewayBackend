@@ -80,7 +80,7 @@ public class NetworkScanService {
     public ResponseEntity<Status> checkScanStatusForCiid(String ciid){
         Optional<Project> project = findProjectService.findProjectByCiid(ciid);
         if (project.isPresent()){
-            List<InfraScan> infraScans = findInfraScanService.findByProjectAndRunning(project.get());
+            List<InfraScan> infraScans = findInfraScanService.findByProjectAndIsAutomatic(project.get());
             if (infraScans.size()>0){
                 return new ResponseEntity<>(new Status("At least one scan for "+project.get().getName()+" is running."), HttpStatus.LOCKED);
             }
@@ -154,7 +154,7 @@ public class NetworkScanService {
         for (Map.Entry<NetworkScanClient, Set<Interface>> keyValue: scannerInterfaceMap.entries()) {
             try {
                 InfraScan scan = getOrCreateInfraScanService.create(keyValue,requestUIDD,project,false);
-
+                //keyValue.getKey().runScan(scan);
                 //putRulesOnRfw(scan);
                 updateInterfaceService.changeRunningState(scan);
                 infraScans.add(scan);

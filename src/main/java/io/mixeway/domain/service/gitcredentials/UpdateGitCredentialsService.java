@@ -17,22 +17,22 @@ public class UpdateGitCredentialsService {
     private final GitCredentialsRepository gitCredentialsRepository;
     private final VaultHelper vaultHelper;
 
-    public void updateUrl(GitCredentials credentials,GitCredentials edited){
+    public GitCredentials updateUrl(GitCredentials credentials,GitCredentials edited){
         credentials.setUrl(edited.getUrl());
-        gitCredentialsRepository.save(credentials);
+        return gitCredentialsRepository.saveAndFlush(credentials);
     }
 
-    public void updateUsername(GitCredentials gitCredentials, GitCredentials edited){
+    public GitCredentials updateUsername(GitCredentials gitCredentials, GitCredentials edited){
         gitCredentials.setUsername(edited.getUsername());
-        gitCredentialsRepository.save(gitCredentials);
+        return gitCredentialsRepository.saveAndFlush(gitCredentials);
     }
-    public void updatePassword(GitCredentials gitCredentials, GitCredentials edited){
+    public GitCredentials updatePassword(GitCredentials gitCredentials, GitCredentials edited){
         String repoPasswordToken = UUID.randomUUID().toString();
         if (vaultHelper.savePassword(edited.getPassword(),repoPasswordToken)){
             gitCredentials.setPassword(repoPasswordToken);
         } else {
             gitCredentials.setPassword(edited.getPassword());
         }
-        gitCredentialsRepository.save(gitCredentials);
+        return gitCredentialsRepository.saveAndFlush(gitCredentials);
     }
 }

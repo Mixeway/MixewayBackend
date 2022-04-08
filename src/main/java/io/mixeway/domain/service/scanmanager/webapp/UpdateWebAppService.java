@@ -12,6 +12,7 @@ import io.mixeway.utils.ProjectRiskAnalyzer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -142,5 +143,12 @@ public class UpdateWebAppService {
     public void removeFromQueue(WebApp app) {
         app.setInQueue(false);
         webAppRepository.save(app);
+    }
+
+    @Transactional
+    public void setRisk() {
+        for(WebApp webApp : webAppRepository.findAll()){
+            webApp.setRisk(Math.min(projectRiskAnalyzer.getWebAppRisk(webApp), 100));
+        }
     }
 }

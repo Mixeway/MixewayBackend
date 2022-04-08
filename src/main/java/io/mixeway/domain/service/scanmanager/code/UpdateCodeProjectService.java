@@ -38,7 +38,7 @@ public class UpdateCodeProjectService {
         codeProject.setBranch(codeScanRequest.getBranch());
         codeProject.setRepoUrl(codeScanRequest.getRepoUrl());
         log.info("{} - Updated CodeProject [{}] {}", "ScanManager", codeProject.getProject().getName(), codeProject.getName());
-        return codeProject;
+        return codeProjectRepository.saveAndFlush(codeProject);
     }
 
     /**
@@ -53,7 +53,7 @@ public class UpdateCodeProjectService {
         codeProject.setRequestId(UUID.randomUUID().toString());
         codeProject = codeProjectRepository.save(codeProject);
         log.info("{} - Updated CodeProject [{}] {}", "ScanManager", codeProject.getProject().getName(), codeProject.getName());
-        return codeProject;
+        return codeProjectRepository.saveAndFlush(codeProject);
     }
 
     /**
@@ -77,6 +77,19 @@ public class UpdateCodeProjectService {
     }
     public void changeCommitId(String commitId, CodeProject codeProject){
         codeProject.setCommitid(commitId);
+        codeProjectRepository.save(codeProject);
+    }
+
+    @Transactional
+    public void setRisk() {
+        for (CodeProject codeProject: codeProjectRepository.findAll()){
+            codeProject.setRisk(Math.min(projectRiskAnalyzer.getCodeProjectRisk(codeProject) + projectRiskAnalyzer.getCodeProjectOpenSourceRisk(codeProject), 100));
+            codeProjectRepository.save(codeProject);
+        }
+    }
+
+    public void startScan(CodeProject codeProject) {
+        codeProject.setRunning(true);
         codeProjectRepository.save(codeProject);
     }
 }

@@ -3,6 +3,7 @@ package io.mixeway.domain.service.project;
 import io.mixeway.api.dashboard.model.Projects;
 import io.mixeway.api.project.model.ContactList;
 import io.mixeway.api.project.model.VulnAuditorSettings;
+import io.mixeway.db.entity.CodeProject;
 import io.mixeway.db.entity.Project;
 import io.mixeway.db.repository.ProjectRepository;
 import lombok.RequiredArgsConstructor;
@@ -80,5 +81,10 @@ public class UpdateProjectService {
         project.setAutoWebAppScan(false);
         project.setWebAppAutoDiscover(false);
         projectRepository.save(project);
+    }
+
+    public void setRisk(Project p, int risk) {
+        p.setRisk(Math.min(risk, 100));
+        projectRepository.save(p);
     }
 }

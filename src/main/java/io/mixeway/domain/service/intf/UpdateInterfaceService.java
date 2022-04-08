@@ -5,6 +5,7 @@ import io.mixeway.db.entity.InfraScan;
 import io.mixeway.db.entity.Interface;
 import io.mixeway.db.entity.Project;
 import io.mixeway.db.repository.AssetRepository;
+import io.mixeway.db.repository.InfraScanRepository;
 import io.mixeway.db.repository.InterfaceRepository;
 import io.mixeway.utils.ProjectRiskAnalyzer;
 import io.mixeway.utils.ScanHelper;
@@ -25,8 +26,11 @@ public class UpdateInterfaceService {
     private final AssetRepository assetRepository;
     private final ProjectRiskAnalyzer projectRiskAnalyzer;
     private final ScanHelper scanHelper;
+    private final InfraScanRepository infraScanRepository;
 
     public void changeRunningState(InfraScan scan) {
+        scan.setRunning(true);
+        infraScanRepository.save(scan);
         for (Interface i : scan.getInterfaces()) {
             i.getAsset().setRequestId(scan.getRequestId());
             i.setScanRunning(true);

@@ -5,14 +5,17 @@ import io.mixeway.db.entity.User;
 import io.mixeway.db.repository.SettingsRepository;
 import io.mixeway.db.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.test.annotation.DirtiesContext;
 
 import java.util.Arrays;
 import java.util.Optional;
@@ -24,12 +27,14 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @SpringBootTest
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class JwtUserDetailsServiceTest {
     private final JwtUserDetailsService jwtUserDetailsService;
     private final UserRepository userRepository;
     private final SettingsRepository settingsRepository;
 
-    @BeforeEach
+    @BeforeAll
     public void prepare(){
         Settings settings = settingsRepository.findAll().get(0);
         settings.setMasterApiKey("master_key");

@@ -69,7 +69,7 @@ public class PermissionFactory {
                 return userOptional.get();
             else if (userApiKey.isPresent()){
                 return userApiKey.get();
-            } else if (settingsRepository.findAll().stream().findFirst().orElse(null).getMasterApiKey().equals(principal.getName())) {
+            } else if (settingsRepository.findAll().stream().findFirst().orElse(null).getMasterApiKey() !=null && settingsRepository.findAll().stream().findFirst().orElse(null).getMasterApiKey().equals(principal.getName())) {
                 return userRepository.findByUsername("admin").orElse(null);
             } else if (principal.getName().equals(Constants.ORIGIN_SCHEDULER)) {
                 User u = new User();

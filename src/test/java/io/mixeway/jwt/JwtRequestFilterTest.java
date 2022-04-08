@@ -5,8 +5,10 @@ import io.mixeway.db.entity.User;
 import io.mixeway.db.repository.SettingsRepository;
 import io.mixeway.db.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.mock.web.MockFilterChain;
@@ -23,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @SpringBootTest
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class JwtRequestFilterTest {
 
 
@@ -30,7 +33,7 @@ class JwtRequestFilterTest {
     private final UserRepository userRepository;
     private final JwtRequestFilter jwtRequestFilter;
 
-    @BeforeEach
+    @BeforeAll
     public void prepare(){
         Settings settings = settingsRepository.findAll().get(0);
         settings.setMasterApiKey("master_key");

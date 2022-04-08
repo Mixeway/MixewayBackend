@@ -47,4 +47,8 @@ public class FindCodeProjectService {
     public List<CodeProject> findByRunning(boolean b) {
         return codeProjectRepository.findByRunning(b);
     }
+
+    public List<CodeProject> getCodeProjectsWithOSIntegrationEnabled() {
+        return codeProjectRepository.getCodeProjectsWithOSIntegrationEnabled();
+    }
 }

@@ -176,7 +176,7 @@ public class WebAppScanService {
         }
     }
 
-    public ResponseEntity<Status> putSingleWebAppToQueue(Long webAppId, Principal principal) {
+    public ResponseEntity<Status>putSingleWebAppToQueue(Long webAppId, Principal principal) {
         try {
             Optional<WebApp> webApp = findWebAppService.findById(webAppId);
             if (webApp.isPresent() && permissionFactory.canUserAccessProject(principal,webApp.get().getProject()) && getScannerService.getScannerForWebApp(webApp.get()) != null) {
@@ -196,15 +196,15 @@ public class WebAppScanService {
             for (RunScanForWebApps selectedApp : runScanForWebApps){
                 try{
                     Optional<WebApp> webApp = findWebAppService.findById(selectedApp.getWebAppId());
-                    if (webApp.isPresent() && webApp.get().getProject() == project.get() && getScannerService.getScannerForWebApp(webApp.get())!=null){
+                    if (webApp.isPresent() && Objects.equals(webApp.get().getProject().getId(), project.get().getId()) && getScannerService.getScannerForWebApp(webApp.get())!=null){
                         updateWebAppService.putWebAppToQueue(webApp.get(), UUID.randomUUID().toString());
                         log.info("{} - Put to queue scan of webapps for project {} - scope partial", LogUtil.prepare(principal.getName()), LogUtil.prepare(project.get().getName()));
-                        return new ResponseEntity<>(HttpStatus.CREATED);
                     }
                 } catch (Exception e){
                     return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
                 }
             }
+            return new ResponseEntity<>(HttpStatus.CREATED);
 
         }
         return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
