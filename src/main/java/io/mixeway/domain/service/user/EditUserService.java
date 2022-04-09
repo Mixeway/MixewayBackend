@@ -44,7 +44,7 @@ public class EditUserService {
         if (roles.contains(userModel.getRole()))
             user.setPermisions(userModel.getRole());
         userRepository.save(user);
-        if (userModel.getProjects().size()>0)
+        if (userModel.getProjects() != null  && userModel.getProjects().size()>0)
             getOrCreateUserService.loadProjectPermissionsForUser(userModel.getProjects(),user);
         userRepository.save(user);
     }

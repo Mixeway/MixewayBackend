@@ -77,6 +77,7 @@ class NetworkScanServiceTest {
 
     @Test
     void checkScanStatusForCiid() {
+        Mockito.when(principal.getName()).thenReturn("admin_network_scan_service");
         Project project = getOrCreateProjectService.getProjectId("network_scan_service","network_scan_service",principal);
         ResponseEntity<Status> statusResponseEntity = networkScanService.checkScanStatusForCiid("network_scan_service");
         assertEquals(statusResponseEntity.getStatusCode(), HttpStatus.OK);
@@ -92,6 +93,7 @@ class NetworkScanServiceTest {
 
     @Test
     void createAndRunNetworkScan() throws Exception {
+        Mockito.when(principal.getName()).thenReturn("admin_network_scan_service");
         Mockito.when(openVasApiClient.canProcessRequest(Mockito.any(RoutingDomain.class))).thenReturn(true);
         Mockito.when(openVasApiClient.runScan(Mockito.any(InfraScan.class))).thenReturn(true);
 
@@ -121,6 +123,7 @@ class NetworkScanServiceTest {
 
     @Test
     void configureAndRunManualScanForScope() throws Exception {
+        Mockito.when(principal.getName()).thenReturn("admin_network_scan_service");
         Mockito.when(openVasApiClient.canProcessRequest(Mockito.any(RoutingDomain.class))).thenReturn(true);
         Project project = getOrCreateProjectService.getProjectId("network_scan_service7","network_scan_service7",principal);
         List<Interface> interfaces = new ArrayList<>();
@@ -140,6 +143,7 @@ class NetworkScanServiceTest {
 
     @Test
     void findNessusForInterfaces() {
+        Mockito.when(principal.getName()).thenReturn("admin_network_scan_service");
         Mockito.when(openVasApiClient.canProcessRequest(Mockito.any(RoutingDomain.class))).thenReturn(true);
         Project project = getOrCreateProjectService.getProjectId("network_scan_service2","network_scan_service2",principal);
         List<Interface> interfaces = new ArrayList<>();
@@ -158,6 +162,7 @@ class NetworkScanServiceTest {
 
     @Test
     void updateAssetsAndPrepareInterfacesForScan() {
+        Mockito.when(principal.getName()).thenReturn("admin_network_scan_service");
         Project project = getOrCreateProjectService.getProjectId("network_scan_service3","network_scan_service3",principal);
         List<AssetToCreate> assetToCreates = new ArrayList<>();
         for (int i=0 ; i<10; i++){
@@ -202,6 +207,7 @@ class NetworkScanServiceTest {
 
     @Test
     void scheduledRunScans() throws Exception {
+        Mockito.when(principal.getName()).thenReturn("admin_network_scan_service");
         Project project = getOrCreateProjectService.getProjectId("network_scan_service5","network_scan_servic5",principal);
         updateProjectService.enableInfraAutoScan(project);
         for(int i=0; i<10; i++){
@@ -218,6 +224,7 @@ class NetworkScanServiceTest {
 
     @Test
     void verifyInteraceState() {
+        Mockito.when(principal.getName()).thenReturn("admin_network_scan_service");
         Project project = getOrCreateProjectService.getProjectId("network_scan_service6","network_scan_servic6",principal);
         for(int i=0; i<10; i++){
             Asset asset = getOrCreateAssetService.getOrCreateAsset("test"+i, createOrGetRoutingDomainService.createOrGetRoutingDomain("default"),project );

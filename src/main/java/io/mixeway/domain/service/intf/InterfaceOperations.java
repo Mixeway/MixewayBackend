@@ -1,13 +1,12 @@
 package io.mixeway.domain.service.intf;
 
 
-import io.mixeway.db.entity.Asset;
-import io.mixeway.db.entity.InfraScan;
-import io.mixeway.db.entity.Interface;
-import io.mixeway.db.entity.RoutingDomain;
+import io.mixeway.db.entity.*;
+import io.mixeway.db.repository.AssetRepository;
 import io.mixeway.db.repository.InfraScanRepository;
 import io.mixeway.db.repository.InterfaceRepository;
 import io.mixeway.db.repository.ProjectRepository;
+import io.mixeway.domain.service.asset.GetOrCreateAssetService;
 import io.mixeway.utils.IpAddressUtils;
 import io.mixeway.utils.ProjectRiskAnalyzer;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +25,14 @@ public class InterfaceOperations {
     private final InterfaceRepository interfaceRepository;
     private final InfraScanRepository infraScanRepository;
     private final ProjectRiskAnalyzer projectRiskAnalyzer;
+    private final AssetRepository assetRepository;
+    private final GetOrCreateAssetService getOrCreateAssetService;
 
+    public Interface getOrCreateInterface(String ip, RoutingDomain routingDomain, Project project){
+        Asset asset = getOrCreateAssetService.getOrCreateAsset(ip, routingDomain,project);
+
+        return createAndReturnInterfaceForAsset(asset,ip);
+    }
 
     public void createInterfaceForAsset(Asset asset, String ip) {
         if (canCreateInterfaceForAsset(asset, ip)) {

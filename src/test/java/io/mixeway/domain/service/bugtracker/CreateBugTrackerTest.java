@@ -1,8 +1,10 @@
 package io.mixeway.domain.service.bugtracker;
 
 import io.mixeway.db.entity.BugTracker;
+import io.mixeway.db.entity.BugTrackerType;
 import io.mixeway.db.entity.Project;
 import io.mixeway.db.entity.User;
+import io.mixeway.db.repository.BugTrackerTypeRepository;
 import io.mixeway.db.repository.UserRepository;
 import io.mixeway.domain.service.project.GetOrCreateProjectService;
 import io.mixeway.domain.service.vulnmanager.CreateOrGetVulnerabilityService;
@@ -29,6 +31,7 @@ class CreateBugTrackerTest {
     private final CreateBugTracker createBugTracker;
     private final UserRepository userRepository;
     private final GetOrCreateProjectService getOrCreateProjectService;
+    private final BugTrackerTypeRepository bugTrackerTypeRepository;
 
     @Mock
     Principal principal;
@@ -48,7 +51,7 @@ class CreateBugTrackerTest {
         Project project = getOrCreateProjectService.getProjectId("create_bt","create_bt",principal);
         BugTracker bugTracker = new BugTracker();
         bugTracker.setUrl("https://test");
-        bugTracker.setProject(project);
+        bugTracker.setBugTrackerType(bugTrackerTypeRepository.findByName("JIRA"));
         BugTracker bugTracker1 = createBugTracker.save(bugTracker,project);
         assertNotNull(bugTracker1);
     }

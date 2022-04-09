@@ -49,7 +49,7 @@ public class GetOrCreateUserService {
             if ( userModel.getPasswordAuth())
                 userToCreate.setPassword(bCryptPasswordEncoder.encode(userModel.getUserPassword()));
             userRepository.save(userToCreate);
-            if (userModel.getProjects().isPresent() && userModel.getProjects().get().size()>0)
+            if (userModel.getProjects() != null && userModel.getProjects().isPresent() && userModel.getProjects().get().size()>0)
                 loadProjectPermissionsForUser(userModel.getProjects().get(),userToCreate);
             return userToCreate;
         }

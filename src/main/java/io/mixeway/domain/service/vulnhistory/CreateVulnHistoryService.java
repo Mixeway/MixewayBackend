@@ -55,6 +55,18 @@ public class CreateVulnHistoryService {
         vulnHistory.setInserted(format.format(new Date()));
         vulnHistoryRepository.save(vulnHistory);
     }
+    public void create(Project project, String date, Long infra, Long webApp, Long code, Long audit, Long software){
+        VulnHistory vulnHistory = new VulnHistory();
+        vulnHistory.setName(Constants.VULN_HISTORY_ALL);
+        vulnHistory.setInfrastructureVulnHistory(infra);
+        vulnHistory.setWebAppVulnHistory(webApp);
+        vulnHistory.setCodeVulnHistory(code);
+        vulnHistory.setAuditVulnHistory(audit);
+        vulnHistory.setSoftwarePacketVulnNumber(software);
+        vulnHistory.setProject(project);
+        vulnHistory.setInserted(date);
+        vulnHistoryRepository.save(vulnHistory);
+    }
     private Long createWebAppVulnHistory(Project p){
         return vulnTemplate.projectVulnerabilityRepository
                 .findByWebAppInAndVulnerabilitySourceAndSeverityIn(new ArrayList<>(p.getWebapps()),vulnTemplate.SOURCE_WEBAPP, severities).count();
