@@ -37,6 +37,7 @@ public class UpdateCiOperationsService {
         if (ciOperations.isPresent()){
             ciOperations.get().setOpenSourceCrit(gateway.getOsCritical());
             ciOperations.get().setOpenSourceHigh(gateway.getOsHigh());
+            ciOperations.get().setOpenSourceScan(true);
             ciOperations.get().setResult(gateway.isPassed() ? "Ok":"Not Ok");
         }
     }
@@ -45,8 +46,9 @@ public class UpdateCiOperationsService {
         SecurityGatewayEntry gateway = securityQualityGateway.buildGatewayResponse(vulnTemplate.projectVulnerabilityRepository.findByCodeProject(codeProject));
         Optional<CiOperations> ciOperations = ciOperationsRepository.findByCodeProjectAndCommitId(codeProject,codeProject.getCommitid());
         if (ciOperations.isPresent()){
-            ciOperations.get().setOpenSourceCrit(gateway.getSastCritical());
-            ciOperations.get().setOpenSourceHigh(gateway.getSastHigh());
+            ciOperations.get().setSastCrit(gateway.getSastCritical());
+            ciOperations.get().setSastHigh(gateway.getSastHigh());
+            ciOperations.get().setSastScan(true);
             ciOperations.get().setResult(gateway.isPassed() ? "Ok":"Not Ok");
         }
     }

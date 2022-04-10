@@ -30,8 +30,8 @@ public class CreateCiOperationsService {
         ciOperationsRepository.save(newOperation);
     }
 
-    public void create(CodeProject codeProject, InfoScanPerformed infoScanPerformed) {
-        ciOperationsRepository.save(new CiOperations(codeProject, infoScanPerformed));
+    public CiOperations create(CodeProject codeProject, InfoScanPerformed infoScanPerformed) {
+        return ciOperationsRepository.save(new CiOperations(codeProject, infoScanPerformed));
     }
     public CiOperations create(SecurityGatewayEntry securityGatewayEntry, CodeProject codeProject, Optional<CiOperations> optionalCiOperations){
         CiOperations ciOperations = optionalCiOperations.orElseGet(CiOperations::new);

@@ -34,14 +34,15 @@ public class InterfaceOperations {
         return createAndReturnInterfaceForAsset(asset,ip);
     }
 
-    public void createInterfaceForAsset(Asset asset, String ip) {
+    public Interface createInterfaceForAsset(Asset asset, String ip) {
         if (canCreateInterfaceForAsset(asset, ip)) {
             Interface intf = new Interface();
             intf.setAsset(asset);
             intf.setActive(true);
             intf.setPrivateip(ip);
-            interfaceRepository.save(intf);
+            return interfaceRepository.save(intf);
         }
+        return null;
     }
     public Interface createAndReturnInterfaceForAsset(Asset a, String ip){
         if (canCreateInterfaceForAsset(a, ip)) {

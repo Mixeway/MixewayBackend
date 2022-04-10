@@ -6,6 +6,7 @@ import io.mixeway.db.entity.User;
 import io.mixeway.db.repository.ProjectRepository;
 import io.mixeway.db.repository.SettingsRepository;
 import io.mixeway.db.repository.UserRepository;
+import io.mixeway.scanmanager.model.NetworkScanRequestModel;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,25 +40,27 @@ class GetOrCreateProjectServiceTest {
 
     @BeforeAll
     public void prepare(){
-        Settings settings = settingsRepository.findAll().get(0);
-        settings.setMasterApiKey("test");
-        settingsRepository.save(settings);
-        if (userRepository.findAll().size() == 0 ) {
-            User user = new User();
-            user.setUsername("admin");
-            user.setPermisions("ROLE_ADMIN");
-            userRepository.save(user);
-        }
-        Mockito.when(principal.getName()).thenReturn("admin");
+        User user = new User();
+        user.setUsername("get_or_create_project");
+        user.setPermisions("ROLE_ADMIN");
+        userRepository.save(user);
+        Mockito.when(principal.getName()).thenReturn("get_or_create_project");
     }
 
     @Test
     void getProjectId() {
+        Mockito.when(principal.getName()).thenReturn("get_or_create_project");
         Project project = createProjectService.getProjectId("empty","testProject",principal);
         assertNotNull(project);
     }
 
     @Test
     void getProject() {
+        Mockito.when(principal.getName()).thenReturn("get_or_create_project");
+        NetworkScanRequestModel networkScanRequestModel = new NetworkScanRequestModel();
+        networkScanRequestModel.setProjectName("get_or_create_project");
+        networkScanRequestModel.setCiid("get_or_create_project");
+        Project project = createProjectService.getProject(networkScanRequestModel,principal);
+        assertNotNull(project);
     }
 }

@@ -51,6 +51,7 @@ class FindVulnHistoryServiceTest {
 
     @Test
     void getVulnTrendData() {
+        Mockito.when(principal.getName()).thenReturn("find_vulnhistory");
         Project project = getOrCreateProjectService.getProjectId("find_vulnhistory","find_vulnhistory",principal);
         for (int i=0; i<5; i++){
             createVulnHistoryService.create(project,"2022-03-0"+i+" 12:00:00",3L,4L,5L,6L, 7L);
@@ -61,7 +62,7 @@ class FindVulnHistoryServiceTest {
 
     @Test
     void getSourceTrendData() {
-
+        Mockito.when(principal.getName()).thenReturn("find_vulnhistory");
         Project project = getOrCreateProjectService.getProjectId("find_vulnhistory2","find_vulnhistory2",principal);
         for (int i=0; i<5; i++){
             createVulnHistoryService.create(project,"2022-03-0"+i+" 12:00:00",3L,4L,5L,6L, 7L);
