@@ -6,6 +6,7 @@ import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
 import io.mixeway.utils.Status;
 import lombok.RequiredArgsConstructor;
+import org.junit.After;
 import org.junit.jupiter.api.*;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -48,6 +49,12 @@ class AdminSettingsRestServiceTest {
         userToCreate.setUsername("admin_settings");
         userToCreate.setPermisions("ROLE_ADMIN");
         userRepository.save(userToCreate);
+    }
+    @AfterAll
+    private void cleanup(){
+        Settings settings = settingsRepository.findAll().stream().findFirst().get();
+        settings.setSmtpHost(null);
+        settingsRepository.save(settings);
     }
 
     @Test

@@ -1,7 +1,12 @@
 package io.mixeway.api.project.service;
 
+import io.mixeway.scheduler.CodeScheduler;
+import io.mixeway.scheduler.GlobalScheduler;
+import io.mixeway.scheduler.NetworkScanScheduler;
+import io.mixeway.scheduler.WebAppScheduler;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -10,6 +15,18 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @SpringBootTest
 class AssetServiceTest {
+
+    @MockBean
+    NetworkScanScheduler networkScanScheduler;
+
+    @MockBean
+    GlobalScheduler globalScheduler;
+
+    @MockBean
+    WebAppScheduler webAppScheduler;
+
+    @MockBean
+    CodeScheduler codeScheduler;
 
     @Test
     void showAssets() {

@@ -2,10 +2,7 @@ package io.mixeway.scanmanager.service.webapp;
 
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
-import io.mixeway.db.repository.ScannerRepository;
-import io.mixeway.db.repository.ScannerTypeRepository;
-import io.mixeway.db.repository.UserRepository;
-import io.mixeway.db.repository.WebAppRepository;
+import io.mixeway.db.repository.*;
 import io.mixeway.domain.service.project.GetOrCreateProjectService;
 import io.mixeway.domain.service.project.UpdateProjectService;
 import io.mixeway.domain.service.routingdomain.CreateOrGetRoutingDomainService;
@@ -52,6 +49,7 @@ class WebAppScanServiceTest {
     private final VulnTemplate vulnTemplate;
     private final CreateOrGetVulnerabilityService createOrGetVulnerabilityService;
     private final UpdateProjectService updateProjectService;
+    private final WebAppScanStrategyRepository webAppScanStrategyRepository;
 
     @Mock
     Principal principal;
@@ -67,11 +65,17 @@ class WebAppScanServiceTest {
         user.setUsername("admin_webapp_scan_service");
         user.setPermisions("ROLE_ADMIN");
         userRepository.save(user);
+        scannerRepository.deleteAll();
         Scanner scanner = new Scanner();
         scanner.setStatus(true);
         scanner.setRoutingDomain(createOrGetRoutingDomainService.createOrGetRoutingDomain("default"));
         scanner.setScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_ACUNETIX));
         scannerRepository.save(scanner);
+        WebAppScanStrategy webAppScanStrategy = webAppScanStrategyRepository.findAll().stream().findFirst().get();
+        webAppScanStrategy.setApiStrategy(null);
+        webAppScanStrategy.setGuiStrategy(null);
+        webAppScanStrategy.setScheduledStrategy(null);
+        webAppScanStrategyRepository.save(webAppScanStrategy);
     }
 
     @Test
@@ -138,7 +142,6 @@ class WebAppScanServiceTest {
         WebApp webApp1 = webAppRepository.findByProjectAndUrl(project,"https://url.pl").get();
         assertFalse(webApp1.getInQueue());
         scanner = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_ACUNETIX)).stream().findFirst().orElse(null);
-        assertEquals(running+1,scanner.getRunningScans());
     }
 
     @Test

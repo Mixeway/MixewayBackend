@@ -13,7 +13,10 @@ import io.mixeway.domain.service.routingdomain.CreateOrGetRoutingDomainService;
 import io.mixeway.scanmanager.integrations.openvas.apiclient.OpenVasApiClient;
 import io.mixeway.scanmanager.model.AssetToCreate;
 import io.mixeway.scanmanager.model.NetworkScanRequestModel;
+import io.mixeway.scheduler.CodeScheduler;
+import io.mixeway.scheduler.GlobalScheduler;
 import io.mixeway.scheduler.NetworkScanScheduler;
+import io.mixeway.scheduler.WebAppScheduler;
 import io.mixeway.utils.Status;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.*;
@@ -60,6 +63,15 @@ class NetworkScanServiceTest {
     @MockBean
     NetworkScanScheduler networkScanScheduler;
 
+    @MockBean
+    GlobalScheduler globalScheduler;
+
+    @MockBean
+    WebAppScheduler webAppScheduler;
+
+    @MockBean
+    CodeScheduler codeScheduler;
+
     @BeforeAll
     private void setUpTest(){
         Mockito.when(principal.getName()).thenReturn("admin_network_scan_service");
@@ -68,6 +80,7 @@ class NetworkScanServiceTest {
         user.setPermisions("ROLE_ADMIN");
         userRepository.save(user);
         Project project = getOrCreateProjectService.getProjectId("network_scan_service","network_scan_service",principal);
+        scannerRepository.deleteAll();
         Scanner scanner = new Scanner();
         scanner.setStatus(true);
         scanner.setRoutingDomain(createOrGetRoutingDomainService.createOrGetRoutingDomain("default"));
