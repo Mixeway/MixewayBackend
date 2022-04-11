@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class UpdateInfraScanService {
-    private InfraScanRepository infraScanRepository;
+    private final InfraScanRepository infraScanRepository;
 
     public void changeStateForRunningScan(InfraScan scan){
         scan.setInQueue(false);

@@ -18,6 +18,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -28,7 +29,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class JwtUserDetailsServiceTest {
     private final JwtUserDetailsService jwtUserDetailsService;
     private final UserRepository userRepository;
@@ -39,18 +39,16 @@ class JwtUserDetailsServiceTest {
         Settings settings = settingsRepository.findAll().get(0);
         settings.setMasterApiKey("master_key");
         settingsRepository.save(settings);
-        Optional<User> testUser = userRepository.findByUsername("jwt_admin");
-        if (!testUser.isPresent()) {
-            User user = new User();
-            user.setUsername("jwt_admin");
-            user.setPermisions("ROLE_ADMIN");
-            userRepository.save(user);
-            User user2 = new User();
-            user2.setUsername("jwt_user");
-            user2.setPermisions("ROLE_USER");
-            user2.setApiKey("user_key");
-            userRepository.save(user2);
-        }
+        User user = new User();
+        user.setUsername("jwt_admin");
+        user.setPermisions("ROLE_ADMIN");
+        user.setApiKey("admin_key");
+        userRepository.save(user);
+        User user2 = new User();
+        user2.setUsername("jwt_user");
+        user2.setPermisions("ROLE_USER");
+        user2.setApiKey("user_key");
+        userRepository.save(user2);
     }
 
     @Test
@@ -66,6 +64,7 @@ class JwtUserDetailsServiceTest {
 
     @Test
     void loadUserByApiKeyAndRequestUri() {
+        List<User> users = userRepository.findAll();
         UserDetails masterUser = jwtUserDetailsService.loadUserByApiKeyAndRequestUri("master_key", null);
         assertEquals("admin", masterUser.getUsername());
         assertTrue(masterUser.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN")));

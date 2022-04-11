@@ -244,7 +244,7 @@ public class AdminSettingsRestService {
                     LogUtil.prepare(String.valueOf(vulnAuditorSettings.isEnabled())), LogUtil.prepare(vulnAuditorSettings.getUrl()));
             return new ResponseEntity<>(HttpStatus.OK);
         } catch (Exception e) {
-            log.error("[Admin] Error during updating vuln auditor ettings {}", e.getLocalizedMessage());
+            log.error("[Admin] Error during updating vuln auditor settings {}", e.getLocalizedMessage());
             return new ResponseEntity<>( HttpStatus.PRECONDITION_FAILED);
         }
 

@@ -28,14 +28,18 @@ public class UpdateInterfaceService {
     private final ScanHelper scanHelper;
     private final InfraScanRepository infraScanRepository;
 
+    @Transactional
     public void changeRunningState(InfraScan scan) {
         scan.setRunning(true);
         infraScanRepository.save(scan);
         for (Interface i : scan.getInterfaces()) {
-            i.getAsset().setRequestId(scan.getRequestId());
             i.setScanRunning(true);
             interfaceRepository.save(i);
-            assetRepository.save(i.getAsset());
+            Optional<Asset> a = assetRepository.findById(i.getAsset().getId());
+            if (a.isPresent()) {
+                a.get().setRequestId(scan.getRequestId());
+                assetRepository.save(a.get());
+            }
         }
     }
     /**
@@ -49,11 +53,11 @@ public class UpdateInterfaceService {
         for (Interface i : interfaces){
             i.setScanRunning(true);
             interfaceRepository.save(i);
-        }
-        interfaces.stream().filter(i -> assets.add(i.getAsset())).collect(Collectors.toList());
-        for (Asset asset : assets){
-            asset.setRequestId(requestId);
-            assetRepository.save(asset);
+            Optional<Asset> asset = assetRepository.findById(i.getAsset().getId());
+            if(asset.isPresent()) {
+                asset.get().setRequestId(requestId);
+                assetRepository.save(asset.get());
+            }
         }
     }
 
@@ -62,13 +66,17 @@ public class UpdateInterfaceService {
         List<String> ipAddresses = scanHelper.prepareTargetsForScan(ns, false);
         for (String ipAddress : ipAddresses) {
             Optional<Interface> interfaceOptional = interfaceRepository.findByPrivateipAndActiveAndAssetIn(ipAddress, true, new ArrayList<>(ns.getProject().getAssets())).stream().findFirst();
-            interfaceOptional.ifPresent(anInterface -> anInterface.setRisk(Math.min(projectRiskAnalyzer.getInterfaceRisk(anInterface), 100)));
+            if (interfaceOptional.isPresent()){
+                int risk = Math.min(projectRiskAnalyzer.getInterfaceRisk(interfaceOptional.get()), 100);
+                interfaceOptional.get().setRisk(risk);
+            }
         }
     }
 
     /**
      * Updating interface state, chaniging running=false for interfaces in given project
      */
+    @Transactional
     public void clearState(Project p) {
         interfaceRepository.updateInterfaceStateForNotRunningScan(p);
     }

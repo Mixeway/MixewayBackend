@@ -121,7 +121,7 @@ public class Asset implements VulnSource {
 	public void setOrigin(String origin) {
 		this.origin = origin;
 	}
-	@OneToMany(mappedBy = "asset", fetch=FetchType.EAGER, orphanRemoval = true, cascade = CascadeType.REMOVE)
+	@OneToMany(mappedBy = "asset", fetch=FetchType.EAGER, orphanRemoval = true, cascade = CascadeType.ALL)
 	public Set<Interface> getInterfaces() {
 		return interfaces;
 	}
