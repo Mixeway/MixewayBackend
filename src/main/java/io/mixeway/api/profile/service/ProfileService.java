@@ -124,7 +124,7 @@ public class ProfileService {
         Optional<User> user = findUserService.findByUsernameOrCommonName(principal.getName(), principal.getName());
         Settings settings = getSettingsService.getSettings();
         if (user.isPresent() && settings.getPasswordAuth()) {
-            if (bCryptPasswordEncoder.matches(updateProfileModel.getOldPassword(), user.get().getPassword())
+            if ((user.get().getPassword() == null && updateProfileModel.getOldPassword()== null) || bCryptPasswordEncoder.matches(updateProfileModel.getOldPassword(), user.get().getPassword())
                 && updateProfileModel.getNewPassword().equals(updateProfileModel.getNewPasswordRepeat())
                 && updateProfileModel.getNewPassword().length() >= 8){
                 user.get().setPassword(bCryptPasswordEncoder.encode(updateProfileModel.getNewPassword()));
