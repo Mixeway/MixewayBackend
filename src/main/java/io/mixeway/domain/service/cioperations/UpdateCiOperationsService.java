@@ -58,6 +58,7 @@ public class UpdateCiOperationsService {
         ciOperationsRepository.save(ciOperations);
     }
 
+    @Transactional
     public void updateCiOperations(CiOperations ciOperations, SecurityGatewayEntry securityGatewayEntry, CodeProject codeProject){
         ciOperations.setResult(securityGatewayEntry.isPassed()?"Ok":"Not Ok");
         ciOperations.setOpenSourceScan(StringUtils.isNotBlank(codeProject.getdTrackUuid()));

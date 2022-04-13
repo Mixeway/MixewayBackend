@@ -46,7 +46,7 @@ public class GetOrCreateUserService {
                 userToCreate.setApiKey(UUID.randomUUID().toString());
             }
             userToCreate.setUsername(userModel.getUserUsername());
-            if ( userModel.getPasswordAuth())
+            if ( userModel.getPasswordAuth() != null && userModel.getPasswordAuth())
                 userToCreate.setPassword(bCryptPasswordEncoder.encode(userModel.getUserPassword()));
             userRepository.save(userToCreate);
             if (userModel.getProjects() != null && userModel.getProjects().isPresent() && userModel.getProjects().get().size()>0)

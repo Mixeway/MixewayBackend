@@ -77,7 +77,6 @@ class FindCiOperationsServiceTest {
         Mockito.when(principal.getName()).thenReturn("find_ci");
         List<Project> projectList = new ArrayList<>();
         projectList.add(getOrCreateProjectService.getProjectId("finc_ci", "find_ci", principal));
-
         Long okResults = findCiOperationsService.countByResultAndProject("Ok",projectList);
         assertEquals(1, okResults);
     }

@@ -30,7 +30,7 @@ public interface CodeProjectRepository extends JpaRepository<CodeProject, Long> 
 	@Query(value = "select cp.* from codeproject cp inner join codegroup cg on cp.codegroup_id = cg.id inner join project p on p.id=cg.project_id " +
 			"where project_id=:project and cp.name=:name and cp.branch=:branch", nativeQuery = true)
 	Optional<CodeProject> getCodeProjectByProjectNameAndBranch(@Param("project") Long project, @Param("name") String name, @Param("branch") String branch);
-	@Query(value = "select cp.* from codeproject cp inner join codegroup cg on cp.codegroup_id = cg.id inner join project p on p.id=cg.project_id " +
+	@Query(value = "select cp.* from codeproject cp inner join project p on p.id=cp.project_id " +
 			"where project_id=:project and cp.name=:name", nativeQuery = true)
 	Optional<CodeProject> getCodeProjectByProjectName(@Param("project") Long project, @Param("name") String name);
 	@Query(value = "select cp.* from codeproject cp where cp.codegroup_id in (select id from codegroup where project_id in :projects) and cp.name ilike :name", nativeQuery = true)

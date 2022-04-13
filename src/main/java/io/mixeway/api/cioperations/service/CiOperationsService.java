@@ -115,6 +115,7 @@ public class CiOperationsService {
         return codeScanService.createScanForCodeProject(id,projectName);
     }
 
+    @Transactional
     public ResponseEntity<CIVulnManageResponse> codeVerify(String codeGroup, String codeProject, Long id, String commitid, Principal principal) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         Optional<Project> project = projectRepository.findById(id);
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal,project.get())) {
@@ -153,10 +154,10 @@ public class CiOperationsService {
         }
     }
 
-    @Transactional
-    List<VulnManageResponse> createVulnManageResponseForCodeProject(CodeProject cp){
+    private List<VulnManageResponse> createVulnManageResponseForCodeProject(CodeProject cp){
         List<VulnManageResponse> vulnManageResponses = new ArrayList<>();
-        List<ProjectVulnerability> codeVulns = null;
+        List<ProjectVulnerability> codeVulns = new ArrayList<>();
+
         try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository
                 .findByCodeProjectAndVulnerabilitySourceAndSeverityAndAnalysisNot(cp, vulnTemplate.SOURCE_SOURCECODE,
                         Constants.VULN_CRITICALITY_CRITICAL,
@@ -415,8 +416,7 @@ public class CiOperationsService {
      * @param codeProject to edit cioperations
      * @param securityGatewayEntry to check vulnerabilities number
      */
-    @Transactional
-    void updateCiOperationWithSecurityGatewayResponse(CodeProject codeProject, SecurityGatewayEntry securityGatewayEntry) {
+    private void updateCiOperationWithSecurityGatewayResponse(CodeProject codeProject, SecurityGatewayEntry securityGatewayEntry) {
         Optional<CiOperations> ciOperations = findCiOperationsService.findByCodeProjectAndCommitId(codeProject, codeProject.getCommitid());
         if (ciOperations.isPresent()){
             updateCiOperationsService.updateCiOperations(ciOperations.get(), securityGatewayEntry,codeProject);

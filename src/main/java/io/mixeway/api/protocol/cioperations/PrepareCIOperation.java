@@ -24,9 +24,9 @@ public class PrepareCIOperation {
 
 
     public PrepareCIOperation(OpenSourceConfig openSourceConfig, CodeProject codeProject, String type) {
-        this.openSourceScannerCredentials = openSourceConfig.getOpenSourceScannerCredentials();
-        this.openSourceScannerApiUrl = openSourceConfig.getOpenSourceScannerApiUrl();
-        this.openSourceScannerProjectId = openSourceConfig.getOpenSourceScannerProjectId();
+        this.openSourceScannerCredentials = openSourceConfig !=null? openSourceConfig.getOpenSourceScannerCredentials() : null;
+        this.openSourceScannerApiUrl = openSourceConfig !=null ? openSourceConfig.getOpenSourceScannerApiUrl() : null;
+        this.openSourceScannerProjectId = openSourceConfig != null ?  openSourceConfig.getOpenSourceScannerProjectId() : null;
         if (this.openSourceScannerApiUrl !=null && this.openSourceScannerCredentials!=null){
             this.openSourceScannerIntegration = true;
         } else {
