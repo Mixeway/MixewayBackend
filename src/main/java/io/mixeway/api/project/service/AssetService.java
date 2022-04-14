@@ -152,12 +152,11 @@ public class AssetService {
             return new ResponseEntity<>( HttpStatus.NOT_FOUND);
     }
 
-    @Transactional
     public ResponseEntity<Status> deleteAsset(Long assetId, Principal principal) {
         Optional<Interface> interf = findInterfaceService.findById(assetId);
         if (interf.isPresent() && permissionFactory.canUserAccessProject(principal, interf.get().getAsset().getProject())) {
-            deleteInterfaceService.delete(interf);
             log.info("{} - Deleted interface [{}] {} - {}", principal.getName(), interf.get().getAsset().getProject().getName() , interf.get().getAsset().getName(), interf.get().getPrivateip());
+            deleteInterfaceService.delete(interf);
             return new ResponseEntity<>(HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);

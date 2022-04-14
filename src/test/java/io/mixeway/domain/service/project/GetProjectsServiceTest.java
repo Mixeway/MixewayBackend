@@ -18,6 +18,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.security.Principal;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -28,7 +29,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class GetProjectsServiceTest {
     private final ProjectRepository projectRepository;
     private final GetOrCreateProjectService getOrCreateProjectService;
@@ -56,8 +56,9 @@ class GetProjectsServiceTest {
     void getProjects() {
         Mockito.when(principal.getName()).thenReturn("get_projects");
         for (int i=0; i <5; i++){
-            getOrCreateProjectService.getProjectId("ciid","project"+i,principal);
+            getOrCreateProjectService.getProjectId("ciid"+i,"project"+i,principal);
         }
+        List<Project>  projects = projectRepository.findAll();
         assertTrue(projectRepository.findAll().size() >= 5);
     }
 
