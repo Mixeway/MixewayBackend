@@ -3,11 +3,14 @@ package io.mixeway.domain.service.scanmanager.code;
 import io.mixeway.api.project.model.EditCodeProjectModel;
 import io.mixeway.db.entity.CodeProject;
 import io.mixeway.db.entity.Project;
+import io.mixeway.db.entity.ProjectVulnerability;
 import io.mixeway.db.repository.CodeProjectRepository;
+import io.mixeway.domain.service.vulnmanager.VulnTemplate;
 import io.mixeway.utils.VaultHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -18,6 +21,7 @@ import java.util.UUID;
 public class OperateOnCodeProject {
     private final CodeProjectRepository codeProjectRepository;
     private final VaultHelper vaultHelper;
+    private final VulnTemplate vulnTemplate;
 
     /**
      * Method which verify if CodeProject scan can be started
@@ -30,6 +34,10 @@ public class OperateOnCodeProject {
 
 
     public void deleteCodeProject(CodeProject codeProject) {
+        List<ProjectVulnerability> projectVulnerabilities = vulnTemplate.projectVulnerabilityRepository.findByCodeProject(codeProject);
+        vulnTemplate.projectVulnerabilityRepository.deleteAll(projectVulnerabilities);
+        codeProject.setProject(null);
+        codeProject = codeProjectRepository.save(codeProject);
         codeProjectRepository.delete(codeProject);
     }
 

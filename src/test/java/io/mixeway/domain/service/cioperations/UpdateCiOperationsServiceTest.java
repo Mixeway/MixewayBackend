@@ -4,9 +4,11 @@ import io.mixeway.api.protocol.cioperations.InfoScanPerformed;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.CiOperationsRepository;
 import io.mixeway.db.repository.CodeProjectRepository;
+import io.mixeway.db.repository.SecurityGatewayRepository;
 import io.mixeway.db.repository.UserRepository;
 import io.mixeway.domain.service.project.GetOrCreateProjectService;
 import io.mixeway.domain.service.scanmanager.code.CreateOrGetCodeProjectService;
+import io.mixeway.domain.service.securitygateway.UpdateSecurityGatewayService;
 import io.mixeway.domain.service.vulnmanager.CreateOrGetVulnerabilityService;
 import io.mixeway.domain.service.vulnmanager.VulnTemplate;
 import lombok.RequiredArgsConstructor;
@@ -41,12 +43,16 @@ class UpdateCiOperationsServiceTest {
     private final CreateOrGetVulnerabilityService createOrGetVulnerabilityService;
     private final FindCiOperationsService findCiOperationsService;
     private final CodeProjectRepository codeProjectRepository;
+    private final SecurityGatewayRepository securityGatewayRepository;
 
     @Mock
     Principal principal;
 
     @BeforeAll
     private void prepareDB() {
+        SecurityGateway securityGateway = securityGatewayRepository.findAll().stream().findFirst().orElse(null);
+        securityGateway.setGrade(false);
+        securityGatewayRepository.save(securityGateway);
         Mockito.when(principal.getName()).thenReturn("update_ci");
         User userToCreate = new User();
         userToCreate.setUsername("update_ci");
@@ -70,6 +76,7 @@ class UpdateCiOperationsServiceTest {
             projectVulnerability.setCodeProject(codeProject);
             projectVulnerability.setSeverity("High");
             projectVulnerability.setAnalysis("Exploitable");
+            projectVulnerability.setGrade(1);
             projectVulnerability.setVulnerabilitySource(vulnTemplate.SOURCE_OPENSOURCE);
             projectVulnerability.setVulnerability(createOrGetVulnerabilityService.createOrGetVulnerability("test"));
             vulnTemplate.vulnerabilityPersist(new ArrayList<>(), projectVulnerability);
@@ -79,6 +86,7 @@ class UpdateCiOperationsServiceTest {
             projectVulnerability.setProject(project);
             projectVulnerability.setCodeProject(codeProject);
             projectVulnerability.setSeverity("High");
+            projectVulnerability.setGrade(1);
             projectVulnerability.setAnalysis("Exploitable");
             projectVulnerability.setVulnerabilitySource(vulnTemplate.SOURCE_SOURCECODE);
             projectVulnerability.setVulnerability(createOrGetVulnerabilityService.createOrGetVulnerability("test"));

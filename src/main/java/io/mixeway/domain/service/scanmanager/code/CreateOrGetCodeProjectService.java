@@ -128,6 +128,7 @@ public class CreateOrGetCodeProjectService {
         Optional<CodeProject> codeProjectOptional = codeProjectRepository.findByProjectAndName(project, codeProjectPutModel.getCodeProjectName());
         if (!codeProjectOptional.isPresent()){
             CodeProject codeProject = new CodeProject();
+            codeProject.setProject(project);
             codeProject.setName(codeProjectPutModel.getCodeProjectName());
             codeProject.setSkipAllScan(false);
             codeProject.setdTrackUuid(codeProjectPutModel.getDTrackUuid());

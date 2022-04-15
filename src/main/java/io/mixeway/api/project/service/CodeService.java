@@ -131,8 +131,8 @@ public class CodeService {
     public ResponseEntity<Status> deleteCodeProject(Long codeProjectId, Principal principal) {
         Optional<CodeProject> codeProject = findCodeProjectService.findById(codeProjectId);
         if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getProject())){
-            operateOnCodeProject.deleteCodeProject(codeProject.get());
             log.info("{} - Deleted codeproject [{}] {}", principal.getName(), codeProject.get().getProject().getName(), codeProject.get().getName());
+            operateOnCodeProject.deleteCodeProject(codeProject.get());
             return new ResponseEntity<>(HttpStatus.OK);
         }
         return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);

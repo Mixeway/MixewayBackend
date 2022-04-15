@@ -111,7 +111,8 @@ class AssetServiceTest {
         List<RunScanForAssets> runScanForAssets = new ArrayList<>();
         for (Asset asset: project.getAssets()){
             RunScanForAssets runScanForAssets1 = new RunScanForAssets();
-            runScanForAssets1.setAssetId(asset.getId());
+            assertTrue(asset.getInterfaces().stream().findFirst().isPresent());
+            runScanForAssets1.setAssetId(asset.getInterfaces().stream().findFirst().get().getId());
             runScanForAssets.add(runScanForAssets1);
         }
 
