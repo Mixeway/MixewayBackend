@@ -1,5 +1,6 @@
 package io.mixeway.domain.service.scanmanager.webapp;
 
+import io.mixeway.db.entity.Project;
 import io.mixeway.db.entity.WebApp;
 import io.mixeway.db.repository.WebAppRepository;
 import lombok.RequiredArgsConstructor;
@@ -37,5 +38,9 @@ public class FindWebAppService {
 
     public List<WebApp> findByInQueue(boolean b) {
         return webAppRepository.findByInQueue(b);
+    }
+
+    public Optional<WebApp> findByProjectAndRul(Project project, String url) {
+        return webAppRepository.findByProjectAndUrl(project,url);
     }
 }

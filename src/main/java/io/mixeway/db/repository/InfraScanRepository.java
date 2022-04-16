@@ -27,6 +27,7 @@ public interface InfraScanRepository extends JpaRepository<InfraScan, Long>{
 	@Query(value="select * from nessusscan where running=true order by random() limit 5", nativeQuery = true)
     List<InfraScan> getRandom5RunningScans();
 	List<InfraScan> findByProjectAndRunning(Project project, boolean running);
+	List<InfraScan> findByProjectAndRunningOrInQueue(Project project, boolean running, boolean inQueue);
 	List<InfraScan> findByNessusAndInQueue(Scanner scanner, Boolean inQueue);
 	List<InfraScan> findByNessusAndRunning(Scanner scanner, Boolean running);
 	Long countByInQueue(Boolean inQueue);

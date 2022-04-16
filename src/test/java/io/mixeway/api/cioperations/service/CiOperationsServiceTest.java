@@ -8,6 +8,7 @@ import io.mixeway.api.protocol.cioperations.InfoScanPerformed;
 import io.mixeway.api.protocol.cioperations.PrepareCIOperation;
 import io.mixeway.api.protocol.securitygateway.SecurityGatewayResponse;
 import io.mixeway.api.protocol.user.UserModel;
+import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.CiOperationsRepository;
 import io.mixeway.db.repository.CodeProjectRepository;
@@ -16,6 +17,7 @@ import io.mixeway.domain.service.cioperations.CreateCiOperationsService;
 import io.mixeway.domain.service.project.GetOrCreateProjectService;
 import io.mixeway.domain.service.scanmanager.code.CreateOrGetCodeProjectService;
 import io.mixeway.domain.service.vulnmanager.VulnTemplate;
+import io.mixeway.scanmanager.integrations.dependencytrack.apiclient.DependencyTrackApiClient;
 import io.mixeway.utils.ScannerType;
 import io.mixeway.utils.Status;
 import io.mixeway.utils.VulnerabilityModel;
@@ -26,6 +28,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -58,6 +61,9 @@ class CiOperationsServiceTest {
 
     @Mock
     Principal principal;
+
+    @MockBean
+    DependencyTrackApiClient dependencyTrackApiClient;
 
     @BeforeAll
     private void prepareDB() {
@@ -151,16 +157,17 @@ class CiOperationsServiceTest {
     @Test
     void getInfoForCI() throws Exception {
         Mockito.when(principal.getName()).thenReturn("cioperations_service");
+        Mockito.when(dependencyTrackApiClient.canProcessRequest()).thenReturn(true);
+        Mockito.when(dependencyTrackApiClient.createProject(Mockito.any())).thenReturn(true);
+
         Project project = getOrCreateProjectService.getProjectId("cioperations_service", "cioperations_service", principal);
         GetInfoRequest getInfoRequest = GetInfoRequest.builder()
                 .branch("dev")
                 .projectId(project.getId())
                 .repoName("new_project")
                 .repoUrl("https://new-project.com")
-                .scope("opensource")
+                .scope(Constants.CI_SCOPE_OPENSOURCE)
                 .build();
-
-
 
         ResponseEntity<PrepareCIOperation> prepareCIOperationResponseEntity = ciOperationsService.getInfoForCI(getInfoRequest,principal);
         assertEquals(HttpStatus.OK, prepareCIOperationResponseEntity.getStatusCode());

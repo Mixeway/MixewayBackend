@@ -201,14 +201,16 @@ public class GetOrCreateWebAppService {
             }
         }
         webApp = webAppRepository.saveAndFlush(webApp);
-        for (String header : webAppPutMode.getWebAppHeaders().split(",")) {
-            String[] headerValues = header.split(":");
-            if (headerValues.length == 2) {
-                WebAppHeader waHeader = new WebAppHeader();
-                waHeader.setHeaderName(headerValues[0]);
-                waHeader.setHeaderValue(headerValues[1]);
-                waHeader.setWebApp(webApp);
-                webAppHeaderRepository.save(waHeader);
+        if (webAppPutMode.getWebAppHeaders() != null ) {
+            for (String header : webAppPutMode.getWebAppHeaders().split(",")) {
+                String[] headerValues = header.split(":");
+                if (headerValues.length == 2) {
+                    WebAppHeader waHeader = new WebAppHeader();
+                    waHeader.setHeaderName(headerValues[0]);
+                    waHeader.setHeaderValue(headerValues[1]);
+                    waHeader.setWebApp(webApp);
+                    webAppHeaderRepository.save(waHeader);
+                }
             }
         }
         return webApp;

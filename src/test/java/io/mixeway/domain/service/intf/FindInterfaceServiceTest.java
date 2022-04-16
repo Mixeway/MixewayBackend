@@ -13,9 +13,7 @@ import io.mixeway.domain.service.routingdomain.CreateOrGetRoutingDomainService;
 import io.mixeway.domain.service.scanmanager.code.CreateOrGetCodeProjectService;
 import lombok.RequiredArgsConstructor;
 import org.checkerframework.checker.nullness.Opt;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class FindInterfaceServiceTest {
     private final FindInterfaceService findInterfaceService;
     private final InterfaceOperations interfaceOperations;
@@ -121,7 +120,7 @@ class FindInterfaceServiceTest {
         assertTrue(anInterface.isPresent());
         anInterface = findInterfaceService.findById(anInterface.get().getId());
         assertTrue(anInterface.isPresent());
-        anInterface = findInterfaceService.findById(100L);
+        anInterface = findInterfaceService.findById(10000L);
         assertFalse(anInterface.isPresent());
     }
 
