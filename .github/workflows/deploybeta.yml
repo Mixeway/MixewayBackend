@@ -47,6 +47,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
+      - name: Java version
+        run: |
+          java -version
       - name: Run tests
         run: |
           mvn test
