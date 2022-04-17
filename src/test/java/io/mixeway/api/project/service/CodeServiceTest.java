@@ -18,6 +18,9 @@ import io.mixeway.scanmanager.integrations.checkmarx.apiclient.CheckmarxApiClien
 import io.mixeway.scanmanager.integrations.dependencytrack.apiclient.DependencyTrackApiClient;
 import io.mixeway.scanmanager.model.Projects;
 import io.mixeway.scheduler.CodeScheduler;
+import io.mixeway.scheduler.GlobalScheduler;
+import io.mixeway.scheduler.NetworkScanScheduler;
+import io.mixeway.scheduler.WebAppScheduler;
 import io.mixeway.utils.RunScanForCodeProject;
 import io.mixeway.utils.SASTProject;
 import io.mixeway.utils.Status;
@@ -70,7 +73,16 @@ class CodeServiceTest {
     DependencyTrackApiClient dependencyTrackApiClient;
 
     @MockBean
+    GlobalScheduler globalScheduler;
+
+    @MockBean
+    NetworkScanScheduler networkScheduler;
+
+    @MockBean
     CodeScheduler codeScheduler;
+
+    @MockBean
+    WebAppScheduler webAppScheduler;
 
     @BeforeAll
     private void prepareDB() {

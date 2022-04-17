@@ -17,8 +17,13 @@ import io.mixeway.domain.service.vulnmanager.CreateOrGetCisRequirementService;
 import io.mixeway.domain.service.vulnmanager.CreateOrGetVulnerabilityService;
 import io.mixeway.scanmanager.integrations.openvas.apiclient.OpenVasApiClient;
 import io.mixeway.scanmanager.model.*;
+import io.mixeway.scheduler.CodeScheduler;
+import io.mixeway.scheduler.GlobalScheduler;
+import io.mixeway.scheduler.NetworkScanScheduler;
+import io.mixeway.scheduler.WebAppScheduler;
 import io.mixeway.utils.ScannerType;
 import io.mixeway.utils.Status;
+import jdk.nashorn.internal.objects.Global;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.*;
 import org.mockito.Mock;
@@ -60,6 +65,19 @@ class ScanManagerServiceTest {
 
     @MockBean
     OpenVasApiClient openVasApiClient;
+
+    @MockBean
+    GlobalScheduler globalScheduler;
+
+    @MockBean
+    NetworkScanScheduler networkScheduler;
+
+    @MockBean
+    CodeScheduler codeScheduler;
+
+    @MockBean
+    WebAppScheduler webAppScheduler;
+
 
     @BeforeAll
     private void prepareDB() {

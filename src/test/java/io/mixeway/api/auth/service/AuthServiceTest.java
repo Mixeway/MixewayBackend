@@ -9,6 +9,10 @@ import io.mixeway.db.entity.Status;
 import io.mixeway.db.entity.User;
 import io.mixeway.db.repository.UserRepository;
 import io.mixeway.domain.exceptions.NotValidRoleException;
+import io.mixeway.scheduler.CodeScheduler;
+import io.mixeway.scheduler.GlobalScheduler;
+import io.mixeway.scheduler.NetworkScanScheduler;
+import io.mixeway.scheduler.WebAppScheduler;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -16,6 +20,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.context.request.RequestAttributes;
@@ -38,6 +43,18 @@ class AuthServiceTest {
     private final AuthService authService;
     private final UserRepository userRepository;
     private final AdminUserRestService adminUserRestService;
+
+    @MockBean
+    GlobalScheduler globalScheduler;
+
+    @MockBean
+    NetworkScanScheduler networkScheduler;
+
+    @MockBean
+    CodeScheduler codeScheduler;
+
+    @MockBean
+    WebAppScheduler webAppScheduler;
 
     @BeforeAll
     private void prepareDB() {

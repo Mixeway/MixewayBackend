@@ -11,7 +11,9 @@ import io.mixeway.domain.service.project.GetOrCreateProjectService;
 import io.mixeway.domain.service.scanmanager.code.CreateOrGetCodeProjectService;
 import io.mixeway.domain.service.vulnmanager.CreateOrGetVulnerabilityService;
 import io.mixeway.domain.service.vulnmanager.VulnTemplate;
+import io.mixeway.scheduler.CodeScheduler;
 import io.mixeway.scheduler.GlobalScheduler;
+import io.mixeway.scheduler.NetworkScanScheduler;
 import io.mixeway.scheduler.WebAppScheduler;
 import io.mixeway.servicediscovery.plugin.aws.apiclient.AwsApiClient;
 import lombok.RequiredArgsConstructor;
@@ -53,6 +55,12 @@ class ProjectRestServiceTest {
 
     @MockBean
     GlobalScheduler globalScheduler;
+
+    @MockBean
+    NetworkScanScheduler networkScheduler;
+
+    @MockBean
+    CodeScheduler codeScheduler;
 
     @MockBean
     WebAppScheduler webAppScheduler;

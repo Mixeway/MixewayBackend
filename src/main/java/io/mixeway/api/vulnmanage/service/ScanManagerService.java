@@ -27,6 +27,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.validation.constraints.Null;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.security.*;
@@ -253,13 +254,17 @@ public class ScanManagerService {
                             .build());
         }
         for (CodeProject codeProject : codeProjects) {
-            securityScans.add(
-                    SecurityScans
-                            .builder()
-                            .scanType("Code Repository")
-                            .scope(codeProject.getRepoUrl())
-                            .project(codeProject.getProject().getName())
-                            .build());
+            try {
+                securityScans.add(
+                        SecurityScans
+                                .builder()
+                                .scanType("Code Repository")
+                                .scope(codeProject.getRepoUrl())
+                                .project(codeProject.getProject().getName())
+                                .build());
+            } catch (NullPointerException e){
+                log.warn("[Scan Manager] Nullpointer during adding security scan for code repository");
+            }
         }
         return new ResponseEntity<>(securityScans, HttpStatus.OK);
     }

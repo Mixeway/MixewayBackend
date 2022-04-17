@@ -18,6 +18,10 @@ import io.mixeway.domain.service.project.GetOrCreateProjectService;
 import io.mixeway.domain.service.scanmanager.code.CreateOrGetCodeProjectService;
 import io.mixeway.domain.service.vulnmanager.VulnTemplate;
 import io.mixeway.scanmanager.integrations.dependencytrack.apiclient.DependencyTrackApiClient;
+import io.mixeway.scheduler.CodeScheduler;
+import io.mixeway.scheduler.GlobalScheduler;
+import io.mixeway.scheduler.NetworkScanScheduler;
+import io.mixeway.scheduler.WebAppScheduler;
 import io.mixeway.utils.ScannerType;
 import io.mixeway.utils.Status;
 import io.mixeway.utils.VulnerabilityModel;
@@ -64,6 +68,18 @@ class CiOperationsServiceTest {
 
     @MockBean
     DependencyTrackApiClient dependencyTrackApiClient;
+
+    @MockBean
+    GlobalScheduler globalScheduler;
+
+    @MockBean
+    NetworkScanScheduler networkScheduler;
+
+    @MockBean
+    CodeScheduler codeScheduler;
+
+    @MockBean
+    WebAppScheduler webAppScheduler;
 
     @BeforeAll
     private void prepareDB() {

@@ -57,10 +57,16 @@ class AssetServiceTest {
     Principal principal;
 
     @MockBean
-    NetworkScanScheduler networkScanScheduler;
+    GlobalScheduler globalScheduler;
 
     @MockBean
-    GlobalScheduler globalScheduler;
+    NetworkScanScheduler networkScheduler;
+
+    @MockBean
+    CodeScheduler codeScheduler;
+
+    @MockBean
+    WebAppScheduler webAppScheduler;
 
     @BeforeAll
     private void prepareDB() {

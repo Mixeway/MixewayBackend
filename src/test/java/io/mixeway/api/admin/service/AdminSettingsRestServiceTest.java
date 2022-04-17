@@ -4,6 +4,10 @@ import io.mixeway.api.admin.model.*;
 import io.mixeway.api.project.model.VulnAuditorSettings;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
+import io.mixeway.scheduler.CodeScheduler;
+import io.mixeway.scheduler.GlobalScheduler;
+import io.mixeway.scheduler.NetworkScanScheduler;
+import io.mixeway.scheduler.WebAppScheduler;
 import io.mixeway.utils.Status;
 import lombok.RequiredArgsConstructor;
 import org.junit.After;
@@ -12,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -41,6 +46,18 @@ class AdminSettingsRestServiceTest {
 
     @Mock
     Principal principal;
+
+    @MockBean
+    GlobalScheduler globalScheduler;
+
+    @MockBean
+    NetworkScanScheduler networkScheduler;
+
+    @MockBean
+    CodeScheduler codeScheduler;
+
+    @MockBean
+    WebAppScheduler webAppScheduler;
 
     @BeforeAll
     private void prepareDB() {

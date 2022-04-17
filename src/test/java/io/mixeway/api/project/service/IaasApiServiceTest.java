@@ -14,6 +14,7 @@ import io.mixeway.db.repository.UserRepository;
 import io.mixeway.domain.service.iaasapi.GetOrCreateIaasApiService;
 import io.mixeway.domain.service.project.GetOrCreateProjectService;
 import io.mixeway.domain.service.routingdomain.CreateOrGetRoutingDomainService;
+import io.mixeway.scheduler.CodeScheduler;
 import io.mixeway.scheduler.GlobalScheduler;
 import io.mixeway.scheduler.NetworkScanScheduler;
 import io.mixeway.scheduler.WebAppScheduler;
@@ -60,6 +61,12 @@ class IaasApiServiceTest {
 
     @MockBean
     GlobalScheduler globalScheduler;
+
+    @MockBean
+    NetworkScanScheduler networkScheduler;
+
+    @MockBean
+    CodeScheduler codeScheduler;
 
     @MockBean
     WebAppScheduler webAppScheduler;

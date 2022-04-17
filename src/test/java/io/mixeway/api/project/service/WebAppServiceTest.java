@@ -13,7 +13,9 @@ import io.mixeway.domain.service.scanmanager.webapp.FindWebAppService;
 import io.mixeway.domain.service.vulnmanager.CreateOrGetVulnerabilityService;
 import io.mixeway.domain.service.vulnmanager.VulnTemplate;
 import io.mixeway.scanmanager.integrations.acunetix.apiclient.AcunetixApiClient;
+import io.mixeway.scheduler.CodeScheduler;
 import io.mixeway.scheduler.GlobalScheduler;
+import io.mixeway.scheduler.NetworkScanScheduler;
 import io.mixeway.scheduler.WebAppScheduler;
 import io.mixeway.utils.RunScanForWebApps;
 import io.mixeway.utils.Status;
@@ -57,6 +59,12 @@ class WebAppServiceTest {
 
     @MockBean
     GlobalScheduler globalScheduler;
+
+    @MockBean
+    NetworkScanScheduler networkScheduler;
+
+    @MockBean
+    CodeScheduler codeScheduler;
 
     @MockBean
     WebAppScheduler webAppScheduler;

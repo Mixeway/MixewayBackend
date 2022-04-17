@@ -6,6 +6,10 @@ import io.mixeway.db.entity.User;
 import io.mixeway.db.repository.UserRepository;
 import io.mixeway.domain.service.project.GetOrCreateProjectService;
 import io.mixeway.scanmanager.integrations.openvas.apiclient.OpenVasApiClient;
+import io.mixeway.scheduler.CodeScheduler;
+import io.mixeway.scheduler.GlobalScheduler;
+import io.mixeway.scheduler.NetworkScanScheduler;
+import io.mixeway.scheduler.WebAppScheduler;
 import io.mixeway.utils.Status;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.*;
@@ -35,6 +39,18 @@ class ApiAccessServiceTest {
 
     @Mock
     Principal principal;
+
+    @MockBean
+    GlobalScheduler globalScheduler;
+
+    @MockBean
+    NetworkScanScheduler networkScheduler;
+
+    @MockBean
+    CodeScheduler codeScheduler;
+
+    @MockBean
+    WebAppScheduler webAppScheduler;
 
     @BeforeAll
     private void prepareDB() {

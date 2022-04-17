@@ -9,6 +9,10 @@ import io.mixeway.db.repository.UserRepository;
 import io.mixeway.domain.service.project.GetOrCreateProjectService;
 import io.mixeway.domain.service.vulnmanager.CreateOrGetCisRequirementService;
 import io.mixeway.domain.service.vulnmanager.CreateOrGetVulnerabilityService;
+import io.mixeway.scheduler.CodeScheduler;
+import io.mixeway.scheduler.GlobalScheduler;
+import io.mixeway.scheduler.NetworkScanScheduler;
+import io.mixeway.scheduler.WebAppScheduler;
 import io.mixeway.utils.Status;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.BeforeAll;
@@ -18,6 +22,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -39,6 +44,17 @@ class VulnsServiceTest {
     private final CreateOrGetVulnerabilityService createOrGetVulnerabilityService;
     private final CreateOrGetCisRequirementService createOrGetCisRequirementService;
 
+    @MockBean
+    GlobalScheduler globalScheduler;
+
+    @MockBean
+    NetworkScanScheduler networkScheduler;
+
+    @MockBean
+    CodeScheduler codeScheduler;
+
+    @MockBean
+    WebAppScheduler webAppScheduler;
     @Mock
     Principal principal;
 

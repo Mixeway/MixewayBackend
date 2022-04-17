@@ -13,6 +13,10 @@ import io.mixeway.domain.service.vulnmanager.VulnTemplate;
 import io.mixeway.scanmanager.integrations.acunetix.apiclient.AcunetixApiClient;
 import io.mixeway.scanmanager.integrations.remotefirewall.apiclient.RfwApiClient;
 import io.mixeway.scanmanager.service.SecurityScanner;
+import io.mixeway.scheduler.CodeScheduler;
+import io.mixeway.scheduler.GlobalScheduler;
+import io.mixeway.scheduler.NetworkScanScheduler;
+import io.mixeway.scheduler.WebAppScheduler;
 import io.mixeway.utils.ScannerModel;
 import io.mixeway.utils.Status;
 import lombok.RequiredArgsConstructor;
@@ -54,6 +58,18 @@ class AdminScannerRestServiceTest {
     AcunetixApiClient acunetixApiClient;
     @MockBean
     RfwApiClient rfwApiClient;
+
+    @MockBean
+    GlobalScheduler globalScheduler;
+
+    @MockBean
+    NetworkScanScheduler networkScheduler;
+
+    @MockBean
+    CodeScheduler codeScheduler;
+
+    @MockBean
+    WebAppScheduler webAppScheduler;
 
     @BeforeAll
     private void prepareDB() {
