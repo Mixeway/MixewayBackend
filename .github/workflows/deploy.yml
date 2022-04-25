@@ -54,20 +54,21 @@ jobs:
 
   publishbrod:
     runs-on: ubuntu-latest
+    needs: integration-testing
     steps:
       - uses: actions/checkout@v1
       - name: Set Release version
         run: |
           echo "RELEASE_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
       - name: docker actions build & deploy latest
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v1
         with:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.DOCKER_TOKEN }}
           repository: mixeway/backend
           tags: latest
       - name: docker actions build & deploy version
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v1
         with:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.DOCKER_TOKEN }}
