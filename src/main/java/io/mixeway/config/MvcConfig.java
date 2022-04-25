@@ -32,4 +32,6 @@ public class MvcConfig implements WebMvcConfigurer  {
     {
         return new MappedInterceptor(null, new Interceptor());
     }
+
+
 }

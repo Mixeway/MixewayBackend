@@ -2,7 +2,7 @@ package io.mixeway.db.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import io.mixeway.rest.cioperations.model.InfoScanPerformed;
+import io.mixeway.api.protocol.cioperations.InfoScanPerformed;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
@@ -10,7 +10,6 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import javax.persistence.*;
-import java.rmi.ConnectIOException;
 import java.util.Date;
 @Entity
 @EntityScan
@@ -19,7 +18,6 @@ import java.util.Date;
 public class CiOperations {
     Long id;
     Project project;
-    CodeGroup codeGroup;
     CodeProject codeProject;
     Date inserted;
     Date ended;
@@ -41,8 +39,7 @@ public class CiOperations {
 
     public CiOperations(CodeProject codeProject, InfoScanPerformed infoScanPerformed) {
         this.codeProject = codeProject;
-        this.codeGroup = codeProject.getCodeGroup();
-        this.project = codeProject.getCodeGroup().getProject();
+        this.project = codeProject.getProject();
         this.commitId = infoScanPerformed.getCommitId();
         this.openSourceScan = true;
     }
@@ -181,16 +178,6 @@ public class CiOperations {
 
     public void setProject(Project project) {
         this.project = project;
-    }
-    @ManyToOne(fetch = FetchType.EAGER, optional = true)
-    @JoinColumn(name = "codegroup_id", nullable = true)
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    public CodeGroup getCodeGroup() {
-        return codeGroup;
-    }
-
-    public void setCodeGroup(CodeGroup codeGroup) {
-        this.codeGroup = codeGroup;
     }
 
     @ManyToOne(fetch = FetchType.EAGER, optional = true)

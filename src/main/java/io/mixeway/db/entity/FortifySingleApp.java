@@ -17,7 +17,6 @@ public class FortifySingleApp {
     private String requestId;
     private String jobToken;
     private CodeProject codeProject;
-    private CodeGroup codeGroup;
     private Boolean finished;
     private Boolean downloaded;
 
@@ -72,16 +71,5 @@ public class FortifySingleApp {
 
     public void setCodeProject(CodeProject codeProject) {
         this.codeProject = codeProject;
-    }
-    @ManyToOne(fetch = FetchType.EAGER, optional = false)
-    @JoinColumn(name = "codegroup_id", nullable = false)
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    @JsonIgnore
-    public CodeGroup getCodeGroup() {
-        return codeGroup;
-    }
-
-    public void setCodeGroup(CodeGroup codeGroup) {
-        this.codeGroup = codeGroup;
     }
 }

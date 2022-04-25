@@ -1162,3 +1162,24 @@ alter table projectvulnerability alter column ticketid type text;
 --changeset siewer:add_jira_option_to_code_project
 alter table codeproject add column enablejira boolean;
 update codeproject set enablejira=false;
+
+--changeset siewer:remove_code_group
+alter table codeproject add column versionidall int;
+alter table codeproject add column versionidsingle int;
+alter table codeproject add column jobid text;
+alter table codeproject add column scanid text;
+alter table codeproject add column scope text;
+alter table codeproject add column remoteid int;
+alter table codeproject add column appclient text;
+alter table codeproject add column auto boolean;
+alter table codeproject add column project_id int references project(id);
+
+update codeproject set project_id=cg.project_id,versionidall=cg.versionidall, versionidsingle=cg.versionidsingle, jobid=cg.jobid, scanid=cg.scanid, scope=cg.scope,remoteid=cg.remoteid,appclient=cg.appclient from codegroup cg where cg.id=codeproject.codegroup_id;
+
+alter table codeproject drop column codegroup_id;
+alter table codescan drop column codegroup_id;
+alter table codevuln drop column codegroup_id;
+alter table webapp drop column codegroup_id;
+alter table fortifysingleapp drop column codegroup_id;
+alter table cioperations drop column codegroup_id;
+drop table codegroup;

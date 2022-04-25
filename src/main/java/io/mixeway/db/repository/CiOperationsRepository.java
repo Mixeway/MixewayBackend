@@ -1,8 +1,8 @@
 package io.mixeway.db.repository;
 
+import io.mixeway.api.protocol.OverAllVulnTrendChartData;
 import io.mixeway.db.entity.CodeProject;
 import io.mixeway.db.entity.Project;
-import io.mixeway.rest.model.OverAllVulnTrendChartData;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import io.mixeway.db.entity.CiOperations;

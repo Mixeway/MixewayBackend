@@ -1,36 +1,48 @@
 package io.mixeway.domain.service.intf;
 
 
-import io.mixeway.db.entity.Asset;
-import io.mixeway.db.entity.Interface;
-import io.mixeway.db.entity.RoutingDomain;
+import io.mixeway.db.entity.*;
+import io.mixeway.db.repository.AssetRepository;
+import io.mixeway.db.repository.InfraScanRepository;
 import io.mixeway.db.repository.InterfaceRepository;
-import io.mixeway.rest.utils.IpAddressUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.mixeway.db.repository.ProjectRepository;
+import io.mixeway.domain.service.asset.GetOrCreateAssetService;
+import io.mixeway.utils.IpAddressUtils;
+import io.mixeway.utils.ProjectRiskAnalyzer;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 @Service
+@Log4j2
+@RequiredArgsConstructor
 public class InterfaceOperations {
-    private final static Logger log = LoggerFactory.getLogger(io.mixeway.rest.utils.InterfaceOperations.class);
     private final InterfaceRepository interfaceRepository;
+    private final InfraScanRepository infraScanRepository;
+    private final ProjectRiskAnalyzer projectRiskAnalyzer;
+    private final AssetRepository assetRepository;
+    private final GetOrCreateAssetService getOrCreateAssetService;
 
-    public InterfaceOperations(InterfaceRepository interfaceRepository){
-        this.interfaceRepository = interfaceRepository;
+    public Interface getOrCreateInterface(String ip, RoutingDomain routingDomain, Project project){
+        Asset asset = getOrCreateAssetService.getOrCreateAsset(ip, routingDomain,project);
+
+        return createAndReturnInterfaceForAsset(asset,ip);
     }
 
-    public void createInterfaceForAsset(Asset asset, String ip) {
+    public Interface createInterfaceForAsset(Asset asset, String ip) {
         if (canCreateInterfaceForAsset(asset, ip)) {
             Interface intf = new Interface();
             intf.setAsset(asset);
             intf.setActive(true);
             intf.setPrivateip(ip);
-            interfaceRepository.save(intf);
+            return interfaceRepository.save(intf);
         }
+        return null;
     }
     public Interface createAndReturnInterfaceForAsset(Asset a, String ip){
         if (canCreateInterfaceForAsset(a, ip)) {
@@ -82,7 +94,7 @@ public class InterfaceOperations {
             inf.setPrivateip(ip);
             inf.setAutoCreated(false);
             inf.setRoutingDomain(asset.getRoutingDomain());
-            interfaces.add(inf);
+            interfaces.add(interfaceRepository.saveAndFlush(inf));
         } else {
             interfaces.add(interfaceRepository.findByAssetInAndPrivateip(asset.getProject().getAssets(),ip).get());
         }
@@ -111,6 +123,33 @@ public class InterfaceOperations {
         } catch (NullPointerException e){
             log.warn("[Interface Operations] Nullpointer for got during checking if interface is already defined");
             return false;
+        }
+    }
+    /**
+     * Double check for already running scan on interface
+     *
+     * @param intfs
+     * @return
+     */
+    public Boolean verifyInterfacesBeforeScan(List<Interface> intfs) {
+        List<InfraScan> manualRunningScans = infraScanRepository.findByIsAutomaticAndRunning(false, true);
+        for (InfraScan ns : manualRunningScans) {
+            if (org.springframework.util.CollectionUtils.containsAny(intfs, ns.getInterfaces()))
+                return true;
+
+        }
+        return false;
+    }
+
+    public void storeInterfaces(List<Interface> interfaceList){
+        interfaceRepository.saveAll(interfaceList);
+    }
+
+    @Transactional
+    public void setRiskForInterfaces() {
+        for (Interface i : interfaceRepository.findByActive(true)){
+            int risk = projectRiskAnalyzer.getInterfaceRisk(i);
+            i.setRisk(Math.min(risk, 100));
         }
     }
 }

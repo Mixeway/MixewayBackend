@@ -3,10 +3,12 @@ on:
   push:
     branches:
       - '*'
+      - 'refactor/*'
       - '!master'
   pull_request:
     branches:
       - '*'
+      - 'refactor/*'
       - '!master'
 jobs:
   sonarbeta:
@@ -40,14 +42,34 @@ jobs:
         run: |
           docker run -e MODE=STANDALONE -e OSS_USERNAME=${{ secrets.oss_username }} -e OSS_KEY=${{ secrets.oss_key }} -e COMMIT_ID=${{ steps.vars.outputs.sha_short }} -e BRANCH=${{ steps.vars.outputs.branch }} -e MIXEWAY_PROJECT_NAME=${{ github.event.repository.name }} -e MIXEWAY_PROJECT_ID=${{ secrets.mixeway_project_id }} -e MIXEWAY_KEY=${{ secrets.mixeway_key }} -v $PWD:/opt/sources mixeway/scanner:latest
 
-  publishbeta:
+  integration-testing:
+    name: Integration test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin' # See 'Supported distributions' for available options
+          java-version: '8'
+      - name: Java version
+        run: |
+          java -version
+      - name: Run tests
+        run: |
+          mvn test
+
+  publishbeta:
+    runs-on: ubuntu-latest
+    needs: integration-testing
+    steps:
+      - uses: actions/checkout@v1
+      - name: Set Release version
+        run: |
+          echo "RELEASE_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
       - name: docker actions build & deploy
         uses: docker/build-push-action@v1
         with:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.DOCKER_TOKEN }}
           repository: mixeway/backend
-          tags: 1.5.0-beta
+          tags: ${{ env.RELEASE_VERSION }}-beta

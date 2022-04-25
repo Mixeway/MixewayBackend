@@ -1,11 +1,11 @@
 package io.mixeway.domain.service.project;
 
-import io.mixeway.pojo.PermissionFactory;
+import io.mixeway.db.entity.Project;
+import io.mixeway.db.repository.ProjectRepository;
+import io.mixeway.utils.PermissionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import io.mixeway.db.entity.Project;
-import io.mixeway.db.repository.ProjectRepository;
 
 import java.security.Principal;
 
@@ -22,14 +22,25 @@ public class CreateProjectService {
     }
 
     @Transactional
-    public Long createProject(String projectName, String ciid, Principal principal) {
+    public Project createProject(String projectName, String ciid, Principal principal) {
         Project project = new Project();
         project.setName(projectName);
         project.setCiid(ciid);
         project.setOwner(permissionFactory.getUserFromPrincipal(principal));
         project = projectRepository.save(project);
         permissionFactory.grantPermissionToProjectForUser(project,principal);
-        return project.getId();
+        return project;
+    }
+
+    @Transactional
+    public Project createAndReturnProject(String projectName, String ciid, Principal principal) {
+        Project project = new Project();
+        project.setName(projectName);
+        project.setCiid(ciid);
+        project.setOwner(permissionFactory.getUserFromPrincipal(principal));
+        project = projectRepository.saveAndFlush(project);
+        permissionFactory.grantPermissionToProjectForUser(project,principal);
+        return project;
     }
 
     @Transactional

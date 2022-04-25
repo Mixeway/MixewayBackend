@@ -1,15 +1,6 @@
 package io.mixeway.db.entity;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EntityListeners;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
@@ -50,7 +41,7 @@ public class WebAppHeader {
 	public void setHeaderValue(String headerValue) {
 		this.headerValue = headerValue;
 	}
-	@ManyToOne(fetch = FetchType.LAZY, optional = true)
+	@ManyToOne(fetch = FetchType.LAZY, optional = true )
     @JoinColumn(name = "webapp_id", nullable = true)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JsonIgnore
@@ -60,7 +51,5 @@ public class WebAppHeader {
 	public void setWebApp(WebApp webApp) {
 		this.webApp = webApp;
 	}
-	
-	
 
 }

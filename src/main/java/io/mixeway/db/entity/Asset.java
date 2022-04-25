@@ -7,7 +7,7 @@ import javax.persistence.*;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.NetworkInterface;
 import io.mixeway.config.Constants;
-import io.mixeway.pojo.VulnSource;
+import io.mixeway.utils.VulnSource;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
@@ -121,7 +121,7 @@ public class Asset implements VulnSource {
 	public void setOrigin(String origin) {
 		this.origin = origin;
 	}
-	@OneToMany(mappedBy = "asset", fetch=FetchType.EAGER, orphanRemoval = true, cascade = CascadeType.REMOVE)
+	@OneToMany(mappedBy = "asset", fetch=FetchType.EAGER, orphanRemoval = true, cascade = CascadeType.ALL)
 	public Set<Interface> getInterfaces() {
 		return interfaces;
 	}

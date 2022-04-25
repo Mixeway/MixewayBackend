@@ -1,18 +1,13 @@
 package io.mixeway.config;
 
-import io.mixeway.pojo.VaultHelper;
+import io.mixeway.utils.VaultHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
-import org.springframework.vault.core.VaultOperations;
-import org.springframework.vault.support.VaultHealth;
-import org.springframework.vault.support.VaultResponseSupport;
 import io.mixeway.db.entity.Settings;
 import io.mixeway.db.repository.SettingsRepository;
 
-import java.util.Map;
-import java.util.Objects;
 import java.util.Properties;
 
 @Configuration
