@@ -59,10 +59,17 @@ jobs:
       - name: Set Release version
         run: |
           echo "RELEASE_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
-      - name: docker actions build & deploy
+      - name: docker actions build & deploy latest
         uses: docker/build-push-action@v2
         with:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.DOCKER_TOKEN }}
           repository: mixeway/backend
-          tags: mixeway/backend:latest,mixeway/backend:${{ env.RELEASE_VERSION }}
+          tags: latest
+      - name: docker actions build & deploy version
+        uses: docker/build-push-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+          repository: mixeway/backend
+            tags: ${{ env.RELEASE_VERSION }}
