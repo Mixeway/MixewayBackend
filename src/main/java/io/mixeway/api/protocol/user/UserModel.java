@@ -1,9 +1,6 @@
 package io.mixeway.api.protocol.user;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.List;
 import java.util.Optional;
@@ -12,6 +9,7 @@ import java.util.Optional;
 @Setter
 @Builder
 @NoArgsConstructor
+@AllArgsConstructor
 public class UserModel {
     String userRole;
     String userCN;
