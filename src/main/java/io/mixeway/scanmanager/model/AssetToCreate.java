@@ -1,14 +1,12 @@
 package io.mixeway.scanmanager.model;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
+@AllArgsConstructor
 public class AssetToCreate {
 	private String hostname;
 	private String ip;
