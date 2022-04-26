@@ -5,6 +5,7 @@ import io.mixeway.config.Constants;
 import io.mixeway.db.entity.CodeProject;
 import io.mixeway.db.entity.Project;
 import io.mixeway.db.repository.CodeProjectRepository;
+import io.mixeway.domain.service.project.GetOrCreateProjectService;
 import io.mixeway.scanmanager.model.CodeScanRequestModel;
 import io.mixeway.utils.CodeGroupPutModel;
 import io.mixeway.utils.VaultHelper;
@@ -12,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.checkerframework.checker.nullness.Opt;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 
 import java.net.MalformedURLException;
@@ -31,6 +33,7 @@ import java.util.regex.Pattern;
 public class CreateOrGetCodeProjectService {
     private final CodeProjectRepository codeProjectRepository;
     private final VaultHelper vaultHelper;
+    private final GetOrCreateProjectService getOrCreateProjectService;
 
 
     public CodeProject getOrCreateCodeProject(Project project, String projectName, String codeDefaultBranch) {
@@ -67,6 +70,25 @@ public class CreateOrGetCodeProjectService {
         return codeProjectRepository.saveAndFlush(codeProject);
     }
 
+    public CodeProject createOrGetCodeProject(String repoUrl, String branch, Principal principal) throws MalformedURLException {
+        repoUrl = repoUrl.replaceAll("(https://)(.*:.*@)(.*)","$1$3").replace(".git","");
+        URL repo = new URL(repoUrl.split("\\.git")[0]);
+        String projectName, codeProjectName = null;
+        String[] repoUrlParts = repo.getPath().split("/");
+        String name = repoUrlParts[repoUrlParts.length-1];
+
+        Optional<CodeProject> codeProject = codeProjectRepository.findByRepoUrlOrRepoUrl(repoUrl, repoUrl+".git");
+
+        if (codeProject.isPresent()){
+            return codeProject.get();
+        } else {
+            Project project = getOrCreateProjectService.getProjectByName(name, principal);
+            CodeProject codeProject1 = createCodeProject(project, name, "master");
+            codeProject1.setBranch(branch);
+            codeProject1.setRepoUrl(repoUrl);
+            return codeProjectRepository.saveAndFlush(codeProject1);
+        }
+    }
     public CodeProject createOrGetCodeProject(String repoUrl, String branch, Principal principal, Project project) throws MalformedURLException {
         Optional<CodeProject> codeProject = codeProjectRepository.findByProjectAndRepoUrl(project, repoUrl);
         if (codeProject.isPresent()){

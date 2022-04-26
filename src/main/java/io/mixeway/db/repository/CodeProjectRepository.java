@@ -47,4 +47,6 @@ public interface CodeProjectRepository extends JpaRepository<CodeProject, Long> 
 	Long countByRunning(boolean b);
 
 	Optional<CodeProject> findByProjectAndRepoUrl(Project project, String repoUrl);
+
+    Optional<CodeProject> findByRepoUrlOrRepoUrl(String repoUrl, String s);
 }

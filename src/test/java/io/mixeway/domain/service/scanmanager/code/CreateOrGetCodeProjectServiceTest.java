@@ -64,6 +64,26 @@ class CreateOrGetCodeProjectServiceTest {
         assertEquals(codeProjectFromRepo.get().getId(), codeProject.getId());
     }
 
+    @Test
+    void createOrGetCodeProjectWithoutProject() throws MalformedURLException {
+        Mockito.when(principal.getName()).thenReturn("test_create_cp");
+        CodeProject codeProject1 = createOrGetCodeProjectService.createOrGetCodeProject("https://test/test_cp1","master",principal);
+        assertNotNull(codeProject1);
+        assertEquals("test_cp1", codeProject1.getProject().getName());
+        CodeProject codeProject2 = createOrGetCodeProjectService.createOrGetCodeProject("https://user:password@test/test_cp2","master",principal);
+        assertNotNull(codeProject2);
+        assertEquals("test_cp2", codeProject2.getProject().getName());
+        CodeProject codeProject3 = createOrGetCodeProjectService.createOrGetCodeProject("https://test/test_cp3.git","master",principal);
+        assertNotNull(codeProject3);
+        assertEquals("test_cp3", codeProject3.getProject().getName());
+        CodeProject codeProject4 = createOrGetCodeProjectService.createOrGetCodeProject("https://user:passwrd@test/test_cp4.git","master",principal);
+        assertNotNull(codeProject4);
+        assertEquals("test_cp4", codeProject4.getProject().getName());
+        codeProject4 = createOrGetCodeProjectService.createOrGetCodeProject("https://user:passwrd@test/test_cp4.git","master",principal);
+        assertNotNull(codeProject4);
+        assertEquals("test_cp4", codeProject4.getProject().getName());
+    }
+
 
 
     @Test

@@ -1,5 +1,7 @@
 package io.mixeway.domain.service.project;
 
+import io.mixeway.api.protocol.cioperations.GetInfoRequest;
+import io.mixeway.config.Constants;
 import io.mixeway.db.entity.Project;
 import io.mixeway.scanmanager.model.NetworkScanRequestModel;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,5 +33,13 @@ public class GetOrCreateProjectService {
     public Project getProject(NetworkScanRequestModel req, Principal principal) {
         Optional<Project> findProject = findProjectService.findProjectByCiid(req.getCiid());
         return findProject.orElseGet(() -> createProjectService.createAndReturnProject(req.getProjectName(), req.getCiid(), principal));
+    }
+    public Project getProject(GetInfoRequest req, Principal principal) {
+        return null;
+    }
+
+    public Project getProjectByName(String name, Principal principal) {
+        Optional<Project> findProject = findProjectService.findProjectByName(name);
+        return findProject.orElseGet(() -> createProjectService.createAndReturnProject(name, Constants.CIID_NONE,principal));
     }
 }
