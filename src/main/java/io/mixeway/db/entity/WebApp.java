@@ -36,7 +36,6 @@ public class WebApp implements VulnSource {
 	@JsonIgnore private Boolean inQueue;
 	private String lastscan;
 	@JsonIgnore private String inserted;
-	@JsonIgnore private CodeProject codeGroup;
 	@JsonIgnore private CodeProject codeProject;
 	@JsonIgnore private Boolean autoStart;
 	@JsonIgnore private String requestId;
@@ -125,15 +124,6 @@ public class WebApp implements VulnSource {
 		this.autoStart = autoStart;
 	}
 
-	@ManyToOne(fetch = FetchType.LAZY, optional = true)
-    @JoinColumn(name = "codegroup_id", nullable = true)
-    @OnDelete(action = OnDeleteAction.CASCADE)
-	public CodeProject getCodeGroup() {
-		return codeGroup;
-	}
-	public void setCodeGroup(CodeProject codeGroup) {
-		this.codeGroup = codeGroup;
-	}
 	@ManyToOne(fetch = FetchType.LAZY, optional = true)
     @JoinColumn(name = "codeproject_id", nullable = true)
     @OnDelete(action = OnDeleteAction.CASCADE)
