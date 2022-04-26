@@ -1,6 +1,7 @@
 package io.mixeway.utils;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -9,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 @Setter
 @Getter
+@NoArgsConstructor
 public class Status {
 	private final static Logger log = LoggerFactory.getLogger(Status.class);
 	private String status;

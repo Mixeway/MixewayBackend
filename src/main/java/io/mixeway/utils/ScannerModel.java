@@ -2,11 +2,13 @@ package io.mixeway.utils;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Builder
 @Setter
 @Getter
+@NoArgsConstructor
 public class ScannerModel {
     private String scannerType;
     private Long routingDomain;

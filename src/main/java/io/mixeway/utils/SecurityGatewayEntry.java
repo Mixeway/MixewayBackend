@@ -13,6 +13,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Builder
+@NoArgsConstructor
 public class SecurityGatewayEntry {
 
     private int sastCritical;
