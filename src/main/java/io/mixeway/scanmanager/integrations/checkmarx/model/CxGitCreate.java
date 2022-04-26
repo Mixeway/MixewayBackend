@@ -1,11 +1,14 @@
 package io.mixeway.scanmanager.integrations.checkmarx.model;
 
 import io.mixeway.db.entity.CodeProject;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
+@AllArgsConstructor
 public class CxGitCreate {
      private String url;
      private String branch;

@@ -3,11 +3,14 @@ package io.mixeway.scanmanager.integrations.checkmarx.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.mixeway.db.entity.CodeProject;
 import io.mixeway.db.entity.Scanner;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
+@AllArgsConstructor
 public class CxProjectCreate {
     private String owningTeam;
     private String name;

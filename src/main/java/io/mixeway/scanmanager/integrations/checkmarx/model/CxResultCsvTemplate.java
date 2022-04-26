@@ -7,11 +7,15 @@ package io.mixeway.scanmanager.integrations.checkmarx.model;
 
 import com.univocity.parsers.annotations.Parsed;
 import com.univocity.parsers.annotations.Trim;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Setter
 @Getter
+@NoArgsConstructor
+@AllArgsConstructor
 public class CxResultCsvTemplate {
     @Trim
     @Parsed(field = "Query")
