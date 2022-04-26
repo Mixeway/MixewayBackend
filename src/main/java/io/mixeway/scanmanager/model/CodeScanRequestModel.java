@@ -1,6 +1,7 @@
 package io.mixeway.scanmanager.model;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.validation.constraints.NotBlank;
@@ -9,6 +10,7 @@ import java.util.Optional;
 
 @Getter
 @Setter
+@NoArgsConstructor
 public class CodeScanRequestModel {
     @NotBlank @NotNull String projectName;
     String ciid;
