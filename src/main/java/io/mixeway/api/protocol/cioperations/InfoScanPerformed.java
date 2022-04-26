@@ -13,6 +13,7 @@ import lombok.Setter;
 @Builder
 @Getter
 @Setter
+@NoArgsConstructor
 public class InfoScanPerformed {
     private String scope;
     private Long codeProjectId;

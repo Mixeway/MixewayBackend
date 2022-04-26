@@ -7,6 +7,7 @@ package io.mixeway.api.protocol.cioperations;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.validation.constraints.NotNull;
@@ -14,6 +15,7 @@ import javax.validation.constraints.NotNull;
 @Builder
 @Getter
 @Setter
+@NoArgsConstructor
 public class GetInfoRequest {
     @NotNull private String repoUrl;
     @NotNull private String branch;

@@ -9,10 +9,12 @@ import io.mixeway.api.protocol.OpenSourceConfig;
 import io.mixeway.db.entity.CodeProject;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
+@NoArgsConstructor
 public class PrepareCIOperation {
     private Long projectId;
     private Long codeProjectId;

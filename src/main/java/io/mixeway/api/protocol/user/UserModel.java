@@ -11,6 +11,7 @@ import java.util.Optional;
 @Getter
 @Setter
 @Builder
+@NoArgsConstructor
 public class UserModel {
     String userRole;
     String userCN;
