@@ -39,6 +39,7 @@ public class PermissionFactory {
         }
         else if (user != null && (
                 user.getPermisions().equals(Constants.ROLE_ADMIN) ||
+                user.getPermisions().equals(Constants.ROLE_API) ||
                 user.getPermisions().equals(Constants.ROLE_AUDITOR))){
             return true;
         } else if ( user != null && (user.getPermisions().equals(Constants.ROLE_USER) || user.getPermisions().equals(Constants.ROLE_EDITOR_RUNNER))){
