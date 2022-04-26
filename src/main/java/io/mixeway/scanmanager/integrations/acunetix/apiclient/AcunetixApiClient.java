@@ -266,7 +266,7 @@ public class AcunetixApiClient implements WebAppScanClient, SecurityScanner {
 						ProjectVulnerability vuln = new ProjectVulnerability(webApp,null,vulnerability,null,
 								null, AcunetixSeverity.resolveSeverity(vulnFromAcu.getSeverity()),null,vulnFromAcu.getAffects_url(),
 								null,vulnTemplate.SOURCE_WEBAPP,null);
-						if (webApp.getCodeGroup() != null && webApp.getCodeProject() != null) {
+						if (webApp.getCodeProject() != null) {
 							vuln.setCodeProject(webApp.getCodeProject());
 						}
 						vuln = loadVulnDetails(vuln, scanner, vulnFromAcu.getVuln_id());
