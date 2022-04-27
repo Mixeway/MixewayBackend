@@ -205,7 +205,7 @@ public class CiOperationsService {
         try {
             switch (getInfoRequest.getScope()) {
                 case Constants.CI_SCOPE_OPENSOURCE:
-                    CodeProject codeProject = createOrGetCodeProjectService.createOrGetCodeProject(getInfoRequest.getRepoUrl(), getInfoRequest.getBranch(), principal);
+                    CodeProject codeProject = createOrGetCodeProjectService.createOrGetCodeProject(getInfoRequest.getRepoUrl(), getInfoRequest.getBranch(), getInfoRequest.getRepoName(), principal);
                     if (StringUtils.isBlank(codeProject.getdTrackUuid())) {
                         openSourceScanService.createProjectOnOpenSourceScanner(codeProject);
                     }

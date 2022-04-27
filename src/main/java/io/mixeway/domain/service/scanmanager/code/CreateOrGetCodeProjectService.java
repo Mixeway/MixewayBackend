@@ -70,14 +70,13 @@ public class CreateOrGetCodeProjectService {
         return codeProjectRepository.saveAndFlush(codeProject);
     }
 
-    public CodeProject createOrGetCodeProject(String repoUrl, String branch, Principal principal) throws MalformedURLException {
+    public CodeProject createOrGetCodeProject(String repoUrl, String branch, String codeProjectName, Principal principal) throws MalformedURLException {
         repoUrl = repoUrl.replaceAll("(https://)(.*:.*@)(.*)","$1$3").replace(".git","");
         URL repo = new URL(repoUrl.split("\\.git")[0]);
-        String projectName, codeProjectName = null;
         String[] repoUrlParts = repo.getPath().split("/");
         String name = repoUrlParts[repoUrlParts.length-1];
 
-        Optional<CodeProject> codeProject = codeProjectRepository.findByRepoUrlOrRepoUrl(repoUrl, repoUrl+".git");
+        Optional<CodeProject> codeProject = codeProjectRepository.findByRepoUrlOrRepoUrlAndName(repoUrl, repoUrl+".git", codeProjectName);
 
         if (codeProject.isPresent()){
             return codeProject.get();
