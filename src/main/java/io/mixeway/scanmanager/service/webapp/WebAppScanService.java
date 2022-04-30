@@ -185,6 +185,7 @@ public class WebAppScanService {
                 return new ResponseEntity<>(HttpStatus.CREATED);
             }
         } catch (Exception e){
+            e.printStackTrace();
             return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
         return new ResponseEntity<>(new Status("No Scanner for given resource"), HttpStatus.EXPECTATION_FAILED);

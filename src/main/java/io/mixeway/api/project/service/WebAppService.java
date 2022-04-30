@@ -72,6 +72,7 @@ public class WebAppService {
                         error = true;
                 }
             } catch (Exception e) {
+                e.printStackTrace();
                 return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
             }
             if (!error) {
