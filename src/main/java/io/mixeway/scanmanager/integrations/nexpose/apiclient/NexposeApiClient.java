@@ -280,7 +280,7 @@ public class NexposeApiClient implements NetworkScanClient, SecurityScanner {
     @Override
     public boolean canProcessRequest(RoutingDomain routingDomain) {
         List<Scanner> scanner = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_NEXPOSE));
-        return scanner.size() == 1 && scanner.get(0).getRoutingDomain().getId().equals(routingDomain.getId());
+        return scanner != null && !scanner.isEmpty() && scanner.get(0).getRoutingDomain().getId().equals(routingDomain.getId());
 
     }
 
