@@ -109,7 +109,7 @@ public class NetworkScanService {
         //CONFIGURE MANUAL SCAN
         List<InfraScan> ns;
         try {
-            ns = configureAndRunManualScanForScope(project, intfs);
+            ns = configureAndRunManualScanForScope(project, intfs, false, true);
         } catch (IndexOutOfBoundsException e){
             return new ResponseEntity<>(new Status("One or more hosts does not have Routing domain or no scanner available in given Routing Domain. Omitting.."),
                     HttpStatus.EXPECTATION_FAILED);
@@ -135,7 +135,7 @@ public class NetworkScanService {
      * @param intfs List of Interfaces to configure scan
      * @return NessusScan which is configured and running network scan
      */
-    public List<InfraScan> configureAndRunManualScanForScope(Project project, List<Interface> intfs) throws Exception {
+    public List<InfraScan> configureAndRunManualScanForScope(Project project, List<Interface> intfs, boolean running, boolean inqueue) throws Exception {
         log.info("Infra Scan - Preparing scan for {}", project.getName());
         List<InfraScan> infraScans = new ArrayList<>();
         intfs = intfs.stream().filter(i -> !i.isScanRunning()).collect(Collectors.toList());
@@ -156,7 +156,7 @@ public class NetworkScanService {
                 InfraScan scan = getOrCreateInfraScanService.create(keyValue,requestUIDD,project,false);
                 //keyValue.getKey().runScan(scan);
                 //putRulesOnRfw(scan);
-                updateInterfaceService.changeRunningState(scan, false, true);
+                updateInterfaceService.changeRunningState(scan, running, inqueue);
                 infraScans.add(scan);
             } catch (Exception e){
                 log.error("Problem with connection to scanner {}", keyValue.getKey().printInfo());
@@ -329,7 +329,7 @@ public class NetworkScanService {
         log.info("Starting Scheduled task for automatic test");
         List<Project> autoInfraProjectList = findProjectService.findProjectsWithAutoInfraScan();
         for (Project project : autoInfraProjectList) {
-            configureAndRunManualScanForScope(project, findInterfaceService.getInterfacesInProject(project) );
+            configureAndRunManualScanForScope(project, findInterfaceService.getInterfacesInProject(project),false, true);
         }
     }
 

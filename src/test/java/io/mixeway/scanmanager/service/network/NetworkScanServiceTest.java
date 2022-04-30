@@ -146,7 +146,7 @@ class NetworkScanServiceTest {
             interfaces.add(anInterface);
         }
         project = getOrCreateProjectService.getProjectId("network_scan_service7","network_scan_service7",principal);
-        List<InfraScan> infraScans = networkScanService.configureAndRunManualScanForScope(project,interfaces);
+        List<InfraScan> infraScans = networkScanService.configureAndRunManualScanForScope(project,interfaces,false, true);
         assertTrue(infraScans.size()>0);
         infraScans.stream().map(InfraScan::getInQueue).forEach(Assertions::assertTrue);
         List<Interface> interfacesToCheck = interfaceRepository.findByAssetIn(new ArrayList<>(project.getAssets()));

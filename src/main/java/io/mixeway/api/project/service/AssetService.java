@@ -110,7 +110,7 @@ public class AssetService {
         Optional<Project> project = findProjectService.findProjectById(id);
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             Set<Interface> intfs =  scanHelper.prepareInterfacesToScan(runScanForAssets, project.get());
-            List<InfraScan> scans = networkScanService.configureAndRunManualScanForScope(project.get(), new ArrayList(intfs));
+            List<InfraScan> scans = networkScanService.configureAndRunManualScanForScope(project.get(), new ArrayList(intfs), false, true);
             if (scans.stream().allMatch(InfraScan::getInQueue)) {
                 log.info("{} - Started scan for project {} - scope partial", principal.getName(), project.get().getName());
                 return new ResponseEntity<>(HttpStatus.CREATED);
@@ -125,7 +125,7 @@ public class AssetService {
         Optional<Project> project = findProjectService.findProjectById(id);
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             List<Interface> intfs =  findInterfaceService.findByAssetIn(new ArrayList<>(project.get().getAssets())).stream().filter(i -> !i.isScanRunning()).collect(Collectors.toList());
-            List<InfraScan> scans = networkScanService.configureAndRunManualScanForScope(project.get(), new ArrayList(intfs));
+            List<InfraScan> scans = networkScanService.configureAndRunManualScanForScope(project.get(), new ArrayList(intfs), false, true);
             if (scans.stream().allMatch(InfraScan::getInQueue)) {
                 log.info("{} - Started scan for project {} - scope full", principal.getName(), project.get().getName());
                 return new ResponseEntity<>(HttpStatus.CREATED);
@@ -141,7 +141,7 @@ public class AssetService {
         Optional<Interface> intf = findInterfaceService.findById(assetId);
         if (intf.isPresent() && permissionFactory.canUserAccessProject(principal, intf.get().getAsset().getProject())) {
             i.add(intf.get());
-            List<InfraScan> scans = networkScanService.configureAndRunManualScanForScope(intf.get().getAsset().getProject(), i);
+            List<InfraScan> scans = networkScanService.configureAndRunManualScanForScope(intf.get().getAsset().getProject(), i, false, true);
             if (scans.size() >0 && scans.stream().allMatch(InfraScan::getInQueue)) {
                 log.info("{} - Started scan for project {} - scope single", principal.getName(), intf.get().getAsset().getProject().getName());
                 return new ResponseEntity<>(HttpStatus.CREATED);
