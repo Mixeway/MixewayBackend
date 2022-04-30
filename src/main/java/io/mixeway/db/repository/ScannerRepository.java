@@ -27,6 +27,7 @@ public interface ScannerRepository extends JpaRepository<Scanner, Long> {
 	List<Scanner> findByScannerTypeAndRoutingDomain(ScannerType scannerType, RoutingDomain routingDomain);
     List<Scanner> findByScannerTypeInAndStatus(List<ScannerType> scannerTypes, Boolean status);
     Scanner findByScannerTypeInAndRoutingDomain(List<ScannerType> scannerTypes, RoutingDomain routingDomain);
+    Scanner findTopByScannerTypeInAndRoutingDomain(List<ScannerType> scannerTypes, RoutingDomain routingDomain);
     @Query("select distinct routingDomain from Scanner")
 	List<RoutingDomain> getDistinctByRoutingDomain();
 }
