@@ -43,4 +43,7 @@ public class FindWebAppService {
     public Optional<WebApp> findByProjectAndRul(Project project, String url) {
         return webAppRepository.findByProjectAndUrl(project,url);
     }
+    public List<WebApp> findByProject(Project project){
+        return webAppRepository.findByProject(project);
+    }
 }

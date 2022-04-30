@@ -7,12 +7,16 @@ import io.mixeway.db.entity.WebApp;
 import io.mixeway.db.repository.UserRepository;
 import io.mixeway.db.repository.WebAppRepository;
 import io.mixeway.domain.service.project.GetOrCreateProjectService;
+import io.mixeway.scheduler.CodeScheduler;
+import io.mixeway.scheduler.GlobalScheduler;
+import io.mixeway.scheduler.WebAppScheduler;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.*;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.security.Principal;
@@ -37,6 +41,12 @@ class FindWebAppServiceTest {
 
     @Mock
     Principal principal;
+    @MockBean
+    GlobalScheduler globalScheduler;
+    @MockBean
+    WebAppScheduler webAppScheduler;
+    @MockBean
+    CodeScheduler codeScheduler;
 
     @BeforeAll
     private void prepareDB() {
@@ -51,7 +61,7 @@ class FindWebAppServiceTest {
     void findRunningWebApps() {
         Mockito.when(principal.getName()).thenReturn("find_webapp");
         Project project = getOrCreateProjectService.getProjectId("find_webapp","find_webapp",principal);
-        assertEquals(0, findWebAppService.findRunningWebApps().size());
+        assertEquals(0, findWebAppService.findByProject(project).size());
         WebApp webApp = new WebApp();
         webApp.setProject(project);
         webApp.setRunning(true);
@@ -65,7 +75,7 @@ class FindWebAppServiceTest {
 
         Mockito.when(principal.getName()).thenReturn("find_webapp");
         Project project = getOrCreateProjectService.getProjectId("find_webapp2","find_webapp2",principal);
-        assertEquals(0, findWebAppService.findRunningWebApps().size());
+        assertEquals(0, findWebAppService.findByProject(project).size());
         WebApp webApp = new WebApp();
         webApp.setProject(project);
         webApp.setInQueue(true);
@@ -78,7 +88,7 @@ class FindWebAppServiceTest {
 
         Mockito.when(principal.getName()).thenReturn("find_webapp");
         Project project = getOrCreateProjectService.getProjectId("find_webapp3","find_webapp3",principal);
-        assertEquals(0, findWebAppService.findRunningWebApps().size());
+        assertEquals(0, findWebAppService.findByProject(project).size());
         WebApp webApp = new WebApp();
         webApp.setProject(project);
         webApp.setInQueue(true);
@@ -94,7 +104,7 @@ class FindWebAppServiceTest {
     void findByRequestId() {
         Mockito.when(principal.getName()).thenReturn("find_webapp");
         Project project = getOrCreateProjectService.getProjectId("find_webapp4","find_webapp4",principal);
-        assertEquals(0, findWebAppService.findRunningWebApps().size());
+        assertEquals(0, findWebAppService.findByProject(project).size());
         WebApp webApp = new WebApp();
         webApp.setProject(project);
         webApp.setInQueue(true);
