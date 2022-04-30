@@ -33,6 +33,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.annotation.DirtiesContext;
 
 import java.security.Principal;
 import java.util.ArrayList;
@@ -90,6 +91,7 @@ class ScanManagerServiceTest {
     }
 
     @Test
+    @Order(6)
     void createScanManageRequestWebApp() throws Exception {
         Mockito.when(principal.getName()).thenReturn("scan_manage_service");
         List<WebAppScanModel> webAppScanModels = new ArrayList<>();
@@ -114,6 +116,7 @@ class ScanManagerServiceTest {
         project.get().getWebapps().stream().map(WebApp::getInQueue).forEach(Assertions::assertTrue);
     }
     @Test
+    @Order(7)
     void createScanManageRequestCode() throws Exception {
         Mockito.when(principal.getName()).thenReturn("scan_manage_service");
         CodeScanRequestModel codeScanRequestModel = new CodeScanRequestModel();

@@ -110,7 +110,8 @@ public class NetworkScanService {
         List<InfraScan> ns;
         try {
             ns = configureAndRunManualScanForScope(project, intfs, false, true);
-        } catch (IndexOutOfBoundsException e){
+        } catch (IndexOutOfBoundsException | NullPointerException e){
+            e.printStackTrace();
             return new ResponseEntity<>(new Status("One or more hosts does not have Routing domain or no scanner available in given Routing Domain. Omitting.."),
                     HttpStatus.EXPECTATION_FAILED);
         }
