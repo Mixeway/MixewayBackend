@@ -8,9 +8,7 @@ import io.mixeway.db.repository.UserRepository;
 import io.mixeway.db.repository.WebAppRepository;
 import io.mixeway.domain.service.project.GetOrCreateProjectService;
 import lombok.RequiredArgsConstructor;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class FindWebAppServiceTest {
     private final FindWebAppService findWebAppService;
     private final UserRepository userRepository;
@@ -79,7 +77,7 @@ class FindWebAppServiceTest {
     void findById() {
 
         Mockito.when(principal.getName()).thenReturn("find_webapp");
-        Project project = getOrCreateProjectService.getProjectId("find_webapp2","find_webapp2",principal);
+        Project project = getOrCreateProjectService.getProjectId("find_webapp3","find_webapp3",principal);
         assertEquals(0, findWebAppService.findRunningWebApps().size());
         WebApp webApp = new WebApp();
         webApp.setProject(project);
@@ -95,7 +93,7 @@ class FindWebAppServiceTest {
     @Test
     void findByRequestId() {
         Mockito.when(principal.getName()).thenReturn("find_webapp");
-        Project project = getOrCreateProjectService.getProjectId("find_webapp2","find_webapp2",principal);
+        Project project = getOrCreateProjectService.getProjectId("find_webapp4","find_webapp4",principal);
         assertEquals(0, findWebAppService.findRunningWebApps().size());
         WebApp webApp = new WebApp();
         webApp.setProject(project);
