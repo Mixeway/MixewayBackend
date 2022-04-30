@@ -29,9 +29,9 @@ public class UpdateInterfaceService {
     private final InfraScanRepository infraScanRepository;
 
     @Transactional
-    public void changeRunningState(InfraScan scan) {
-        scan.setRunning(false);
-        scan.setInQueue(true);
+    public void changeRunningState(InfraScan scan, boolean running, boolean inqueue) {
+        scan.setRunning(running);
+        scan.setInQueue(inqueue);
         infraScanRepository.save(scan);
         for (Interface i : scan.getInterfaces()) {
             i.setScanRunning(true);

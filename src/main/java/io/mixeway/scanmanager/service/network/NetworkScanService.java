@@ -156,7 +156,7 @@ public class NetworkScanService {
                 InfraScan scan = getOrCreateInfraScanService.create(keyValue,requestUIDD,project,false);
                 //keyValue.getKey().runScan(scan);
                 //putRulesOnRfw(scan);
-                updateInterfaceService.changeRunningState(scan);
+                updateInterfaceService.changeRunningState(scan, false, true);
                 infraScans.add(scan);
             } catch (Exception e){
                 log.error("Problem with connection to scanner {}", keyValue.getKey().printInfo());
@@ -306,6 +306,7 @@ public class NetworkScanService {
                         if (networkScanClient.canProcessRequest(ns) && networkScanClient.isScanDone(ns)) {
                             networkScanClient.loadVulnerabilities(ns);
                             deleteRulsFromRfw(ns);
+                            updateInterfaceService.changeRunningState(ns, false, false);
                             updateInterfaceService.updateRiskForInterfaces(ns);
                         }
                     }

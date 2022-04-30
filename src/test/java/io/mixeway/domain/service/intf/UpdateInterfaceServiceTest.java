@@ -72,7 +72,7 @@ class UpdateInterfaceServiceTest {
         infraScan.setRequestId("test");
         infraScan.setInterfaces(new HashSet<>(interfaceList));
         infraScan = infraScanRepository.save(infraScan);
-        updateInterfaceService.changeRunningState(infraScan);
+        updateInterfaceService.changeRunningState(infraScan, true,true);
         infraScan = infraScanRepository.findById(infraScan.getId()).get();
         assertFalse(infraScan.getRunning());
         infraScan.getInterfaces().stream().map(Interface::isScanRunning).forEach(Assertions::assertTrue);
