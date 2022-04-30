@@ -48,4 +48,6 @@ public class FindInfraScanService {
     public List<InfraScan> findByInQueue(boolean b) {
         return infraScanRepository.findByInQueue(b);
     }
+
+    public List<InfraScan> findByProject(Project project) { return infraScanRepository.findByProject(project);}
 }

@@ -165,7 +165,7 @@ class ScanManagerServiceTest {
         assertTrue(project.isPresent());
         List<Interface>  interfaces = findInterfaceService.findByAssetIn(new ArrayList<>(project.get().getAssets()));
         assertTrue(interfaces.size() > 0);
-        List<InfraScan> infraScan = findInfraScanService.findByProjectAndIsAutomatic(project.get());
+        List<InfraScan> infraScan = findInfraScanService.findByProject(project.get());
         assertTrue(infraScan.size()>0);
     }
 
@@ -174,7 +174,7 @@ class ScanManagerServiceTest {
     void checkStatusOfRequestedScan() {
         Optional<Project> project = findProjectService.findProjectByName("network_scan_request");
         assertTrue(project.isPresent());
-        List<InfraScan> infraScan = findInfraScanService.findByProjectAndIsAutomatic(project.get());
+        List<InfraScan> infraScan = findInfraScanService.findByProject(project.get());
         InfraScan scan = infraScan.get(0);
         scan.setRequestId("scan_requestid");
         infraScanRepository.save(scan);
@@ -216,6 +216,11 @@ class ScanManagerServiceTest {
     @Test
     @Order(4)
     void getRunningSecurityScans() {
+        Optional<Project> project = findProjectService.findProjectByName("network_scan_request");
+        List<InfraScan> infraScan = findInfraScanService.findByProject(project.get());
+        InfraScan scan = infraScan.get(0);
+        scan.setRunning(true);
+        infraScanRepository.save(scan);
 
         ResponseEntity<List<SecurityScans>> listResponseEntity = scanManagerService.getRunningSecurityScans();
         assertEquals(HttpStatus.OK, listResponseEntity.getStatusCode());
