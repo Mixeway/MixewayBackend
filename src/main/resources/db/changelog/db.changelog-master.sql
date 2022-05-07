@@ -1183,3 +1183,7 @@ alter table webapp drop column codegroup_id;
 alter table fortifysingleapp drop column codegroup_id;
 alter table cioperations drop column codegroup_id;
 drop table codegroup;
+
+--changeset siewer:fix_code_project_status
+update codeproject set running=false where running is null;
+update codeproject set inqueue=false where inqueue is null;
