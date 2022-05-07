@@ -60,9 +60,11 @@ public class UpdateCodeProjectService {
      * Putting Code Project to scan queue
      */
     public CodeProject putCodeProjectToQueue(CodeProject codeProject) {
-        codeProject.setInQueue(true);
-        codeProject.setRequestId(UUID.randomUUID().toString());
-        codeProject = codeProjectRepository.save(codeProject);
+        if (!codeProject.getInQueue() && !codeProject.getRunning()) {
+            codeProject.setInQueue(true);
+            codeProject.setRequestId(UUID.randomUUID().toString());
+            codeProject = codeProjectRepository.save(codeProject);
+        }
         return codeProject;
     }
 
@@ -91,5 +93,11 @@ public class UpdateCodeProjectService {
     public void startScan(CodeProject codeProject) {
         codeProject.setRunning(true);
         codeProjectRepository.save(codeProject);
+    }
+
+    public CodeProject removeFromQueueAndStart(CodeProject codeProject) {
+        codeProject.setInQueue(false);
+        codeProject.setRunning(true);
+        return codeProjectRepository.saveAndFlush(codeProject);
     }
 }

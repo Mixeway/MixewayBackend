@@ -346,8 +346,8 @@ public class GetVulnerabilitiesService {
             List<VulnManageResponse> vmr = createVulnManageResponseForCodeProject(cp.get());
             ciVulnManageResponse.setVulnManageResponseList(vmr);
             ciVulnManageResponse.setResult(calculateResultForCI(securityGateway, vmr));
-            ciVulnManageResponse.setInQueue(cp.get().getInQueue() != null ? cp.get().getInQueue() : false);
-            ciVulnManageResponse.setRunning(cp.get().getRunning() != null ? cp.get().getRunning() : false);
+            ciVulnManageResponse.setInQueue(cp.get().getInQueue());
+            ciVulnManageResponse.setRunning(cp.get().getRunning());
             ciVulnManageResponse.setCommitId(cp.get().getCommitid());
             prepareOperationForRequest(ciVulnManageResponse, cp.get());
             return new ResponseEntity<>(ciVulnManageResponse,HttpStatus.OK);

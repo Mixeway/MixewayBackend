@@ -32,7 +32,7 @@ public class CodeProject implements VulnSource {
 	@JsonIgnore private String technique;
 	@JsonIgnore private Boolean skipAllScan;
 	@JsonIgnore private String additionalPath;
-	@JsonIgnore private Boolean inQueue;
+	@JsonIgnore private boolean inQueue;
 	@JsonIgnore private Set<SoftwarePacket> softwarePackets;
 	private String branch;
 	@JsonIgnore
@@ -191,7 +191,7 @@ public class CodeProject implements VulnSource {
 		this.softwarePackets = softwarePackets;
 	}
 
-	private Boolean running;
+	private boolean running;
 
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	@JoinColumn(name = "project_id", nullable = false)
@@ -200,20 +200,20 @@ public class CodeProject implements VulnSource {
 		return project;
 	}
 
-	public Boolean getRunning() {
+	public boolean getRunning() {
 		return running;
 	}
 
-	public void setRunning(Boolean running) {
+	public void setRunning(boolean running) {
 		this.running = running;
 	}
 
 	@Column(name = "inqueue")
-	public Boolean getInQueue() {
+	public boolean getInQueue() {
 		return inQueue;
 	}
 
-	public void setInQueue(Boolean inQueue) {
+	public void setInQueue(boolean inQueue) {
 		this.inQueue = inQueue;
 	}
 
@@ -299,16 +299,8 @@ public class CodeProject implements VulnSource {
 		this.vulns = vulns;
 	}
 
-
-	@PreUpdate
-	void preUpdate(){
-		if (running == null)
-			running = false;
-	}
 	@PrePersist
 	void prePersist(){
-		if (running == null)
-			running = false;
 		if (enableJira==null)
 			enableJira=false;
 	}

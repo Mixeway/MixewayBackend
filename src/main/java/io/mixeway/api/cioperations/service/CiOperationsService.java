@@ -133,8 +133,8 @@ public class CiOperationsService {
                 } else {
                     ciVulnManageResponse.setResult("Ok");
                 }
-                ciVulnManageResponse.setInQueue(codeProjectToVerify.getInQueue() != null ? codeProjectToVerify.getInQueue() : false);
-                ciVulnManageResponse.setRunning(codeProjectToVerify.getRunning() != null ? codeProjectToVerify.getRunning() : false);
+                ciVulnManageResponse.setInQueue( codeProjectToVerify.getInQueue());
+                ciVulnManageResponse.setRunning(codeProjectToVerify.getRunning());
                 ciVulnManageResponse.setCommitId(codeProjectToVerify.getCommitid());
                 updateCiOperation(ciVulnManageResponse, codeProjectToVerify);
                 return new ResponseEntity<>(ciVulnManageResponse,HttpStatus.OK);
@@ -351,8 +351,7 @@ public class CiOperationsService {
     public ResponseEntity<Status> performSastScanForCodeProject(Long codeProjectId, Principal principal) {
         Optional<CodeProject> codeProject = codeProjectRepository.findById(codeProjectId);
         if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getProject())) {
-            codeProject.get().setInQueue(true);
-            codeProjectRepository.save(codeProject.get());
+            codeScanService.putCodeProjectToQueue(codeProjectId,principal);
             log.info("{} put SAST Project in queue - {}", principal.getName(), codeProject.get().getName());
             return new ResponseEntity<>(HttpStatus.OK);
         } else {

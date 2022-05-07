@@ -1,3 +1,10 @@
+## 1.6.1 (2022-05-07)
+
+#### Bug Fixes
+* Fixed bug that allow to perform multiple sast scans of same project. Fixed status management, now when specific codeproject has inqueue or running state equal to true, it cannot be put on queue
+
+
+
 <a name="1.3.0"></a>
 ## 1.3.0 (2020-05-31)
 

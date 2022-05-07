@@ -226,8 +226,8 @@ public class CodeScanService {
                     if (operateOnCodeProject.canScanCodeProject(cp)) {
                         for (CodeScanClient codeScanClient : codeScanClients) {
                             if (codeScanClient.canProcessRequest(cp)) {
-                                log.info("Ready to scan [scope {}] {}, taking it from the queue", cp.getName(), cp.getName());
-                                cp = updateCodeProjectService.removeFromQueue(cp);
+                                log.info("[CodeScan] Starting scan form queue [scope {}] {}", cp.getName(), cp.getName());
+                                cp = updateCodeProjectService.removeFromQueueAndStart(cp);
                                 codeScanClient.runScan( cp);
                             }
                         }
