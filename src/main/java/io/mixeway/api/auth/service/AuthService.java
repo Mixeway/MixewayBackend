@@ -185,7 +185,16 @@ public class AuthService {
 
     public ResponseEntity<StatusEntity> getStatus() {
         Settings settings = getSettingsService.getSettings();
-        return new ResponseEntity<>(new StatusEntity(settings.getInitialized(), settings.getCertificateAuth(),settings.getPasswordAuth(), isFacebookEnabled, isGitHubEnabled, isKeycloakEnabled), HttpStatus.OK);
+        return new ResponseEntity<>(
+                StatusEntity.builder()
+                        .facebook(isFacebookEnabled)
+                        .gitHub(isGitHubEnabled)
+                        .keycloak(isKeycloakEnabled)
+                        .initialized(settings.getInitialized())
+                        .password(settings.getPasswordAuth())
+                        .cert(settings.getCertificateAuth())
+                        .build()
+                , HttpStatus.OK);
 
     }
 
