@@ -6,6 +6,7 @@
 package io.mixeway.scanmanager.integrations.openscap.model;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.simpleframework.xml.Element;
 import org.simpleframework.xml.ElementList;
@@ -15,6 +16,7 @@ import java.util.List;
 
 @Getter
 @Setter
+@NoArgsConstructor
 @Root(strict = false, name = "Benchmark")
 public class Benchmark {
     @Element

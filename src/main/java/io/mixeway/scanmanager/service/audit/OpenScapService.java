@@ -42,8 +42,8 @@ public class OpenScapService {
     public void loadOpenScapReport(Interface anInterface, MultipartFile file) throws Exception {
         Serializer serializer = new Persister();
         Benchmark benchmark = serializer.read(Benchmark.class, file.getInputStream());
-        log.info("[Openscap] Loading report for {} scope: {}", anInterface.getPrivateip(), benchmark.getTitle());
         HashMap<Rule, CisRequirement> benchmarkRules = loadBechmarkRules(benchmark);
+        log.info("[Openscap] Loading report for {} scope: {}, benchmark rules: {}", anInterface.getPrivateip(), benchmark.getTitle(), benchmarkRules.size());
         List<ProjectVulnerability> projectVulnerabilities = processVulnerabilitiesFromBenchmark(benchmark, benchmarkRules, anInterface);
 
     }
