@@ -142,7 +142,7 @@ public class NetworkScanService {
         intfs = intfs.stream().filter(i -> !i.isScanRunning()).collect(Collectors.toList());
 
         // Partitioning scans for smaller parts
-        int partitionSize = 15;
+        int partitionSize = 4;
         List<List<Interface>> sublists = StreamEx.ofSubLists(intfs, partitionSize).toList();
 
         String requestUIDD = UUID.randomUUID().toString();
