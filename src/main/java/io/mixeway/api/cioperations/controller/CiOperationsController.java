@@ -151,7 +151,7 @@ public class CiOperationsController {
     @PreAuthorize("hasAuthority('ROLE_API')")
     @PostMapping(value="/loadvulns/{codeProjectId}")
     public ResponseEntity<Status> loadVulns (@RequestBody LoadVulnModel loadVulnModel,
-                                                                          @PathVariable(value = "codeProjectid") Long id,
+                                                                          @PathVariable(value = "codeProjectId") Long id,
                                                                           Principal principal) throws Exception {
         return ciOperationsService.loadVulnerabilitiesFromCICDToProject(loadVulnModel.getVulns(),
                 id,
