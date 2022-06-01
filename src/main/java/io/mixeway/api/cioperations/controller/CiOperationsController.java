@@ -2,6 +2,7 @@ package io.mixeway.api.cioperations.controller;
 
 import io.mixeway.api.cioperations.model.CIVulnManageResponse;
 import io.mixeway.api.cioperations.model.CiResultModel;
+import io.mixeway.api.cioperations.model.LoadVulnModel;
 import io.mixeway.api.cioperations.service.CiOperationsService;
 import io.mixeway.api.protocol.OverAllVulnTrendChartData;
 import io.mixeway.api.protocol.cioperations.GetInfoRequest;
@@ -132,6 +133,7 @@ public class CiOperationsController {
         return ciOperationsService.performSastScanForCodeProject(codeProjectId, principal);
     }
     @PreAuthorize("hasAuthority('ROLE_API')")
+    @Deprecated
     @PostMapping(value = "/loadvulnerabilities/{codeProjectName}/{branch}/{commitId}",produces = "application/json")
     public ResponseEntity<Status> loadVulnerabilitiesFromCICD(@RequestBody List<VulnerabilityModel> vulns,
                                                                        @PathVariable(value = "codeProjectName") String codeProjectName,
@@ -145,6 +147,18 @@ public class CiOperationsController {
                                                                           @PathVariable(value = "codeProjectName") String codeProjectName,
                                                                           Principal principal) {
         return ciOperationsService.loadVulnerabilitiesForAnonymousProject(vulns, codeProjectName,principal);
+    }
+    @PreAuthorize("hasAuthority('ROLE_API')")
+    @PostMapping(value="/loadvulns/{codeProjectId}")
+    public ResponseEntity<Status> loadVulns (@RequestBody LoadVulnModel loadVulnModel,
+                                                                          @PathVariable(value = "codeProjectid") Long id,
+                                                                          Principal principal) {
+        return ciOperationsService.loadVulnerabilitiesFromCICDToProject(loadVulnModel.getVulns(),
+                null,
+                loadVulnModel.getProjectName(),
+                loadVulnModel.getBranch(),
+                loadVulnModel.getCommitId(),
+                principal);
     }
 
 }

@@ -2,6 +2,7 @@ package io.mixeway.api.cioperations.service;
 
 import io.mixeway.api.cioperations.model.CIVulnManageResponse;
 import io.mixeway.api.cioperations.model.CiResultModel;
+import io.mixeway.api.cioperations.model.LoadVulnModel;
 import io.mixeway.api.cioperations.model.VulnManageResponse;
 import io.mixeway.api.protocol.OpenSourceConfig;
 import io.mixeway.api.protocol.OverAllVulnTrendChartData;
