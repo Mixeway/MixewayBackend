@@ -152,9 +152,9 @@ public class CiOperationsController {
     @PostMapping(value="/loadvulns/{codeProjectId}")
     public ResponseEntity<Status> loadVulns (@RequestBody LoadVulnModel loadVulnModel,
                                                                           @PathVariable(value = "codeProjectid") Long id,
-                                                                          Principal principal) {
+                                                                          Principal principal) throws Exception {
         return ciOperationsService.loadVulnerabilitiesFromCICDToProject(loadVulnModel.getVulns(),
-                null,
+                id,
                 loadVulnModel.getProjectName(),
                 loadVulnModel.getBranch(),
                 loadVulnModel.getCommitId(),
