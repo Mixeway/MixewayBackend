@@ -32,7 +32,9 @@ public class UpdateInterfaceService {
     public void changeRunningState(InfraScan scan, boolean running, boolean inqueue) {
         for (Interface i : scan.getInterfaces()) {
             i.setScanRunning(true);
-            i.getAsset().setRequestId(scan.getRequestId());
+            Asset a = i.getAsset();
+            a.setRequestId(scan.getRequestId());
+            assetRepository.save(a);
         }
         interfaceRepository.saveAll(scan.getInterfaces());
         scan.setRunning(running);
