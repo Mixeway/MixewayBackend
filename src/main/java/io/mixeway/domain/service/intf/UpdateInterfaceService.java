@@ -36,7 +36,7 @@ public class UpdateInterfaceService {
         for (Interface i : scan.getInterfaces()) {
             i.setScanRunning(true);
             interfaceRepository.save(i);
-            Asset a = i.getAsset();
+            Asset a = assetRepository.getOne(i.getAsset().getId());
             a.setRequestId(scan.getRequestId());
             assetRepository.save(a);
         }

@@ -23,7 +23,6 @@ import io.mixeway.scheduler.NetworkScanScheduler;
 import io.mixeway.scheduler.WebAppScheduler;
 import io.mixeway.utils.ScannerType;
 import io.mixeway.utils.Status;
-import jdk.nashorn.internal.objects.Global;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.*;
 import org.mockito.Mock;
@@ -33,7 +32,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.annotation.DirtiesContext;
 
 import java.security.Principal;
 import java.util.ArrayList;
