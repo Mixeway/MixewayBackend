@@ -30,20 +30,21 @@ public class UpdateInterfaceService {
 
     @Transactional
     public void changeRunningState(InfraScan scan, boolean running, boolean inqueue) {
-        for (Interface i : scan.getInterfaces()) {
-            i.setScanRunning(true);
-//            Asset a = i.getAsset();
-//            a.setRequestId(scan.getRequestId());
-//            assetRepository.save(a);
-        }
-//        interfaceRepository.saveAll(scan.getInterfaces());
+//        for (Interface i : scan.getInterfaces()) {
+//            i.setScanRunning(true);
+////            Asset a = i.getAsset();
+////            a.setRequestId(scan.getRequestId());
+////            assetRepository.save(a);
+//        }
+////        interfaceRepository.saveAll(scan.getInterfaces());
+        scan.getInterfaces().forEach(i -> i.setScanRunning(true));
         scan.setRunning(running);
         scan.setInQueue(inqueue);
-        infraScanRepository.save(scan);
+        scan = infraScanRepository.saveAndFlush(scan);
         for (Interface i : scan.getInterfaces()){
             Asset a = i.getAsset();
             a.setRequestId(scan.getRequestId());
-            assetRepository.save(i.getAsset());
+            assetRepository.save(a);
         }
     }
     /**
