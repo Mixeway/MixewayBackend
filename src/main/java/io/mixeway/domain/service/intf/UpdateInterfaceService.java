@@ -33,7 +33,8 @@ public class UpdateInterfaceService {
         scan.setRunning(running);
         scan.setInQueue(inqueue);
         infraScanRepository.save(scan);
-        for (Interface i : scan.getInterfaces()) {
+        for (Iterator<Interface> iterator = scan.getInterfaces().iterator(); iterator.hasNext();) {
+            Interface i = iterator.next();
             i.setScanRunning(true);
             interfaceRepository.save(i);
             Optional<Asset> a = assetRepository.findById(i.getAsset().getId());
