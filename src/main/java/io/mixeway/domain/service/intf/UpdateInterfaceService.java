@@ -30,7 +30,8 @@ public class UpdateInterfaceService {
 
     @Transactional
     public void changeRunningState(InfraScan scan, boolean running, boolean inqueue) {
-        for (Interface i : scan.getInterfaces()) {
+        Set<Interface> interfacesList = scan.getInterfaces();
+        for (Interface i : interfacesList) {
             i.setScanRunning(true);
             interfaceRepository.save(i);
             Asset a = assetRepository.getOne(i.getAsset().getId());
