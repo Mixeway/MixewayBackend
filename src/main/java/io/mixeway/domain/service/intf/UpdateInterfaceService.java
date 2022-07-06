@@ -30,9 +30,6 @@ public class UpdateInterfaceService {
 
     @Transactional
     public void changeRunningState(InfraScan scan, boolean running, boolean inqueue) {
-        scan.setRunning(running);
-        scan.setInQueue(inqueue);
-        infraScanRepository.save(scan);
         for (Interface i : scan.getInterfaces()) {
             i.setScanRunning(true);
             interfaceRepository.save(i);
@@ -40,6 +37,9 @@ public class UpdateInterfaceService {
             a.setRequestId(scan.getRequestId());
             assetRepository.save(a);
         }
+        scan.setRunning(running);
+        scan.setInQueue(inqueue);
+        infraScanRepository.save(scan);
     }
     /**
      * Method set state of runnig=true for give Intercace list. Also update Asset with proper requestId.
