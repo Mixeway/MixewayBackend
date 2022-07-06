@@ -7,6 +7,7 @@ import io.mixeway.db.entity.Project;
 import io.mixeway.db.repository.AssetRepository;
 import io.mixeway.db.repository.InfraScanRepository;
 import io.mixeway.db.repository.InterfaceRepository;
+import io.mixeway.domain.service.asset.UpdateAssetService;
 import io.mixeway.utils.ProjectRiskAnalyzer;
 import io.mixeway.utils.ScanHelper;
 import lombok.RequiredArgsConstructor;
@@ -27,25 +28,15 @@ public class UpdateInterfaceService {
     private final ProjectRiskAnalyzer projectRiskAnalyzer;
     private final ScanHelper scanHelper;
     private final InfraScanRepository infraScanRepository;
+    private final UpdateAssetService updateAssetService;
 
     @Transactional
     public void changeRunningState(InfraScan scan, boolean running, boolean inqueue) {
-//        for (Interface i : scan.getInterfaces()) {
-//            i.setScanRunning(true);
-////            Asset a = i.getAsset();
-////            a.setRequestId(scan.getRequestId());
-////            assetRepository.save(a);
-//        }
-////        interfaceRepository.saveAll(scan.getInterfaces());
         scan.getInterfaces().forEach(i -> i.setScanRunning(true));
         scan.setRunning(running);
         scan.setInQueue(inqueue);
         scan = infraScanRepository.saveAndFlush(scan);
-        for (Interface i : scan.getInterfaces()){
-            Asset a = i.getAsset();
-            a.setRequestId(scan.getRequestId());
-            assetRepository.save(a);
-        }
+        updateAssetService.setRequestId(scan);
     }
     /**
      * Method set state of runnig=true for give Intercace list. Also update Asset with proper requestId.
