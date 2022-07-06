@@ -33,15 +33,12 @@ public class UpdateInterfaceService {
         scan.setRunning(running);
         scan.setInQueue(inqueue);
         infraScanRepository.save(scan);
-        for (Iterator<Interface> iterator = scan.getInterfaces().iterator(); iterator.hasNext();) {
-            Interface i = iterator.next();
+        for (Interface i : scan.getInterfaces()) {
             i.setScanRunning(true);
             interfaceRepository.save(i);
-            Optional<Asset> a = assetRepository.findById(i.getAsset().getId());
-            if (a.isPresent()) {
-                a.get().setRequestId(scan.getRequestId());
-                assetRepository.save(a.get());
-            }
+            Asset a = i.getAsset();
+            a.setRequestId(scan.getRequestId());
+            assetRepository.save(a);
         }
     }
     /**
