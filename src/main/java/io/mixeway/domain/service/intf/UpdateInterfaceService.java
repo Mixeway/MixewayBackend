@@ -32,14 +32,19 @@ public class UpdateInterfaceService {
     public void changeRunningState(InfraScan scan, boolean running, boolean inqueue) {
         for (Interface i : scan.getInterfaces()) {
             i.setScanRunning(true);
-            Asset a = i.getAsset();
-            a.setRequestId(scan.getRequestId());
-            assetRepository.save(a);
+//            Asset a = i.getAsset();
+//            a.setRequestId(scan.getRequestId());
+//            assetRepository.save(a);
         }
-        interfaceRepository.saveAll(scan.getInterfaces());
+//        interfaceRepository.saveAll(scan.getInterfaces());
         scan.setRunning(running);
         scan.setInQueue(inqueue);
         infraScanRepository.save(scan);
+        for (Interface i : scan.getInterfaces()){
+            Asset a = i.getAsset();
+            a.setRequestId(scan.getRequestId());
+            assetRepository.save(i.getAsset());
+        }
     }
     /**
      * Method set state of runnig=true for give Intercace list. Also update Asset with proper requestId.

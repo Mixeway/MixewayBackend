@@ -31,6 +31,7 @@ import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -138,6 +139,8 @@ class AssetServiceTest {
         assertEquals(HttpStatus.CREATED, statusResponseEntity.getStatusCode());
         project = getOrCreateProjectService.getProjectId("asset_service","asset_service",principal);
         project.getAssets().stream().map(Asset::getRequestId).forEach(Assertions::assertNotNull);
+        List<Interface> interfaces = interfaceRepository.findByAssetIn(new ArrayList<>(project.getAssets()));
+        interfaces.stream().map(Interface::isScanRunning).forEach(Assertions::assertTrue);
 
     }
 
