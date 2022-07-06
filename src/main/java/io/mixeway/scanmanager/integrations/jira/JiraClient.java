@@ -17,6 +17,7 @@ import io.mixeway.utils.VaultHelper;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,6 +35,9 @@ import java.util.stream.StreamSupport;
 public class JiraClient implements BugTracking {
     private static final Logger log = LoggerFactory.getLogger(JiraClient.class);
     private final VaultHelper vaultHelper;
+
+    @Value("${frontend.url}")
+    private String frontendUrl;
 
     JiraClient(VaultHelper vaultHelper){
         this.vaultHelper = vaultHelper;
@@ -159,7 +163,7 @@ public class JiraClient implements BugTracking {
                 stringBuilder.append("\n\n");
                 stringBuilder.append("Descriptions");
                 stringBuilder.append("\n");
-                stringBuilder.append("Avaliable at Mixeway (mixer.corpnet.pl)");
+                stringBuilder.append("Avaliable at Mixeway ( "+frontendUrl+" )");
                 return stringBuilder.toString();
             case Constants.VULN_TYPE_WEBAPP:
                 stringBuilder.append("Vulnerability Name: ");
