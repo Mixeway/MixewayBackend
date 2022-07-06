@@ -160,6 +160,7 @@ public class NetworkScanService {
                 updateInterfaceService.changeRunningState(scan, running, inqueue);
                 infraScans.add(scan);
             } catch (Exception e){
+                e.printStackTrace();
                 log.error("Problem with connection to scanner {}", keyValue.getKey().printInfo());
             }
         }
