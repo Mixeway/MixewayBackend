@@ -217,13 +217,14 @@ public class ScanManagerService {
                             .build());
         }
         for (CodeProject codeProject : codeProjects) {
-            securityScans.add(
-                    SecurityScans
-                            .builder()
-                            .scanType("Code Repository")
-                            .scope(codeProject.getRepoUrl())
-                            .project(codeProject.getProject().getName())
-                            .build());
+            if (codeProject.getProject() != null)
+                securityScans.add(
+                        SecurityScans
+                                .builder()
+                                .scanType("Code Repository")
+                                .scope(codeProject.getRepoUrl())
+                                .project(codeProject.getProject().getName())
+                                .build());
         }
         return new ResponseEntity<>(securityScans, HttpStatus.OK);
     }
