@@ -413,7 +413,6 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
                             CxResponseId.class);
             if (response.getStatusCode().equals(HttpStatus.CREATED) ) {
                 codeProject.setRunning(true);
-                codeProject.setRunning(true);
                 codeProject.setScanid(Long.toString(Objects.requireNonNull(response.getBody()).getId()));
                 codeProjectRepository.save(codeProject);
                 log.info("[Checkmarx] Successfull Created and started scan for {}", codeProject.getName());

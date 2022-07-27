@@ -70,6 +70,7 @@ public class UpdateCodeProjectService {
 
     public void endScan(CodeProject codeProject) {
         codeProject.setRunning(false);
+        codeProject.setJobId(null);
         codeProject.setRisk(projectRiskAnalyzer.getCodeProjectRisk(codeProject) + projectRiskAnalyzer.getCodeProjectOpenSourceRisk(codeProject));
         codeProjectRepository.save(codeProject);
     }
@@ -97,6 +98,7 @@ public class UpdateCodeProjectService {
 
     public CodeProject removeFromQueueAndStart(CodeProject codeProject) {
         codeProject.setInQueue(false);
+        codeProject.setJobId(null);
         codeProject.setRunning(true);
         return codeProjectRepository.saveAndFlush(codeProject);
     }

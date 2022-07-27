@@ -197,15 +197,15 @@ public class CodeScanService {
                             codeScanClient.loadVulnerabilities(sastScanner.get(), null, true, codeProject, codeVulns);
                             log.info("Vulerabilities for codescan for {}", codeProject.getName());
                             updateCiOperations.updateCiOperationsForSAST(codeProject);
+                            updateCodeProjectService.endScan(codeProject);
                             if (codeProject.getEnableJira()) {
                                 log.info("[CodeScan] Automatic integration with BugTracker enabled, proceeding...");
                                 vulnTemplate.processBugTracking(codeProject, vulnTemplate.SOURCE_SOURCECODE);
                             }
                         }
                     } catch (Exception e){
+                        e.printStackTrace();
                         log.error("[CodeScanService] There is exception of {} during verifying codeproject off {}", e.getLocalizedMessage(), codeProject.getName());
-                    } finally {
-                        updateCodeProjectService.endScan(codeProject);
                     }
                 }
                 vulnTemplate.projectVulnerabilityRepository.deleteByStatus(vulnTemplate.STATUS_REMOVED);
