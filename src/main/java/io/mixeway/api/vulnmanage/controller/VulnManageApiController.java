@@ -1,6 +1,7 @@
 package io.mixeway.api.vulnmanage.controller;
 
 import io.mixeway.api.cioperations.model.CIVulnManageResponse;
+import io.mixeway.api.vulnmanage.model.GlobalStatistic;
 import io.mixeway.api.vulnmanage.model.InfraScanMetadata;
 import io.mixeway.api.vulnmanage.model.Vulnerabilities;
 import io.mixeway.api.vulnmanage.service.GetVulnerabilitiesService;
@@ -15,11 +16,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
+import java.security.*;
 import java.security.cert.CertificateException;
+import java.util.List;
 
 @Controller
 public class VulnManageApiController {
@@ -90,5 +89,4 @@ public class VulnManageApiController {
                                                                    @PathVariable(value = "projectId") Long id) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         return getVulnerabilitiesService.getCiScoreForCodeProject(codeGroup,codeProject, id);
     }
-
 }

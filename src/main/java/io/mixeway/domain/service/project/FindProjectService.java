@@ -71,4 +71,8 @@ public class FindProjectService {
     public List<Project> getUniqueContactListEmails(String email) {
         return projectRepository.getUniqueContactListEmails(email);
     }
+
+    public List<Project> findProjectWithoutCodeVulnerabilities(){
+        return projectRepository.getProjectsWithoutCodeVulns();
+    }
 }

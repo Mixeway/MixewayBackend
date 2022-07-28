@@ -4,7 +4,7 @@
 
 	<groupId>io.mixeway</groupId>
 	<artifactId>mixeway</artifactId>
-	<version>1.6.1</version>
+	<version>1.6.3</version>
 	<packaging>jar</packaging>
 
 	<name>Mixeway</name>

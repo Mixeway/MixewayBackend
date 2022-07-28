@@ -1,29 +1,39 @@
 package io.mixeway.api.statistic.service;
 
+import io.mixeway.api.vulnmanage.model.GlobalStatistic;
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.CisRequirement;
 import io.mixeway.db.entity.Project;
+import io.mixeway.db.entity.ProjectVulnerability;
 import io.mixeway.db.entity.Vulnerability;
 import io.mixeway.db.projection.VulnBarChartProjection;
+import io.mixeway.domain.service.project.FindProjectService;
+import io.mixeway.domain.service.projectvulnerability.GetProjectVulnerabilitiesService;
 import io.mixeway.domain.service.vulnmanager.VulnTemplate;
 import io.mixeway.utils.PermissionFactory;
 import io.mixeway.utils.Status;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.collections.ArrayStack;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.Principal;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
 public class VulnsService {
     private final VulnTemplate vulnTemplate;
     private final PermissionFactory permissionFactory;
+    private final FindProjectService findProjectService;
+    private final GetProjectVulnerabilitiesService getProjectVulnerabilitiesService;
 
 
     public ResponseEntity<List<VulnBarChartProjection>> getCodeVulnsTop(Principal principal) {
@@ -140,5 +150,23 @@ public class VulnsService {
         } else {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
+    }
+
+    @Transactional
+    public ResponseEntity<List<GlobalStatistic>> getGlobalStatistics(Principal principal) {
+        List<Project> projects = findProjectService.findProjectWithoutCodeVulnerabilities();
+        List<GlobalStatistic> globalStatistis = new ArrayList<>();
+        for (Project project: projects){
+            GlobalStatistic globalStatistic = new GlobalStatistic();
+            List<ProjectVulnerability> codeVulns = getProjectVulnerabilitiesService
+                    .getProjectVulnerabilitiesForProjectAndSourceAndSeverity(project, vulnTemplate.SOURCE_SOURCECODE,  Arrays.asList("Critical", "High")) ;
+            List<ProjectVulnerability> scaVulns = getProjectVulnerabilitiesService
+                    .getProjectVulnerabilitiesForProjectAndSourceAndSeverity(project, vulnTemplate.SOURCE_OPENSOURCE,  Arrays.asList("Critical", "High")) ;
+            globalStatistic.setProject(project.getName());
+            globalStatistic.setCodeVulns(codeVulns.size());
+            globalStatistic.setScaVulns(scaVulns.size());
+            globalStatistis.add(globalStatistic);
+        }
+        return new ResponseEntity<>(globalStatistis, HttpStatus.OK);
     }
 }
