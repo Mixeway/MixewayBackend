@@ -1,14 +1,15 @@
 package io.mixeway.api.statistic.service;
 
-import io.mixeway.db.entity.CisRequirement;
-import io.mixeway.db.entity.Project;
-import io.mixeway.db.entity.User;
-import io.mixeway.db.entity.Vulnerability;
+import io.mixeway.api.vulnmanage.model.GlobalStatistic;
+import io.mixeway.db.entity.*;
 import io.mixeway.db.projection.VulnBarChartProjection;
 import io.mixeway.db.repository.UserRepository;
 import io.mixeway.domain.service.project.GetOrCreateProjectService;
+import io.mixeway.domain.service.scanmanager.code.CreateOrGetCodeProjectService;
+import io.mixeway.domain.service.softwarepackage.GetOrCreateSoftwarePacketService;
 import io.mixeway.domain.service.vulnmanager.CreateOrGetCisRequirementService;
 import io.mixeway.domain.service.vulnmanager.CreateOrGetVulnerabilityService;
+import io.mixeway.domain.service.vulnmanager.VulnTemplate;
 import io.mixeway.scheduler.CodeScheduler;
 import io.mixeway.scheduler.GlobalScheduler;
 import io.mixeway.scheduler.NetworkScanScheduler;
@@ -43,6 +44,9 @@ class VulnsServiceTest {
     private final GetOrCreateProjectService getOrCreateProjectService;
     private final CreateOrGetVulnerabilityService createOrGetVulnerabilityService;
     private final CreateOrGetCisRequirementService createOrGetCisRequirementService;
+    private final CreateOrGetCodeProjectService createOrGetCodeProjectService;
+    private final VulnTemplate vulnTemplate;
+    private final GetOrCreateSoftwarePacketService getOrCreateSoftwarePacketService;
 
     @MockBean
     GlobalScheduler globalScheduler;
@@ -159,5 +163,36 @@ class VulnsServiceTest {
         cisRequirement = createOrGetCisRequirementService.createOrGetCisRequirement("test","test");
         assertEquals("Medium", cisRequirement.getSeverity());
 
+    }
+    @Test
+    void getGlobalStatistics() {
+        Mockito.when(principal.getName()).thenReturn("vulns_service");
+        Project project = getOrCreateProjectService.getProjectByName("global_stats",principal);
+        CodeProject codeProject = createOrGetCodeProjectService.createCodeProject(project,"global_stats","master");
+        SoftwarePacket softwarePacket = getOrCreateSoftwarePacketService.getOrCreateSoftwarePacket("test","1.0");
+        Vulnerability vulnerability = createOrGetVulnerabilityService.createOrGetVulnerability("testvulnerability");
+        for (int i =0 ; i <5 ; i++){
+            ProjectVulnerability pv = new ProjectVulnerability();
+            pv.setProject(project);
+            pv.setCodeProject(codeProject);
+            pv.setVulnerability(vulnerability);
+            pv.setVulnerabilitySource(vulnTemplate.SOURCE_SOURCECODE);
+            pv.setSeverity("High");
+            vulnTemplate.projectVulnerabilityRepository.save(pv);
+        }
+        for (int i =0 ; i <15 ; i++){
+            ProjectVulnerability pv = new ProjectVulnerability();
+            pv.setProject(project);
+            pv.setCodeProject(codeProject);
+            pv.setSoftwarePacket(softwarePacket);
+            pv.setVulnerability(vulnerability);
+            pv.setVulnerabilitySource(vulnTemplate.SOURCE_OPENSOURCE);
+            pv.setSeverity("High");
+            vulnTemplate.projectVulnerabilityRepository.save(pv);
+        }
+        ResponseEntity<List<GlobalStatistic>> globalStatistics = vulnsService.getGlobalStatistics(principal);
+        assert globalStatistics != null;
+        assertTrue(globalStatistics.getBody().size()>0);
+        assertEquals(HttpStatus.OK, globalStatistics.getStatusCode());
     }
 }

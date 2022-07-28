@@ -1,6 +1,7 @@
 package io.mixeway.api.statistic.controller;
 
 import io.mixeway.api.statistic.service.VulnsService;
+import io.mixeway.api.vulnmanage.model.GlobalStatistic;
 import io.mixeway.db.entity.CisRequirement;
 import io.mixeway.db.entity.Vulnerability;
 import io.mixeway.db.projection.VulnBarChartProjection;
@@ -86,6 +87,13 @@ public class VulnsController {
                                                             @PathVariable(name = "severity") String severity,
                                                             Principal principal) {
         return vulnsService.setCisRequirementSeverity(id, severity, principal);
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @GetMapping(value = "/global/statistic",produces = "application/json")
+    public ResponseEntity<List<GlobalStatistic>> getGlobalStatistics(Principal principal){
+        return vulnsService.getGlobalStatistics(principal);
+
     }
 
 
