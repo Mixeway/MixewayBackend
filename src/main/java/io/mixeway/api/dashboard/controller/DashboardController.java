@@ -83,5 +83,10 @@ public class DashboardController {
     public ResponseEntity<DashboardTopStatistics> getRootStatistics(Principal principal) {
         return dashboardService.getRootStatistics(principal);
     }
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @GetMapping(value = "/merge/project/source/{source}/destination/{destination}")
+    public ResponseEntity<Status> mergeTwoProjects(@PathVariable(value = "source") long sourceId, @PathVariable("destination") long destinationId, Principal principal){
+        return dashboardService.mergeTwoProjects(sourceId, destinationId, principal);
+    }
 
 }

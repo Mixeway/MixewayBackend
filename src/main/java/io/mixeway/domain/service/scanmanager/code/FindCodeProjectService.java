@@ -5,6 +5,7 @@ import io.mixeway.db.entity.Project;
 import io.mixeway.db.repository.CodeProjectRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -32,6 +33,7 @@ public class FindCodeProjectService {
         return codeProjectRepository.findByRepoUrl(repoUrl);
     }
 
+    @Transactional
     public List<CodeProject> findByProject(Project project) {
         return codeProjectRepository.findByProject(project);
     }

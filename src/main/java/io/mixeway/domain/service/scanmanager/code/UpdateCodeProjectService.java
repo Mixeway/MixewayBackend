@@ -1,6 +1,7 @@
 package io.mixeway.domain.service.scanmanager.code;
 
 import io.mixeway.db.entity.CodeProject;
+import io.mixeway.db.entity.Project;
 import io.mixeway.db.repository.CodeProjectRepository;
 import io.mixeway.scanmanager.model.CodeScanRequestModel;
 import io.mixeway.utils.ProjectRiskAnalyzer;
@@ -20,6 +21,7 @@ import java.util.UUID;
 public class UpdateCodeProjectService {
     private final CodeProjectRepository codeProjectRepository;
     private final ProjectRiskAnalyzer projectRiskAnalyzer;
+    private final FindCodeProjectService findCodeProjectService;
 
     /**
      * Updates CodeProjcet base on configuration from CodeScanRequest
@@ -101,5 +103,13 @@ public class UpdateCodeProjectService {
         codeProject.setJobId(null);
         codeProject.setRunning(true);
         return codeProjectRepository.saveAndFlush(codeProject);
+    }
+
+    @Transactional
+    public void changeProjectForCodeProject(Project source, Project destination){
+        for( CodeProject cp : findCodeProjectService.findByProject(source)){
+            cp.setProject(destination);
+            codeProjectRepository.saveAndFlush(cp);
+        }
     }
 }

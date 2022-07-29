@@ -32,6 +32,7 @@ public class UpdateWebAppService {
     private final CodeProjectRepository codeProjectRepository;
     private final GetOrCreateWebAppService getOrCreateWebAppService;
     private final ProjectRiskAnalyzer projectRiskAnalyzer;
+    private final FindWebAppService findWebAppService;
 
     private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
@@ -149,6 +150,14 @@ public class UpdateWebAppService {
     public void setRisk() {
         for(WebApp webApp : webAppRepository.findAll()){
             webApp.setRisk(Math.min(projectRiskAnalyzer.getWebAppRisk(webApp), 100));
+        }
+    }
+
+    @Transactional
+    public void changeProjectForWebApps(Project source, Project destination){
+        for (WebApp webApp : findWebAppService.findByProject(source)){
+            webApp.setProject(destination);
+            webAppRepository.saveAndFlush(webApp);
         }
     }
 }

@@ -5,6 +5,7 @@ import io.mixeway.db.entity.WebApp;
 import io.mixeway.db.repository.WebAppRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -43,6 +44,7 @@ public class FindWebAppService {
     public Optional<WebApp> findByProjectAndRul(Project project, String url) {
         return webAppRepository.findByProjectAndUrl(project,url);
     }
+    @Transactional
     public List<WebApp> findByProject(Project project){
         return webAppRepository.findByProject(project);
     }

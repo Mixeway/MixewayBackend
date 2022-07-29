@@ -1,16 +1,21 @@
 package io.mixeway.api.dashboard.service;
 
 import io.mixeway.api.dashboard.model.*;
+import io.mixeway.api.project.model.EditCodeProjectModel;
 import io.mixeway.api.protocol.OverAllVulnTrendChartData;
 import io.mixeway.api.protocol.SourceDetectionChartData;
-import io.mixeway.db.entity.Project;
-import io.mixeway.db.entity.ProjectVulnerability;
-import io.mixeway.db.entity.User;
+import io.mixeway.db.entity.*;
+import io.mixeway.domain.service.asset.FindAssetService;
+import io.mixeway.domain.service.asset.UpdateAssetService;
 import io.mixeway.domain.service.project.CreateProjectService;
 import io.mixeway.domain.service.project.DeleteProjectService;
 import io.mixeway.domain.service.project.FindProjectService;
 import io.mixeway.domain.service.project.UpdateProjectService;
 import io.mixeway.domain.service.scan.GetScanNumberService;
+import io.mixeway.domain.service.scanmanager.code.FindCodeProjectService;
+import io.mixeway.domain.service.scanmanager.code.UpdateCodeProjectService;
+import io.mixeway.domain.service.scanmanager.webapp.FindWebAppService;
+import io.mixeway.domain.service.scanmanager.webapp.UpdateWebAppService;
 import io.mixeway.domain.service.user.FindUserService;
 import io.mixeway.domain.service.vulnhistory.FindVulnHistoryService;
 import io.mixeway.domain.service.vulnmanager.VulnTemplate;
@@ -21,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,6 +49,13 @@ public class DashboardService {
     private final UpdateProjectService updateProjectService;
     private final DeleteProjectService deleteProjectService;
     private final FindUserService findUserService;
+    private final FindCodeProjectService findCodeProjectService;
+    private final FindWebAppService findWebAppService;
+    private final FindAssetService findAssetService;
+    private final UpdateCodeProjectService updateCodeProjectService;
+    private final UpdateWebAppService updateWebAppService;
+    private final UpdateAssetService updateAssetService;
+
 
 
     public List<OverAllVulnTrendChartData> getVulnTrendData(Principal principal) {
@@ -96,7 +109,7 @@ public class DashboardService {
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get()))
             try {
                 deleteProjectService.delete(project.get());
-                log.info("{} - Deleted project {}", principal.getName(), project.get().getName());
+                log.info("[Dashboard] User {} - Deleted project {}", principal.getName(), project.get().getName());
                 return new ResponseEntity<>(HttpStatus.OK);
             } catch (Exception e){
                 log.warn("Exception during delete project try, error is {}", e.getLocalizedMessage());
@@ -154,5 +167,40 @@ public class DashboardService {
         dashboardTopStatistics.setStatisticCard(statisticCard);
         dashboardTopStatistics.setProjectVulnerabilityList(projectVulnerabilities.stream().limit(5).collect(Collectors.toList()));
         return new ResponseEntity<>(dashboardTopStatistics, HttpStatus.OK);
+    }
+
+    /**
+     * Merging two projects. Move all resources in source project to destination project and delete source.
+     * 1. Move all codeprojects
+     * 2. move all assets
+     * 3. move all webapps
+     * 4. move all project vulnerabilities
+     * 5. delete source project
+     */
+    public ResponseEntity<Status> mergeTwoProjects(long sourceId, long destinationId, Principal principal) {
+        Optional<Project> sourceProject = findProjectService.findProjectById(sourceId);
+        Optional<Project> destinationProject = findProjectService.findProjectById(destinationId);
+        if (sourceProject.isPresent() && destinationProject.isPresent()) {
+            // Loop over CodeProjects, change project_id
+            updateCodeProjectService.changeProjectForCodeProject(sourceProject.get(), destinationProject.get());
+            // Loop over Assets chamge project id
+            updateAssetService.changeProjectForAssets(sourceProject.get(), destinationProject.get());
+            // Loop over webapps chamge project id
+            updateWebAppService.changeProjectForWebApps(sourceProject.get(), destinationProject.get());
+            // Loop over project vulnerabilties chanage project id
+            List<ProjectVulnerability> projectVulnerabilities = vulnTemplate.projectVulnerabilityRepository.findByProjectList(sourceProject.get().getId());
+            for (ProjectVulnerability pv : projectVulnerabilities) {
+                pv.setProject(destinationProject.get());
+                vulnTemplate.projectVulnerabilityRepository.saveAndFlush(pv);
+            }
+
+            // delete source project
+            this.deleteProject(sourceId, principal);
+            log.info("[Dashboard] User {}, successfully merge project {} to project {}", principal.getName(), sourceProject.get().getName(), destinationProject.get().getName());
+            return new ResponseEntity<>(new Status("ok"), HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+
     }
 }
