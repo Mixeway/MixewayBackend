@@ -54,13 +54,14 @@ public class JiraClient implements BugTracking {
             proxyProp.setProperty("http.proxyPort", bugTracker.getProxies().getPort());
         }
         origProp.setProperty("jsse.enableSNIExtension","false");
+        origProp.setProperty("javax.net.ssl.trustStore","/Users/gs/pki/trust.jks");
         JiraRestClientFactory factory = new AsynchronousJiraRestClientFactory();
         String password =vaultHelper.getPassword(bugTracker.getPassword());
         URI uri = new URI(bugTracker.getUrl());
 
         JiraRestClient client = factory.createWithBasicHttpAuthentication(uri, bugTracker.getUsername(), password);
         IssueRestClient issueClient = client.getIssueClient();
-        Iterable<Priority> basicPriorities =  client.getMetadataClient().getPriorities().claim();
+        //Iterable<Priority> basicPriorities =  client.getMetadataClient().getPriorities().claim();
         IssueInput newIssue;
         if (bugTracker.getAsignee() != null) {
             newIssue = new IssueInputBuilder(bugTracker.getProjectId(), Long.valueOf(bugTracker.getIssueType()), title)
@@ -73,7 +74,7 @@ public class JiraClient implements BugTracking {
                     .build();
         }
         //TODO uncomment it
-        String ticketId = issueClient.createIssue(newIssue) .claim().getKey();
+        String ticketId = issueClient.createIssue(newIssue).claim().getKey();
         System.setProperties(origProp);
         return ticketId;
     }
@@ -323,7 +324,16 @@ public class JiraClient implements BugTracking {
 
     @Override
     public void closeIssue(String ticketId, BugTracker bugTracker) throws URISyntaxException {
-
+        Properties origProp;
+        Properties proxyProp;
+        origProp = System.getProperties();
+        if (bugTracker.getProxies() != null) {
+            proxyProp = new Properties(origProp);
+            proxyProp.setProperty("http.proxyHost", bugTracker.getProxies().getIp());
+            proxyProp.setProperty("http.proxyPort", bugTracker.getProxies().getPort());
+        }
+        origProp.setProperty("jsse.enableSNIExtension","false");
+        origProp.setProperty("javax.net.ssl.trustStore","/Users/gs/pki/trust.jks");
         JiraRestClientFactory factory = new AsynchronousJiraRestClientFactory();
         String password = vaultHelper.getPassword(bugTracker.getPassword());
         URI uri = new URI(bugTracker.getUrl());
@@ -331,7 +341,7 @@ public class JiraClient implements BugTracking {
 
         Issue issue = client.getIssueClient().getIssue(ticketId).claim();
         Iterable<Transition> transitions = client.getIssueClient().getTransitions(issue.getTransitionsUri()).claim();
-        Transition transition = StreamSupport.stream(transitions.spliterator(), false).filter(t->t.getName().equals("Gotowe")).findFirst().orElse(null);
+        Transition transition = StreamSupport.stream(transitions.spliterator(), false).filter(t->t.getName().equals("Resolved")).findFirst().orElse(null);
         Comment closingMessage = Comment.valueOf("Vulnerabilities removed");
         assert transition != null;
         try {
@@ -340,6 +350,8 @@ public class JiraClient implements BugTracking {
         } catch (NullPointerException e){
             log.warn("[Jira] Cannot close ticket id {} reason NullPointerException", ticketId);
         }
+        System.setProperties(origProp);
+
     }
 
 
