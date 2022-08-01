@@ -161,7 +161,8 @@ public class VulnTemplate {
 
     private void processOpenSourceIssues(List<ProjectVulnerability> projectVulnerabilities, Optional<BugTracker> bugTracker, CodeProject codeProject) throws URISyntaxException {
         List<String> libsWithVulns = projectVulnerabilities.stream().map(ProjectVulnerability::getLocation).distinct().collect(Collectors.toList());
-        log.info("[OpenSourceScan] Proceeding with OpenSource Issuing tickets. {} Ticket to be issued.", libsWithVulns.size());
+        if (libsWithVulns.size() > 0 )
+            log.info("[OpenSourceScan] Proceeding with OpenSource Issuing tickets. {} Ticket to be issued.", libsWithVulns.size());
         for (String lib : libsWithVulns) {
             List<ProjectVulnerability> vulnsToIssue = projectVulnerabilities.stream().filter(pv -> pv.getLocation().equals(lib)).collect(Collectors.toList());
             if (projectVulnerabilities.size() > 0 && bugTracker.isPresent()) {
