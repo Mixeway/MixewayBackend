@@ -300,6 +300,7 @@ public class Constants {
     public static final String NOT_OK = "Not Ok";
     public static final String OK = "Ok";
     public static final String CIID_NONE = "none";
+    public static final String CX_STATUS_FAILED = "Failed";
 }
 
 
