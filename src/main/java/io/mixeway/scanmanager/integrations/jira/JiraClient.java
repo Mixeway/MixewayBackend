@@ -38,6 +38,10 @@ public class JiraClient implements BugTracking {
 
     @Value("${frontend.url}")
     private String frontendUrl;
+    @Value("${keycloak.truststore}")
+    private String truststore;
+    @Value("${keycloak.truststore-password}")
+    private String trustStorePassword;
 
     JiraClient(VaultHelper vaultHelper){
         this.vaultHelper = vaultHelper;
@@ -54,7 +58,7 @@ public class JiraClient implements BugTracking {
             proxyProp.setProperty("http.proxyPort", bugTracker.getProxies().getPort());
         }
         origProp.setProperty("jsse.enableSNIExtension","false");
-        origProp.setProperty("javax.net.ssl.trustStore","/Users/gs/pki/trust.jks");
+        //origProp.setProperty("javax.net.ssl.trustStore","/Users/gs/pki/trust.jks");
         JiraRestClientFactory factory = new AsynchronousJiraRestClientFactory();
         String password =vaultHelper.getPassword(bugTracker.getPassword());
         URI uri = new URI(bugTracker.getUrl());
@@ -333,7 +337,7 @@ public class JiraClient implements BugTracking {
             proxyProp.setProperty("http.proxyPort", bugTracker.getProxies().getPort());
         }
         origProp.setProperty("jsse.enableSNIExtension","false");
-        origProp.setProperty("javax.net.ssl.trustStore","/Users/gs/pki/trust.jks");
+        //origProp.setProperty("javax.net.ssl.trustStore","/Users/gs/pki/trust.jks");
         JiraRestClientFactory factory = new AsynchronousJiraRestClientFactory();
         String password = vaultHelper.getPassword(bugTracker.getPassword());
         URI uri = new URI(bugTracker.getUrl());
