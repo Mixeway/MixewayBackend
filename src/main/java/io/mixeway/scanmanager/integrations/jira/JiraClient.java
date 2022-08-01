@@ -348,6 +348,7 @@ public class JiraClient implements BugTracking {
             TransitionInput transitionInput = new TransitionInput(transition.getId(), null, closingMessage);
             client.getIssueClient().transition(issue.getTransitionsUri(), transitionInput).claim();
         } catch (NullPointerException e){
+            e.printStackTrace();
             log.warn("[Jira] Cannot close ticket id {} reason NullPointerException", ticketId);
         }
         System.setProperties(origProp);
