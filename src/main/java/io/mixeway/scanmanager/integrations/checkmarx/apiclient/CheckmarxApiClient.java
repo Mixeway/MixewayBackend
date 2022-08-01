@@ -124,12 +124,13 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
         Optional<Scanner> cxSast = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_CHECKMARX)).stream().findFirst();
         if (cxSast.isPresent()) {
             CxScan cxScan = getScanInfo(cxSast.get(), cp);
+            assert cxScan != null;
             if (cxScan.getStatus().getName().equals(Constants.CX_STATUS_FAILED)){
                 cp.setRunning(false);
-                codeProjectRepository.save(cp);
+                codeProjectRepository.saveAndFlush(cp);
                 log.warn("[Checkmarx] Scan for {} Failed, ending..", cp.getName());
             }
-            boolean isScanFinished = Objects.requireNonNull(getScanInfo(cxSast.get(), cp)).getStatus().getName().equals(Constants.CX_STATUS_FINISHED);
+            boolean isScanFinished = cxScan.getStatus().getName().equals(Constants.CX_STATUS_FINISHED);
             boolean isReportGenerationStarged = isScanFinished && (StringUtils.isNotBlank(cp.getJobId()) || generateReport(cxSast.get(), cp));
             boolean isRaportGenerated = isReportGenerationStarged &&checkReportState(cxSast.get(), cp);
             return isScanFinished && isReportGenerationStarged && isRaportGenerated;
