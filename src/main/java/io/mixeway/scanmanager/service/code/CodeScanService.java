@@ -194,6 +194,7 @@ public class CodeScanService {
                 for (CodeScanClient codeScanClient : codeScanClients) {
                     try {
                         if (codeScanClient.canProcessRequest(sastScanner.get()) && codeScanClient.isScanDone(codeProject)) {
+                            log.info("[CodeScan] Scan for {} is done, proceeding with report..",codeProject.getName());
                             codeScanClient.loadVulnerabilities(sastScanner.get(), null, true, codeProject, codeVulns);
                             log.info("Vulerabilities for codescan for {}", codeProject.getName());
                             updateCiOperations.updateCiOperationsForSAST(codeProject);

@@ -124,7 +124,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
         Optional<Scanner> cxSast = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_CHECKMARX)).stream().findFirst();
         if (cxSast.isPresent()) {
             CxScan cxScan = getScanInfo(cxSast.get(), cp);
-            //log.info("[Checkmarx] Scan for {} status is {}", cp.getName(), cxScan.getStatus().getName());
+            log.info("[Checkmarx] Scan for {} status is {}", cp.getName(), cxScan.getStatus().getName());
             if (cxScan.getStatus().getName().equals(Constants.CX_STATUS_FAILED)){
                 cp.setRunning(false);
                 codeProjectRepository.saveAndFlush(cp);
@@ -447,6 +447,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
         }
         return null;
     }
+    @Transactional
     private boolean generateReport(Scanner scanner, CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
         CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
         try {
