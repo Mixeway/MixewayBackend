@@ -203,6 +203,8 @@ public class CodeScanService {
                                 log.info("[CodeScan] Automatic integration with BugTracker enabled, proceeding...");
                                 vulnTemplate.processBugTracking(codeProject, vulnTemplate.SOURCE_SOURCECODE);
                             }
+                        } else {
+                            log.info("[CodeScan] Scan for {} is still running", codeProject.getName());
                         }
                     } catch (Exception e){
                         e.printStackTrace();
