@@ -183,7 +183,7 @@ public class CodeScanService {
      * Method which is looking for CodeProject and CodeGroup with running = true
      * Verify if scan is done, and if so loads vulnerabilities
      */
-   // @Transactional
+    @Transactional
     public void getResultsForRunningScan() {
         List<Scanner> scanners = getScannerService.findAll();
         Optional<Scanner> sastScanner = getScannerService.getCodeScanners();
@@ -218,6 +218,7 @@ public class CodeScanService {
      * Get the CodeProjects and CodeGroups with inQueue=true
      * Verify if scan can be run and then runs it.
      */
+    @Transactional
     public void runFromQueue() {
         Optional<Scanner> codeScanner = getScannerService.getCodeScanners();
         if (codeScanner.isPresent() && codeScanner.get().getStatus()) {
