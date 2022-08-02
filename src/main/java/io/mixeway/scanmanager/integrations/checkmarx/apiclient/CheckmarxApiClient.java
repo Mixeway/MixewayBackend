@@ -493,7 +493,9 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
     private List<CxResultCsvTemplate> downloadResultsForScan(Scanner scanner, CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
         CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
         if (codeProject.getJobId() == null) {
-            this.generateReport(scanner, codeProject);
+            log.info("[Checkmarx] Generating report for  {}", codeProject.getName());
+            generateReport(scanner, codeProject);
+            log.info("[Checkmarx] Report generated for {}", codeProject.getName());
         }
         try {
             log.info("[Checkmarx] Trying to download results for scan {}", codeProject.getName());
