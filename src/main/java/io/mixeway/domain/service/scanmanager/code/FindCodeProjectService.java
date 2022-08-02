@@ -26,6 +26,9 @@ public class FindCodeProjectService {
     public List<CodeProject> findRunningCodeProjects(){
         return codeProjectRepository.findByRunning(true);
     }
+    public List<CodeProject> findRunningCodeProjectsLimit5(){
+        return codeProjectRepository.findTop5ByRunning(true);
+    }
     public Optional<CodeProject> findById(long id){
         return codeProjectRepository.findById(id);
     }

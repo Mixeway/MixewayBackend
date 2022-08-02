@@ -21,6 +21,7 @@ public interface CodeProjectRepository extends JpaRepository<CodeProject, Long> 
 	List<CodeProject> findByRequestId(String requestId);
 	List<CodeProject> findBydTrackUuidNotNull();
 	List<CodeProject> findByRunning(boolean running);
+	List<CodeProject> findTop5ByRunning(boolean running);
 	List<CodeProject> findByProjectAndRunning(Project project, boolean running);
 	List<CodeProject> findByProject(Project project);
 	@Query(value = "Select * from codeproject where dtrackuuid != ''", nativeQuery = true)

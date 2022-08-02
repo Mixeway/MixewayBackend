@@ -25,6 +25,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 
@@ -183,20 +184,18 @@ public class CodeScanService {
      * Method which is looking for CodeProject and CodeGroup with running = true
      * Verify if scan is done, and if so loads vulnerabilities
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void getResultsForRunningScan() {
         List<Scanner> scanners = getScannerService.findAll();
         Optional<Scanner> sastScanner = getScannerService.getCodeScanners();
         if (sastScanner.isPresent()) {
-            List<CodeProject> codeProjectsRunning = findCodeProjectService.findRunningCodeProjects();
+            List<CodeProject> codeProjectsRunning = findCodeProjectService.findRunningCodeProjectsLimit5();
             for (CodeProject codeProject : codeProjectsRunning) {
                 List<ProjectVulnerability> codeVulns = getProjectVulnerabilitiesService.getOldVulnsForCodeProject(codeProject);
                 for (CodeScanClient codeScanClient : codeScanClients) {
                     try {
                         if (codeScanClient.canProcessRequest(sastScanner.get()) && codeScanClient.isScanDone(codeProject)) {
-                            log.info("[CodeScan] Scan for {} is done, proceeding with report..",codeProject.getName());
                             codeScanClient.loadVulnerabilities(sastScanner.get(), null, true, codeProject, codeVulns);
-                            log.info("Vulerabilities for codescan for {}", codeProject.getName());
                             updateCiOperations.updateCiOperationsForSAST(codeProject);
                             updateCodeProjectService.endScan(codeProject);
                             if (codeProject.getEnableJira()) {
