@@ -120,6 +120,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
     }
 
     @Override
+    @Transactional
     public boolean isScanDone( CodeProject cp) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, ParseException, JSONException {
         Optional<Scanner> cxSast = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_CHECKMARX)).stream().findFirst();
         if (cxSast.isPresent()) {
@@ -134,6 +135,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
             boolean isScanFinished = cxScan.getStatus().getName().equals(Constants.CX_STATUS_FINISHED);
             boolean isReportGenerationStarged = isScanFinished && (StringUtils.isNotBlank(cp.getJobId()) || generateReport(cxSast.get(), cp));
             boolean isRaportGenerated = isReportGenerationStarged &&checkReportState(cxSast.get(), cp);
+            log.info("[Checkmarx] isScanFinished {}, isReportGenerationStarged {}, isRaportGenerated {}",isScanFinished,isReportGenerationStarged,isRaportGenerated);
             return isScanFinished && isReportGenerationStarged && isRaportGenerated;
         } else
             return false;
@@ -447,7 +449,6 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
         }
         return null;
     }
-    @Transactional
     private boolean generateReport(Scanner scanner, CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
         CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
         try {
