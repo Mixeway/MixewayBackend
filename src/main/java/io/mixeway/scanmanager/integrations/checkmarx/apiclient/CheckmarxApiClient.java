@@ -477,7 +477,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
                     .exchange(scanner.getApiUrl() + Constants.CX_GET_REPORT_STATUS_API.replace(Constants.CX_REPORTID,codeProject.getJobId()), HttpMethod.GET,
                             codeRequestHelper.getHttpEntity(),
                             CxReportStatus.class);
-            log.info("[Checkmarx] Report state response: {} - message {}", response.getStatusCode(), new ObjectMapper().writeValueAsString(response.getBody()) );
+            log.info("[Checkmarx] Report state response: {} - message {} - jobid {}", response.getStatusCode(), new ObjectMapper().writeValueAsString(response.getBody()), codeProject.getJobId() );
             if (response.getStatusCode().equals(HttpStatus.OK) ) {
                 if (response.getBody().getStatus().getValue().equals(Constants.CX_STATUS_CREATED)){
                     log.info("[Checkmarx] Report generation state for {} is {}", codeProject.getName(), response.getBody().getStatus().getValue());
