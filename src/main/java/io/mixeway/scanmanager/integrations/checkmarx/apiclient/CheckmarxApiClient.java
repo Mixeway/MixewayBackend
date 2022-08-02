@@ -457,7 +457,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
                             CxResponseId.class);
             if (response.getStatusCode().equals(HttpStatus.ACCEPTED) ) {
                 codeProject.setJobId(String.valueOf(Objects.requireNonNull(response.getBody()).getReportId()));
-                codeProjectRepository.save(codeProject);
+                codeProjectRepository.saveAndFlush(codeProject);
                 log.info("[Checkmarx] Report generation for {} started", codeProject.getName());
                 return true;
             }
@@ -491,6 +491,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
         return false;
     }
     private List<CxResultCsvTemplate> downloadResultsForScan(Scanner scanner, CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
+        log.info("[Checkmarx] Trying to download results for scan {}", codeProject.getName());
         CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
         if (codeProject.getJobId() == null) {
             this.generateReport(scanner, codeProject);
@@ -504,15 +505,17 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
             if (response.getStatusCode().equals(HttpStatus.OK) ) {
                 codeProject.setRunning(false);
                 codeProject.setJobId(null);
-                codeProjectRepository.save(codeProject);
+                codeProjectRepository.saveAndFlush(codeProject);
                 log.info("[Checkmarx] Report for {} is ready to be downloaded", codeProject.getName());
                 return processCsvReport(response.getBody(),codeProject);
+            } else {
+                log.info("[Checkmarx] Got {} during scan downloading {} - message {}", response.getStatusCode(), codeProject.getName(), response.getBody());
             }
         } catch (HttpClientErrorException e){
             log.error("[Checkmarx] Error during downloadig results for scan - {}", e.getStatusCode());
             codeProject.setScanid(null);
         } catch (NullPointerException npe ){
-            log.warn("[Checkmarx] cannot download report for {} - no report Id avaliable", codeProject.getName());
+            log.warn("[Checkmarx] cannot download report for {} - no report Id available", codeProject.getName());
             codeProject.setScanid(null);
         }
         return new ArrayList<>();
