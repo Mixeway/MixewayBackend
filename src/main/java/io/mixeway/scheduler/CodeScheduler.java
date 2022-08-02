@@ -37,7 +37,6 @@ public class CodeScheduler {
 		codeScanService.getResultsForRunningScan();
 	}
 
-	@Transactional
 	@Scheduled(fixedDelay = 60000)
 	public void checkAndRunFromQueue() throws CertificateException, IOException, NoSuchAlgorithmException, KeyManagementException, UnrecoverableKeyException, KeyStoreException {
 		codeScanService.runFromQueue();

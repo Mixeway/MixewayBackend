@@ -183,7 +183,7 @@ public class CodeScanService {
      * Method which is looking for CodeProject and CodeGroup with running = true
      * Verify if scan is done, and if so loads vulnerabilities
      */
-    @Transactional
+   // @Transactional
     public void getResultsForRunningScan() {
         List<Scanner> scanners = getScannerService.findAll();
         Optional<Scanner> sastScanner = getScannerService.getCodeScanners();
