@@ -32,7 +32,7 @@ public class CodeScheduler {
 	public void runScheduledScans() {
 		//codeScanService.schedulerRunAutoScans();
 	}
-	@Scheduled(fixedDelay = 30000)
+	@Scheduled(initialDelay = 60000)
 	public void getVulns() {
 		codeScanService.getResultsForRunningScan();
 	}
