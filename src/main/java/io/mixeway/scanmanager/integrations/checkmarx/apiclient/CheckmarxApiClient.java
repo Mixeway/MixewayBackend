@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -449,7 +450,8 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
         }
         return null;
     }
-    private boolean generateReport(Scanner scanner, CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    boolean generateReport(Scanner scanner, CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
         CodeRequestHelper codeRequestHelper = prepareRestTemplate(scanner);
         try {
             ResponseEntity<CxResponseId> response = codeRequestHelper
@@ -460,7 +462,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
             if (response.getStatusCode().equals(HttpStatus.ACCEPTED) ) {
                 codeProject.setJobId(String.valueOf(Objects.requireNonNull(response.getBody()).getReportId()));
                 codeProjectRepository.saveAndFlush(codeProject);
-                log.info("[Checkmarx] Report generation for {} started", codeProject.getName());
+                log.info("[Checkmarx] Report generation for {} started, jobid {}", codeProject.getName(), codeProject.getJobId());
                 return true;
             }
         } catch (HttpClientErrorException e){
@@ -477,7 +479,6 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
                     .exchange(scanner.getApiUrl() + Constants.CX_GET_REPORT_STATUS_API.replace(Constants.CX_REPORTID,codeProject.getJobId()), HttpMethod.GET,
                             codeRequestHelper.getHttpEntity(),
                             CxReportStatus.class);
-            log.info("[Checkmarx] Report state response: {} - message {} - jobid {}", response.getStatusCode(), new ObjectMapper().writeValueAsString(response.getBody()), codeProject.getJobId() );
             if (response.getStatusCode().equals(HttpStatus.OK) ) {
                 if (response.getBody().getStatus().getValue().equals(Constants.CX_STATUS_CREATED)){
                     log.info("[Checkmarx] Report generation state for {} is {}", codeProject.getName(), response.getBody().getStatus().getValue());
