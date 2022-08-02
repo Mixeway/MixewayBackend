@@ -203,6 +203,7 @@ public class CodeScanService {
                                 log.info("[CodeScan] Automatic integration with BugTracker enabled, proceeding...");
                                 vulnTemplate.processBugTracking(codeProject, vulnTemplate.SOURCE_SOURCECODE);
                             }
+                            vulnTemplate.projectVulnerabilityRepository.deleteByStatus(vulnTemplate.STATUS_REMOVED);
                         } else {
                             log.info("[CodeScan] Scan for {} is still running", codeProject.getName());
                         }
@@ -211,7 +212,7 @@ public class CodeScanService {
                         log.error("[CodeScanService] There is exception of {} during verifying codeproject off {}", e.getLocalizedMessage(), codeProject.getName());
                     }
                 }
-                vulnTemplate.projectVulnerabilityRepository.deleteByStatus(vulnTemplate.STATUS_REMOVED);
+
             }
         }
     }
