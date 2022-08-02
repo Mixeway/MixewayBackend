@@ -184,7 +184,7 @@ public class CodeScanService {
      * Method which is looking for CodeProject and CodeGroup with running = true
      * Verify if scan is done, and if so loads vulnerabilities
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public void getResultsForRunningScan() {
         List<Scanner> scanners = getScannerService.findAll();
         Optional<Scanner> sastScanner = getScannerService.getCodeScanners();
@@ -202,7 +202,7 @@ public class CodeScanService {
                                 log.info("[CodeScan] Automatic integration with BugTracker enabled, proceeding...");
                                 vulnTemplate.processBugTracking(codeProject, vulnTemplate.SOURCE_SOURCECODE);
                             }
-                            vulnTemplate.projectVulnerabilityRepository.deleteByStatus(vulnTemplate.STATUS_REMOVED);
+                            vulnTemplate.projectVulnerabilityRepository.deleteByStatusAndCodeProject(vulnTemplate.STATUS_REMOVED,codeProject);
                         } else {
                             log.info("[CodeScan] Scan for {} is still running", codeProject.getName());
                         }
