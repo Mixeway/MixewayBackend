@@ -134,7 +134,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
             }
             boolean isScanFinished = cxScan.getStatus().getName().equals(Constants.CX_STATUS_FINISHED);
             boolean isReportGenerationStarged = isScanFinished && (StringUtils.isNotBlank(cp.getJobId()) || generateReport(cxSast.get(), cp));
-            boolean isRaportGenerated = isReportGenerationStarged &&checkReportState(cxSast.get(), cp);
+            boolean isRaportGenerated = isReportGenerationStarged && checkReportState(cxSast.get(), cp);
             log.info("[Checkmarx] isScanFinished {}, isReportGenerationStarged {}, isRaportGenerated {}",isScanFinished,isReportGenerationStarged,isRaportGenerated);
             return isScanFinished && isReportGenerationStarged && isRaportGenerated;
         } else
@@ -477,6 +477,7 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
                     .exchange(scanner.getApiUrl() + Constants.CX_GET_REPORT_STATUS_API.replace(Constants.CX_REPORTID,codeProject.getJobId()), HttpMethod.GET,
                             codeRequestHelper.getHttpEntity(),
                             CxReportStatus.class);
+            log.info("[Checkmarx] Report state response: {} - message {}", response.getStatusCode(), new ObjectMapper().writeValueAsString(response.getBody()) );
             if (response.getStatusCode().equals(HttpStatus.OK) ) {
                 if (response.getBody().getStatus().getValue().equals(Constants.CX_STATUS_CREATED)){
                     log.info("[Checkmarx] Report generation state for {} is {}", codeProject.getName(), response.getBody().getStatus().getValue());
