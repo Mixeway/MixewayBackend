@@ -25,6 +25,7 @@ import io.mixeway.utils.Status;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.conn.util.InetAddressUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,7 +58,9 @@ public class OpenscapRestService {
      */
     public ResponseEntity<Status> processReport(MultipartFile file, String ipaddress, Long projectId, Principal principal) throws Exception {
         Optional<Project> project = findProjectService.findProjectById(projectId);
-
+        if (ipaddress.endsWith(".")){
+            ipaddress = StringUtils.chop(ipaddress);
+        }
         // Check if provided IP Address is correct
         //InetAddressValidator validator = InetAddressValidator.getInstance();
         if (!InetAddressUtils.isIPv4Address(ipaddress)) {
