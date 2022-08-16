@@ -47,7 +47,7 @@ class JwtUserDetailsServiceTest {
         User user2 = new User();
         user2.setUsername("jwt_user");
         user2.setPermisions("ROLE_USER");
-        user2.setApiKey("user_key");
+        user2.setApiKey("jwt_user_key");
         userRepository.save(user2);
     }
 
@@ -69,7 +69,7 @@ class JwtUserDetailsServiceTest {
         assertEquals("admin", masterUser.getUsername());
         assertTrue(masterUser.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN")));
 
-        UserDetails user = jwtUserDetailsService.loadUserByApiKeyAndRequestUri("user_key", null);
+        UserDetails user = jwtUserDetailsService.loadUserByApiKeyAndRequestUri("jwt_user_key", null);
         assertEquals("jwt_user", user.getUsername());
         assertTrue(user.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_USER")));
         assertFalse(user.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN")));
