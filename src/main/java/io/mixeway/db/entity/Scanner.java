@@ -89,7 +89,7 @@ public class Scanner {
 	public void setTemplate(String template) {
 		this.template = template;
 	}
-	@Column(name="engineId")
+	@Column(name="engineid")
 	public Integer getEngineId() {
 		return engineId;
 	}
