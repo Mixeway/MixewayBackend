@@ -38,6 +38,7 @@ import org.springframework.social.oauth2.AccessGrant;
 import org.springframework.social.oauth2.OAuth2Operations;
 import org.springframework.social.oauth2.OAuth2Parameters;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.http.Cookie;
@@ -178,7 +179,9 @@ public class AuthService {
                     .userPassword(password.getPassword())
                     .userRole(Constants.ROLE_ADMIN).build();
             getOrCreateUserService.getOrCreateUser(userModel);
-            updateSettingsService.initialize(settings);
+            user = findUserService.findByUsername(Constants.ADMIN_USERNAME);
+            if (user.isPresent() && user.get().getPassword()!=null)
+                updateSettingsService.initialize(settings);
             return new ResponseEntity<>(HttpStatus.OK);
         }
     }
