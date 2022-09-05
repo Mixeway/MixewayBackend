@@ -298,7 +298,7 @@ public class NetworkScanService {
     /**
      * Method which is cheacking for running nessusscan test and then it download results
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public void scheduledCheckStatusAndLoadVulns() {
         try {
             List<InfraScan> nsl = findInfraScanService.getRunning5Scans();

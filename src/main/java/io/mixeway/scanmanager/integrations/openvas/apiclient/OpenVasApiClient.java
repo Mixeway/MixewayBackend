@@ -256,11 +256,12 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 			return false;
 	}
 
-	@Transactional(propagation = Propagation.REQUIRES_NEW)
+	@Transactional
 	void setVulnerabilities(InfraScan ns, String body) throws JSONException  {
 		List<ProjectVulnerability> oldVulns = getProjectVulnerabilititiesByScan(ns);
 		List<ProjectVulnerability> vulnsToPersist = new ArrayList<>();
 		List<Interface> scannerInterfaces = new ArrayList<>();
+		// Set All old vulnerabilities status of removed
 		if (oldVulns.size() > 0) {
 			vulnTemplate.projectVulnerabilityRepository.updateVulnState(oldVulns.stream().map(ProjectVulnerability::getId).collect(Collectors.toList()),
 					vulnTemplate.STATUS_REMOVED.getId());
