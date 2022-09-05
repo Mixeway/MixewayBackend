@@ -256,7 +256,6 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 			return false;
 	}
 
-	@Transactional
 	void setVulnerabilities(InfraScan ns, String body) throws JSONException  {
 		List<ProjectVulnerability> oldVulns = getProjectVulnerabilititiesByScan(ns);
 		List<ProjectVulnerability> vulnsToPersist = new ArrayList<>();
@@ -273,7 +272,7 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 		JSONArray vulns = vuln.getJSONArray(Constants.IF_VULNS);
 		JSONObject v;
 		Interface intfActive;
-		log.info("OpenVas loading {} vulns for {}", vulns.length(),ns.getProject().getName());
+		log.info("[OpenVas] loading {} vulns for {}", vulns.length(),ns.getProject().getName());
 		for (int i = 0; i < vulns.length(); i++) {
 			v = vulns.getJSONObject(i);
 			intfActive = loadInterface(ns,assetsActive,v.getString(Constants.IF_VULN_HOST) );
@@ -295,10 +294,10 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 			}
 
 		}
-		log.info("OpenVAS starting to persist vulns for {}", ns.getProject().getName());
+		log.info("[OpenVAS] starting to persist vulns for {}", ns.getProject().getName());
 		vulnTemplate.vulnerabilityPersistList(oldVulns, vulnsToPersist);
 		scannerInterfaces.forEach(f -> f.setScanRunning(false));
-		log.info("OpenVas finished loading vulns for {}", ns.getProject().getName());
+		log.info("[OpenVas] finished loading vulns for {}", ns.getProject().getName());
 	}
 
 	// TODO: wczytanie interfejsow dla assetu i stremami wyszukanie

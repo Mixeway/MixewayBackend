@@ -310,6 +310,7 @@ public class NetworkScanService {
                             deleteRulsFromRfw(ns);
                             updateInterfaceService.changeRunningState(ns, false, false);
                             updateInterfaceService.updateRiskForInterfaces(ns);
+                            log.info("[NetworkScan] Finished procesing scan for {}", ns.getProject().getName());
                         }
                     }
                     return;
