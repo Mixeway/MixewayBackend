@@ -179,7 +179,7 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 			ResponseEntity<String> response = restTemplate.exchange(infraScan.getNessus().getApiUrl() + "/getreport", HttpMethod.POST, entity, String.class);
 			if (response.getStatusCode() == HttpStatus.OK) {
 				setVulnerabilities(infraScan, response.getBody());
-				vulnTemplate.projectVulnerabilityRepository.deleteByStatus(vulnTemplate.STATUS_REMOVED);
+				vulnTemplate.projectVulnerabilityRepository.deleteByStatusAndProject(vulnTemplate.STATUS_REMOVED, infraScan.getProject());
 				infraScan.setRunning(false);
 				infraScan.setTaskId(null);
 				infraScanRepository.save(infraScan);

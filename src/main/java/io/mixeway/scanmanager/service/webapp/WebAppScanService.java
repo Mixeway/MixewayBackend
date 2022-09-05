@@ -112,7 +112,7 @@ public class WebAppScanService {
                             webAppScanClient.loadVulnerabilities(scanner,app, null, tmpVulns);
                             updateScannerService.decreaseScanNumber(scanner);
                             updateWebAppService.updateRisk(app);
-                            vulnTemplate.projectVulnerabilityRepository.deleteByStatus(vulnTemplate.STATUS_REMOVED);
+                            vulnTemplate.projectVulnerabilityRepository.deleteByStatusAndProject(vulnTemplate.STATUS_REMOVED,app.getProject());
                             break;
                         }
                     }
