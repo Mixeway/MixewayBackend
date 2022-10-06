@@ -30,6 +30,9 @@ public class GetOrCreateInfraScanService {
     public InfraScan create(Map.Entry<NetworkScanClient, Set<Interface>> keyValue, String requestUIDD, Project project, boolean auto){
         Scanner scanner = keyValue.getKey().getScannerFromClient(
                 Objects.requireNonNull(keyValue.getValue().stream().findFirst().orElse(null)).getRoutingDomain());
+        if (scanner == null){
+            throw new NullPointerException("There is no scanner in given domain ");
+        }
         InfraScan scan = new InfraScan();
 
         scan.setInterfaces(keyValue.getValue());

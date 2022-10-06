@@ -97,7 +97,7 @@ public class NetworkScanService {
      * @return HttpStatus.CREATED if scan is started, PREDONDITION_FAILED when exception occured
      */
     public ResponseEntity<Status> createAndRunNetworkScan(NetworkScanRequestModel req, Principal principal) throws Exception {
-        log.info("Infra Scan - Got request for scan from koordynator - system {}, asset no: {}", LogUtil.prepare(req.getProjectName()),  LogUtil.prepare(String.valueOf(req.getIpAddresses().size())));
+        log.info("[NetworkService] - Got request for scan from koordynator - system {}, asset no: {}", LogUtil.prepare(req.getProjectName()),  LogUtil.prepare(String.valueOf(req.getIpAddresses().size())));
         Project project = getOrCreateProjectService.getProject(req, principal);
 
         List<Interface> intfs = updateAssetsAndPrepareInterfacesForScan(req, project);
@@ -111,7 +111,6 @@ public class NetworkScanService {
         try {
             ns = configureAndRunManualScanForScope(project, intfs, false, true);
         } catch (IndexOutOfBoundsException | NullPointerException e){
-            e.printStackTrace();
             return new ResponseEntity<>(new Status("One or more hosts does not have Routing domain or no scanner available in given Routing Domain. Omitting.."),
                     HttpStatus.EXPECTATION_FAILED);
         }
@@ -153,16 +152,12 @@ public class NetworkScanService {
         }
 
         for (Map.Entry<NetworkScanClient, Set<Interface>> keyValue: scannerInterfaceMap.entries()) {
-            try {
-                InfraScan scan = getOrCreateInfraScanService.create(keyValue,requestUIDD,project,false);
-                //keyValue.getKey().runScan(scan);
-                //putRulesOnRfw(scan);
-                updateInterfaceService.changeRunningState(scan, running, inqueue);
-                infraScans.add(scan);
-            } catch (Exception e){
-                e.printStackTrace();
-                log.error("Problem with connection to scanner {}", keyValue.getKey().printInfo());
-            }
+            InfraScan scan = getOrCreateInfraScanService.create(keyValue,requestUIDD,project,false);
+            //keyValue.getKey().runScan(scan);
+            //putRulesOnRfw(scan);
+            updateInterfaceService.changeRunningState(scan, running, inqueue);
+            infraScans.add(scan);
+
         }
         return infraScans;
     }
