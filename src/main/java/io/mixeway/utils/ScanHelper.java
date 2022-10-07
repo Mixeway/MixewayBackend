@@ -22,9 +22,9 @@ import java.util.stream.Collectors;
 @Component
 @Log4j2
 public class ScanHelper {
-    private AssetRepository assetRepository;
-    private InterfaceRepository interfaceRepository;
-    private InfraScanRepository infraScanRepository;
+    private final AssetRepository assetRepository;
+    private final InterfaceRepository interfaceRepository;
+    private final InfraScanRepository infraScanRepository;
 
 
     @Lazy
@@ -82,8 +82,8 @@ public class ScanHelper {
         try {
             for (String ip : interfacesToScan) {
                 if (ip!=null && infraScan.getProject().getAssets() != null) {
-                    Optional<Interface> inter = interfaceRepository.findByAssetInAndPrivateipAndActive(infraScan.getProject().getAssets(), ip, true);
-                    inter.ifPresent(anInterface -> anInterface.setScanRunning(true));
+                    List<Interface> inter = interfaceRepository.findByAssetInAndPrivateipAndActive(infraScan.getProject().getAssets(), ip, true);
+                    inter.forEach(anInterface -> anInterface.setScanRunning(true));
                 }
             }
         } catch (Exception ex) {

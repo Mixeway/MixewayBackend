@@ -4,6 +4,7 @@ import io.mixeway.api.cioperations.service.CiOperationsService;
 import io.mixeway.api.vulnmanage.model.CreateScanManageRequest;
 import io.mixeway.api.vulnmanage.model.SecurityScans;
 import io.mixeway.api.vulnmanage.model.Vulnerabilities;
+import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
 import io.mixeway.domain.service.infrascan.FindInfraScanService;
@@ -11,6 +12,7 @@ import io.mixeway.domain.service.intf.FindInterfaceService;
 import io.mixeway.domain.service.intf.InterfaceOperations;
 import io.mixeway.domain.service.project.FindProjectService;
 import io.mixeway.domain.service.project.GetOrCreateProjectService;
+import io.mixeway.domain.service.routingdomain.CreateOrGetRoutingDomainService;
 import io.mixeway.domain.service.scanmanager.code.CreateOrGetCodeProjectService;
 import io.mixeway.domain.service.scanmanager.code.FindCodeProjectService;
 import io.mixeway.domain.service.vulnmanager.CreateOrGetCisRequirementService;
@@ -58,6 +60,9 @@ class ScanManagerServiceTest {
     private final InfraScanRepository infraScanRepository;
     private final AssetRepository assetRepository;
     private final CiOperationsService ciOperationsService;
+    private final ScannerRepository scannerRepository;
+    private final ScannerTypeRepository scannerTypeRepository;
+    private final CreateOrGetRoutingDomainService createOrGetRoutingDomainService;
 
     @Mock
     Principal principal;
@@ -86,6 +91,12 @@ class ScanManagerServiceTest {
         userToCreate.setCommonName("scan_manage_service");
         userToCreate.setPermisions("ROLE_ADMIN");
         userRepository.save(userToCreate);
+        scannerRepository.deleteAll();
+        Scanner scanner = new Scanner();
+        scanner.setStatus(true);
+        scanner.setRoutingDomain(createOrGetRoutingDomainService.createOrGetRoutingDomain("default"));
+        scanner.setScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_OPENVAS));
+        scannerRepository.save(scanner);
     }
 
     @Test
@@ -141,6 +152,12 @@ class ScanManagerServiceTest {
     void createScanManageRequestNetwork() throws Exception {
         Mockito.when(principal.getName()).thenReturn("scan_manage_service");
         Mockito.when(openVasApiClient.canProcessRequest(Mockito.any(RoutingDomain.class))).thenReturn(true);
+        List<Scanner> scanner = scannerRepository
+                .findByScannerTypeAndRoutingDomain(
+                        scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_OPENVAS),
+                        createOrGetRoutingDomainService.createOrGetRoutingDomain("default")
+                );
+        Mockito.when(openVasApiClient.getScannerFromClient(Mockito.any(RoutingDomain.class))).thenReturn(scanner.get(0));
         List<AssetToCreate> assetToCreates = new ArrayList<>();
         for (int i =0; i<5; i++){
             AssetToCreate assetToCreate = AssetToCreate.builder()

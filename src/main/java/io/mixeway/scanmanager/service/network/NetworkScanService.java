@@ -71,6 +71,7 @@ public class NetworkScanService {
     private final FindInterfaceService findInterfaceService;
     private final UpdateInfraScanService updateInfraScanService;
 
+
     /**
      * Method which is checking running NessusScan entities for particular proejct by externalId
      *
@@ -174,12 +175,13 @@ public class NetworkScanService {
      */
     public Multimap<NetworkScanClient, Set<Interface>> findNessusForInterfaces(Set<Interface> intfs) {
         Multimap<NetworkScanClient, Set<Interface>> scannerInterfaceMap = LinkedHashMultimap.create();
-        List<RoutingDomain> uniqueDomainInProjectAssets = intfs.stream().map(Interface::getRoutingDomain).distinct().collect(Collectors.toList());
-        for (RoutingDomain rd : uniqueDomainInProjectAssets) {
+        List<Long> uniqueDomainInProjectAssetsId = intfs.stream().map(Interface::getRoutingDomain).map(RoutingDomain::getId).distinct().collect(Collectors.toList());
+        for (Long rd : uniqueDomainInProjectAssetsId) {
+            RoutingDomain routingDomain = createOrGetRoutingDomainService.getById(rd);
             for (NetworkScanClient networkScanClient : networkScanClients){
-                if (networkScanClient.canProcessRequest(rd)){
+                if (networkScanClient.canProcessRequest(routingDomain)){
                     log.debug("Got scanner to scan target {}", networkScanClient.printInfo());
-                    scannerInterfaceMap.put(networkScanClient, intfs.stream().filter(i -> i.getRoutingDomain().getId().equals(rd.getId())).collect(Collectors.toSet()));
+                    scannerInterfaceMap.put(networkScanClient, intfs.stream().filter(i -> i.getRoutingDomain().getId().equals(routingDomain.getId())).collect(Collectors.toSet()));
                 }
             }
         }

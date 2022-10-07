@@ -45,7 +45,8 @@ public interface InterfaceRepository extends JpaRepository<Interface, Long>{
 	void deleteInterface();
 	Set<Interface> findByAssetInAndRoutingDomainAndActive(Set<Asset> assets, RoutingDomain routingDomain, Boolean active);
 	Optional<Interface> findByAssetInAndPrivateip(Set<Asset> assets, String privateip);
-	Optional<Interface> findByAssetInAndPrivateipAndActive(Set<Asset> assets, String privateip, Boolean active);
+	//Optional<Interface> findByAssetInAndPrivateipAndActive(Set<Asset> assets, String privateip, Boolean active);
+	List<Interface> findByAssetInAndPrivateipAndActive(Set<Asset> assets, String privateip, Boolean active);
 	@Query(value = "select * from interface where privateip ilike %?1% limit 100", nativeQuery = true)
 	List<Interface> searchForIp(@Param("ip") String ip);
 	@Modifying

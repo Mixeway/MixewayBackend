@@ -109,7 +109,12 @@ class NetworkScanServiceTest {
         Mockito.when(principal.getName()).thenReturn("admin_network_scan_service");
         Mockito.when(openVasApiClient.canProcessRequest(Mockito.any(RoutingDomain.class))).thenReturn(true);
         Mockito.when(openVasApiClient.runScan(Mockito.any(InfraScan.class))).thenReturn(true);
-
+        List<Scanner> scanner = scannerRepository
+                .findByScannerTypeAndRoutingDomain(
+                        scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_OPENVAS),
+                        createOrGetRoutingDomainService.createOrGetRoutingDomain("default")
+                );
+        Mockito.when(openVasApiClient.getScannerFromClient(Mockito.any(RoutingDomain.class))).thenReturn(scanner.get(0));
         List<AssetToCreate> assetToCreates = new ArrayList<>();
         for (int i=0 ; i<10; i++){
             assetToCreates.add(AssetToCreate.builder()
@@ -138,6 +143,12 @@ class NetworkScanServiceTest {
     void configureAndRunManualScanForScope() throws Exception {
         Mockito.when(principal.getName()).thenReturn("admin_network_scan_service");
         Mockito.when(openVasApiClient.canProcessRequest(Mockito.any(RoutingDomain.class))).thenReturn(true);
+        List<Scanner> scanner = scannerRepository
+                .findByScannerTypeAndRoutingDomain(
+                        scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_OPENVAS),
+                        createOrGetRoutingDomainService.createOrGetRoutingDomain("default")
+                );
+        Mockito.when(openVasApiClient.getScannerFromClient(Mockito.any(RoutingDomain.class))).thenReturn(scanner.get(0));
         Project project = getOrCreateProjectService.getProjectId("network_scan_service7","network_scan_service7",principal);
         List<Interface> interfaces = new ArrayList<>();
         for(int i=0; i<10; i++){
@@ -221,6 +232,12 @@ class NetworkScanServiceTest {
     @Test
     void scheduledRunScans() throws Exception {
         Mockito.when(principal.getName()).thenReturn("admin_network_scan_service");
+        List<Scanner> scanner = scannerRepository
+                .findByScannerTypeAndRoutingDomain(
+                        scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_OPENVAS),
+                        createOrGetRoutingDomainService.createOrGetRoutingDomain("default")
+                );
+        Mockito.when(openVasApiClient.getScannerFromClient(Mockito.any(RoutingDomain.class))).thenReturn(scanner.get(0));
         Project project = getOrCreateProjectService.getProjectId("network_scan_service5","network_scan_servic5",principal);
         updateProjectService.enableInfraAutoScan(project);
         for(int i=0; i<10; i++){

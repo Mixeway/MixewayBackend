@@ -2,8 +2,11 @@ package io.mixeway.api.project.service;
 
 import io.mixeway.api.project.model.AssetCard;
 import io.mixeway.api.project.model.AssetPutModel;
+import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.InterfaceRepository;
+import io.mixeway.db.repository.ScannerRepository;
+import io.mixeway.db.repository.ScannerTypeRepository;
 import io.mixeway.db.repository.UserRepository;
 import io.mixeway.domain.service.project.GetOrCreateProjectService;
 import io.mixeway.domain.service.routingdomain.CreateOrGetRoutingDomainService;
@@ -50,6 +53,8 @@ class AssetServiceTest {
     private final CreateOrGetVulnerabilityService createOrGetVulnerabilityService;
     private final VulnTemplate vulnTemplate;
     private final InterfaceRepository interfaceRepository;
+    private final ScannerRepository scannerRepository;
+    private final ScannerTypeRepository scannerTypeRepository;
 
     @MockBean
     OpenVasApiClient openVasApiClient;
@@ -78,6 +83,12 @@ class AssetServiceTest {
         userToCreate.setPermisions("ROLE_ADMIN");
         userRepository.save(userToCreate);
         Project project = getOrCreateProjectService.getProjectId("asset_service","asset_service",principal);
+        scannerRepository.deleteAll();
+        Scanner scanner = new Scanner();
+        scanner.setStatus(true);
+        scanner.setRoutingDomain(createOrGetRoutingDomainService.createOrGetRoutingDomain("default"));
+        scanner.setScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_OPENVAS));
+        scannerRepository.save(scanner);
     }
 
 
@@ -114,6 +125,12 @@ class AssetServiceTest {
     void runScanForAssets() throws Exception {
         Mockito.when(principal.getName()).thenReturn("asset_service");
         Mockito.when(openVasApiClient.canProcessRequest(Mockito.any(RoutingDomain.class))).thenReturn(true);
+        List<Scanner> scanner = scannerRepository
+                .findByScannerTypeAndRoutingDomain(
+                        scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_OPENVAS),
+                        createOrGetRoutingDomainService.createOrGetRoutingDomain("default")
+                );
+        Mockito.when(openVasApiClient.getScannerFromClient(Mockito.any(RoutingDomain.class))).thenReturn(scanner.get(0));
         Project project = getOrCreateProjectService.getProjectId("asset_service","asset_service",principal);
         List<RunScanForAssets> runScanForAssets = new ArrayList<>();
         for (Asset asset: project.getAssets()){
@@ -134,6 +151,12 @@ class AssetServiceTest {
     void runAllAssetScan() throws Exception {
         Mockito.when(principal.getName()).thenReturn("asset_service");
         Mockito.when(openVasApiClient.canProcessRequest(Mockito.any(RoutingDomain.class))).thenReturn(true);
+        List<Scanner> scanner = scannerRepository
+                .findByScannerTypeAndRoutingDomain(
+                        scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_OPENVAS),
+                        createOrGetRoutingDomainService.createOrGetRoutingDomain("default")
+                );
+        Mockito.when(openVasApiClient.getScannerFromClient(Mockito.any(RoutingDomain.class))).thenReturn(scanner.get(0));
         Project project = getOrCreateProjectService.getProjectId("asset_service","asset_service",principal);
         ResponseEntity<Status> statusResponseEntity = assetService.runAllAssetScan(project.getId(),principal);
         assertEquals(HttpStatus.CREATED, statusResponseEntity.getStatusCode());
@@ -149,6 +172,12 @@ class AssetServiceTest {
     void runSingleAssetScan() throws Exception {
         Mockito.when(principal.getName()).thenReturn("asset_service");
         Mockito.when(openVasApiClient.canProcessRequest(Mockito.any(RoutingDomain.class))).thenReturn(true);
+        List<Scanner> scanner = scannerRepository
+                .findByScannerTypeAndRoutingDomain(
+                        scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_OPENVAS),
+                        createOrGetRoutingDomainService.createOrGetRoutingDomain("default")
+                );
+        Mockito.when(openVasApiClient.getScannerFromClient(Mockito.any(RoutingDomain.class))).thenReturn(scanner.get(0));
         Project project = getOrCreateProjectService.getProjectId("asset_service","asset_service",principal);
         Interface anInterface = project.getAssets().stream().findFirst().get().getInterfaces().stream().findFirst().get();
         anInterface.setScanRunning(false);

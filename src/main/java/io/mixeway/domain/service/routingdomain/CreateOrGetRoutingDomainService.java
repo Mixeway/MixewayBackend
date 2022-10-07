@@ -25,4 +25,7 @@ public class CreateOrGetRoutingDomainService {
             return routingDomainRepository.save(routingDomain);
         }
     }
+    public RoutingDomain getById (Long id) {
+        return routingDomainRepository.findById(id).orElse(null);
+    }
 }
