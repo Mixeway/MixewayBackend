@@ -1187,3 +1187,7 @@ drop table codegroup;
 --changeset siewer:fix_code_project_status
 update codeproject set running=false where running is null;
 update codeproject set inqueue=false where inqueue is null;
+
+--changeset siewer:add_columns_to_nessusscan
+alter table nessusscan add column inserted text;
+alter table nessusscan add column updated text;

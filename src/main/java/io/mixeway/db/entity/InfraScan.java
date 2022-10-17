@@ -1,20 +1,11 @@
 package io.mixeway.db.entity;
 
+import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
 import java.util.Set;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EntityListeners;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
@@ -49,6 +40,27 @@ public class InfraScan {
 	private int retries;
 	private Boolean inQueue;
 
+	private String inserted;
+	private String updated;
+
+
+	@Column(name="inserted")
+	public String getInserted() {
+		return inserted;
+	}
+
+	public void setInserted(String inserted) {
+		this.inserted = inserted;
+	}
+
+	@Column(name="updated")
+	public String getUpdated() {
+		return updated;
+	}
+
+	public void setUpdated(String updated) {
+		this.updated = updated;
+	}
 
 	public Boolean getAutomatic() {
 		return isAutomatic;
@@ -206,5 +218,16 @@ public class InfraScan {
 
 	public void setInQueue(Boolean inQueue) {
 		this.inQueue = inQueue;
+	}
+
+	@PrePersist
+	public void setInsertedDate() {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		this.inserted = sdf.format(new Date());
+	}
+	@PreUpdate
+	public void setUpdatedDate() {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		this.updated = sdf.format(new Date());
 	}
 }
