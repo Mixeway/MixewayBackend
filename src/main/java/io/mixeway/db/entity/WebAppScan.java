@@ -1,15 +1,6 @@
 package io.mixeway.db.entity;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EntityListeners;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
@@ -18,12 +9,14 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 @Entity
 @EntityScan
 @Table(name = "webappscan")
 @EntityListeners(AuditingEntityListener.class)
 public class WebAppScan {
-	
 	private Long id;
 	private Project project;
 	private Scanner scanner;
@@ -31,6 +24,31 @@ public class WebAppScan {
 	private String scanId;
 	private String type;
 	private WebApp webApp;
+	private String inserted;
+	private String updated;
+
+	public WebAppScan(WebApp webApp){
+		this.webApp = webApp;
+	}
+
+	@Column(name = "inserted")
+	public String getInserted() {
+		return inserted;
+	}
+
+	public void setInserted(String inserted) {
+		this.inserted = inserted;
+	}
+
+	@Column(name = "updated")
+	public String getUpdated() {
+		return updated;
+	}
+
+	public void setUpdated(String updated) {
+		this.updated = updated;
+	}
+
 	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
 	public Long getId() {
@@ -89,7 +107,17 @@ public class WebAppScan {
 	public void setProject(Project project) {
 		this.project = project;
 	}
-	
-	
+
+	@PrePersist
+	public void setInsertedDate() {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		this.inserted = sdf.format(new Date());
+	}
+	@PreUpdate
+	public void setUpdatedDate() {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		this.updated = sdf.format(new Date());
+	}
+
 
 }

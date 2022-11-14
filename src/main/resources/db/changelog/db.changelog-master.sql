@@ -1191,3 +1191,8 @@ update codeproject set inqueue=false where inqueue is null;
 --changeset siewer:add_columns_to_nessusscan
 alter table nessusscan add column inserted text;
 alter table nessusscan add column updated text;
+
+--changeset siewer:add_webapp_and_code_scan_entity
+alter table codescan add column updated text;
+alter table webappscan add column inserted text;
+alter table webappscan add column updated text;

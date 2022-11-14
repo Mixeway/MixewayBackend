@@ -196,6 +196,7 @@ public class CodeScanService {
                     try {
                         if (codeScanClient.canProcessRequest(sastScanner.get()) && codeScanClient.isScanDone(codeProject)) {
                             codeScanClient.loadVulnerabilities(sastScanner.get(), null, true, codeProject, codeVulns);
+                            // TODO: end codescan
                             updateCiOperations.updateCiOperationsForSAST(codeProject);
                             updateCodeProjectService.endScan(codeProject);
                             if (codeProject.getEnableJira()) {
@@ -233,6 +234,7 @@ public class CodeScanService {
                                 log.info("[CodeScan] Starting scan form queue [scope {}] {}", cp.getName(), cp.getName());
                                 cp = updateCodeProjectService.removeFromQueueAndStart(cp);
                                 codeScanClient.runScan( cp);
+                                // TODO: create codescan
                             }
                         }
                     }
@@ -263,6 +265,7 @@ public class CodeScanService {
             for(CodeScanClient codeScanClient : codeScanClients){
                 if (codeScanClient.canProcessRequest(sastRequestVerify.getCp())){
                     if (codeScanClient.runScan(sastRequestVerify.getCp())){
+                        // TODO: Create codescan
                         return new ResponseEntity<>(new Status("OK"), HttpStatus.CREATED);
                     } else {
                         return new ResponseEntity<>(new Status("Queued"), HttpStatus.CREATED);
@@ -318,6 +321,7 @@ public class CodeScanService {
                         for(CodeScanClient codeScanClient : codeScanClients){
                             if (codeScanClient.canProcessRequest(codeProject.get())){
                                 codeScanClient.runScan( codeProject.get());
+                                // TODO: create codescan
                                 break;
                             }
                         }

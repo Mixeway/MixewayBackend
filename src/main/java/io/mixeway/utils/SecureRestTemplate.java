@@ -173,6 +173,48 @@ public class SecureRestTemplate {
         return restTemplate;
     }
 
+    public RestTemplate noVerificationClientWithCert(Scanner scanner) throws KeyStoreException, NoSuchAlgorithmException, KeyManagementException, IOException, CertificateException, UnrecoverableKeyException {
+        TrustStrategy acceptingTrustStrategy = (X509Certificate[] chain, String authType) -> true;
+        KeyStore clientStore = KeyStore.getInstance("PKCS12");
+        clientStore.load(new FileInputStream(keyStorePath), keyStorePassword.toCharArray());
+        KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+        kmf.init(clientStore, keyStorePassword.toCharArray());
+        KeyManager[] kms = kmf.getKeyManagers();
+
+        KeyStore trustStore = KeyStore.getInstance("JKS");
+        trustStore.load(new FileInputStream(trustStorePath), trustStorePassword.toCharArray());
+
+        TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        tmf.init(trustStore);
+        TrustManager[] tms = tmf.getTrustManagers();
+
+        SSLContext sslContext = null;
+        sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(kms, tms, new SecureRandom());
+
+        HttpClient httpClient;
+
+        if (scanner != null && scanner.getProxies() !=null) {
+            httpClient = HttpClients.custom()
+                    .setProxy(new HttpHost(scanner.getProxies().getIp(), Integer.parseInt(scanner.getProxies().getPort())))
+                    .setSSLContext(sslContext)
+                    .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE)
+                    .build();
+        } else {
+            httpClient = HttpClients.custom()
+                    .setSSLContext(sslContext)
+                    .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE)
+                    .build();
+        }
+        HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory() ;
+        requestFactory.setConnectionRequestTimeout(200000);
+        requestFactory.setConnectTimeout(200000);
+        requestFactory.setReadTimeout(200000);
+        requestFactory.setHttpClient(httpClient);
+        RestTemplate restTemplate = new RestTemplate(requestFactory);
+        return restTemplate;
+    }
+
     public ResponseEntity<Object> executeRequest(RestTemplate restTemplate, HttpMethod method, String url, HttpEntity<Object> entity, Class c){
         ResponseEntity<Object> response = restTemplate.exchange(url,method, entity, c);
         return response;
