@@ -37,6 +37,4 @@ public interface ProjectRepository extends JpaRepository<Project, Long>{
 	@Query(value = "select p from Project p where exists (select 1 from ProjectVulnerability pv where pv.project=p and pv.codeProject is not null)")
 	List<Project> getProjectsWithoutCodeVulns();
 
-	@Query(value = "")
-	List<Project> getProjectWithR
 }
