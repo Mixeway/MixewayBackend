@@ -265,6 +265,6 @@ class NetworkScanServiceTest {
         project = getOrCreateProjectService.getProjectId("network_scan_service6","network_scan_servic6",principal);
         networkScanService.verifyInteraceState();
         List<Interface> interfaces = interfaceRepository.findByAssetIn(new ArrayList<>(project.getAssets()));
-        interfaces.stream().map(Interface::isScanRunning).forEach(Assertions::assertTrue);
+        interfaces.stream().map(Interface::isScanRunning).forEach(Assertions::assertFalse);
     }
 }
