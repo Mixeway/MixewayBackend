@@ -34,4 +34,5 @@ public interface InfraScanRepository extends JpaRepository<InfraScan, Long>{
 	Long countByInQueue(Boolean inQueue);
 	Long countByRunning(Boolean running);
 	List<InfraScan> findByInQueue(Boolean inQueue);
+	List<InfraScan> findByRunningOrInQueue(Boolean inQueue, Boolean running);
 }

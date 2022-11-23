@@ -1,7 +1,9 @@
 package io.mixeway.scheduler;
 
 import io.mixeway.db.entity.*;
+import io.mixeway.domain.service.infrascan.FindInfraScanService;
 import io.mixeway.domain.service.intf.InterfaceOperations;
+import io.mixeway.domain.service.intf.UpdateInterfaceService;
 import io.mixeway.domain.service.project.FindProjectService;
 import io.mixeway.domain.service.project.UpdateProjectService;
 import io.mixeway.domain.service.scanmanager.code.FindCodeProjectService;
@@ -32,6 +34,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 @Transactional
@@ -50,6 +53,8 @@ public class GlobalScheduler {
     private final UpdateCodeProjectService updateCodeProjectService;
     private final GetSettingsService getSettingsService;
     private final FindVulnHistoryService findVulnHistoryService;
+    private final FindInfraScanService findInfraScanService;
+    private final UpdateInterfaceService updateInterfaceService;
 
     private DOPMailTemplateBuilder templateBuilder = new DOPMailTemplateBuilder();
     private List<String> severities = new ArrayList<String>(){{
@@ -285,5 +290,21 @@ public class GlobalScheduler {
            throw new Exception("Cannot create Trend Email not enough data");
        }
        return vulns;
+    }
+    /**
+     * Interval: 15min
+     *
+     * Deactivate scan on interfaces that have runningscan=true
+     */
+    @Scheduled(initialDelay=3000,fixedDelay = 1500000)
+    public void deactivateScanRunning() {
+        List<Project> projects = findProjectService.findProjectWithInterfaceWithScanRunning();
+
+        for(Project project: projects){
+            if (findInfraScanService.hasProjectNoInfraScanRunning(project)){
+                log.info("[Cleaning service] Project {} has no running infra scan but have interface with runningscan=true, deactivating it", project.getName());
+                updateInterfaceService.clearState(project);
+            }
+        }
     }
 }

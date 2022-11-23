@@ -50,4 +50,7 @@ public class FindInfraScanService {
     }
 
     public List<InfraScan> findByProject(Project project) { return infraScanRepository.findByProject(project);}
+    public List<InfraScan> findByRunningOrInQueue(Boolean running, Boolean inqueue){
+        return infraScanRepository.findByRunningOrInQueue(inqueue,running);
+    }
 }
