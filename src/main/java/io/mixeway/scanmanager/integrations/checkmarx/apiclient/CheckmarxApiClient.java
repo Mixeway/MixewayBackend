@@ -123,20 +123,28 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
     @Override
     public boolean isScanDone( CodeProject cp) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, ParseException, JSONException {
         Optional<Scanner> cxSast = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_CHECKMARX)).stream().findFirst();
-        if (cxSast.isPresent()) {
-            CxScan cxScan = getScanInfo(cxSast.get(), cp);
-            if (cxScan.getStatus().getName().equals(Constants.CX_STATUS_FAILED)){
-                cp.setRunning(false);
-                codeProjectRepository.saveAndFlush(cp);
-                log.warn("[Checkmarx] Scan for {} Failed, ending..", cp.getName());
+        try {
+            if (cxSast.isPresent()) {
+                CxScan cxScan = getScanInfo(cxSast.get(), cp);
+                if (cxScan.getStatus().getName().equals(Constants.CX_STATUS_FAILED)) {
+                    cp.setRunning(false);
+                    codeProjectRepository.saveAndFlush(cp);
+                    log.warn("[Checkmarx] Scan for {} Failed, ending..", cp.getName());
+                    return false;
+                }
+                boolean isScanFinished = cxScan.getStatus().getName().equals(Constants.CX_STATUS_FINISHED);
+                boolean isReportGenerationStarged = isScanFinished && (StringUtils.isNotBlank(cp.getJobId()) || generateReport(cxSast.get(), cp));
+                boolean isRaportGenerated = isReportGenerationStarged && checkReportState(cxSast.get(), cp);
+                return isScanFinished && isReportGenerationStarged && isRaportGenerated;
+            } else
                 return false;
-            }
-            boolean isScanFinished = cxScan.getStatus().getName().equals(Constants.CX_STATUS_FINISHED);
-            boolean isReportGenerationStarged = isScanFinished && (StringUtils.isNotBlank(cp.getJobId()) || generateReport(cxSast.get(), cp));
-            boolean isRaportGenerated = isReportGenerationStarged && checkReportState(cxSast.get(), cp);
-            return isScanFinished && isReportGenerationStarged && isRaportGenerated;
-        } else
-            return false;
+        } catch (NullPointerException e){
+            log.warn("[Checkmarx] Nullpointer Exception during checking scan for {} deactivating it",cp.getName());
+            cp.setRunning(false);
+            cp.setJobId(null);
+            codeProjectRepository.saveAndFlush(cp);
+        }
+        return false;
     }
 
     @Override
