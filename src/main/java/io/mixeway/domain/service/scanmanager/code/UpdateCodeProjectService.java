@@ -112,4 +112,10 @@ public class UpdateCodeProjectService {
             codeProjectRepository.saveAndFlush(cp);
         }
     }
+
+    public void updateOpenSourceSettings(CodeProject codeProject, String remoteId, String remoteName){
+        codeProject.setdTrackUuid(remoteId);
+        codeProject.setRemotename(remoteName);
+        codeProjectRepository.save(codeProject);
+    }
 }

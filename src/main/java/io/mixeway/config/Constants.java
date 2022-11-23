@@ -194,6 +194,7 @@ public class Constants {
     public static final String SCANNER_TYPE_DEPENDENCYTRACK = "OWASP Dependency Track";
     public static final String DTRACK_AUTH_HEADER = "X-Api-Key";
     public static final String SCANNER_TYPE_CHECKMARX = "Checkmarx";
+    public static final String SCANNER_TYPE_NEXUS_IQ = "Nexus-IQ";
 
     //Checmkarx
 	public static final String CHECKMARX_LOGIN_FORM_USERNAME = "username";

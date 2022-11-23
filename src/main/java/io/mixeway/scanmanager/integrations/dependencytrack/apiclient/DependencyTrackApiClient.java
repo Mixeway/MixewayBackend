@@ -177,6 +177,11 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
         return null;
     }
 
+    @Override
+    public void autoDiscovery() {
+
+    }
+
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void createVulns(CodeProject codeProject, List<DTrackVuln> body) throws URISyntaxException {
         List<ProjectVulnerability> oldVulns = vulnTemplate.projectVulnerabilityRepository

@@ -24,6 +24,10 @@ public class FindScannerService {
         return scannerRepository.findAll();
     }
 
+    public Scanner getById(long id){
+        return scannerRepository.getOne(id);
+    }
+
     public Optional<Scanner> findById(long id){
         return scannerRepository.findById(id);
     }
