@@ -96,7 +96,10 @@ public class InterfaceOperations {
             inf.setRoutingDomain(asset.getRoutingDomain());
             interfaces.add(interfaceRepository.saveAndFlush(inf));
         } else {
-            interfaces.add(interfaceRepository.findByAssetInAndPrivateip(asset.getProject().getAssets(),ip).get());
+            Interface interfaceToScan = interfaceRepository.findByAssetInAndPrivateip(asset.getProject().getAssets(),ip).get();
+            interfaceToScan.setRoutingDomain(asset.getRoutingDomain());
+            interfaceRepository.save(interfaceToScan);
+            interfaces.add(interfaceToScan);
         }
     }
 
