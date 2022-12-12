@@ -36,6 +36,7 @@ public class CreateProjectService {
     public Project createAndReturnProject(String projectName, String ciid, Principal principal) {
         Project project = new Project();
         project.setName(projectName);
+        project.setEnableVulnManage(false);
         project.setCiid(ciid);
         project.setOwner(permissionFactory.getUserFromPrincipal(principal));
         project = projectRepository.saveAndFlush(project);
