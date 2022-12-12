@@ -132,12 +132,16 @@ public class NexusIqApiClient implements SecurityScanner, OpenSourceScanClient {
 
     @Override
     public boolean canProcessRequest() {
-        return false;
+        Scanner scanner = getScannerService.getScannerByType(findScannerTypeService.findByName(Constants.SCANNER_TYPE_NEXUS_IQ));
+        return scanner !=null;
     }
 
     @Override
     public void loadVulnerabilities(CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+        Scanner scanner = getScannerService.getScannerByType(findScannerTypeService.findByName(Constants.SCANNER_TYPE_NEXUS_IQ));
+        if (scanner!=null) {
 
+        }
     }
 
     @Override
@@ -147,6 +151,20 @@ public class NexusIqApiClient implements SecurityScanner, OpenSourceScanClient {
 
     @Override
     public List<Projects> getProjects() throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+        Scanner scanner = getScannerService.getScannerByType(findScannerTypeService.findByName(Constants.SCANNER_TYPE_NEXUS_IQ));
+        List<Projects> projects = new ArrayList<>();
+        if (scanner!=null) {
+            List<Synchro> synchroList = loadNexusData(scanner);
+            for(Synchro synchro : synchroList){
+                projects.add(
+                        Projects.builder()
+                        .name(synchro.getName())
+                        .uuid(synchro.getId())
+                        .build()
+                );
+            }
+            return projects;
+        }
         return null;
     }
 
