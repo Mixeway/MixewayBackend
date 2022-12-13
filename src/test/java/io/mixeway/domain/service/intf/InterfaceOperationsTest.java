@@ -6,6 +6,7 @@ import io.mixeway.db.entity.Project;
 import io.mixeway.db.entity.User;
 import io.mixeway.db.repository.InterfaceRepository;
 import io.mixeway.db.repository.UserRepository;
+import io.mixeway.domain.exceptions.ScanException;
 import io.mixeway.domain.service.asset.GetOrCreateAssetService;
 import io.mixeway.domain.service.project.GetOrCreateProjectService;
 import io.mixeway.domain.service.routingdomain.CreateOrGetRoutingDomainService;
@@ -69,7 +70,7 @@ class InterfaceOperationsTest {
     }
 
     @Test
-    void createInterfacesForModel() {
+    void createInterfacesForModel() throws ScanException {
 
         Mockito.when(principal.getName()).thenReturn("interface_operations");
         Project project = getOrCreateProjectService.getProjectId("interface_operations3","interface_operations3",principal);
@@ -93,7 +94,7 @@ class InterfaceOperationsTest {
     }
 
     @Test
-    void verifyInterfacesBeforeScan() {
+    void verifyInterfacesBeforeScan() throws ScanException {
         Mockito.when(principal.getName()).thenReturn("interface_operations");
         Project project = getOrCreateProjectService.getProjectId("interface_operations5","interface_operations5",principal);
         Asset asset = getOrCreateAssetService.getOrCreateAsset("test5",createOrGetRoutingDomainService.createOrGetRoutingDomain("default"), project);

@@ -6,6 +6,7 @@ import io.mixeway.db.repository.AssetRepository;
 import io.mixeway.db.repository.InfraScanRepository;
 import io.mixeway.db.repository.InterfaceRepository;
 import io.mixeway.db.repository.ProjectRepository;
+import io.mixeway.domain.exceptions.ScanException;
 import io.mixeway.domain.service.asset.GetOrCreateAssetService;
 import io.mixeway.utils.IpAddressUtils;
 import io.mixeway.utils.ProjectRiskAnalyzer;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -68,7 +70,7 @@ public class InterfaceOperations {
             return true;
     }
 
-    public List<Interface> createInterfacesForModel(Asset asset, RoutingDomain routingDomain, String ips) {
+    public List<Interface> createInterfacesForModel(Asset asset, RoutingDomain routingDomain, String ips) throws ScanException {
         List<Interface> interfaces = new ArrayList<>();
         for(String ip : ips.trim().split(",")){
             if (IpAddressUtils.validate(ip) ){
@@ -86,7 +88,7 @@ public class InterfaceOperations {
         return interfaces;
     }
 
-    private void checkAndCreateInterface(Asset asset, List<Interface> interfaces, String ip) {
+    private void checkAndCreateInterface(Asset asset, List<Interface> interfaces, String ip) throws ScanException {
         if (canCreateInterfaceForAsset(asset, ip)) {
             Interface inf = new Interface();
             inf.setActive(true);
@@ -97,6 +99,14 @@ public class InterfaceOperations {
             interfaces.add(interfaceRepository.saveAndFlush(inf));
         } else {
             Interface interfaceToScan = interfaceRepository.findByAssetInAndPrivateip(asset.getProject().getAssets(),ip).get();
+            if (!Objects.equals(interfaceToScan.getRoutingDomain().getId(), asset.getRoutingDomain().getId()) && interfaceToScan.isScanRunning()){
+                StringBuilder exceptionText = new StringBuilder();
+                exceptionText
+                        .append("Trying to change RoutingDomain for asset ")
+                        .append(interfaceToScan.getPrivateip())
+                        .append(" which is in running state. Scan will not be requested.");
+                throw new ScanException(exceptionText.toString());
+            }
             interfaceToScan.setRoutingDomain(asset.getRoutingDomain());
             interfaceRepository.save(interfaceToScan);
             interfaces.add(interfaceToScan);
