@@ -6,6 +6,7 @@ import io.mixeway.api.project.model.VulnAuditorSettings;
 import io.mixeway.db.entity.CodeProject;
 import io.mixeway.db.entity.Project;
 import io.mixeway.db.repository.ProjectRepository;
+import io.mixeway.scanmanager.model.NetworkScanRequestModel;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.jpa.repository.Modifying;
@@ -27,6 +28,15 @@ public class UpdateProjectService {
         project.setDescription(projectObject.getDescription());
         project.setCiid(projectObject.getCiid());
         project.setEnableVulnManage(projectObject.getEnableVulnManage() == 1);
+        projectRepository.save(project);
+    }
+
+    public void updateWithRequest(NetworkScanRequestModel req, Project project){
+        if (req.getEnableVulnManage().isPresent()) {
+            req.getEnableVulnManage().get();
+            project.setEnableVulnManage(req.getEnableVulnManage().get());
+        }
+        project.setName(req.getProjectName());
         projectRepository.save(project);
     }
 

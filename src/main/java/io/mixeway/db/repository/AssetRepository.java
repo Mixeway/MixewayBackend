@@ -55,4 +55,7 @@ public interface AssetRepository extends JpaRepository<Asset,Long> {
 	@Modifying
 	@Query(value = "update Asset a set a.active=:status where a.project=:project")
     void updateStatusOfAssetByProject(@Param("project") Project project,@Param("status") boolean status);
+
+	@Query(value= "select a from Asset a, Interface i where a.project.id=?1 and i.asset=a and i.privateip=?2")
+	Optional<Asset> findAssetByProjectAndPrivateIp(Long projectid, String privateip);
 }

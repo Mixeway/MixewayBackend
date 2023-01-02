@@ -24,8 +24,12 @@ public class GetOrCreateAssetService {
 
 
     public Asset getOrCreateAsset(AssetToCreate atc, Project project, String origin) {
-        Optional<Asset> asset = assetRepository.findByProjectAndName(project,atc.getHostname() != null ? atc.getHostname() : atc.getIp());
+        //Optional<Asset> asset = assetRepository.findByProjectAndName(project,atc.getHostname() != null ? atc.getHostname() : atc.getIp());
+        Optional<Asset> asset = assetRepository.findAssetByProjectAndPrivateIp(project.getId(), atc.getIp());
         if (asset.isPresent()) {
+            Asset a = asset.get();
+            a.setName(atc.getHostname() != null ? atc.getHostname() : atc.getIp());
+            a.setRoutingDomain(createOrGetRoutingDomainService.createOrGetRoutingDomain(atc.getRoutingDomain()));
             return asset.get();
         } else {
             Asset a = new Asset();

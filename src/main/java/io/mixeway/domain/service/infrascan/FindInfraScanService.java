@@ -32,7 +32,6 @@ public class FindInfraScanService {
 
     public boolean hasProjectNoInfraScanRunning(Project project){
         List<InfraScan> infraScans = infraScanRepository.getInfraScansRunningOrInQueueByProject(project.getId());
-        //long runningScanOrInQueue = infraScans.stream().filter(InfraScan::getInQueue).count();
         return infraScans.size() == 0;
     }
 

@@ -5,6 +5,7 @@ import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.*;
+import io.mixeway.domain.exceptions.ScanException;
 import io.mixeway.domain.service.asset.GetOrCreateAssetService;
 import io.mixeway.domain.service.intf.InterfaceOperations;
 import io.mixeway.domain.service.project.GetOrCreateProjectService;
@@ -185,7 +186,7 @@ class NetworkScanServiceTest {
     }
 
     @Test
-    void updateAssetsAndPrepareInterfacesForScan() {
+    void updateAssetsAndPrepareInterfacesForScan() throws ScanException {
         Mockito.when(principal.getName()).thenReturn("admin_network_scan_service");
         Project project = getOrCreateProjectService.getProjectId("network_scan_service3","network_scan_service3",principal);
         List<AssetToCreate> assetToCreates = new ArrayList<>();

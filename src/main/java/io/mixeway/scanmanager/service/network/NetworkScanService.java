@@ -5,6 +5,7 @@ import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
+import io.mixeway.domain.exceptions.ScanException;
 import io.mixeway.domain.service.asset.GetOrCreateAssetService;
 import io.mixeway.domain.service.infrascan.FindInfraScanService;
 import io.mixeway.domain.service.infrascan.GetOrCreateInfraScanService;
@@ -97,31 +98,44 @@ public class NetworkScanService {
      * @param req NetworkScanRequestModel which contain information about object to be sacn
      * @return HttpStatus.CREATED if scan is started, PREDONDITION_FAILED when exception occured
      */
-    public ResponseEntity<Status> createAndRunNetworkScan(NetworkScanRequestModel req, Principal principal) throws Exception {
-        log.info("[NetworkService] - Got request for scan from koordynator - system {}, asset no: {}", LogUtil.prepare(req.getProjectName()),  LogUtil.prepare(String.valueOf(req.getIpAddresses().size())));
-        Project project = getOrCreateProjectService.getProject(req, principal);
-
-        List<Interface> intfs = updateAssetsAndPrepareInterfacesForScan(req, project);
-        //GET RUNNING MANUAL SCANS AND CHECK IF INTERFACE ON LIST
-        if (interfaceOperations.verifyInterfacesBeforeScan(intfs))
-            return new ResponseEntity<>(new Status("Request containts IP with running test. Omitting.."),
-                    HttpStatus.EXPECTATION_FAILED);
-
-        //CONFIGURE MANUAL SCAN
-        List<InfraScan> ns;
+    public ResponseEntity<Status> createAndRunNetworkScan(NetworkScanRequestModel req, Principal principal)  {
         try {
-            ns = configureAndRunManualScanForScope(project, intfs, false, true);
-        } catch (IndexOutOfBoundsException | NullPointerException e){
-            return new ResponseEntity<>(new Status("One or more hosts does not have Routing domain or no scanner available in given Routing Domain. Omitting.."),
-                    HttpStatus.EXPECTATION_FAILED);
-        }
+            log.info("[NetworkService] - Got request for scan from koordynator - system {}, asset no: {}", LogUtil.prepare(req.getProjectName()), LogUtil.prepare(String.valueOf(req.getIpAddresses().size())));
+            Project project = getOrCreateProjectService.getProject(req, principal);
 
-        if (ns.stream().allMatch(InfraScan::getInQueue)) {
-            return new ResponseEntity<>(new Status("ok",
-                    StringUtils.join(ns.stream().map(InfraScan::getRequestId).collect(Collectors.toSet()), ",")),
-                    HttpStatus.CREATED);
-        } else {
-            return new ResponseEntity<>(new Status("Problem with running scan..."), HttpStatus.PRECONDITION_FAILED);
+            List<Interface> intfs = updateAssetsAndPrepareInterfacesForScan(req, project);
+            //GET RUNNING MANUAL SCANS AND CHECK IF INTERFACE ON LIST
+            if (interfaceOperations.verifyInterfacesBeforeScan(intfs))
+                return new ResponseEntity<>(new Status("Request containts IP with running test. Omitting.."),
+                        HttpStatus.EXPECTATION_FAILED);
+
+            //CONFIGURE MANUAL SCAN
+            List<InfraScan> ns;
+            try {
+                ns = configureAndRunManualScanForScope(project, intfs, false, true);
+            } catch (IndexOutOfBoundsException | NullPointerException e) {
+                return new ResponseEntity<>(new Status("One or more hosts does not have Routing domain or no scanner available in given Routing Domain. Omitting.."),
+                        HttpStatus.EXPECTATION_FAILED);
+            } catch (Exception e){
+                return new ResponseEntity<>(new Status(e.getMessage()), HttpStatus.PRECONDITION_FAILED);
+            }
+
+            if (ns.isEmpty()) {
+                return new ResponseEntity<>(new Status("None of requested assets qualify for scan (probably scan is queued or running or Routing Domain mismatched)"), HttpStatus.PRECONDITION_FAILED);
+            } else if (ns.stream().allMatch(InfraScan::getInQueue)) {
+                List<Interface> interfaceToBeScanned = new ArrayList<>();
+                ns.stream().map(InfraScan::getInterfaces).forEach(interfaceToBeScanned::addAll);
+                String response = "Scan requested. Scope: [" +
+                        StringUtils.join(interfaceToBeScanned.stream().map(Interface::getPrivateip).collect(Collectors.toSet()), ",") +
+                        "]";
+                return new ResponseEntity<>(new Status(response,
+                        StringUtils.join(ns.stream().map(InfraScan::getRequestId).collect(Collectors.toSet()), ",")),
+                        HttpStatus.CREATED);
+            } else {
+                return new ResponseEntity<>(new Status("Problem with running scan..."), HttpStatus.PRECONDITION_FAILED);
+            }
+        } catch (ScanException e){
+            return new ResponseEntity<>(new Status(e.getMessage()), HttpStatus.PRECONDITION_FAILED);
         }
     }
 
@@ -196,7 +210,7 @@ public class NetworkScanService {
      * @return list of interface in request
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    List<Interface> updateAssetsAndPrepareInterfacesForScan(NetworkScanRequestModel req, Project project) {
+    List<Interface> updateAssetsAndPrepareInterfacesForScan(NetworkScanRequestModel req, Project project) throws ScanException {
         List<Interface> listtoScan = new ArrayList<>();
         for (AssetToCreate atc : req.getIpAddresses()){
             Asset a = getOrCreateAssetService.getOrCreateAsset(atc, project, "manual");
