@@ -6,6 +6,7 @@ import io.mixeway.api.project.model.AssetPutModel;
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.InterfaceRepository;
+import io.mixeway.domain.exceptions.ScanException;
 import io.mixeway.domain.service.asset.GetOrCreateAssetService;
 import io.mixeway.domain.service.intf.DeleteInterfaceService;
 import io.mixeway.domain.service.intf.FindInterfaceService;
@@ -84,26 +85,30 @@ public class AssetService {
 
     @Transactional
     public ResponseEntity<Status> saveAsset(Long id, AssetPutModel assetPutModel, Principal principal) {
-        Optional<Project> project = findProjectService.findProjectById(id);
-        Optional<RoutingDomain> routingDomain = findRoutingDomainService.findById(assetPutModel.getRoutingDomainForAsset());
-        if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get()) && routingDomain.isPresent()){
-            Asset asset = getOrCreateAssetService.getOrCreateAsset(
-                    AssetToCreate
-                            .builder()
-                            .ip(null)
-                            .hostname(assetPutModel.getAssetName())
-                            .routingDomain(routingDomain.get().getName())
-                            .build(),
-                    project.get(),
-                    "manual"
-            );
-            List<Interface> interfaces = interfaceOperations.createInterfacesForModel(asset, routingDomain.get(), assetPutModel.getIpAddresses());
-            interfaceOperations.storeInterfaces(interfaces);
-            //asset = assetRepository.findById(asset.getId()).get();
-            log.info("{} - Created new asset [{}]{} ", principal.getName(), project.get().getName(), asset.getName());
-            return new ResponseEntity<>(new Status("created"), HttpStatus.CREATED);
-        } else {
-            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
+        try {
+            Optional<Project> project = findProjectService.findProjectById(id);
+            Optional<RoutingDomain> routingDomain = findRoutingDomainService.findById(assetPutModel.getRoutingDomainForAsset());
+            if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get()) && routingDomain.isPresent()) {
+                Asset asset = getOrCreateAssetService.getOrCreateAsset(
+                        AssetToCreate
+                                .builder()
+                                .ip(null)
+                                .hostname(assetPutModel.getAssetName())
+                                .routingDomain(routingDomain.get().getName())
+                                .build(),
+                        project.get(),
+                        "manual"
+                );
+                List<Interface> interfaces = interfaceOperations.createInterfacesForModel(asset, routingDomain.get(), assetPutModel.getIpAddresses());
+                interfaceOperations.storeInterfaces(interfaces);
+                //asset = assetRepository.findById(asset.getId()).get();
+                log.info("{} - Created new asset [{}]{} ", principal.getName(), project.get().getName(), asset.getName());
+                return new ResponseEntity<>(new Status("created"), HttpStatus.CREATED);
+            } else {
+                return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
+            }
+        } catch (ScanException e){
+            return new ResponseEntity<>(new Status(e.getMessage()), HttpStatus.EXPECTATION_FAILED);
         }
     }
     public ResponseEntity<Status> runScanForAssets(Long id, List<RunScanForAssets> runScanForAssets, Principal principal) throws Exception {

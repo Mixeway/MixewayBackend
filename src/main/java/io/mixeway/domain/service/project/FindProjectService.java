@@ -5,6 +5,7 @@ import io.mixeway.db.repository.ProjectRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -74,5 +75,14 @@ public class FindProjectService {
 
     public List<Project> findProjectWithoutCodeVulnerabilities(){
         return projectRepository.getProjectsWithoutCodeVulns();
+    }
+    public List<Project> findProjectWithInterfaceWithScanRunning(){
+        List<Long> projectIds = projectRepository.getProjectIdWithScanRunningOnInterface();
+        List<Project> projects = new ArrayList<>();
+        for (Long id : projectIds){
+            Optional<Project> project = findProjectById(id);
+            project.ifPresent(projects::add);
+        }
+        return projects;
     }
 }
