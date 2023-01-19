@@ -258,7 +258,7 @@ public class Constants {
     public static final String BURP_SCAN_RUNNING = "RUNNING";
 	public static final String BURP_SCAN_QUEUED = "QUEUED";
 	public static final String BURP_CONFIG_CRAWL = "Crawl strategy - fastest";
-	public static final String BURP_CONFIG_AUDIT = "Audit checks - medium active";
+	public static final String BURP_CONFIG_AUDIT = "Audit checks - light active";
     public static final String BURP_NAMED_CONFIGURATION = "NamedConfiguration";
 	public static final String BURP_STATUS_FAILED = "failed";
 	public static final String BURP_STATUS_SUCCEEDED = "succeeded";
