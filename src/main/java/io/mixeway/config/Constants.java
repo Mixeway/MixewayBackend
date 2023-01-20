@@ -302,6 +302,9 @@ public class Constants {
     public static final String OK = "Ok";
     public static final String CIID_NONE = "none";
     public static final String CX_STATUS_FAILED = "Failed";
+    public static final String NEXUS_STAGE_BUILD = "build";
+    public static final String NEXUS_STAGE_SOURCE = "source";
+    public static final String NPM = "npm";
 }
 
 

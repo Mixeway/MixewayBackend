@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.security.Security;
 import java.util.List;
 
 @Getter
@@ -14,5 +15,6 @@ import java.util.List;
 public class ReportEntry {
     private String packageUrl;
     private String displayName;
-    private List<SecurityData> securityData;
+    private ComponentIdentifier componentIdentifier;
+    private SecurityData securityData;
 }
