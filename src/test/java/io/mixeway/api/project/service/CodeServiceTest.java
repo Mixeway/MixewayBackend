@@ -276,7 +276,7 @@ class CodeServiceTest {
         Mockito.when(dependencyTrackApiClient.getProjects()).thenReturn(new ArrayList<>());
         Mockito.when(dependencyTrackApiClient.canProcessRequest()).thenReturn(true);
 
-        ResponseEntity<List<Projects>> listResponseEntity = codeService.getdTracksProjects();
+        ResponseEntity<List<Projects>> listResponseEntity = codeService.getOpenSourceProjects();
         assertEquals(HttpStatus.OK, listResponseEntity.getStatusCode());
         assertNotNull(listResponseEntity.getBody());
 

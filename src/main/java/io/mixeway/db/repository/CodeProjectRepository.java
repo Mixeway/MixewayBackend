@@ -52,4 +52,7 @@ public interface CodeProjectRepository extends JpaRepository<CodeProject, Long> 
     Optional<CodeProject> findByRepoUrlOrRepoUrl(String repoUrl, String s);
 
     Optional<CodeProject> findByRepoUrlOrRepoUrlAndName(String repoUrl, String s, String name);
+	List<CodeProject> findBydTrackUuidNotNullAndRepoUrlNotNull();
+	@Query("select cp from CodeProject cp where cp.remotename is null and cp.repoUrl is not null and cp.dTrackUuid is null")
+	List<CodeProject> getCodeProjectsForSynchro();
 }

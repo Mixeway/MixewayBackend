@@ -56,4 +56,7 @@ public class FindCodeProjectService {
     public List<CodeProject> getCodeProjectsWithOSIntegrationEnabled() {
         return codeProjectRepository.getCodeProjectsWithOSIntegrationEnabled();
     }
+    public List<CodeProject> findProjectWithoutOSIntegration(){
+        return codeProjectRepository.getCodeProjectsForSynchro();
+    }
 }

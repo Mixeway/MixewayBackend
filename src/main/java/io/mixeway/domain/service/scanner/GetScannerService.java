@@ -56,6 +56,13 @@ public class GetScannerService {
                 .findFirst()
                 .orElse(null);
     }
+    public Scanner getScannerByType(ScannerType scannerType){
+        return scannerRepository.findByScannerType(scannerType).stream().findFirst().orElse(null);
+    }
+
+    public Optional<Scanner> getScannerByApiUrlAndType(ScannerType scannerType, String url){
+        return scannerRepository.findByApiUrlAndScannerType(url, scannerType);
+    }
 
     public List<Scanner> findAll() {
         return scannerRepository.findAll();

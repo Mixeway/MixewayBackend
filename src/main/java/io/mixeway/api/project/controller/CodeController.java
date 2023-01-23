@@ -84,9 +84,9 @@ public class CodeController {
         return codeService.createDTrackProject(id, principal);
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
-    @GetMapping(value = "/dtrackprojects")
-    public ResponseEntity<List<Projects>> getdTracksProjects() throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
-        return codeService.getdTracksProjects();
+    @GetMapping(value = "/opensourceprojects")
+    public ResponseEntity<List<Projects>> getOpenSourceProjects() throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+        return codeService.getOpenSourceProjects();
     }
     @PreAuthorize("hasAuthority('ROLE_EDITOR_RUNNER')")
     @GetMapping(value = "/codeprojects")

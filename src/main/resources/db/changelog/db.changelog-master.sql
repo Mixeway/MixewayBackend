@@ -1196,3 +1196,10 @@ alter table nessusscan add column updated text;
 alter table codescan add column updated text;
 alter table webappscan add column inserted text;
 alter table webappscan add column updated text;
+
+--changeset siewer:add_nexus_iq
+insert into scannertype (name, authaccesstoken,authapikey,authcloudctrltoken,authpassword,authusername,authsecrettoken,scanlimit) values ('Nexus-IQ',false,false,false,true,true,false,0);
+
+--changeset siewer:change_nexus
+update scannertype set  category='OPENSOURCE' where name='Nexus-IQ';
+alter table codeproject add column remotename text;

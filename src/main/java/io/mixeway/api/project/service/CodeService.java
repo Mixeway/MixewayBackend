@@ -67,6 +67,7 @@ public class CodeService {
                         .dTrackUuid(cp.getdTrackUuid())
                         .running(cp.getRunning())
                         .risk(cp.getRisk())
+                        .repoUrl(cp.getRepoUrl())
                         .repoUsername(cp.getRepoUsername())
                         .repoPassword(StringUtils.isNoneBlank(cp.getRepoPassword()) ? Constants.DUMMY_PASSWORD : "")
                         .build();
@@ -163,13 +164,20 @@ public class CodeService {
         }
     }
 
+    private boolean editSCASettings(String uuid, CodeProject codeProject){
+        if (codeProject.getdTrackUuid() == null && StringUtils.isNotBlank(uuid)){
+            return true;
+        } else if (codeProject.getdTrackUuid() == null && uuid == null){
+            return false;
+        } else return codeProject.getProject() == null || !codeProject.getdTrackUuid().equals(uuid);
+    }
     public ResponseEntity<Status> editCodeProject(Long id, EditCodeProjectModel editCodeProjectModel, Principal principal) {
         Optional<CodeProject> codeProject = findCodeProjectService.findById(id);
         try{
             if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getProject())){
-                if (StringUtils.isNotBlank(editCodeProjectModel.getDTrackUuid()) && !codeProject.get().getdTrackUuid().equals(editCodeProjectModel.getDTrackUuid())) {
-                    operateOnCodeProject.setDtrackUUID(codeProject.get(),editCodeProjectModel);
-                    log.info("{} Edited CodeProject {} scope DtrackUUID", principal.getName(), codeProject.get().getName());
+                if (editSCASettings(editCodeProjectModel.getDTrackUuid(), codeProject.get())) {
+                    operateOnCodeProject.setSCA(codeProject.get(),editCodeProjectModel);
+                    log.info("{} Edited CodeProject {} scope SCA", principal.getName(), codeProject.get().getName());
                 }
                 if (editCodeProjectModel.getSastProject() > 0 && codeProject.get().getVersionIdAll() != editCodeProjectModel.getSastProject() ) {
                     codeProject.get().setVersionIdAll(editCodeProjectModel.getSastProject());
@@ -198,6 +206,7 @@ public class CodeService {
             }
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         } catch (IllegalArgumentException | NullPointerException exception){
+            exception.printStackTrace();
             log.warn("{} failed to edit codeProject {} due to wrong UUID format", principal.getName(), id);
         }
         return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
@@ -220,7 +229,7 @@ public class CodeService {
         return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
 
-    public ResponseEntity<List<Projects>> getdTracksProjects() throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+    public ResponseEntity<List<Projects>> getOpenSourceProjects() throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         return new ResponseEntity<>(openSourceScanService.getOpenSourceProjectFromScanner(), HttpStatus.OK);
     }
 

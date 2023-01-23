@@ -24,6 +24,7 @@ public class CodeProject implements VulnSource {
 	private Long id;
 	private String name;
 	private String dTrackUuid;
+	private String remotename;
 	@JsonIgnore private Set<ProjectVulnerability> vulns;
 	@JsonIgnore private String commitid;
 	@JsonIgnore private String repoUrl;
@@ -53,6 +54,14 @@ public class CodeProject implements VulnSource {
 
 	@JsonIgnore
 	private Project project;
+
+	public String getRemotename() {
+		return remotename;
+	}
+
+	public void setRemotename(String remotename) {
+		this.remotename = remotename;
+	}
 
 	public void setProject(Project project) {
 		this.project = project;
