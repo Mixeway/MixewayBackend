@@ -8,6 +8,7 @@ import io.mixeway.db.repository.CodeProjectRepository;
 import io.mixeway.domain.service.vulnmanager.VulnTemplate;
 import io.mixeway.utils.VaultHelper;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -41,9 +42,11 @@ public class OperateOnCodeProject {
         codeProjectRepository.delete(codeProject);
     }
 
-    public void setDtrackUUID(CodeProject codeProject, EditCodeProjectModel editCodeProjectModel) {
-        UUID uuid = UUID.fromString(editCodeProjectModel.getDTrackUuid());
+    public void setSCA(CodeProject codeProject, EditCodeProjectModel editCodeProjectModel) {
         codeProject.setdTrackUuid(editCodeProjectModel.getDTrackUuid());
+        if(StringUtils.isNotBlank(editCodeProjectModel.getRemoteName())){
+            codeProject.setRemotename(editCodeProjectModel.getRemoteName());
+        }
         codeProjectRepository.save(codeProject);
     }
 

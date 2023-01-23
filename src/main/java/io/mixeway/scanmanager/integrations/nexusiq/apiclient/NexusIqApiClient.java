@@ -221,7 +221,7 @@ public class NexusIqApiClient implements SecurityScanner, OpenSourceScanClient {
         if (codeProject.getEnableJira()) {
             vulnTemplate.processBugTracking(codeProject, vulnTemplate.SOURCE_OPENSOURCE);
         }
-        log.info("[Nexus-IQ] Loaded {} vulnerabilities for {}", projectVulnerabilitiesFromReport.size(), codeProject.getName());
+        log.debug("[Nexus-IQ] Loaded {} vulnerabilities for {}", projectVulnerabilitiesFromReport.size(), codeProject.getName());
     }
 
     private RawReport getRawReport(Scanner scanner, String getRawDataReportUrl) throws UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, KeyManagementException {
@@ -272,7 +272,7 @@ public class NexusIqApiClient implements SecurityScanner, OpenSourceScanClient {
         Scanner scanner = getScannerService.getScannerByType(findScannerTypeService.findByName(Constants.SCANNER_TYPE_NEXUS_IQ));
         List<Projects> projects = new ArrayList<>();
         if (scanner!=null) {
-            List<Synchro> synchroList = loadNexusData(scanner);
+            List<Synchro> synchroList = loadNexusDataSimplified(scanner);
             for(Synchro synchro : synchroList){
                 projects.add(
                         Projects.builder()
@@ -322,6 +322,21 @@ public class NexusIqApiClient implements SecurityScanner, OpenSourceScanClient {
                 synchroList.add(synchroEntry);
             } catch (HttpClientErrorException e){
                 log.warn("[Nexus-IQ] Application {} on nexus has no repourl, HTTP_STATUS {}", application.getPublicId(), e.getStatusCode());
+            }
+        }
+        return synchroList;
+    }
+    // NO Repo URL
+    private List<Synchro> loadNexusDataSimplified(Scanner scanner) throws UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, KeyManagementException {
+        List<Synchro> synchroList = new ArrayList<>();
+        for (Application application : getApplications(scanner).getApplications()){
+            try {
+                Synchro synchroEntry = new Synchro();
+                synchroEntry.setId(application.getId());
+                synchroEntry.setName(application.getPublicId());
+                synchroList.add(synchroEntry);
+            } catch (HttpClientErrorException e){
+                log.debug("[Nexus-IQ] Application {} on nexus has no repourl, HTTP_STATUS {}", application.getPublicId(), e.getStatusCode());
             }
         }
         return synchroList;
