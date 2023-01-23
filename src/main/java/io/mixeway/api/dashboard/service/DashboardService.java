@@ -4,6 +4,7 @@ import io.mixeway.api.dashboard.model.*;
 import io.mixeway.api.project.model.EditCodeProjectModel;
 import io.mixeway.api.protocol.OverAllVulnTrendChartData;
 import io.mixeway.api.protocol.SourceDetectionChartData;
+import io.mixeway.api.vulnmanage.service.GetVulnerabilitiesService;
 import io.mixeway.db.entity.*;
 import io.mixeway.domain.service.asset.FindAssetService;
 import io.mixeway.domain.service.asset.UpdateAssetService;
@@ -18,6 +19,8 @@ import io.mixeway.domain.service.scanmanager.webapp.FindWebAppService;
 import io.mixeway.domain.service.scanmanager.webapp.UpdateWebAppService;
 import io.mixeway.domain.service.user.FindUserService;
 import io.mixeway.domain.service.vulnhistory.FindVulnHistoryService;
+import io.mixeway.domain.service.vulnmanager.CreateOrGetVulnerabilityService;
+import io.mixeway.domain.service.vulnmanager.FindVulnerabilityService;
 import io.mixeway.domain.service.vulnmanager.VulnTemplate;
 import io.mixeway.utils.LogUtil;
 import io.mixeway.utils.PermissionFactory;
@@ -31,9 +34,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.Principal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -55,7 +56,7 @@ public class DashboardService {
     private final UpdateCodeProjectService updateCodeProjectService;
     private final UpdateWebAppService updateWebAppService;
     private final UpdateAssetService updateAssetService;
-
+    private final FindVulnerabilityService findVulnerabilityService;
 
 
     public List<OverAllVulnTrendChartData> getVulnTrendData(Principal principal) {
@@ -202,5 +203,38 @@ public class DashboardService {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
+    }
+
+    public ResponseEntity<DashboardStat> getDashboardStat() {
+        HashMap<Project, Long> projects = findProjectService.findTop10ProjectsWithVulnerabilities();
+        HashMap<Vulnerability, Long> vulns = findVulnerabilityService.findTop10Vulns();
+        List<ProjectStat> projectStats = new ArrayList<>();
+        List<VulnStat> vulnStats = new ArrayList<>();
+        for (Map.Entry<Project, Long> project : projects.entrySet()){
+            projectStats.add(
+                    ProjectStat.builder()
+                            .vulnerabilities(project.getValue().intValue())
+                            .risk(project.getKey().getRisk())
+                            .name(project.getKey().getName())
+                            .build()
+            );
+        }
+        for (Map.Entry<Vulnerability, Long> vuln : vulns.entrySet()) {
+            vulnStats.add(VulnStat.builder()
+                            .name(vuln.getKey().getName())
+                            .occurances(vuln.getValue().intValue())
+                    .build());
+        }
+
+        return new ResponseEntity<>(
+                DashboardStat.builder()
+                        .vulnStats(vulnStats)
+                        .projectStats(projectStats)
+                        .critical(vulnTemplate.projectVulnerabilityRepository.countBySeverityIn(Arrays.asList("Critical", "High")).intValue())
+                        .medium(vulnTemplate.projectVulnerabilityRepository.countBySeverityIn(Arrays.asList("Medium")).intValue())
+                        .low(vulnTemplate.projectVulnerabilityRepository.countBySeverityIn(Arrays.asList("Low")).intValue())
+                        .build(),
+                HttpStatus.OK
+        );
     }
 }
