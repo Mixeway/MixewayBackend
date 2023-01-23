@@ -35,6 +35,11 @@ public class DashboardController {
         return dashboardService.getSessionOwner(request.getUserPrincipal().getName());
 
     }
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @GetMapping(value = "/stat")
+    public ResponseEntity<DashboardStat> getDashboardStat(){
+        return dashboardService.getDashboardStat();
+    }
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping(value = "/getvulntrenddata")
     public List<OverAllVulnTrendChartData> getVulnTrendData(Principal principal) throws IOException {

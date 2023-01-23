@@ -1,23 +1,25 @@
 package io.mixeway.domain.service.project;
 
 import io.mixeway.db.entity.Project;
+import io.mixeway.db.entity.ProjectVulnerability;
+import io.mixeway.db.projection.VulnerableProjects;
 import io.mixeway.db.repository.ProjectRepository;
+import io.mixeway.db.repository.ProjectVulnerabilityRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class FindProjectService {
 
     private final ProjectRepository projectRepository;
-
-    @Autowired
-    public FindProjectService(ProjectRepository projectRepository) {
-        this.projectRepository = projectRepository;
-    }
+    private final ProjectVulnerabilityRepository projectVulnerabilityRepository;
 
     public Optional<Project> findProjectByCiid(String ciid) {
         Optional<List<Project>> projects = projectRepository.findByCiid(ciid);
@@ -82,6 +84,13 @@ public class FindProjectService {
         for (Long id : projectIds){
             Optional<Project> project = findProjectById(id);
             project.ifPresent(projects::add);
+        }
+        return projects;
+    }
+    public HashMap<Project, Long> findTop10ProjectsWithVulnerabilities(){
+        HashMap<Project, Long> projects = new HashMap<>();
+        for (VulnerableProjects vulnerableProject : projectVulnerabilityRepository.top10VulnerableProjects()) {
+            projects.put(findProjectById(vulnerableProject.getId()).get(), vulnerableProject.getCount());
         }
         return projects;
     }
