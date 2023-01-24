@@ -209,7 +209,7 @@ public class NexusIqApiClient implements SecurityScanner, OpenSourceScanClient {
                                     vulnerability,
                                     "Read more: " + securityIssues.getUrl(),
                                     "",
-                                    StringUtils.capitalize(securityIssues.getThreatCategory()),
+                                    setSeverity(StringUtils.capitalize(securityIssues.getThreatCategory())),
                                     null,
                                     null,
                                     null,
@@ -230,7 +230,16 @@ public class NexusIqApiClient implements SecurityScanner, OpenSourceScanClient {
         if (codeProject.getEnableJira()) {
             vulnTemplate.processBugTracking(codeProject, vulnTemplate.SOURCE_OPENSOURCE);
         }
-        log.debug("[Nexus-IQ] Loaded {} vulnerabilities for {}", projectVulnerabilitiesFromReport.size(), codeProject.getName());
+        log.info("[Nexus-IQ] Loaded {} vulnerabilities for {}", projectVulnerabilitiesFromReport.size(), codeProject.getName());
+    }
+
+    private String setSeverity(String severity) {
+        if (severity.equals(Constants.NEXUS_SEVERITY_SEVERE)) {
+            return Constants.API_SEVERITY_CRITICAL;
+        } else if (severity.equals(Constants.NEXUS_SEVERITY_MODERATE)) {
+            return Constants.API_SEVERITY_MEDIUM;
+        } else
+            return severity;
     }
 
     private RawReport getRawReport(Scanner scanner, String getRawDataReportUrl) throws UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, KeyManagementException {

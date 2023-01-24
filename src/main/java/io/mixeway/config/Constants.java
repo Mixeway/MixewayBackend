@@ -305,6 +305,8 @@ public class Constants {
     public static final String NEXUS_STAGE_BUILD = "build";
     public static final String NEXUS_STAGE_SOURCE = "source";
     public static final String NPM = "npm";
+    public static final String NEXUS_SEVERITY_SEVERE = "Severe";
+    public static final String NEXUS_SEVERITY_MODERATE = "Moderate";
 }
 
 

@@ -66,7 +66,7 @@ public class JiraClient implements BugTracking {
         if (bugTracker.getAsignee() != null) {
             newIssue = new IssueInputBuilder(bugTracker.getProjectId(), Long.valueOf(bugTracker.getIssueType()), title)
                     .setDescription(description)
-                    .setFieldInput(new FieldInput(IssueFieldId.ASSIGNEE_FIELD, ComplexIssueInputFieldValue.with("name", bugTracker.getAsignee())))
+                    .setAssigneeName(bugTracker.getAsignee())
                     .build();
         } else {
             newIssue = new IssueInputBuilder(bugTracker.getProjectId(), Long.valueOf(bugTracker.getIssueType()), title)
@@ -105,7 +105,7 @@ public class JiraClient implements BugTracking {
             entity.forEach(pv -> pv.setTicketId(ticketId));
             o.saveAll(entity);
             log.info("[BugTracker] Issuing ticket with {} vulnerabilities for project {}",
-                    entity.stream().filter(pv -> pv.getTicketId().isEmpty()).count(),
+                    entity.stream().filter(pv -> !pv.getTicketId().isEmpty()).count(),
                     LogUtil.prepare(project.getName()));
             return new ResponseEntity<>(HttpStatus.CREATED);
         } else {
