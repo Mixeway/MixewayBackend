@@ -27,6 +27,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jettison.json.JSONException;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
@@ -184,8 +185,8 @@ public class NexusIqApiClient implements SecurityScanner, OpenSourceScanClient {
         List<ProjectVulnerability> oldVulns = vulnTemplate.projectVulnerabilityRepository
                 .findByVulnerabilitySourceAndCodeProject(vulnTemplate.SOURCE_OPENSOURCE, codeProject);
         List<ProjectVulnerability> projectVulnerabilitiesFromReport = new ArrayList<>();
-        for (ReportEntry reportEntry : rawReport.getComponents()){
-            String componentName="";
+        for (ReportEntry reportEntry : rawReport.getComponents()) {
+            String componentName = "";
             String componentVersion = "";
             try {
                 componentName = reportEntry.getComponentIdentifier().getFormat().equals(Constants.NPM) ?
@@ -196,28 +197,33 @@ public class NexusIqApiClient implements SecurityScanner, OpenSourceScanClient {
                 componentName = reportEntry.getDisplayName();
                 componentVersion = "unknown";
             }
-            SoftwarePacket softwarePacket = getOrCreateSoftwarePacketService.getOrCreateSoftwarePacket(componentName, componentVersion);
-
             try {
-                if (reportEntry.getSecurityData() != null && !reportEntry.getSecurityData().getSecurityIssues().isEmpty()) {
-                    for (SecurityIssues securityIssues : reportEntry.getSecurityData().getSecurityIssues()) {
-                        Vulnerability vulnerability = createOrGetVulnerabilityService.createOrGetVulnerability(securityIssues.getReference());
-                        ProjectVulnerability projectVulnerability = new ProjectVulnerability(softwarePacket,
-                                codeProject,
-                                vulnerability,
-                                "Read more: " + securityIssues.getUrl(),
-                                "",
-                                StringUtils.capitalize(securityIssues.getThreatCategory()),
-                                null,
-                                null,
-                                null,
-                                vulnTemplate.SOURCE_OPENSOURCE,
-                                null);
-                        projectVulnerability.setStatus(vulnTemplate.STATUS_NEW);
+                SoftwarePacket softwarePacket = getOrCreateSoftwarePacketService.getOrCreateSoftwarePacket(componentName, componentVersion);
+
+                try {
+                    if (reportEntry.getSecurityData() != null && !reportEntry.getSecurityData().getSecurityIssues().isEmpty()) {
+                        for (SecurityIssues securityIssues : reportEntry.getSecurityData().getSecurityIssues()) {
+                            Vulnerability vulnerability = createOrGetVulnerabilityService.createOrGetVulnerability(securityIssues.getReference());
+                            ProjectVulnerability projectVulnerability = new ProjectVulnerability(softwarePacket,
+                                    codeProject,
+                                    vulnerability,
+                                    "Read more: " + securityIssues.getUrl(),
+                                    "",
+                                    StringUtils.capitalize(securityIssues.getThreatCategory()),
+                                    null,
+                                    null,
+                                    null,
+                                    vulnTemplate.SOURCE_OPENSOURCE,
+                                    null);
+                            projectVulnerability.setStatus(vulnTemplate.STATUS_NEW);
+                            projectVulnerabilitiesFromReport.add(projectVulnerability);
+                        }
                     }
+                } catch (NullPointerException e) {
+                    log.info("test");
                 }
-            } catch (NullPointerException e ){
-                log.info("test");
+            } catch (IncorrectResultSizeDataAccessException e) {
+                log.info("[Nexus-IQ] IncorrectResultSizeDataAccessException for SoftwarePacket {} : {} during loading of app {}",componentName, componentVersion, codeProject.getName());
             }
         }
         vulnTemplate.vulnerabilityPersistListSoftware(oldVulns,projectVulnerabilitiesFromReport);
