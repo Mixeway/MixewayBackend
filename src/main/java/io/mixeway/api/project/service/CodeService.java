@@ -29,6 +29,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.UnknownContentTypeException;
 
 import java.io.IOException;
 import java.security.*;
@@ -168,13 +169,10 @@ public class CodeService {
 
     private boolean editSCASettings(String uuid, CodeProject codeProject){
         if (codeProject.getdTrackUuid() == null && StringUtils.isNotBlank(uuid)){
-            log.info("Returning true codeProject.getdTrackUuid is null and uuid is not null");
             return true;
         } else if (codeProject.getdTrackUuid() == null && uuid == null){
-            log.info("Returning false codeProject.getdTrackUuid is null and uuid is null");
             return false;
         } else {
-            log.info("Returning {} codeProject.getProject() == null or dtrackuuid != uuid", codeProject.getProject() == null || !codeProject.getdTrackUuid().equals(uuid));
             return codeProject.getProject() == null || !codeProject.getdTrackUuid().equals(uuid);
         }
     }
@@ -182,7 +180,6 @@ public class CodeService {
         Optional<CodeProject> codeProject = findCodeProjectService.findById(id);
         try{
             if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getProject())){
-                log.info("json message dTrackUuid: {}", editCodeProjectModel.getRemoteId()!=null? editCodeProjectModel.getRemoteId():"null");
                 if (editSCASettings(editCodeProjectModel.getRemoteId(), codeProject.get())) {
                     operateOnCodeProject.setSCA(codeProject.get(),editCodeProjectModel);
                     log.info("{} Edited CodeProject {} scope SCA", principal.getName(), codeProject.get().getName());
@@ -238,7 +235,12 @@ public class CodeService {
     }
 
     public ResponseEntity<List<Projects>> getOpenSourceProjects() throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
-        return new ResponseEntity<>(openSourceScanService.getOpenSourceProjectFromScanner(), HttpStatus.OK);
+        try {
+            return new ResponseEntity<>(openSourceScanService.getOpenSourceProjectFromScanner(), HttpStatus.OK);
+        } catch (UnknownContentTypeException e){
+            log.error("[API] Unable to load OpenSource projects");
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.OK);
+        }
     }
 
     public ResponseEntity<List<SASTProject>> getCodeProjects() throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, JSONException, KeyStoreException, ParseException, IOException {
