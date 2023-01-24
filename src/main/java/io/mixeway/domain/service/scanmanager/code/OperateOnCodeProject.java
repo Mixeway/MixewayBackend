@@ -43,7 +43,7 @@ public class OperateOnCodeProject {
     }
 
     public void setSCA(CodeProject codeProject, EditCodeProjectModel editCodeProjectModel) {
-        codeProject.setdTrackUuid(editCodeProjectModel.getDTrackUuid());
+        codeProject.setdTrackUuid(editCodeProjectModel.getRemoteId());
         if(StringUtils.isNotBlank(editCodeProjectModel.getRemoteName())){
             codeProject.setRemotename(editCodeProjectModel.getRemoteName());
         }

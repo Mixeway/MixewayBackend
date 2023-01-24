@@ -10,7 +10,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class EditCodeProjectModel {
-    private String dTrackUuid;
+    private String remoteId;
     private String remoteName;
     private int sastProject;
     private String branch;

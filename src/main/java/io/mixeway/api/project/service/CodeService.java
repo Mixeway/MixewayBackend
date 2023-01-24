@@ -182,8 +182,8 @@ public class CodeService {
         Optional<CodeProject> codeProject = findCodeProjectService.findById(id);
         try{
             if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getProject())){
-                log.info("json message dTrackUuid: {}", editCodeProjectModel.getDTrackUuid()!=null? editCodeProjectModel.getDTrackUuid():"null");
-                if (editSCASettings(editCodeProjectModel.getDTrackUuid(), codeProject.get())) {
+                log.info("json message dTrackUuid: {}", editCodeProjectModel.getRemoteId()!=null? editCodeProjectModel.getRemoteId():"null");
+                if (editSCASettings(editCodeProjectModel.getRemoteId(), codeProject.get())) {
                     operateOnCodeProject.setSCA(codeProject.get(),editCodeProjectModel);
                     log.info("{} Edited CodeProject {} scope SCA", principal.getName(), codeProject.get().getName());
                 }
