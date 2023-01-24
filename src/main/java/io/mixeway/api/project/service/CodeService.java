@@ -178,13 +178,11 @@ public class CodeService {
             return codeProject.getProject() == null || !codeProject.getdTrackUuid().equals(uuid);
         }
     }
-    public ResponseEntity<Status> editCodeProject(Long id, EditCodeProjectModel editCodeProjectModel, Principal principal) throws JsonProcessingException {
+    public ResponseEntity<Status> editCodeProject(Long id, EditCodeProjectModel editCodeProjectModel, Principal principal) {
         Optional<CodeProject> codeProject = findCodeProjectService.findById(id);
-        ObjectMapper mapper = new ObjectMapper();
-        String json = mapper.writeValueAsString(editCodeProjectModel);
-        log.info("json string {}", json);
         try{
             if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getProject())){
+                log.info("json message dTrackUuid: {}", editCodeProjectModel.getDTrackUuid()!=null? editCodeProjectModel.getDTrackUuid():"null");
                 if (editSCASettings(editCodeProjectModel.getDTrackUuid(), codeProject.get())) {
                     operateOnCodeProject.setSCA(codeProject.get(),editCodeProjectModel);
                     log.info("{} Edited CodeProject {} scope SCA", principal.getName(), codeProject.get().getName());
