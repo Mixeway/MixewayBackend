@@ -1,5 +1,7 @@
 package io.mixeway.api.project.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mixeway.api.project.model.CodeCard;
 import io.mixeway.api.project.model.CodeModel;
 import io.mixeway.api.project.model.CodeProjectPutModel;
@@ -176,8 +178,11 @@ public class CodeService {
             return codeProject.getProject() == null || !codeProject.getdTrackUuid().equals(uuid);
         }
     }
-    public ResponseEntity<Status> editCodeProject(Long id, EditCodeProjectModel editCodeProjectModel, Principal principal) {
+    public ResponseEntity<Status> editCodeProject(Long id, EditCodeProjectModel editCodeProjectModel, Principal principal) throws JsonProcessingException {
         Optional<CodeProject> codeProject = findCodeProjectService.findById(id);
+        ObjectMapper mapper = new ObjectMapper();
+        String json = mapper.writeValueAsString(editCodeProjectModel);
+        log.info("json string {}", json);
         try{
             if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getProject())){
                 if (editSCASettings(editCodeProjectModel.getDTrackUuid(), codeProject.get())) {
