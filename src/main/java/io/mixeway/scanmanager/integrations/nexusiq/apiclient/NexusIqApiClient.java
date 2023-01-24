@@ -230,7 +230,7 @@ public class NexusIqApiClient implements SecurityScanner, OpenSourceScanClient {
         if (codeProject.getEnableJira()) {
             vulnTemplate.processBugTracking(codeProject, vulnTemplate.SOURCE_OPENSOURCE);
         }
-        log.info("[Nexus-IQ] Loaded {} vulnerabilities for {}", projectVulnerabilitiesFromReport.size(), codeProject.getName());
+        log.debug("[Nexus-IQ] Loaded {} vulnerabilities for {}", projectVulnerabilitiesFromReport.size(), codeProject.getName());
     }
 
     private String setSeverity(String severity) {
