@@ -166,10 +166,15 @@ public class CodeService {
 
     private boolean editSCASettings(String uuid, CodeProject codeProject){
         if (codeProject.getdTrackUuid() == null && StringUtils.isNotBlank(uuid)){
+            log.info("Returning true codeProject.getdTrackUuid is null and uuid is not null");
             return true;
         } else if (codeProject.getdTrackUuid() == null && uuid == null){
+            log.info("Returning false codeProject.getdTrackUuid is null and uuid is null");
             return false;
-        } else return codeProject.getProject() == null || !codeProject.getdTrackUuid().equals(uuid);
+        } else {
+            log.info("Returning {} codeProject.getProject() == null or dtrackuuid != uuid", codeProject.getProject() == null || !codeProject.getdTrackUuid().equals(uuid));
+            return codeProject.getProject() == null || !codeProject.getdTrackUuid().equals(uuid);
+        }
     }
     public ResponseEntity<Status> editCodeProject(Long id, EditCodeProjectModel editCodeProjectModel, Principal principal) {
         Optional<CodeProject> codeProject = findCodeProjectService.findById(id);
