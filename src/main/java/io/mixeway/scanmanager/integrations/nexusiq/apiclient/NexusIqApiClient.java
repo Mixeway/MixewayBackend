@@ -202,15 +202,18 @@ public class NexusIqApiClient implements SecurityScanner, OpenSourceScanClient {
                 if (reportEntry.getSecurityData() != null && !reportEntry.getSecurityData().getSecurityIssues().isEmpty()) {
                     for (SecurityIssues securityIssues : reportEntry.getSecurityData().getSecurityIssues()) {
                         Vulnerability vulnerability = createOrGetVulnerabilityService.createOrGetVulnerability(securityIssues.getReference());
-                        ProjectVulnerability projectVulnerability = new ProjectVulnerability();
-                        projectVulnerability.setProject(codeProject.getProject());
-                        projectVulnerability.setCodeProject(codeProject);
-                        projectVulnerability.setSoftwarePacket(softwarePacket);
-                        projectVulnerability.setVulnerabilitySource(vulnTemplate.SOURCE_OPENSOURCE);
-                        projectVulnerability.setVulnerability(vulnerability);
-                        projectVulnerability.setDescription("Read more: " + securityIssues.getUrl());
-                        projectVulnerability.setSeverity(StringUtils.capitalize(securityIssues.getThreatCategory()));
-                        projectVulnerabilitiesFromReport.add(projectVulnerability);
+                        ProjectVulnerability projectVulnerability = new ProjectVulnerability(softwarePacket,
+                                codeProject,
+                                vulnerability,
+                                "Read more: " + securityIssues.getUrl(),
+                                "",
+                                StringUtils.capitalize(securityIssues.getThreatCategory()),
+                                null,
+                                null,
+                                null,
+                                vulnTemplate.SOURCE_OPENSOURCE,
+                                null);
+                        projectVulnerability.setStatus(vulnTemplate.STATUS_NEW);
                     }
                 }
             } catch (NullPointerException e ){
