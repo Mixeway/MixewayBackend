@@ -86,7 +86,7 @@ public class GlobalScheduler {
      *
      * Get Vulns from OpenSource scanners - track
      */
-    @Scheduled(initialDelay=3000,fixedDelay = 1500000)
+    @Scheduled(initialDelay=3000,fixedDelay = 10000000)
     public void getDepTrackVulns() {
         log.info("[OpenSourceService] Starting loading vulnerabilities from SCA");
         try {
