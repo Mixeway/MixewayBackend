@@ -76,7 +76,7 @@ public class OpenSourceScanService {
      */
     @Transactional()
     public void loadVulnerabilities(CodeProject codeProjectToVerify) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
-        log.info("[OpenSourceService] Starting loading vulnerabilities from SCA");
+
         for (OpenSourceScanClient openSourceScanClient : openSourceScanClients){
             if (openSourceScanClient.canProcessRequest(codeProjectToVerify)){
                 List<ProjectVulnerability> oldVulns = getProjectVulnerabilitiesService.getOldVulnsForCodeProjectAndSource(codeProjectToVerify,vulnTemplate.SOURCE_OPENSOURCE );
@@ -91,7 +91,7 @@ public class OpenSourceScanService {
                 break;
             }
         }
-        log.info("[OpenSourceService] SCA Synchronization completed - vulnerabilities loaded");
+
     }
 
     /**

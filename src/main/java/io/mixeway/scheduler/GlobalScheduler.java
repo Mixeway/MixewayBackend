@@ -88,6 +88,7 @@ public class GlobalScheduler {
      */
     @Scheduled(initialDelay=3000,fixedDelay = 1500000)
     public void getDepTrackVulns() {
+        log.info("[OpenSourceService] Starting loading vulnerabilities from SCA");
         try {
             List<CodeProject> codeProjects = findCodeProjectService.getCodeProjectsWithOSIntegrationEnabled();
             for (CodeProject cp : codeProjects){
@@ -101,7 +102,7 @@ public class GlobalScheduler {
             ignored.printStackTrace();
             log.error("Error during dTrack synchro {}", ignored.getLocalizedMessage());
         }
-
+        log.info("[OpenSourceService] SCA Synchronization completed - vulnerabilities loaded");
     }
 
     /**
