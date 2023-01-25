@@ -32,6 +32,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.UnknownContentTypeException;
 
 import javax.xml.bind.JAXBException;
 import javax.xml.transform.Source;
@@ -261,23 +262,27 @@ public class NexusIqApiClient implements SecurityScanner, OpenSourceScanClient {
     }
 
     private String getRawDataUrl(Scanner scanner, CodeProject codeProject) throws UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, KeyManagementException {
-        RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(scanner);
-        HttpHeaders headers = prepareAuthHeader(scanner);
-        HttpEntity<String> entity = new HttpEntity<>(headers);
-        ResponseEntity<List<GetReports>> response = restTemplate.exchange(scanner.getApiUrl() +
-                "/api/v2/reports/applications/"+codeProject.getdTrackUuid(), HttpMethod.GET, entity, new ParameterizedTypeReference<List<GetReports>>() {});
-        if (response.getStatusCode().equals(HttpStatus.OK)){
-            if (response.getBody().size() > 1) {
-                GetReports getReports = response.getBody().stream().filter(gr -> gr.getStage().equals(Constants.NEXUS_STAGE_BUILD)).findFirst().orElse(new GetReports());
-                return getReports.getReportDataUrl();
-            } else if (response.getBody().size() == 1) {
-                return response.getBody().get(0).getReportDataUrl();
-            } else {
-                return null;
+        try {
+            RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(scanner);
+            HttpHeaders headers = prepareAuthHeader(scanner);
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+            ResponseEntity<List<GetReports>> response = restTemplate.exchange(scanner.getApiUrl() +
+                    "/api/v2/reports/applications/" + codeProject.getdTrackUuid(), HttpMethod.GET, entity, new ParameterizedTypeReference<List<GetReports>>() {
+            });
+            if (response.getStatusCode().equals(HttpStatus.OK)) {
+                if (response.getBody().size() > 1) {
+                    GetReports getReports = response.getBody().stream().filter(gr -> gr.getStage().equals(Constants.NEXUS_STAGE_BUILD)).findFirst().orElse(new GetReports());
+                    return getReports.getReportDataUrl();
+                } else if (response.getBody().size() == 1) {
+                    return response.getBody().get(0).getReportDataUrl();
+                } else {
+                    return null;
+                }
             }
-        } else {
-            return null;
+        } catch (UnknownContentTypeException e){
+            log.warn("[Nexus-IQ] Problem in getting raw data URL for {}", codeProject.getName());
         }
+        return null;
     }
 
     @Override
