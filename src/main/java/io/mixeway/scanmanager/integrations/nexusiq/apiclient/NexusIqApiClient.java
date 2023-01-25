@@ -192,7 +192,7 @@ public class NexusIqApiClient implements SecurityScanner, OpenSourceScanClient {
             try {
                 componentName = reportEntry.getComponentIdentifier().getFormat().equals(Constants.NPM) ?
                         reportEntry.getComponentIdentifier().getCoordinates().getPackageId() :
-                        reportEntry.getComponentIdentifier().getCoordinates().getGroupId();
+                        reportEntry.getComponentIdentifier().getCoordinates().getGroupId()+":"+reportEntry.getComponentIdentifier().getCoordinates().getArtifactId();
                 componentVersion = reportEntry.getComponentIdentifier().getCoordinates().getVersion();
             } catch (NullPointerException e) {
                 componentName = reportEntry.getDisplayName();

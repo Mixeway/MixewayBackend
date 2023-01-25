@@ -11,6 +11,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class Coordinates {
     private String groupId;
+    private String artifactId;
     private String packageId;
     private String version;
 }
