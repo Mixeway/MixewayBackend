@@ -205,6 +205,9 @@ public class NexusIqApiClient implements SecurityScanner, OpenSourceScanClient {
                     if (reportEntry.getSecurityData() != null && !reportEntry.getSecurityData().getSecurityIssues().isEmpty()) {
                         for (SecurityIssues securityIssues : reportEntry.getSecurityData().getSecurityIssues()) {
                             Vulnerability vulnerability = createOrGetVulnerabilityService.createOrGetVulnerability(securityIssues.getReference());
+                            if (vulnerability.getSeverity() != null && vulnerability.getSeverity().equals(Constants.SKIP_VULENRABILITY)){
+                                continue;
+                            }
                             ProjectVulnerability projectVulnerability = new ProjectVulnerability(softwarePacket,
                                     codeProject,
                                     vulnerability,
