@@ -26,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.client.HttpClient;
 import org.codehaus.jettison.json.JSONException;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -34,6 +35,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.UnexpectedRollbackException;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.util.HtmlUtils;
 
@@ -396,9 +399,11 @@ public class NetworkScanService {
                                     updateInterfaceService.updateIntfsStateAndAssetRequestId(new ArrayList<>(infraScan.getInterfaces()), infraScan.getRequestId());
                                 }
                             }
-                        } catch (ResourceAccessException e){
+                        } catch (ResourceAccessException | HttpServerErrorException | HttpClientErrorException e){
                             infraScan.setInQueue(false);
-                            log.error("[NetworkScanService] Unable to perform scan");
+                            log.error("[NetworkScanService] Unable to perform scan for {} in RoutingDomain {}",
+                                    infraScan.getProject().getName(),
+                                    infraScan.getNessus().getRoutingDomain().getName());
                         }
                     }
                 }
