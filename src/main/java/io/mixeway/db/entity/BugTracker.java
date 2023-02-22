@@ -27,6 +27,7 @@ public class BugTracker {
     private String autoStrategy;
     private String asignee;
     private Proxies proxies;
+    private String epic;
 
     @ManyToOne(fetch = FetchType.EAGER, optional = true)
     @JoinColumn(name = "proxies_id", nullable = true)
@@ -131,5 +132,13 @@ public class BugTracker {
 
     public void setProject(Project project) {
         this.project = project;
+    }
+
+    public String getEpic() {
+        return epic;
+    }
+
+    public void setEpic(String epic) {
+        this.epic = epic;
     }
 }

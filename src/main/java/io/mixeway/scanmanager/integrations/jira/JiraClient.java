@@ -3,6 +3,7 @@ package io.mixeway.scanmanager.integrations.jira;
 import com.atlassian.jira.rest.client.api.IssueRestClient;
 import com.atlassian.jira.rest.client.api.JiraRestClient;
 import com.atlassian.jira.rest.client.api.JiraRestClientFactory;
+import com.atlassian.jira.rest.client.api.UserRestClient;
 import com.atlassian.jira.rest.client.api.domain.*;
 import com.atlassian.jira.rest.client.api.domain.input.*;
 import com.atlassian.jira.rest.client.internal.async.AsynchronousJiraRestClientFactory;
@@ -25,10 +26,7 @@ import org.springframework.stereotype.Service;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Properties;
+import java.util.*;
 import java.util.stream.StreamSupport;
 
 @Service
@@ -61,13 +59,13 @@ public class JiraClient implements BugTracking {
 
         JiraRestClient client = factory.createWithBasicHttpAuthentication(uri, bugTracker.getUsername(), password);
         IssueRestClient issueClient = client.getIssueClient();
-        //Iterable<Priority> basicPriorities =  client.getMetadataClient().getPriorities().claim();
+        UserRestClient userRestClient = client.getUserClient();
         IssueInput newIssue;
-        if (bugTracker.getAsignee() != null) {
-            newIssue = new IssueInputBuilder(bugTracker.getProjectId(), Long.valueOf(bugTracker.getIssueType()), title)
-                    .setDescription(description)
-                    .setAssigneeName(bugTracker.getAsignee())
-                    .build();
+        if (bugTracker.getEpic() != null) {
+            IssueInputBuilder newIssueBuilder = new IssueInputBuilder(bugTracker.getProjectId(), Long.valueOf(bugTracker.getIssueType()), title)
+                    .setFieldValue("customfield_10014", bugTracker.getEpic())
+                    .setDescription(description);
+            newIssue = newIssueBuilder.build();
         } else {
             newIssue = new IssueInputBuilder(bugTracker.getProjectId(), Long.valueOf(bugTracker.getIssueType()), title)
                     .setDescription(description)
@@ -75,6 +73,7 @@ public class JiraClient implements BugTracking {
         }
         //TODO uncomment it
         String ticketId = issueClient.createIssue(newIssue).claim().getKey();
+
         System.setProperties(origProp);
         return ticketId;
     }

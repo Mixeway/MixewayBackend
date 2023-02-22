@@ -1203,3 +1203,6 @@ insert into scannertype (name, authaccesstoken,authapikey,authcloudctrltoken,aut
 --changeset siewer:change_nexus
 update scannertype set  category='OPENSOURCE' where name='Nexus-IQ';
 alter table codeproject add column remotename text;
+
+--changeset siewer:bugtracker_epic
+alter table bugtracker add column epic text;
