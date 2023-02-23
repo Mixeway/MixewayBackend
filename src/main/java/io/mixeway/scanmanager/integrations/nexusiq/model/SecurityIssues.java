@@ -12,7 +12,7 @@ import lombok.Setter;
 public class SecurityIssues {
     private String source;
     private String reference;
-    private String severity;
+    private Double severity;
     private String threatCategory;
     private String url;
 }
