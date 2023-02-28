@@ -26,7 +26,9 @@ public class OpenSourceScheduler {
     @Scheduled(initialDelay=0,fixedDelay = 28800000)
     public void autoDiscover() throws UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, KeyManagementException {
         for (OpenSourceScanClient openSourceScanClient : openSourceScanClients) {
-            openSourceScanClient.autoDiscovery();
+            if (openSourceScanClient.canProcessRequest()) {
+                openSourceScanClient.autoDiscovery();
+            }
         }
     }
 }

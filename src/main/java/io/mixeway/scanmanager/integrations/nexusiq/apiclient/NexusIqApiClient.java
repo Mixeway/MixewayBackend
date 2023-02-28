@@ -139,13 +139,14 @@ public class NexusIqApiClient implements SecurityScanner, OpenSourceScanClient {
 
     @Override
     public boolean canProcessRequest(CodeProject codeProject) {
-        return StringUtils.isNotBlank(codeProject.getdTrackUuid()) && StringUtils.isNotBlank(codeProject.getRemotename());
+        Scanner scanner = getScannerService.getScannerByType(findScannerTypeService.findByName(Constants.SCANNER_TYPE_NEXUS_IQ));
+        return scanner !=null && scanner.getStatus() && StringUtils.isNotBlank(codeProject.getdTrackUuid()) && StringUtils.isNotBlank(codeProject.getRemotename());
     }
 
     @Override
     public boolean canProcessRequest() {
         Scanner scanner = getScannerService.getScannerByType(findScannerTypeService.findByName(Constants.SCANNER_TYPE_NEXUS_IQ));
-        return scanner !=null;
+        return scanner !=null && scanner.getStatus();
     }
 
     @Override

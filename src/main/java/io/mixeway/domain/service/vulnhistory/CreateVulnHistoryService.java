@@ -15,6 +15,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 
 /**
@@ -84,7 +86,8 @@ public class CreateVulnHistoryService {
     }
     private int createSoftwarePacketHistory(Project project) {
 
-        return vulnTemplate.projectVulnerabilityRepository.findByProjectAndVulnerabilitySourceAndSeverityIn(project,vulnTemplate.SOURCE_OPENSOURCE, critSeverities).size();
+        return (int) vulnTemplate.projectVulnerabilityRepository.findByProjectAndVulnerabilitySourceAndSeverityIn(project, vulnTemplate.SOURCE_OPENSOURCE, critSeverities)
+                .stream().filter(pv -> !Objects.equals(pv.getVulnerability().getSeverity(), Constants.SKIP_VULENRABILITY)).count();
     }
     private long getInfraVulnsForProject(Project project){
         return vulnTemplate.projectVulnerabilityRepository.findByProjectAndVulnerabilitySourceAndSeverityIn(project, vulnTemplate.SOURCE_NETWORK, severities).size();
