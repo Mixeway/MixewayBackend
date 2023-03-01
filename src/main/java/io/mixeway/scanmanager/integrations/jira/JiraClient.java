@@ -61,9 +61,20 @@ public class JiraClient implements BugTracking {
         IssueRestClient issueClient = client.getIssueClient();
         UserRestClient userRestClient = client.getUserClient();
         IssueInput newIssue;
-        if (bugTracker.getEpic() != null) {
+        if (bugTracker.getEpic() != null && bugTracker.getAsignee() != null) {
             IssueInputBuilder newIssueBuilder = new IssueInputBuilder(bugTracker.getProjectId(), Long.valueOf(bugTracker.getIssueType()), title)
                     .setFieldValue("customfield_10014", bugTracker.getEpic())
+                    .setAssignee(userRestClient.getUser(bugTracker.getAsignee()).claim())
+                    .setDescription(description);
+            newIssue = newIssueBuilder.build();
+        }else if (bugTracker.getEpic() != null){
+            IssueInputBuilder newIssueBuilder = new IssueInputBuilder(bugTracker.getProjectId(), Long.valueOf(bugTracker.getIssueType()), title)
+                    .setFieldValue("customfield_10014", bugTracker.getEpic())
+                    .setDescription(description);
+            newIssue = newIssueBuilder.build();
+        } else if (bugTracker.getAsignee() != null){
+            IssueInputBuilder newIssueBuilder = new IssueInputBuilder(bugTracker.getProjectId(), Long.valueOf(bugTracker.getIssueType()), title)
+                    .setAssignee(userRestClient.getUser(bugTracker.getAsignee()).claim())
                     .setDescription(description);
             newIssue = newIssueBuilder.build();
         } else {
