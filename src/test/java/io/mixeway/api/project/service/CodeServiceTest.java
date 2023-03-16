@@ -1,6 +1,7 @@
 package io.mixeway.api.project.service;
 
 import io.mixeway.api.project.model.CodeProjectPutModel;
+import io.mixeway.api.project.model.CodeProjectSearch;
 import io.mixeway.api.project.model.EditCodeProjectModel;
 import io.mixeway.api.protocol.OpenSourceConfig;
 import io.mixeway.config.Constants;
@@ -10,7 +11,6 @@ import io.mixeway.db.repository.ScannerRepository;
 import io.mixeway.db.repository.ScannerTypeRepository;
 import io.mixeway.db.repository.UserRepository;
 import io.mixeway.domain.service.project.GetOrCreateProjectService;
-import io.mixeway.domain.service.scanmanager.code.CreateOrGetCodeProjectService;
 import io.mixeway.domain.service.scanmanager.code.FindCodeProjectService;
 import io.mixeway.domain.service.vulnmanager.CreateOrGetVulnerabilityService;
 import io.mixeway.domain.service.vulnmanager.VulnTemplate;
@@ -35,7 +35,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import javax.xml.ws.Response;
 import java.io.IOException;
 import java.security.*;
 import java.security.cert.CertificateException;
@@ -120,6 +119,46 @@ class CodeServiceTest {
         List<CodeProject> codeProjects = codeProjectRepository.findByProject(project);
         Optional<CodeProject> codeProject = findCodeProjectService.findCodeProject(project, "save_code");
         assertTrue(codeProject.isPresent());
+    }
+
+
+    @Test
+    @Order(2)
+    void searchCodeProject_OK(){
+        Mockito.when(principal.getName()).thenReturn("code_service");
+        Project project = getOrCreateProjectService.getProjectId("code_service","code_service", principal);
+
+        Optional<CodeProject> codeProject = findCodeProjectService.findCodeProject(project, "save_code");
+        assertTrue(codeProject.isPresent());
+
+        ResponseEntity<CodeProject> codeProjectResponseEntity = codeService.searchCodeProject(CodeProjectSearch.builder().repourl("https://git/save_code").build(), principal);
+        assertEquals(HttpStatus.OK, codeProjectResponseEntity.getStatusCode());
+    }
+
+    @Test
+    @Order(2)
+    void searchCodeProject_NOT_FOUND(){
+        Mockito.when(principal.getName()).thenReturn("code_service");
+        Project project = getOrCreateProjectService.getProjectId("code_service","code_service", principal);
+
+        Optional<CodeProject> codeProject = findCodeProjectService.findCodeProject(project, "save_code");
+        assertTrue(codeProject.isPresent());
+
+        ResponseEntity<CodeProject> codeProjectResponseEntity = codeService.searchCodeProject(CodeProjectSearch.builder().repourl("random").build(), principal);
+        assertEquals(HttpStatus.NOT_FOUND, codeProjectResponseEntity.getStatusCode());
+    }
+
+    @Test
+    @Order(2)
+    void searchCodeProject_FORBIDDEN(){
+        Mockito.when(principal.getName()).thenReturn("random");
+        Project project = getOrCreateProjectService.getProjectId("code_service","code_service", principal);
+
+        Optional<CodeProject> codeProject = findCodeProjectService.findCodeProject(project, "save_code");
+        assertTrue(codeProject.isPresent());
+
+        ResponseEntity<CodeProject> codeProjectResponseEntity = codeService.searchCodeProject(CodeProjectSearch.builder().repourl("https://git/save_code").build(), principal);
+        assertEquals(HttpStatus.FORBIDDEN, codeProjectResponseEntity.getStatusCode());
     }
 
     @Test
