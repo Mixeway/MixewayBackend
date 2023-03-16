@@ -1,11 +1,6 @@
 package io.mixeway.api.project.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.mixeway.api.project.model.CodeCard;
-import io.mixeway.api.project.model.CodeModel;
-import io.mixeway.api.project.model.CodeProjectPutModel;
-import io.mixeway.api.project.model.EditCodeProjectModel;
+import io.mixeway.api.project.model.*;
 import io.mixeway.api.protocol.OpenSourceConfig;
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.CodeProject;
@@ -21,6 +16,9 @@ import io.mixeway.scanmanager.model.Projects;
 import io.mixeway.scanmanager.service.code.CodeScanService;
 import io.mixeway.scanmanager.service.opensource.OpenSourceScanService;
 import io.mixeway.utils.*;
+import io.mixeway.utils.CodeGroupPutModel;
+import io.mixeway.utils.RunScanForCodeProject;
+import io.mixeway.utils.SASTProject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
@@ -253,5 +251,16 @@ public class CodeService {
 
     public ResponseEntity<OpenSourceConfig> getOpenSourceConfig(Long id, String codeGroup, String codeProject, Principal principal) {
         return openSourceScanService.getOpenSourceScannerConfiguration(id, codeGroup, codeProject, principal);
+    }
+
+    public ResponseEntity<CodeProject> searchCodeProject(CodeProjectSearch search, Principal principal) {
+        Optional<CodeProject> codeProject  = findCodeProjectService.findByRepoUrl(search.getRepourl());
+        if(!codeProject.isPresent()){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        if(!permissionFactory.canUserAccessProject(principal, codeProject.get().getProject())){
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+        return new ResponseEntity<>(codeProject.get(), HttpStatus.OK);
     }
 }

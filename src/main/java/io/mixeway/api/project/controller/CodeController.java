@@ -2,9 +2,11 @@ package io.mixeway.api.project.controller;
 
 import io.mixeway.api.project.model.CodeCard;
 import io.mixeway.api.project.model.CodeProjectPutModel;
+import io.mixeway.api.project.model.CodeProjectSearch;
 import io.mixeway.api.project.model.EditCodeProjectModel;
 import io.mixeway.api.project.service.CodeService;
 import io.mixeway.api.protocol.OpenSourceConfig;
+import io.mixeway.db.entity.CodeProject;
 import io.mixeway.db.entity.ProjectVulnerability;
 import io.mixeway.scanmanager.model.Projects;
 import io.mixeway.utils.RunScanForCodeProject;
@@ -104,5 +106,10 @@ public class CodeController {
                                                                 @PathVariable("codeProject")String codeProject,
                                                                 Principal principal) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, JSONException, ParseException {
         return codeService.getOpenSourceConfig(id, codeGroup, codeProject, principal);
+    }
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @PostMapping(value = "/code/details")
+    public ResponseEntity<CodeProject> searchCodeDetailsByRepoUrl(@RequestBody CodeProjectSearch search, Principal principal) {
+        return codeService.searchCodeProject(search, principal);
     }
 }
