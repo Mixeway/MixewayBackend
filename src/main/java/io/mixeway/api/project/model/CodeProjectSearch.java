@@ -1,12 +1,12 @@
 package io.mixeway.api.project.model;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Builder
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class CodeProjectSearch {
     private String repourl;
 }
