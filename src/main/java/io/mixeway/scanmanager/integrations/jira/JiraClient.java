@@ -60,11 +60,13 @@ public class JiraClient implements BugTracking {
         JiraRestClient client = factory.createWithBasicHttpAuthentication(uri, bugTracker.getUsername(), password);
         IssueRestClient issueClient = client.getIssueClient();
         UserRestClient userRestClient = client.getUserClient();
+        URI userUri = URI.create(bugTracker.getUrl() + "/rest/api/2/user?accountId=" + bugTracker.getAsignee());
+        BasicUser basicUser = userRestClient.getUser(userUri).claim();
         IssueInput newIssue;
         if (bugTracker.getEpic() != null && bugTracker.getAsignee() != null) {
             IssueInputBuilder newIssueBuilder = new IssueInputBuilder(bugTracker.getProjectId(), Long.valueOf(bugTracker.getIssueType()), title)
                     .setFieldValue("customfield_10014", bugTracker.getEpic())
-                    .setAssignee(userRestClient.getUser(bugTracker.getAsignee()).claim())
+                    .setAssignee(basicUser)
                     .setDescription(description);
             newIssue = newIssueBuilder.build();
         }else if (bugTracker.getEpic() != null){
@@ -74,7 +76,7 @@ public class JiraClient implements BugTracking {
             newIssue = newIssueBuilder.build();
         } else if (bugTracker.getAsignee() != null){
             IssueInputBuilder newIssueBuilder = new IssueInputBuilder(bugTracker.getProjectId(), Long.valueOf(bugTracker.getIssueType()), title)
-                    .setAssignee(userRestClient.getUser(bugTracker.getAsignee()).claim())
+                    .setAssignee(basicUser)
                     .setDescription(description);
             newIssue = newIssueBuilder.build();
         } else {
