@@ -1,15 +1,21 @@
 package io.mixeway.scanmanager.service.webapp;
 
+import io.mixeway.api.cioperations.model.ZapAlertModel;
+import io.mixeway.api.cioperations.model.ZapInstancesModel;
+import io.mixeway.api.cioperations.model.ZapReportModel;
+import io.mixeway.api.cioperations.model.ZapSiteModel;
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
 import io.mixeway.domain.service.project.FindProjectService;
+import io.mixeway.domain.service.project.GetOrCreateProjectService;
 import io.mixeway.domain.service.projectvulnerability.GetProjectVulnerabilitiesService;
 import io.mixeway.domain.service.scanmanager.webapp.FindWebAppService;
 import io.mixeway.domain.service.scanmanager.webapp.GetOrCreateWebAppService;
 import io.mixeway.domain.service.scanmanager.webapp.UpdateWebAppService;
 import io.mixeway.domain.service.scanner.GetScannerService;
 import io.mixeway.domain.service.scanner.UpdateScannerService;
+import io.mixeway.domain.service.vulnmanager.CreateOrGetVulnerabilityService;
 import io.mixeway.domain.service.vulnmanager.VulnTemplate;
 import io.mixeway.scanmanager.model.WebAppScanModel;
 import io.mixeway.utils.*;
@@ -24,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 
 import java.security.Principal;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -45,6 +52,8 @@ public class WebAppScanService {
     private final GetScannerService getScannerService;
     private final GetProjectVulnerabilitiesService getProjectVulnerabilitiesService;
     private final UpdateScannerService updateScannerService;
+    private final GetOrCreateProjectService getOrCreateProjectService;
+    private final CreateOrGetVulnerabilityService CreateOrGetVulnerabilityService;
 
     private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
@@ -211,5 +220,50 @@ public class WebAppScanService {
 
         }
         return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
+    }
+
+
+    //**ZAP integrations
+    public List<ProjectVulnerability> ZapMapper(ZapReportModel zapReport, WebApp webApp){
+        List<ProjectVulnerability> projectVulnerabilities = new ArrayList<>();
+        for (ZapSiteModel site : zapReport.getSite()) {
+            for (ZapAlertModel alert : site.getAlerts() ){
+                for (ZapInstancesModel alertInstance : alert.getInstances() ){
+                    Vulnerability vulnerability = CreateOrGetVulnerabilityService.createOrGetVulnerability(alert.getName());
+                    ProjectVulnerability pv = new ProjectVulnerability(webApp, null, vulnerability, alert.getDesc(), alert.getSolution(), alert.getRiskdesc().split(" \\(")[0], null, alertInstance.getUri(), null, vulnTemplate.SOURCE_WEBAPP, null);
+                    projectVulnerabilities.add(pv);
+                }
+            }
+        }
+        return projectVulnerabilities;
+    }
+
+    public void zapVulnsRemove(List<ProjectVulnerability> oldVulns){
+        for (ProjectVulnerability projectVulnerability : oldVulns) {
+            List<ProjectVulnerability> vulnsToRemove = oldVulns.stream().collect(Collectors.toList());
+            if (vulnsToRemove.size() > 0) {
+                vulnsToRemove.forEach(pv -> pv.setStatus(vulnTemplate.STATUS_REMOVED));
+                vulnsToRemove.forEach(vulnTemplate.projectVulnerabilityRepository::saveAndFlush);
+            }
+        }
+    }
+
+    public ResponseEntity<Status> prepareAndLoadZapVulns(ZapReportModel loadVulnModel, String ciid, Principal principal) throws ParseException {
+
+        if (loadVulnModel.getSite() != null && !Objects.equals(loadVulnModel.getSite().get(0).getName(), "")) {
+            Project project = getOrCreateProjectService.getProjectId(ciid, loadVulnModel.getSite().get(0).getName().substring(8), principal);
+            WebAppScanModel webAppScanModel = new WebAppScanModel();
+            webAppScanModel.setUrl(loadVulnModel.getSite().get(0).getName());
+            WebApp webApp = getOrCreateWebAppService.getOrCreateWebApp(loadVulnModel.getSite().get(0).getName(), project, webAppScanModel, "API", UUID.randomUUID().toString());
+            List<ProjectVulnerability> oldVulns = vulnTemplate.projectVulnerabilityRepository.findByWebApp(webApp);
+            List<ProjectVulnerability> newVulns = ZapMapper(loadVulnModel,webApp);
+            zapVulnsRemove(oldVulns);
+            vulnTemplate.vulnerabilityPersistList(oldVulns, newVulns);
+            vulnTemplate.projectVulnerabilityRepository.deleteByStatus(vulnTemplate.STATUS_REMOVED);
+            return new ResponseEntity<>(HttpStatus.OK);
+        }
+        else {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
     }
 }

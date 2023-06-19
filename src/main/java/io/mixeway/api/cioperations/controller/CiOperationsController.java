@@ -3,6 +3,7 @@ package io.mixeway.api.cioperations.controller;
 import io.mixeway.api.cioperations.model.CIVulnManageResponse;
 import io.mixeway.api.cioperations.model.CiResultModel;
 import io.mixeway.api.cioperations.model.LoadVulnModel;
+import io.mixeway.api.cioperations.model.ZapReportModel;
 import io.mixeway.api.cioperations.service.CiOperationsService;
 import io.mixeway.api.protocol.OverAllVulnTrendChartData;
 import io.mixeway.api.protocol.cioperations.GetInfoRequest;
@@ -12,11 +13,14 @@ import io.mixeway.api.protocol.securitygateway.SecurityGatewayResponse;
 import io.mixeway.db.entity.CiOperations;
 import io.mixeway.utils.Status;
 import io.mixeway.utils.VulnerabilityModel;
+import lombok.extern.log4j.Log4j;
+import lombok.extern.log4j.Log4j2;
 import org.codehaus.jettison.json.JSONException;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
 
 import javax.validation.Valid;
 import java.io.IOException;
@@ -27,6 +31,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/v2/api/cicd")
+@Log4j2
 public class CiOperationsController {
     private final CiOperationsService ciOperationsService;
 
@@ -160,5 +165,14 @@ public class CiOperationsController {
                 loadVulnModel.getCommitId(),
                 principal);
     }
+    @PreAuthorize("hasAuthority('ROLE_API')")
+    @PostMapping(value="/loadvulns/zap/{ciid}")
+    public ResponseEntity<Status> loadVulnsZap (@RequestBody ZapReportModel loadVulnModel,
+                                                                          @PathVariable(value = "ciid") String ciid,
+                                                                          Principal principal) throws Exception {
+        return ciOperationsService.loadVulnZap(loadVulnModel,ciid,principal);
+
+    }
+
 
 }
