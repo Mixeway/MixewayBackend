@@ -1,9 +1,6 @@
 package io.mixeway.api.cioperations.service;
 
-import io.mixeway.api.cioperations.model.CIVulnManageResponse;
-import io.mixeway.api.cioperations.model.CiResultModel;
-import io.mixeway.api.cioperations.model.LoadVulnModel;
-import io.mixeway.api.cioperations.model.VulnManageResponse;
+import io.mixeway.api.cioperations.model.*;
 import io.mixeway.api.protocol.OpenSourceConfig;
 import io.mixeway.api.protocol.OverAllVulnTrendChartData;
 import io.mixeway.api.protocol.cioperations.GetInfoRequest;
@@ -23,14 +20,19 @@ import io.mixeway.domain.service.project.GetOrCreateProjectService;
 import io.mixeway.domain.service.scanmanager.code.CreateOrGetCodeProjectService;
 import io.mixeway.domain.service.scanmanager.code.FindCodeProjectService;
 import io.mixeway.domain.service.scanmanager.code.UpdateCodeProjectService;
+import io.mixeway.domain.service.scanmanager.webapp.GetOrCreateWebAppService;
+import io.mixeway.domain.service.vulnmanager.CreateOrGetVulnerabilityService;
 import io.mixeway.domain.service.vulnmanager.VulnTemplate;
 import io.mixeway.scanmanager.model.CodeAccessVerifier;
 import io.mixeway.scanmanager.model.SASTRequestVerify;
+import io.mixeway.scanmanager.model.WebAppScanModel;
 import io.mixeway.scanmanager.service.code.CodeScanService;
 import io.mixeway.scanmanager.service.opensource.OpenSourceScanService;
+import io.mixeway.scanmanager.service.webapp.WebAppScanService;
 import io.mixeway.utils.*;
 import io.mixeway.utils.ScannerType;
 import io.mixeway.utils.Status;
+import io.mixeway.utils.VulnerabilityModel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
@@ -44,15 +46,14 @@ import java.io.IOException;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
 @Log4j2
 @RequiredArgsConstructor
+//@Transactional
 public class CiOperationsService {
     private final PermissionFactory permissionFactory;
     private final ProjectRepository projectRepository;
@@ -70,6 +71,9 @@ public class CiOperationsService {
     private final CreateOrGetCodeProjectService createOrGetCodeProjectService;
     private final GetOrCreateProjectService getOrCreateProjectService;
     private final FindProjectService findProjectService;
+    private final GetOrCreateWebAppService getOrCreateWebAppService;
+    private final CreateOrGetVulnerabilityService CreateOrGetVulnerabilityService;
+    private final WebAppScanService WebAppScanService;
     ArrayList<String> severitiesHigh = new ArrayList<String>() {{
         add("Critical");
         add("High");
@@ -421,4 +425,15 @@ public class CiOperationsService {
             updateCiOperationsService.updateCiOperations(ciOperations.get(), securityGatewayEntry,codeProject);
         }
     }
-}
+    /**
+     * ZAP reports
+     */
+
+     @Transactional
+     public ResponseEntity<Status> loadVulnZap(ZapReportModel loadVulnModel, String ciid, Principal principal) throws ParseException {
+
+            return WebAppScanService.prepareAndLoadZapVulns(loadVulnModel,ciid,principal);
+     }
+
+    }
+
