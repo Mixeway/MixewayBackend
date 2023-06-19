@@ -1,3 +1,8 @@
+## 1.7.2 (19.06.2023)
+
+### New Features
+* Added ZAP DAST scanner integration
+
 ## 1.7.1 (2023-01-23)
 
 #### New Features

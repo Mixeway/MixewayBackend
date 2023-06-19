@@ -93,7 +93,6 @@ public class VulnTemplate {
             if (oldVulnsToKeep.size() >0 ){
                 oldVulnsToKeep.forEach(o -> o.setStatus(STATUS_EXISTING));
                 oldVulnsToKeep.forEach(projectVulnerabilityRepository::saveAndFlush);
-
             } else {
                 projectVulnerability.setStatus(STATUS_NEW);
                 projectVulnerability.setGrade(-1);
