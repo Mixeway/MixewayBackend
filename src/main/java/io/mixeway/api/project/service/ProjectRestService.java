@@ -240,4 +240,9 @@ public class ProjectRestService {
             return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
     }
+
+    public ResponseEntity<Project> getProjectByCiid(String ciid, Principal principal) {
+        Optional<Project> project = findProjectService.findProjectByCiid(ciid);
+        return project.map(value -> new ResponseEntity<>(value, HttpStatus.OK)).orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
 }

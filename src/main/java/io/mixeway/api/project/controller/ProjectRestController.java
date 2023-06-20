@@ -97,6 +97,10 @@ public class ProjectRestController {
         return projectService.showProjectStats(id, principal);
     }
     //endregion
-
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @GetMapping(value = "/ciid/{ciid}")
+    public ResponseEntity<Project> getProjectByCiid(@PathVariable("ciid") String ciid, Principal principal) {
+        return projectService.getProjectByCiid(ciid, principal);
+    }
 
 }

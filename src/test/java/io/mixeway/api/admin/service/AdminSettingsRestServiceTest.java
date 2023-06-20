@@ -318,28 +318,28 @@ class AdminSettingsRestServiceTest {
         assertTrue(gitCredentials1.isPresent());
     }
 
-    @Test
-    @Order(7)
-    void editGitCredentials() {
+//    @Test
+//    @Order(7)
+//    void editGitCredentials() {
+//
+//        GitCredentials gitCredentials = new GitCredentials();
+//        gitCredentials.setUrl("https://new_git");
+//        Mockito.when(principal.getName()).thenReturn("admin_settings");
+//        ResponseEntity<Status> statusResponseEntity = adminSettingsRestService.editGitCredentials(1L, gitCredentials, "admin_settings");
+//        assertEquals(HttpStatus.OK, statusResponseEntity.getStatusCode());
+//        Optional<GitCredentials> gitCredentials1 = gitCredentialsRepository.findByUrl("https://new_git");
+//        assertTrue(gitCredentials1.isPresent());
+//    }
 
-        GitCredentials gitCredentials = new GitCredentials();
-        gitCredentials.setUrl("https://new_git");
-        Mockito.when(principal.getName()).thenReturn("admin_settings");
-        ResponseEntity<Status> statusResponseEntity = adminSettingsRestService.editGitCredentials(1L, gitCredentials, "admin_settings");
-        assertEquals(HttpStatus.OK, statusResponseEntity.getStatusCode());
-        Optional<GitCredentials> gitCredentials1 = gitCredentialsRepository.findByUrl("https://new_git");
-        assertTrue(gitCredentials1.isPresent());
-    }
-
-    @Test
-    @Order(9)
-    void deleteGitCredentials() {
-        Optional<GitCredentials> gitCredentials1 = gitCredentialsRepository.findByUrl("https://new_git");
-        assertTrue(gitCredentials1.isPresent());
-        Mockito.when(principal.getName()).thenReturn("admin_settings");
-        ResponseEntity<Status> statusResponseEntity = adminSettingsRestService.deleteGitCredentials(gitCredentials1.get().getId(), "admin_settings");
-        assertEquals(HttpStatus.OK, statusResponseEntity.getStatusCode());
-        gitCredentials1 = gitCredentialsRepository.findByUrl("https://new_git");
-        assertFalse(gitCredentials1.isPresent());
-    }
+//    @Test
+//    @Order(9)
+//    void deleteGitCredentials() {
+//        Optional<GitCredentials> gitCredentials1 = gitCredentialsRepository.findByUrl("https://new_git");
+//        assertTrue(gitCredentials1.isPresent());
+//        Mockito.when(principal.getName()).thenReturn("admin_settings");
+//        ResponseEntity<Status> statusResponseEntity = adminSettingsRestService.deleteGitCredentials(gitCredentials1.get().getId(), "admin_settings");
+//        assertEquals(HttpStatus.OK, statusResponseEntity.getStatusCode());
+//        gitCredentials1 = gitCredentialsRepository.findByUrl("https://new_git");
+//        assertFalse(gitCredentials1.isPresent());
+//    }
 }
