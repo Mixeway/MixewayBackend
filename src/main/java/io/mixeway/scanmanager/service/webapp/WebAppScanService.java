@@ -228,10 +228,12 @@ public class WebAppScanService {
         List<ProjectVulnerability> projectVulnerabilities = new ArrayList<>();
         for (ZapSiteModel site : zapReport.getSite()) {
             for (ZapAlertModel alert : site.getAlerts() ){
-                for (ZapInstancesModel alertInstance : alert.getInstances() ){
-                    Vulnerability vulnerability = CreateOrGetVulnerabilityService.createOrGetVulnerability(alert.getName());
-                    ProjectVulnerability pv = new ProjectVulnerability(webApp, null, vulnerability, alert.getDesc(), alert.getSolution(), alert.getRiskdesc().split(" \\(")[0], null, alertInstance.getUri(), null, vulnTemplate.SOURCE_WEBAPP, null);
-                    projectVulnerabilities.add(pv);
+                if(!(alert.getRiskdesc().split(" \\(")[0].equals("Informational"))) {
+                    for (ZapInstancesModel alertInstance : alert.getInstances()) {
+                        Vulnerability vulnerability = CreateOrGetVulnerabilityService.createOrGetVulnerability(alert.getName());
+                        ProjectVulnerability pv = new ProjectVulnerability(webApp, null, vulnerability, alert.getDesc(), alert.getSolution(), alert.getRiskdesc().split(" \\(")[0], null, alertInstance.getUri(), null, vulnTemplate.SOURCE_WEBAPP, null);
+                        projectVulnerabilities.add(pv);
+                    }
                 }
             }
         }
@@ -260,9 +262,11 @@ public class WebAppScanService {
             zapVulnsRemove(oldVulns);
             vulnTemplate.vulnerabilityPersistList(oldVulns, newVulns);
             vulnTemplate.projectVulnerabilityRepository.deleteByStatus(vulnTemplate.STATUS_REMOVED);
+            log.info("ZAP DAST vulnerabilities loaded/updated/removed for ciid {}",ciid);
             return new ResponseEntity<>(HttpStatus.OK);
         }
         else {
+            log.error("Malformed ZAP DAST JSON report.");
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
