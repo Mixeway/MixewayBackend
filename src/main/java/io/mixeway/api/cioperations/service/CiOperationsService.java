@@ -431,7 +431,7 @@ public class CiOperationsService {
 
      @Transactional
      public ResponseEntity<Status> loadVulnZap(ZapReportModel loadVulnModel, String ciid, Principal principal) throws ParseException {
-
+            log.info("ZAP DAST JSON report received for ciid {}", ciid);
             return WebAppScanService.prepareAndLoadZapVulns(loadVulnModel,ciid,principal);
      }
 
