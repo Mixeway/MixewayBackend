@@ -21,7 +21,7 @@ import java.util.List;
 public class OperateOnVulnHistoryService {
     private final VulnHistoryRepository vulnHistoryRepository;
 
-    public ProjectVulnTrendChart getVulnTrendChart(Project project){
+    public ProjectVulnTrendChart getVulnTrendChart(Project project, int limit){
         LinkedList<Integer> infraVulnTrend = new LinkedList<>();
         LinkedList<Integer> webAppVulnTrend = new LinkedList<>();
         LinkedList<Integer> codeVulnTrend = new LinkedList<>();
@@ -29,7 +29,7 @@ public class OperateOnVulnHistoryService {
         LinkedList<Integer> softwareVulnTrend = new LinkedList<>();
         LinkedList<String> dates = new LinkedList<>();
         List<ProjectVulnTrendChartSerie>series = new ArrayList<>();
-        List<VulnHistory> vulnHistories = vulnHistoryRepository.getLastTwoVulnForProject(project.getId()) ;
+        List<VulnHistory> vulnHistories = vulnHistoryRepository.getVulnHistoryLimit(project.getId(),limit) ;
         for(VulnHistory vulnHistory : vulnHistories){
             infraVulnTrend.add(vulnHistory.getInfrastructureVulnHistory().intValue());
             webAppVulnTrend.add(vulnHistory.getWebAppVulnHistory().intValue());

@@ -48,8 +48,15 @@ public class ProjectRestController {
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping(value = "/{id}/vulns/vulntrendchart")
     public ResponseEntity<ProjectVulnTrendChart> showVulnTrendChart(@PathVariable("id")Long id, Principal principal) {
-        return projectService.showVulnTrendChart(id, principal);
+        return projectService.showVulnTrendChart(id,7, principal);
     }
+
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @GetMapping(value = "/{id}/vulns/vulntrendchart/days/{limit}")
+    public ResponseEntity<ProjectVulnTrendChart> showVulnTrendChartWithLimit(@PathVariable("id")Long id, @PathVariable("limit") int limit, Principal principal) {
+        return projectService.showVulnTrendChart(id,limit, principal);
+    }
+
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping(value = "/{id}/vulns/severitychart")
     public ResponseEntity<HashMap<String,Long>> showSeverityChart(@PathVariable("id")Long id, Principal principal) {

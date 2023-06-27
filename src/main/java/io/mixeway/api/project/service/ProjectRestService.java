@@ -100,10 +100,10 @@ public class ProjectRestService {
 
 
 
-    public ResponseEntity<ProjectVulnTrendChart> showVulnTrendChart(Long id, Principal principal) {
+    public ResponseEntity<ProjectVulnTrendChart> showVulnTrendChart(Long id, int limit, Principal principal) {
         Optional<Project> project = findProjectService.findProjectById(id) ;
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())) {
-            return new ResponseEntity<>(operateOnVulnHistoryService.getVulnTrendChart(project.get()),HttpStatus.OK);
+            return new ResponseEntity<>(operateOnVulnHistoryService.getVulnTrendChart(project.get(), limit),HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
