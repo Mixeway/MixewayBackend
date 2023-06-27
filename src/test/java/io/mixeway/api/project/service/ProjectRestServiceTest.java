@@ -111,7 +111,7 @@ class ProjectRestServiceTest {
         Mockito.when(principal.getName()).thenReturn("project_service");
         Project project = getOrCreateProjectService.getProjectId("project_service","project_service",principal);
 
-        ResponseEntity<ProjectVulnTrendChart> showVulnTrendChart = projectRestService.showVulnTrendChart(project.getId(),principal);
+        ResponseEntity<ProjectVulnTrendChart> showVulnTrendChart = projectRestService.showVulnTrendChart(project.getId(),7 ,principal);
         assertEquals(HttpStatus.OK, showVulnTrendChart.getStatusCode());
         assertNotNull(showVulnTrendChart.getBody());
 
