@@ -285,7 +285,7 @@ public class NexusIqApiClient implements SecurityScanner, OpenSourceScanClient {
                     return null;
                 }
             }
-        } catch (UnknownContentTypeException e){
+        } catch (UnknownContentTypeException | HttpClientErrorException e){
             log.warn("[Nexus-IQ] Problem in getting raw data URL for {}", codeProject.getName());
         }
         return null;
