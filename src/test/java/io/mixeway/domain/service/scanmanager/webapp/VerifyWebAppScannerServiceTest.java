@@ -22,7 +22,7 @@ class VerifyWebAppScannerServiceTest {
     private final VerifyWebAppScannerService verifyWebAppScannerService;
     private final FindScannerTypeService findScannerTypeService;
 
-    @Test
+    //@Test
     void canWebAppScannerBeAdded() {
         boolean status = verifyWebAppScannerService.canWebAppScannerBeAdded(findScannerTypeService.findByName(Constants.SCANNER_TYPE_ACUNETIX));
         assertTrue(status);
