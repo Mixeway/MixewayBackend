@@ -99,7 +99,8 @@ public class VulnTemplate {
                 newVulns.add(projectVulnerability);
             }
         }
-        projectVulnerabilityRepository.saveAll(newVulns);
+        
+        projectVulnerabilityRepository.saveAll(newVulns.stream().distinct().collect(Collectors.toList()));
     }
 
     public void vulnerabilityPersistListSoftware(List<ProjectVulnerability> oldTmpVulns, List<ProjectVulnerability> projectVulnerabilities) {
