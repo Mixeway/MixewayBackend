@@ -5,6 +5,7 @@ import io.mixeway.db.entity.*;
 import io.mixeway.domain.service.cioperations.UpdateCiOperationsService;
 import io.mixeway.domain.service.opensource.CreateOpenSourceConfigService;
 import io.mixeway.domain.service.project.FindProjectService;
+import io.mixeway.domain.service.projectvulnerability.DeleteProjectVulnerabilityService;
 import io.mixeway.domain.service.projectvulnerability.GetProjectVulnerabilitiesService;
 import io.mixeway.domain.service.scanner.GetScannerService;
 import io.mixeway.domain.service.softwarepackage.GetOrCreateSoftwarePacketService;
@@ -44,6 +45,7 @@ public class OpenSourceScanService {
     private final CreateOpenSourceConfigService createOpenSourceConfigService;
     private final GetProjectVulnerabilitiesService getProjectVulnerabilitiesService;
     private final GetOrCreateSoftwarePacketService getOrCreateSoftwarePacketService;
+    private final DeleteProjectVulnerabilityService deleteProjectVulnerabilityService;
 
     /**
      * Method witch get information about configured OpenSource scanner which is proper for particular project
@@ -129,6 +131,8 @@ public class OpenSourceScanService {
      */
    // @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void loadVulnsFromCICDToCodeProject(CodeProject codeProject, List<VulnerabilityModel> openSourceVulns) {
+        if (openSourceVulns.isEmpty())
+            return;
         List<ProjectVulnerability> oldVulns = getProjectVulnerabilitiesService.getOldVulnsForCodeProjectAndSource(codeProject, vulnTemplate.SOURCE_OPENSOURCE);
         List<ProjectVulnerability> vulnToPersist = new ArrayList<>();
         for (VulnerabilityModel oSSVulnerabilityModel : openSourceVulns){
@@ -140,21 +144,10 @@ public class OpenSourceScanService {
 
             ProjectVulnerability projectVulnerability = new ProjectVulnerability(codeProject, vuln, oSSVulnerabilityModel, softwarePacket, vulnTemplate.SOURCE_OPENSOURCE);
             vulnToPersist.add(projectVulnerability);
-            //vulnTemplate.vulnerabilityPersist(oldVulns, projectVulnerability);
         }
         vulnTemplate.vulnerabilityPersistList(oldVulns,vulnToPersist);
-        removeOldVulns(codeProject);
+        deleteProjectVulnerabilityService.deleteRemovedVulnerabilitiesInCodeProject(codeProject);
         log.info("[CICD] SourceCode - Loading Vulns for {} completed type of DEPENDENCY CHECK", codeProject.getName());
     }
 
-    public void removeOldVulns(CodeProject codeProject){
-        try {
-            List<Long> toRemove = vulnTemplate.projectVulnerabilityRepository.findByCodeProjectAndVulnerabilitySource(codeProject, vulnTemplate.SOURCE_OPENSOURCE).filter(v -> v.getStatus().getId().equals(vulnTemplate.STATUS_REMOVED.getId())).map(ProjectVulnerability::getId).collect(Collectors.toList());
-            if (toRemove.size() > 0) {
-                vulnTemplate.projectVulnerabilityRepository.deleteProjectVulnerabilityIn(toRemove);
-            }
-        } catch (Exception e){
-            log.error("[OpenSourceScanService] For some reason unable to delete old vulns for codeproject {} / {}", codeProject.getName(),codeProject.getProject().getName());
-        }
-    }
 }

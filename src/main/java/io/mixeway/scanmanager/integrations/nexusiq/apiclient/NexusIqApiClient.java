@@ -278,6 +278,9 @@ public class NexusIqApiClient implements SecurityScanner, OpenSourceScanClient {
             if (response.getStatusCode().equals(HttpStatus.OK)) {
                 if (response.getBody().size() > 1) {
                     GetReports getReports = response.getBody().stream().filter(gr -> gr.getStage().equals(Constants.NEXUS_STAGE_BUILD)).findFirst().orElse(new GetReports());
+                    if (getReports.getReportDataUrl() == null) {
+                        getReports = response.getBody().stream().filter(gr -> gr.getStage().equals(Constants.NEXUS_STAGE_SOURCE)).findFirst().orElse(new GetReports());
+                    }
                     return getReports.getReportDataUrl();
                 } else if (response.getBody().size() == 1) {
                     return response.getBody().get(0).getReportDataUrl();

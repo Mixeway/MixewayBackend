@@ -1,0 +1,9 @@
+<persistence-unit name="myPersistenceUnit">
+    <!-- Konfiguracje dla dostawcy JPA -->
+
+    <!-- Konfiguracja Envers -->
+    <properties>
+        <!-- Włącz Envers -->
+        <property name="org.hibernate.envers.store_data_at_delete" value="true" />
+    </properties>
+</persistence-unit>
