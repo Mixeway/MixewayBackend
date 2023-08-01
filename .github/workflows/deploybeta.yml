@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - '*'
+      - 'feature/*'
       - 'refactor/*'
       - '!master'
   pull_request:
