@@ -1257,3 +1257,6 @@ alter table projectvulnerability_AUD
     add constraint FK5ecvi1a0ykunrriib7j28vpdj
         foreign key (REV)
             references REVINFO;
+
+--changeset siewer:envers-error-fix
+CREATE SEQUENCE hibernate_sequence START 1;
