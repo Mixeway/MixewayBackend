@@ -203,7 +203,7 @@ public class NexusIqApiClient implements SecurityScanner, OpenSourceScanClient {
                 SoftwarePacket softwarePacket = getOrCreateSoftwarePacketService.getOrCreateSoftwarePacket(componentName, componentVersion);
 
                 try {
-                    if (reportEntry.getSecurityData() != null && !reportEntry.getSecurityData().getSecurityIssues().isEmpty() && componentVersion!="unknown") {
+                    if (reportEntry.getSecurityData() != null && !reportEntry.getSecurityData().getSecurityIssues().isEmpty()) {
                         for (SecurityIssues securityIssues : reportEntry.getSecurityData().getSecurityIssues()) {
                             Vulnerability vulnerability = createOrGetVulnerabilityService.createOrGetVulnerability(securityIssues.getReference());
                             if (vulnerability.getSeverity() != null && vulnerability.getSeverity().equals(Constants.SKIP_VULENRABILITY)){

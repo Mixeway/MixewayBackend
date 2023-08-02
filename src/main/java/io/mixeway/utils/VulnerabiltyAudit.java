@@ -9,13 +9,16 @@ import lombok.Setter;
 public class VulnerabiltyAudit {
 
     private String inserted;
+    private String start;
+    private String end;
+    private int occurances;
     private EventType eventType;
     private String ticketid;
     private String severity;
     private String source;
     private Long id;
 
-    public VulnerabiltyAudit(ProjectVulnerabilityAudit pva){
+    public VulnerabiltyAudit(ProjectVulnerabilityAudit pva, String start, String end, int occurances){
         this.inserted = pva.getInserted();
         if (pva.getRevtype() == 0){
             this.eventType = EventType.CREATED;
@@ -28,5 +31,8 @@ public class VulnerabiltyAudit {
         this.id = pva.getId().getId();
         this.severity = pva.getSeverity();
         this.source = pva.getVulnerabilitySource().getName();
+        this.start = start;
+        this.end = end;
+        this.occurances = occurances;
     }
 }

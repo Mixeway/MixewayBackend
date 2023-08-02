@@ -56,7 +56,7 @@ public class ProjectAuditService {
                 ), HttpStatus.OK);
     }
 
-    public ResponseEntity<List<VulnerabiltyAudit>> getAuditForProjectVulnerability(Project project, AuditRequest settings) {
+    public ResponseEntity<List<VulnerabiltyAudit>> getAuditForProjectVulnerability(Project project) {
         return new ResponseEntity<>(
                 findProjectVulnerabilityAuditService.getProjectHistory(
                         project

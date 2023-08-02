@@ -70,18 +70,18 @@ public class ProjectAudit {
     }
 
     @PreAuthorize("hasAuthority('ROLE_USER')")
-    @PostMapping(value = "/project/{id}")
-    public ResponseEntity<List<VulnerabiltyAudit>> getAuditForProjectVulnerability(@PathVariable("id")Long id, @Valid @RequestBody AuditRequest settings, Principal principal) {
+    @GetMapping(value = "/project/{id}")
+    public ResponseEntity<List<VulnerabiltyAudit>> getAuditForProjectVulnerability(@PathVariable("id")Long id, Principal principal) {
         Optional<Project> project = findProjectService.findProjectById(id);
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())) {
-            return projectAuditService.getAuditForProjectVulnerability(project.get(), settings);
+            return projectAuditService.getAuditForProjectVulnerability(project.get());
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
 
     @PreAuthorize("hasAuthority('ROLE_USER')")
-    @GetMapping(value = "/project/{id}")
+    @GetMapping(value = "/project/stats/{id}")
     public ResponseEntity<io.mixeway.utils.ProjectAudit> getAuditForProjectVulnerabilitySummarize(@PathVariable("id")Long id, Principal principal) {
         Optional<Project> project = findProjectService.findProjectById(id);
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())) {
