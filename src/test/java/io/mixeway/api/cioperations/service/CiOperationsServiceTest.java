@@ -274,7 +274,7 @@ class CiOperationsServiceTest {
     }
 
     @Test
-    void performSastScanForCodeProject() {
+    void performSastScanForCodeProject() throws UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, KeyManagementException {
         Mockito.when(principal.getName()).thenReturn("cioperations_service");
         Project project = getOrCreateProjectService.getProjectId("cioperations_service", "cioperations_service", principal);
         CodeProject codeProject = createOrGetCodeProjectService.getOrCreateCodeProject(project,"cioperations_service", "master");

@@ -354,14 +354,18 @@ public class CiOperationsService {
         }
     }
 
-    public ResponseEntity<Status> performSastScanForCodeProject(Long codeProjectId, Principal principal) {
+    public ResponseEntity<Status> performSastScanForCodeProject(Long codeProjectId, Principal principal) throws UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, KeyManagementException {
         Optional<CodeProject> codeProject = codeProjectRepository.findById(codeProjectId);
         if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getProject())) {
             codeScanService.putCodeProjectToQueue(codeProjectId,principal);
-            log.info("{} put SAST Project in queue - {}", principal.getName(), codeProject.get().getName());
+            if (StringUtils.isNotBlank(codeProject.get().getdTrackUuid())) {
+                openSourceScanService.loadVulnerabilities(codeProject.get());
+                log.info("[CICD] {} Loaded OpenSource Vulns for project - {}", principal.getName(), codeProject.get().getName());
+            }
+            log.info("[CICD] {} put SAST Project in queue - {}", principal.getName(), codeProject.get().getName());
             return new ResponseEntity<>(HttpStatus.OK);
         } else {
-            log.error("{} tries to run SAST scan for id {} but project doesnt exist or user has no permision to do so.", principal.getName(), codeProjectId);
+            log.error("[CICD] {} tries to run SAST scan for id {} but project doesnt exist or user has no permision to do so.", principal.getName(), codeProjectId);
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
@@ -399,6 +403,10 @@ public class CiOperationsService {
                 if (pv.getVulnerabilitySource().getId().equals(vulnTemplate.SOURCE_OPENSOURCE.getId())){
                     vulnList.add(new Vuln(pv,null,null,pv.getCodeProject(),Constants.API_SCANNER_OPENSOURCE));
                 } else if (pv.getVulnerabilitySource().getId().equals(vulnTemplate.SOURCE_SOURCECODE.getId())){
+                    vulnList.add(new Vuln(pv,null,null,pv.getCodeProject(),Constants.API_SCANNER_CODE));
+                } else if (pv.getVulnerabilitySource().getId().equals(vulnTemplate.SOURCE_GITLEAKS.getId())){
+                    vulnList.add(new Vuln(pv,null,null,pv.getCodeProject(),Constants.API_SCANNER_CODE));
+                } else if (pv.getVulnerabilitySource().getId().equals(vulnTemplate.SOURCE_IAC.getId())){
                     vulnList.add(new Vuln(pv,null,null,pv.getCodeProject(),Constants.API_SCANNER_CODE));
                 }
             }
