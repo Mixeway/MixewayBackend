@@ -1260,3 +1260,6 @@ alter table projectvulnerability_AUD
 
 --changeset siewer:envers-error-fix
 CREATE SEQUENCE hibernate_sequence START 1;
+
+--changeset siewer:add-scantype-iac
+insert into vulnerabilitysource (name) values ('IaC');

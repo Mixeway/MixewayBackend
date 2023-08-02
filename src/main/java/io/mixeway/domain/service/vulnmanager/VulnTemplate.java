@@ -40,6 +40,7 @@ public class VulnTemplate {
     public final VulnerabilitySource SOURCE_OPENSOURCE;
     public final VulnerabilitySource SOURCE_OSPACKAGE;
     public final VulnerabilitySource SOURCE_GITLEAKS;
+    public final VulnerabilitySource SOURCE_IAC;
     public final VulnerabilitySource SOURCE_CISBENCHMARK;
     private static final Logger log = LoggerFactory.getLogger(VulnTemplate.class);
 
@@ -66,6 +67,7 @@ public class VulnTemplate {
         SOURCE_OSPACKAGE = vulnerabilitySourceRepository.findByName(Constants.VULN_TYPE_OSPACKAGE);
         SOURCE_GITLEAKS = vulnerabilitySourceRepository.findByName(Constants.VULNEARBILITY_SOURCE_GITLEAKS);
         SOURCE_CISBENCHMARK = vulnerabilitySourceRepository.findByName(Constants.VULNEARBILITY_SOURCE_CISBENCHMARK);
+        SOURCE_IAC = vulnerabilitySourceRepository.findByName(Constants.VULNEARBILITY_SOURCE_IAC);
     }
 
     public void vulnerabilityPersist(List<ProjectVulnerability> oldTmpVulns, ProjectVulnerability projectVulnerability){

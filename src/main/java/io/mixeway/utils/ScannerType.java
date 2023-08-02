@@ -5,5 +5,6 @@ public enum ScannerType {
     SAST,
     GITLEAKS,
     DAST,
-    PROGPILOT
+    PROGPILOT,
+    IAC
 }

@@ -214,9 +214,10 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
         log.debug("[Checkmarx] Setting git repo {}", mapper.writeValueAsString(cxSetGitRepoHttpEntity));
         codeRequestHelper.setHttpEntity(cxSetGitRepoHttpEntity);
         try {
+            int remoteId = (codeProject.getRemoteid() == 0) ? codeProject.getVersionIdAll() : (codeProject.getVersionIdAll() == 0) ? codeProject.getRemoteid() : codeProject.getVersionIdAll();
             ResponseEntity<String> response = codeRequestHelper
                     .getRestTemplate()
-                    .exchange(scanner.getApiUrl() + Constants.CX_GET_PROJECTS_API + "/" + codeProject.getRemoteid() + "/sourceCode/remoteSettings/git", HttpMethod.POST, codeRequestHelper.getHttpEntity(), String.class);
+                    .exchange(scanner.getApiUrl() + Constants.CX_GET_PROJECTS_API + "/" + remoteId + "/sourceCode/remoteSettings/git", HttpMethod.POST, codeRequestHelper.getHttpEntity(), String.class);
             log.info("[Checkmarx] Setting GIT repo for {} result {}", codeProject.getName(), response.getStatusCode());
         } catch (Exception e){
             log.error("[Checkmarx] Error setting GIT repo for project {} - {}",codeProject.getName(), e.getLocalizedMessage());

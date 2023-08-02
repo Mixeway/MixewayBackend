@@ -255,11 +255,12 @@ public class CiOperationsService {
             CodeProject codeProject = createOrGetCodeProjectService.getOrCreateCodeProject(project.get(),codeProjectName, branch);
             codeProject.setCommitid(commitId);
 
+            // to support legacy application where client call SAST while it should be IAC
             List<VulnerabilityModel> sastVulns = vulns.stream().filter(v -> v.getScannerType().equals(ScannerType.SAST)).collect(Collectors.toList());
             if (sastVulns.size() > 0 ){
-                codeScanService.loadVulnsFromCICDToCodeProject(codeProject, sastVulns, ScannerType.SAST);
+                codeScanService.loadVulnsFromCICDToCodeProject(codeProject, sastVulns, ScannerType.IAC);
             } else {
-                codeScanService.loadVulnsFromCICDToCodeProject(codeProject, new ArrayList<>(), ScannerType.SAST);
+                codeScanService.loadVulnsFromCICDToCodeProject(codeProject, new ArrayList<>(), ScannerType.IAC);
             }
             List<VulnerabilityModel> gitLeaksVulns = vulns.stream().filter(v -> v.getScannerType().equals(ScannerType.GITLEAKS)).collect(Collectors.toList());
             if (gitLeaksVulns.size() > 0 ){

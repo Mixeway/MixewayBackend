@@ -397,6 +397,8 @@ public class CodeScanService {
             vulnerabilitySource = vulnTemplate.SOURCE_SOURCECODE;
         } else if (scannerType.equals(ScannerType.GITLEAKS)){
             vulnerabilitySource = vulnTemplate.SOURCE_GITLEAKS;
+        } else if (scannerType.equals(ScannerType.IAC)){
+            vulnerabilitySource = vulnTemplate.SOURCE_IAC;
         }
         List<ProjectVulnerability> oldVulnsForCodeProject = getProjectVulnerabilitiesService.getOldVulnsForCodeProjectAndSource(codeProject,vulnerabilitySource);
         List<ProjectVulnerability> vulnToPersist = new ArrayList<>();
