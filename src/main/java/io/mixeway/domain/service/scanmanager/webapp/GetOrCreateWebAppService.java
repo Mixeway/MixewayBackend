@@ -35,6 +35,25 @@ public class GetOrCreateWebAppService {
 
     private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
+    public WebApp getOrCreateWebApp(String url, Project project, RoutingDomain routingDomain){
+        Optional<WebApp> webApp = webAppRepository.findByProjectAndUrl(project, url);
+        if (webApp.isPresent()){
+            return webApp.get();
+        } else {
+            WebApp webAppNew = new WebApp();
+            webAppNew.setUrl(url);
+            webAppNew.setRoutingDomain(routingDomain);
+            webAppNew.setRisk(0);
+            webAppNew.setOrigin("SERCICE_DISCOVERY");
+            webAppNew.setInQueue(false);
+            webAppNew.setInserted(sdf.format(new Date()));
+            webAppNew.setRunning(false);
+            webAppRepository.save(webAppNew);
+            log.info("[WebApp] Created webapp {} for {}", url, project.getName());
+            return webAppNew;
+        }
+    }
+
     public WebApp getOrCreateWebApp(String url, Project project, WebAppScanModel webAppScanModel, String origin, String requestId) throws ParseException {
         String urlToCompareSimiliar = getUrltoCompare(url);
         String urlToCompareWithRegexx = WebAppScanHelper.normalizeUrl(url) + "$";

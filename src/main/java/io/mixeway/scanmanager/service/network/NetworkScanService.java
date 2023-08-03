@@ -20,6 +20,7 @@ import io.mixeway.domain.service.scanner.GetScannerService;
 import io.mixeway.scanmanager.integrations.remotefirewall.apiclient.RfwApiClient;
 import io.mixeway.scanmanager.model.AssetToCreate;
 import io.mixeway.scanmanager.model.NetworkScanRequestModel;
+import io.mixeway.scanmanager.service.webapp.WebAppScanService;
 import io.mixeway.utils.*;
 import io.mixeway.utils.Status;
 import lombok.RequiredArgsConstructor;
@@ -74,6 +75,7 @@ public class NetworkScanService {
     private final GetScannerService getScannerService;
     private final FindInterfaceService findInterfaceService;
     private final UpdateInfraScanService updateInfraScanService;
+    private final WebAppScanService webAppScanService;
 
 
     /**
@@ -321,6 +323,7 @@ public class NetworkScanService {
                     for (NetworkScanClient networkScanClient :networkScanClients) {
                         if (networkScanClient.canProcessRequest(ns) && networkScanClient.isScanDone(ns)) {
                             networkScanClient.loadVulnerabilities(ns);
+                            webAppScanService.createWebAppsForProject(ns.getProject(), ns.getNessus().getRoutingDomain());
                             deleteRulsFromRfw(ns);
                             updateInterfaceService.changeRunningState(ns, false, false);
                             updateInterfaceService.updateRiskForInterfaces(ns);
