@@ -24,7 +24,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class Interface implements VulnSource {
 
-	@JsonIgnore private Long id;
+	private Long id;
 	private String privateip;
 	@JsonIgnore private String floatingip;
 	@JsonIgnore private String subnetId;

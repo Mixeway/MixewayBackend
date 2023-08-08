@@ -1,3 +1,13 @@
+## 1.8.0 (2023-08-08)
+
+#### New Features
+* Enabled hibernate envers for projectvulnerability table
+* added endpoint with more detailed statistics for both project and vulnerabilities discovered within project
+
+#### Bug Fixes
+* Fixed bug when some vulnerabilities status was not managed properly
+* Fixed bug with Checkmarx integration
+
 ## 1.7.2 (19.06.2023)
 
 ### New Features

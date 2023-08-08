@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.security.Principal;
+import java.text.ParseException;
 import java.util.List;
 import java.util.Optional;
 
@@ -82,7 +83,7 @@ public class ProjectAudit {
 
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping(value = "/project/stats/{id}")
-    public ResponseEntity<io.mixeway.utils.ProjectAudit> getAuditForProjectVulnerabilitySummarize(@PathVariable("id")Long id, Principal principal) {
+    public ResponseEntity<io.mixeway.utils.ProjectAudit> getAuditForProjectVulnerabilitySummarize(@PathVariable("id")Long id, Principal principal) throws ParseException {
         Optional<Project> project = findProjectService.findProjectById(id);
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())) {
             return projectAuditService.getAuditForProjectVulnerabilitySummarize(project.get());
