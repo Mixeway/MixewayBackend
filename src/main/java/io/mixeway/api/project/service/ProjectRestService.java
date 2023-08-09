@@ -114,11 +114,7 @@ public class ProjectRestService {
         HashMap<String,Long> pieData = new HashMap<>();
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             for (String severity : severityList){
-                pieData.put(severity,
-                        (vulnTemplate.projectVulnerabilityRepository.countByAnInterfaceInAndSeverity(findInterfaceService.findByAssetIn(new ArrayList<>(project.get().getAssets())),severity)
-                        + vulnTemplate.projectVulnerabilityRepository.countByCodeProjectInAndSeverityAndAnalysisNot(new ArrayList<>(project.get().getCodes()),severity,Constants.FORTIFY_NOT_AN_ISSUE)
-                        + vulnTemplate.projectVulnerabilityRepository.countByWebAppInAndSeverity(new ArrayList<>(project.get().getWebapps()),severity)
-                        + vulnTemplate.projectVulnerabilityRepository.getSoftwareVulnsForProjectAndSeverity(project.get().getId(), severity).size()));
+                pieData.put(severity,vulnTemplate.projectVulnerabilityRepository.countByProjectAndSeverity(project.get(), severity));
             }
             return new ResponseEntity<>(pieData,HttpStatus.OK);
         } else {
