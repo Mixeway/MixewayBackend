@@ -89,9 +89,15 @@ public class GlobalScheduler {
     @Scheduled(initialDelay=3000,fixedDelay = 10000000)
     public void getDepTrackVulns() {
         log.info("[OpenSourceService] Starting loading vulnerabilities from SCA");
+        int i =0;
         try {
             List<CodeProject> codeProjects = findCodeProjectService.getCodeProjectsWithOSIntegrationEnabled();
+            log.info("[OpenSourceService] About to load info for {} projects", codeProjects.size());
             for (CodeProject cp : codeProjects){
+                i++;
+                if (i % 10 == 0) {
+                    log.info("[OpenSourceService] Loading progress: {} / {}", i, codeProjects.size());
+                }
                     try {
                         openSourceScanService.loadVulnerabilities(cp);
                     } catch (CertificateException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyManagementException | KeyStoreException | IOException e) {

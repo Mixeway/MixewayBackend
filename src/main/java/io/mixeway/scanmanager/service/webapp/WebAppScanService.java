@@ -9,6 +9,7 @@ import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
 import io.mixeway.domain.service.project.FindProjectService;
 import io.mixeway.domain.service.project.GetOrCreateProjectService;
+import io.mixeway.domain.service.projectvulnerability.DeleteProjectVulnerabilityService;
 import io.mixeway.domain.service.projectvulnerability.GetProjectVulnerabilitiesService;
 import io.mixeway.domain.service.scanmanager.webapp.FindWebAppService;
 import io.mixeway.domain.service.scanmanager.webapp.GetOrCreateWebAppService;
@@ -54,6 +55,7 @@ public class WebAppScanService {
     private final UpdateScannerService updateScannerService;
     private final GetOrCreateProjectService getOrCreateProjectService;
     private final CreateOrGetVulnerabilityService CreateOrGetVulnerabilityService;
+    private final DeleteProjectVulnerabilityService deleteProjectVulnerabilityService;
 
     private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
@@ -117,12 +119,13 @@ public class WebAppScanService {
                                         vulnTemplate.STATUS_REMOVED.getId());
                                 tmpVulns.forEach(v -> v.setStatus(vulnTemplate.STATUS_REMOVED));
                             }
-                            //vulnTemplate.projectVulnerabilityRepository.deleteByWebApp(app);
                             webAppScanClient.loadVulnerabilities(scanner,app, null, tmpVulns);
                             // TODO: end webappscan
                             updateScannerService.decreaseScanNumber(scanner);
                             updateWebAppService.updateRisk(app);
-                            vulnTemplate.projectVulnerabilityRepository.deleteByStatusAndProject(vulnTemplate.STATUS_REMOVED,app.getProject());
+
+                            //vulnTemplate.projectVulnerabilityRepository.deleteByStatusAndProject(vulnTemplate.STATUS_REMOVED,app.getProject());
+                            deleteProjectVulnerabilityService.deleteRemovedVulnerabilitiesInWebApp(app);
                             break;
                         }
                     }
@@ -268,6 +271,22 @@ public class WebAppScanService {
         else {
             log.error("Malformed ZAP DAST JSON report.");
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    public void createWebAppsForProject(Project project, RoutingDomain routingDomain) {
+        Vulnerability vulnerability = vulnTemplate.vulnerabilityRepository.findByName(Constants.VULNERABILITY_HTTP_SERVER_DETECTED).orElse(null);
+        if (vulnerability != null) {
+            List<ProjectVulnerability> projectVulnerabilities = vulnTemplate.projectVulnerabilityRepository.findByProjectAndVulnerability(project, vulnerability);
+            if (projectVulnerabilities.size() > 0){
+                for (ProjectVulnerability pv : projectVulnerabilities) {
+                    if (pv.getPort() != null && !Objects.equals(pv.getPort(), "") && pv.getPort().contains("/") && pv.getAnInterface() != null) {
+                        String port = pv.getPort().split("/")[0].trim();
+                        String url = "https://"+pv.getAnInterface().getPrivateip()+":"+port;
+                        getOrCreateWebAppService.getOrCreateWebApp(url, project, routingDomain);
+                    }
+                }
+            }
         }
     }
 }

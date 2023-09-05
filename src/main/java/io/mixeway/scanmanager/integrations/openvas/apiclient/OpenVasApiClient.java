@@ -6,6 +6,7 @@ import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.*;
 import io.mixeway.domain.service.intf.InterfaceOperations;
+import io.mixeway.domain.service.projectvulnerability.DeleteProjectVulnerabilityService;
 import io.mixeway.domain.service.vulnmanager.VulnTemplate;
 import io.mixeway.scanmanager.integrations.openvas.model.RestRequestBody;
 import io.mixeway.scanmanager.integrations.openvas.model.User;
@@ -72,11 +73,12 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 	private final RoutingDomainRepository routingDomainRepository;
 	private final VulnTemplate vulnTemplate;
 	private final InterfaceOperations interfaceOperations;
+	private final DeleteProjectVulnerabilityService deleteProjectVulnerabilityService;
 	OpenVasApiClient(VaultHelper vaultHelper, ScannerRepository nessusRepository, InfraScanRepository infraScanRepository, InterfaceRepository interfaceRepository,
 					 AssetRepository assetRepository, ScanHelper scanHelper, InterfaceOperations interfaceOperations,
 					 SecureRestTemplate secureRestTemplate, ScannerRepository scannerRepository,
 					 ScannerTypeRepository scannerTypeRepository, ProxiesRepository proxiesRepository, RoutingDomainRepository routingDomainRepository,
-					 VulnTemplate vulnTemplate){
+					 VulnTemplate vulnTemplate, DeleteProjectVulnerabilityService deleteProjectVulnerabilityService){
 		this.vaultHelper = vaultHelper;
 		this.interfaceOperations = interfaceOperations;
 		this.scanHelper = scanHelper;
@@ -90,6 +92,7 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 		this.secureRestTemplate = secureRestTemplate;
 		this.assetRepository = assetRepository;
 		this.vulnTemplate = vulnTemplate;
+		this.deleteProjectVulnerabilityService = deleteProjectVulnerabilityService;
 	}
 
 
@@ -179,7 +182,8 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 			ResponseEntity<String> response = restTemplate.exchange(infraScan.getNessus().getApiUrl() + "/getreport", HttpMethod.POST, entity, String.class);
 			if (response.getStatusCode() == HttpStatus.OK) {
 				setVulnerabilities(infraScan, response.getBody());
-				vulnTemplate.projectVulnerabilityRepository.deleteByStatusAndProject(vulnTemplate.STATUS_REMOVED, infraScan.getProject());
+				//vulnTemplate.projectVulnerabilityRepository.deleteByStatusAndProject(vulnTemplate.STATUS_REMOVED, infraScan.getProject());
+				deleteProjectVulnerabilityService.deleteProjectVulnerabilityWithStatus(infraScan.getProject(), vulnTemplate.STATUS_REMOVED);
 				infraScan.setRunning(false);
 				infraScan.setTaskId(null);
 				infraScanRepository.save(infraScan);

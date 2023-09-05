@@ -3,6 +3,7 @@ package io.mixeway.domain.service.vulnhistory;
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.Project;
 import io.mixeway.db.entity.VulnHistory;
+import io.mixeway.db.entity.VulnerabilitySource;
 import io.mixeway.db.repository.NodeAuditRepository;
 import io.mixeway.db.repository.VulnHistoryRepository;
 import io.mixeway.domain.service.vulnmanager.VulnTemplate;
@@ -43,6 +44,7 @@ public class CreateVulnHistoryService {
         add("Critical");
     }};
 
+
     private DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     public void createScheduled(Project project){
@@ -75,12 +77,27 @@ public class CreateVulnHistoryService {
 
     }
 
+    /**
+     * As Code Vuln we assume vulnerabilities detected by:
+     * SAST
+     * IaC
+     * GitLeaks
+     *
+     * @param p
+     * @return
+     */
     private Long createCodeVulnHistory(Project p){
-        return vulnTemplate.projectVulnerabilityRepository.findByProjectAndVulnerabilitySourceAndAnalysisNot(p,vulnTemplate.SOURCE_SOURCECODE, Constants.FORTIFY_NOT_AN_ISSUE).count();
+        List<VulnerabilitySource> codeSources = new ArrayList<VulnerabilitySource>(){{
+            add(vulnTemplate.SOURCE_SOURCECODE);
+            add(vulnTemplate.SOURCE_IAC);
+            add(vulnTemplate.SOURCE_GITLEAKS);
+        }};
+        return vulnTemplate.projectVulnerabilityRepository.findByProjectAndVulnerabilitySourceInAndAnalysisNot(p,codeSources, Constants.FORTIFY_NOT_AN_ISSUE).count();
     }
     private Long createInfraVulnHistory(Project p){
         return getInfraVulnsForProject(p);
     }
+
     private Long createAuditHistory(Project p){
         return (long)(nodeAuditRepository.findByNodeInAndScoreIn(p.getNodes(),scores).size());
     }

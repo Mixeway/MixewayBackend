@@ -8,6 +8,7 @@ import io.mixeway.db.repository.ScannerRepository;
 import io.mixeway.db.repository.ScannerTypeRepository;
 import io.mixeway.db.repository.UserRepository;
 import io.mixeway.domain.service.project.GetOrCreateProjectService;
+import io.mixeway.domain.service.projectvulnerability.DeleteProjectVulnerabilityService;
 import io.mixeway.domain.service.routingdomain.CreateOrGetRoutingDomainService;
 import io.mixeway.domain.service.scanmanager.code.CreateOrGetCodeProjectService;
 import io.mixeway.domain.service.vulnmanager.CreateOrGetVulnerabilityService;
@@ -56,6 +57,7 @@ class OpenSourceScanServiceTest {
     private final CreateOrGetCodeProjectService createOrGetCodeProjectService;
     private final CreateOrGetVulnerabilityService createOrGetVulnerabilityService;
     private final VulnTemplate vulnTemplate;
+    private final DeleteProjectVulnerabilityService deleteProjectVulnerabilityService;
     @MockBean
     GlobalScheduler globalScheduler;
 
@@ -179,7 +181,7 @@ class OpenSourceScanServiceTest {
             projectVulnerability.setVulnerability(createOrGetVulnerabilityService.createOrGetVulnerability("test"));
             vulnTemplate.vulnerabilityPersist(new ArrayList<>(), projectVulnerability);
         }
-        openSourceScanService.removeOldVulns(codeProject);
+        deleteProjectVulnerabilityService.deleteRemovedVulnerabilitiesInCodeProject(codeProject);
         codeProject = createOrGetCodeProjectService.createCodeProject(project,"code_project_test_os3","master");
         List<ProjectVulnerability> projectVulnerabilities = vulnTemplate.projectVulnerabilityRepository.findByCodeProject(codeProject);
         assertEquals(0, projectVulnerabilities.size());

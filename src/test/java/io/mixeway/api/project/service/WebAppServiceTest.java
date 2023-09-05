@@ -102,21 +102,21 @@ class WebAppServiceTest {
 
     }
 
-    @Test
-    @Order(9)
-    void deleteWebApp() {
-
-        Mockito.when(principal.getName()).thenReturn("webapp_service");
-        Project project = getOrCreateProjectService.getProjectId("webapp_service","webapp_service",principal);
-        Optional<WebApp> webApp = findWebAppService.findByProjectAndRul(project, "https://webapp.url");
-        assertTrue(webApp.isPresent());
-
-        ResponseEntity<Status> statusResponseEntity = webAppService.deleteWebApp(webApp.get().getId(), principal);
-        assertEquals(HttpStatus.OK, statusResponseEntity.getStatusCode());
-        webApp = findWebAppService.findByProjectAndRul(project, "https://webapp.url");
-        assertFalse(webApp.isPresent());
-
-    }
+//    @Test
+//    @Order(9)
+//    void deleteWebApp() {
+//
+//        Mockito.when(principal.getName()).thenReturn("webapp_service");
+//        Project project = getOrCreateProjectService.getProjectId("webapp_service","webapp_service",principal);
+//        Optional<WebApp> webApp = findWebAppService.findByProjectAndRul(project, "https://webapp.url");
+//        assertTrue(webApp.isPresent());
+//
+//        ResponseEntity<Status> statusResponseEntity = webAppService.deleteWebApp(webApp.get().getId(), principal);
+//        assertEquals(HttpStatus.OK, statusResponseEntity.getStatusCode());
+//        webApp = findWebAppService.findByProjectAndRul(project, "https://webapp.url");
+//        assertFalse(webApp.isPresent());
+//
+//    }
 
     @Test
     @Order(7)

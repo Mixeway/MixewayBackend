@@ -134,7 +134,7 @@ public class CiOperationsController {
     }
     @PreAuthorize("hasAuthority('ROLE_API')")
     @GetMapping(value = "/sast/performscan/codeproject/{id}")
-    public ResponseEntity<Status> performSastScanForCodeProject(@PathVariable("id") Long codeProjectId, Principal principal){
+    public ResponseEntity<Status> performSastScanForCodeProject(@PathVariable("id") Long codeProjectId, Principal principal) throws UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, KeyManagementException {
         return ciOperationsService.performSastScanForCodeProject(codeProjectId, principal);
     }
     @PreAuthorize("hasAuthority('ROLE_API')")

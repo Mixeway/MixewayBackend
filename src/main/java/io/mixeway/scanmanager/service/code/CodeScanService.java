@@ -203,9 +203,10 @@ public class CodeScanService {
                                 log.info("[CodeScan] Automatic integration with BugTracker enabled, proceeding...");
                                 vulnTemplate.processBugTracking(codeProject, vulnTemplate.SOURCE_SOURCECODE);
                             }
-                            vulnTemplate.projectVulnerabilityRepository.deleteByStatusAndCodeProject(vulnTemplate.STATUS_REMOVED,codeProject);
+                            deleteProjectVulnerabilityService.deleteRemovedVulnerabilitiesInCodeProject(codeProject);
+                            //vulnTemplate.projectVulnerabilityRepository.deleteByStatusAndCodeProject(vulnTemplate.STATUS_REMOVED,codeProject);
                         } else {
-                            log.info("[CodeScan] Scan for {} is still running", codeProject.getName());
+                            log.debug("[CodeScan] Scan for {} is still running", codeProject.getName());
                         }
                     } catch (Exception e){
                         e.printStackTrace();
@@ -389,11 +390,15 @@ public class CodeScanService {
     @Transactional
     @Modifying
     public void loadVulnsFromCICDToCodeProject(CodeProject codeProject, List<VulnerabilityModel> sastVulns, ScannerType scannerType) {
+        if (sastVulns.isEmpty())
+            return;
         VulnerabilitySource vulnerabilitySource = null;
         if (scannerType.equals(ScannerType.SAST)){
             vulnerabilitySource = vulnTemplate.SOURCE_SOURCECODE;
         } else if (scannerType.equals(ScannerType.GITLEAKS)){
             vulnerabilitySource = vulnTemplate.SOURCE_GITLEAKS;
+        } else if (scannerType.equals(ScannerType.IAC)){
+            vulnerabilitySource = vulnTemplate.SOURCE_IAC;
         }
         List<ProjectVulnerability> oldVulnsForCodeProject = getProjectVulnerabilitiesService.getOldVulnsForCodeProjectAndSource(codeProject,vulnerabilitySource);
         List<ProjectVulnerability> vulnToPersist = new ArrayList<>();
@@ -408,9 +413,9 @@ public class CodeScanService {
         }
         vulnTemplate.vulnerabilityPersistList(oldVulnsForCodeProject, vulnToPersist);
 
-        deleteProjectVulnerabilityService.removeByCodeProject(codeProject);
+        deleteProjectVulnerabilityService.deleteProjectVulnerabilityWithStatus(codeProject.getProject(), vulnTemplate.STATUS_REMOVED);
 
         vulnTemplate.projectVulnerabilityRepository.flush();
-        log.info("[CICD] SourceCode - Loading Vulns for {} completed type of {}", codeProject.getName(), scannerType);
+        log.info("[CICD] SourceCode - Loading Vulns for {} completed type of {} number of vulns {}", codeProject.getName(), scannerType, vulnToPersist.size());
     }
 }
