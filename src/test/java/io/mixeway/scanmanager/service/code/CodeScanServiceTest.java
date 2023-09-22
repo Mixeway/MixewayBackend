@@ -67,6 +67,7 @@ class CodeScanServiceTest {
     private final ScannerTypeRepository scannerTypeRepository;
     private final ScannerRepository scannerRepository;
     private final GetProjectVulnerabilitiesService getProjectVulnerabilitiesService;
+
     private Scanner scanner;
     @Mock
     Principal principal;
@@ -153,9 +154,10 @@ class CodeScanServiceTest {
         Mockito.when(principal.getName()).thenReturn("admin_code_scan_service");
         Project project = getOrCreateProjectService.getProjectId("code_scan_service","code_scan_service",principal);
         CodeProject codeProject = createOrGetCodeProjectService.getOrCreateCodeProject(project,"code_scan_service","master");
+
         updateCodeProjectService.changeCommitId("test",codeProject);
         updateCodeProjectService.startScan(codeProject);
-        Mockito.doNothing().when(checkmarxApiClient).loadVulnerabilities(null,null,null,null,null);
+        Mockito.doNothing().when(checkmarxApiClient).loadVulnerabilities(null,null,null,null,null,null);
         Mockito.when(checkmarxApiClient.isScanDone(Mockito.any(CodeProject.class))).thenReturn(true);
         Mockito.when(checkmarxApiClient.canProcessRequest(Mockito.any(Scanner.class))).thenReturn(true);
         CiOperations ciOperations = new CiOperations();

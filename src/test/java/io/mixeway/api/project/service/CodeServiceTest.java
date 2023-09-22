@@ -12,6 +12,7 @@ import io.mixeway.db.repository.ScannerTypeRepository;
 import io.mixeway.db.repository.UserRepository;
 import io.mixeway.domain.service.project.GetOrCreateProjectService;
 import io.mixeway.domain.service.scanmanager.code.FindCodeProjectService;
+import io.mixeway.domain.service.scanmanager.code.GetOrCreateCodeProjectBranchService;
 import io.mixeway.domain.service.vulnmanager.CreateOrGetVulnerabilityService;
 import io.mixeway.domain.service.vulnmanager.VulnTemplate;
 import io.mixeway.scanmanager.integrations.checkmarx.apiclient.CheckmarxApiClient;
@@ -62,6 +63,7 @@ class CodeServiceTest {
     private final CreateOrGetVulnerabilityService createOrGetVulnerabilityService;
     private final ScannerRepository scannerRepository;
     private final ScannerTypeRepository scannerTypeRepository;
+    private final GetOrCreateCodeProjectBranchService getOrCreateCodeProjectBranchService;
 
     @Mock
     Principal principal;
@@ -165,7 +167,7 @@ class CodeServiceTest {
     @Order(3)
     void runSelectedCodeProjects() throws UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, KeyManagementException, JSONException, ParseException {
         Mockito.when(principal.getName()).thenReturn("code_service");
-        Mockito.doNothing().when(checkmarxApiClient).loadVulnerabilities(null,null,null,null,null);
+        Mockito.doNothing().when(checkmarxApiClient).loadVulnerabilities(null,null,null,null,null, null);
         Mockito.when(checkmarxApiClient.isScanDone(Mockito.any(CodeProject.class))).thenReturn(true);
         Mockito.when(checkmarxApiClient.canProcessRequest(Mockito.any(Scanner.class))).thenReturn(true);
 
@@ -198,7 +200,7 @@ class CodeServiceTest {
     @Order(6)
     void runSingleCodeProjectScan() throws UnrecoverableKeyException, JSONException, CertificateException, ParseException, NoSuchAlgorithmException, KeyStoreException, IOException, KeyManagementException {
         Mockito.when(principal.getName()).thenReturn("code_service");
-        Mockito.doNothing().when(checkmarxApiClient).loadVulnerabilities(null,null,null,null,null);
+        Mockito.doNothing().when(checkmarxApiClient).loadVulnerabilities(null,null,null,null,null,null);
         Mockito.when(checkmarxApiClient.isScanDone(Mockito.any(CodeProject.class))).thenReturn(true);
         Mockito.when(checkmarxApiClient.canProcessRequest(Mockito.any(Scanner.class))).thenReturn(true);
 
@@ -288,7 +290,7 @@ class CodeServiceTest {
         codeProject = findCodeProjectService.findCodeProject(project, "save_code");
         assertTrue(codeProject.isPresent());
         assertEquals(HttpStatus.OK, statusResponseEntity.getStatusCode());
-        assertEquals("new_branch", codeProject.get().getBranch());
+        assertEquals("master", codeProject.get().getBranch());
         assertEquals("https://git/new_repo_edited", codeProject.get().getRepoUrl());
 
     }

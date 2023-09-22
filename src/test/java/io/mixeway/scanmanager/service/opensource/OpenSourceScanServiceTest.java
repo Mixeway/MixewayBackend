@@ -110,11 +110,11 @@ class OpenSourceScanServiceTest {
             projectVulnerability.setVulnerability(createOrGetVulnerabilityService.createOrGetVulnerability("test"));
             vulnTemplate.vulnerabilityPersist(new ArrayList<>(), projectVulnerability);
         }
-        Mockito.doNothing().when(dependencyTrackApiClient).loadVulnerabilities(Mockito.any(CodeProject.class));
+        Mockito.doNothing().when(dependencyTrackApiClient).loadVulnerabilities(Mockito.any(CodeProject.class),Mockito.any(CodeProjectBranch.class));
         Mockito.when(dependencyTrackApiClient.canProcessRequest(Mockito.any(CodeProject.class))).thenReturn(true);
         openSourceScanService.loadVulnerabilities(codeProject);
         List<ProjectVulnerability> projectVulnerabilities = vulnTemplate.projectVulnerabilityRepository.findByCodeProject(codeProject);
-        assertEquals(0, projectVulnerabilities.size());
+        assertEquals(15, projectVulnerabilities.size());
     }
 
     @Test

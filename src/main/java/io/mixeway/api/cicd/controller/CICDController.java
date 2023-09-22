@@ -61,7 +61,7 @@ public class CICDController {
      *
      */
     @PreAuthorize("hasAuthority('ROLE_API')")
-    @PostMapping(value="/loadvulns/{codeProjectId}")
+    @PostMapping(value="/codeproject/loadvulns/{codeProjectId}")
     public ResponseEntity<Status> loadVulns (@RequestBody LoadVulnModel loadVulnModel,
                                              @PathVariable(value = "codeProjectId") Long id,
                                              Principal principal) throws Exception {

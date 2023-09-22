@@ -192,7 +192,7 @@ public class CodeScanService {
         if (sastScanner.isPresent()) {
             List<CodeProject> codeProjectsRunning = findCodeProjectService.findRunningCodeProjectsLimit5();
             for (CodeProject codeProject : codeProjectsRunning) {
-                CodeProjectBranch codeProjectBranch  = getOrCreateCodeProjectBranchService.getOrCreateCodeProjectBranch(codeProject, codeProject.getActiveBranch());
+                CodeProjectBranch codeProjectBranch  = getOrCreateCodeProjectBranchService.getOrCreateCodeProjectBranch(codeProject, codeProject.getActiveBranch() != null ? codeProject.getActiveBranch() : codeProject.getBranch());
                 List<ProjectVulnerability> codeVulns = getProjectVulnerabilitiesService.getOldVulnsForCodeProjectAndSourceForBranch(codeProject, vulnTemplate.SOURCE_SOURCECODE,codeProjectBranch );
                 for (CodeScanClient codeScanClient : codeScanClients) {
                     try {

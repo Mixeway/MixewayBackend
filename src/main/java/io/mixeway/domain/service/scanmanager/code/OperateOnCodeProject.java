@@ -9,7 +9,9 @@ import io.mixeway.domain.service.vulnmanager.VulnTemplate;
 import io.mixeway.utils.VaultHelper;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -56,6 +58,8 @@ public class OperateOnCodeProject {
         codeProjectRepository.save(codeProject);
     }
 
+    @Modifying
+    @Transactional
     public void setBranch(CodeProject codeProject, String branch) {
         codeProjectRepository.updateCodeProjectBranch(codeProject.getId(), branch);
     }
