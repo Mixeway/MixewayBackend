@@ -4,6 +4,7 @@ import io.mixeway.config.Constants;
 import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
+import io.mixeway.domain.service.scanmanager.code.GetOrCreateCodeProjectBranchService;
 import io.mixeway.domain.service.vulnmanager.VulnTemplate;
 import io.mixeway.scanmanager.integrations.dependencytrack.model.Component;
 import io.mixeway.scanmanager.integrations.dependencytrack.model.DTrackCreateProject;
@@ -55,6 +56,7 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
     private final CodeProjectRepository codeProjectRepository;
     private final CiOperationsRepository ciOperationsRepository;
     private final VulnTemplate vulnTemplate;
+    private final GetOrCreateCodeProjectBranchService getOrCreateCodeProjectBranchService;
 
 
     @Override
@@ -69,8 +71,11 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
     }
 
     @Override
-    public void loadVulnerabilities(CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+    public void loadVulnerabilities(CodeProject codeProject, CodeProjectBranch codeProjectBranch) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         List<Scanner> dTrack = scannerRepository.findByScannerType(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_DEPENDENCYTRACK));
+        if (codeProjectBranch == null){
+            codeProjectBranch = getOrCreateCodeProjectBranchService.getOrCreateCodeProjectBranch(codeProject, codeProject.getBranch());
+        }
         //Multiple dTrack instances not yet supported
         if (dTrack.size() == 1 && codeProject.getdTrackUuid() != null){
             RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(dTrack.get(0));
@@ -81,7 +86,7 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
                         "/api/v1/vulnerability/project/" + codeProject.getdTrackUuid(), HttpMethod.GET, entity, new ParameterizedTypeReference<List<DTrackVuln>>() {
                 });
                 if (response.getStatusCode() == HttpStatus.OK) {
-                    createVulns(codeProject, Objects.requireNonNull(response.getBody()));
+                    createVulns(codeProject, Objects.requireNonNull(response.getBody()), codeProjectBranch);
                     updateCiOperations(codeProject);
                 } else {
                     log.error("Unable to get Findings from Dependency Track for project {}", codeProject.getdTrackUuid());
@@ -182,9 +187,9 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void createVulns(CodeProject codeProject, List<DTrackVuln> body) throws URISyntaxException {
+    public void createVulns(CodeProject codeProject, List<DTrackVuln> body, CodeProjectBranch codeProjectBranch) throws URISyntaxException {
         List<ProjectVulnerability> oldVulns = vulnTemplate.projectVulnerabilityRepository
-                .findByVulnerabilitySourceAndCodeProject(vulnTemplate.SOURCE_OPENSOURCE, codeProject);
+                .findByVulnerabilitySourceAndCodeProjectAndCodeProjectBranch(vulnTemplate.SOURCE_OPENSOURCE, codeProject, codeProjectBranch);
         List<ProjectVulnerability> vulnsToPersist = new ArrayList<>();
         for(DTrackVuln dTrackVuln : body){
             List<SoftwarePacket> softwarePackets = new ArrayList<>();
@@ -204,16 +209,17 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
                     Vulnerability vuln = vulnTemplate.createOrGetVulnerabilityService.createOrGetVulnerabilityWithDescAndReferences(dTrackVuln.getVulnId(), dTrackVuln.getDescription(),
                             dTrackVuln.getReferences(), dTrackVuln.getRecommendation());
                     Optional<ProjectVulnerability> softwarePacketVulnerability = vulnTemplate.projectVulnerabilityRepository
-                            .findBySoftwarePacketAndVulnerabilityAndCodeProject(sPacket,vuln, codeProject);
+                            .findBySoftwarePacketAndVulnerabilityAndCodeProjectAndCodeProjectBranch(sPacket,vuln, codeProject,codeProjectBranch);
                     if (!softwarePacketVulnerability.isPresent()){
                         ProjectVulnerability projectVulnerability = new ProjectVulnerability(sPacket,codeProject,vuln,dTrackVuln.getDescription(),dTrackVuln.getRecommendation(),
-                                dTrackVuln.getSeverity(), null, null, null,vulnTemplate.SOURCE_OPENSOURCE,null);
+                                dTrackVuln.getSeverity(), null, null, null,vulnTemplate.SOURCE_OPENSOURCE,null, codeProjectBranch);
                         projectVulnerability.setStatus(vulnTemplate.STATUS_NEW);
                         vulnsToPersist.add(projectVulnerability);
                     } else {
                         softwarePacketVulnerability.get().setCodeProject(codeProject);
                         softwarePacketVulnerability.get().setInserted(dateFormat.format(new Date()));
                         softwarePacketVulnerability.get().setStatus(vulnTemplate.STATUS_EXISTING);
+                        softwarePacketVulnerability.get().setCodeProjectBranch(codeProjectBranch);
                         vulnsToPersist.add(softwarePacketVulnerability.get()) ;
                     }
 
@@ -221,6 +227,7 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
             }
             //codeProjectRepository.saveAndFlush(codeProject);
         }
+        log.info("[Dependency-Track] Send {} vulns to persist for {}", vulnsToPersist.size(), codeProject.getName());
         vulnTemplate.vulnerabilityPersistListSoftware(oldVulns,vulnsToPersist);
         if (codeProject.getEnableJira()) {
             vulnTemplate.processBugTracking(codeProject, vulnTemplate.SOURCE_OPENSOURCE);

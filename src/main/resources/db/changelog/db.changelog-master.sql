@@ -1263,3 +1263,16 @@ CREATE SEQUENCE hibernate_sequence START 1;
 
 --changeset siewer:add-scantype-iac
 insert into vulnerabilitysource (name) values ('IaC');
+
+--changeset siewer:add-codeproject-branch
+create table codeprojectbranch (
+    id serial primary key,
+    codeproject_id int references codeproject(id),
+    name text,
+    inserted text
+);
+
+alter table projectvulnerability add column codeprojectbranch_id int references codeprojectbranch(id);
+
+--changeset siewer:add-active-branch
+alter table codeproject add column activebranch text;

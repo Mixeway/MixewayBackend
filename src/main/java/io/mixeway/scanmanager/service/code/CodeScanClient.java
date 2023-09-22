@@ -1,6 +1,7 @@
 package io.mixeway.scanmanager.service.code;
 
 import io.mixeway.db.entity.CodeProject;
+import io.mixeway.db.entity.CodeProjectBranch;
 import io.mixeway.db.entity.ProjectVulnerability;
 import io.mixeway.db.entity.Scanner;
 import io.mixeway.utils.SASTProject;
@@ -17,7 +18,7 @@ import java.text.ParseException;
 import java.util.List;
 
 public interface CodeScanClient {
-    void loadVulnerabilities(Scanner scanner, String urlToGetNext, Boolean single, CodeProject codeProject, List<ProjectVulnerability> codeVulns) throws ParseException, JSONException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, URISyntaxException;
+    void loadVulnerabilities(Scanner scanner, String urlToGetNext, Boolean single, CodeProject codeProject, List<ProjectVulnerability> codeVulns, CodeProjectBranch codeProjectBranch) throws ParseException, JSONException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, URISyntaxException;
     Boolean runScan(CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, JSONException, ParseException;
     boolean isScanDone(CodeProject cp) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException, ParseException, JSONException;
     boolean canProcessRequest(CodeProject cp);

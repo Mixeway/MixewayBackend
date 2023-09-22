@@ -234,7 +234,7 @@ public class WebAppScanService {
                 if(!(alert.getRiskdesc().split(" \\(")[0].equals("Informational"))) {
                     for (ZapInstancesModel alertInstance : alert.getInstances()) {
                         Vulnerability vulnerability = CreateOrGetVulnerabilityService.createOrGetVulnerability(alert.getName());
-                        ProjectVulnerability pv = new ProjectVulnerability(webApp, null, vulnerability, alert.getDesc(), alert.getSolution(), alert.getRiskdesc().split(" \\(")[0], null, alertInstance.getUri(), null, vulnTemplate.SOURCE_WEBAPP, null);
+                        ProjectVulnerability pv = new ProjectVulnerability(webApp, null, vulnerability, alert.getDesc(), alert.getSolution(), alert.getRiskdesc().split(" \\(")[0], null, alertInstance.getUri(), null, vulnTemplate.SOURCE_WEBAPP, null, null);
                         projectVulnerabilities.add(pv);
                     }
                 }

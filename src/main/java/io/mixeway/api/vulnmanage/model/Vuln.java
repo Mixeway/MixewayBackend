@@ -71,7 +71,7 @@ public class Vuln {
 			this.setDateCreated(projectVulnerability.getInserted());
 			this.setPacketName(projectVulnerability.getSoftwarePacket().getName());
 			this.setGrade(projectVulnerability.getGrade());
-		} else if ((target instanceof CodeProject) && projectVulnerability.getVulnerabilitySource().getName().equals(Constants.VULN_TYPE_SOURCECODE)){
+		} else if ((target instanceof CodeProject) && (projectVulnerability.getVulnerabilitySource().getName().equals(Constants.VULN_TYPE_SOURCECODE) || projectVulnerability.getVulnerabilitySource().getName().equals(Constants.VULNEARBILITY_SOURCE_IAC) || projectVulnerability.getVulnerabilitySource().getName().equals(Constants.VULNEARBILITY_SOURCE_GITLEAKS) )){
 			this.setGrade(projectVulnerability.getGrade());
 			this.setId(projectVulnerability.getId());
 			this.setVulnerabilityName(projectVulnerability.getVulnerability().getName());
@@ -87,7 +87,8 @@ public class Vuln {
 			this.setDateCreated(projectVulnerability.getInserted());
 			this.setType(Constants.API_SCANNER_CODE);
 			}catch (Exception e){
-				log.info("asd");
+				e.printStackTrace();
+				log.info("problem with vuln for {}", projectVulnerability.getCodeProject().getName());
 			}
 		} else if ((target instanceof WebApp) && projectVulnerability.getVulnerabilitySource().getName().equals(Constants.VULN_TYPE_WEBAPP)){
 			this.setGrade(projectVulnerability.getGrade());

@@ -199,8 +199,16 @@ public class ProjectRestService {
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             Optional<ProjectVulnerability> projectVulnerability = vulnTemplate.projectVulnerabilityRepository.findById(vulnId);
             if (projectVulnerability.isPresent() && projectVulnerability.get().getProject().getId().equals(project.get().getId()) && (grade==1 || grade==0)) {
-                projectVulnerability.get().setGrade(grade);
-                log.info("{} - changed Grade for Vulnerability {} to {}", principal.getName(), projectVulnerability.get().getId(), grade);
+                List<ProjectVulnerability> projectVulnerabilities = vulnTemplate.projectVulnerabilityRepository
+                        .findByVulnerabilityAndLocationAndDescription(
+                                projectVulnerability.get().getVulnerability(),
+                                projectVulnerability.get().getLocation(),
+                                projectVulnerability.get().getDescription()
+                        );
+                projectVulnerabilities.forEach(pv -> pv.setGrade(grade));
+
+                //projectVulnerability.get().setGrade(grade);
+                log.info("{} - changed Grade for Vulnerability {} to {}, affected vulnerabilities in {} branches", principal.getName(), projectVulnerability.get().getId(), grade, 0);
                 return new ResponseEntity<>( HttpStatus.OK);
             }
         } else {

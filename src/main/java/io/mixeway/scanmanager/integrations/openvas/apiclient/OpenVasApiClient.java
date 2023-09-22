@@ -183,7 +183,7 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 			if (response.getStatusCode() == HttpStatus.OK) {
 				setVulnerabilities(infraScan, response.getBody());
 				//vulnTemplate.projectVulnerabilityRepository.deleteByStatusAndProject(vulnTemplate.STATUS_REMOVED, infraScan.getProject());
-				deleteProjectVulnerabilityService.deleteProjectVulnerabilityWithStatus(infraScan.getProject(), vulnTemplate.STATUS_REMOVED);
+				deleteProjectVulnerabilityService.deleteProjectVulnerabilityWithStatus(infraScan.getProject(), vulnTemplate.STATUS_REMOVED, vulnTemplate.SOURCE_NETWORK);
 				infraScan.setRunning(false);
 				infraScan.setTaskId(null);
 				infraScanRepository.save(infraScan);
@@ -286,7 +286,7 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 			if (intfActive != null) {
 				Vulnerability vulnerability = vulnTemplate.createOrGetVulnerabilityService.createOrGetVulnerability(v.getString(Constants.IF_VULN_NAME));
 				ProjectVulnerability projectVulnerability = new ProjectVulnerability(intfActive,null,vulnerability,v.getString(Constants.IF_VULN_DESC),null
-						,v.getString(Constants.IF_VULN_THREAT),v.getString(Constants.IF_VULN_PORT),null,null,vulnTemplate.SOURCE_NETWORK, null);
+						,v.getString(Constants.IF_VULN_THREAT),v.getString(Constants.IF_VULN_PORT),null,null,vulnTemplate.SOURCE_NETWORK, null,null);
 				//projectVulnerability.updateStatusAndGrade(oldVulns, vulnTemplate);
 				vulnsToPersist.add(projectVulnerability);
 				scannerInterfaces.add(intfActive);

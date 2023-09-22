@@ -7,6 +7,7 @@ import io.mixeway.api.vulnmanage.model.*;
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.*;
+import io.mixeway.domain.service.scanmanager.code.FindCodeProjectService;
 import io.mixeway.domain.service.vulnmanager.VulnTemplate;
 import io.mixeway.scanmanager.service.opensource.OpenSourceScanService;
 import lombok.extern.log4j.Log4j2;
@@ -78,6 +79,9 @@ public class GetVulnerabilitiesService {
     @Autowired
     SecurityGatewayRepository securityGatewayRepository;
 
+    @Autowired
+    FindCodeProjectService findCodeProjectService;
+
     ArrayList<String> severitiesNot = new ArrayList<String>() {{
         add("Log");
         add("Info");
@@ -120,7 +124,34 @@ public class GetVulnerabilitiesService {
                 softVuln = vulnsForProject.collect(Collectors.toList());
             }
         }
+        softVuln.removeIf(projectVulnerability -> projectVulnerability.getGrade() == 0);
+
+
+        // Usuniecie duplikatach w branchach
+        Map<String, ProjectVulnerability> uniqueVulnsMap = new HashMap<>();
+
         for (ProjectVulnerability projectVulnerability : softVuln) {
+            CodeProjectBranch codeProjectBranch = projectVulnerability.getCodeProjectBranch();
+            CodeProject codeProject = projectVulnerability.getCodeProject();
+
+            if (codeProjectBranch != null && codeProject != null) {
+                String branchName = codeProjectBranch.getName();
+                String projectBranch = codeProject.getBranch();
+
+                if (branchName != null && branchName.equals(projectBranch)) {
+                    String uniqueKey = branchName + "_" + projectBranch + "_" + projectVulnerability.getId(); // Tworzenie unikalnego klucza
+                    uniqueVulnsMap.put(uniqueKey, projectVulnerability);
+                }
+            } else if ( codeProjectBranch == null && codeProject != null ){
+                String uniqueKey = UUID.randomUUID().toString();
+                uniqueVulnsMap.put(uniqueKey, projectVulnerability);
+            }
+        }
+
+        List<ProjectVulnerability> uniqueVulns = new ArrayList<>(uniqueVulnsMap.values());
+
+
+        for (ProjectVulnerability projectVulnerability : uniqueVulns) {
 //            for (Asset a : projectVulnerability.getSoftwarePacket().getAssets()) {
 //                String hostname;
 //                AtomicReference<String> ipAddress = null;
@@ -130,8 +161,13 @@ public class GetVulnerabilitiesService {
 //                Vuln v = new Vuln(projectVulnerability, hostname, ipAddress.get(), a, Constants.API_SCANNER_PACKAGE);
 //                tmpVulns.add(v);
 //            }
-            Vuln v = new Vuln(projectVulnerability, null, null,projectVulnerability.getCodeProject(), Constants.API_SCANNER_PACKAGE);
-            tmpVulns.add(v);
+            try {
+                Vuln v = new Vuln(projectVulnerability, null, null, projectVulnerability.getCodeProject(), Constants.API_SCANNER_PACKAGE);
+                tmpVulns.add(v);
+            } catch (NullPointerException e ){
+                e.printStackTrace();
+                log.error("[Export for SCA Vulns] Error during exporting vuln for {}", projectVulnerability.getProject().getName());
+            }
         }
         vulns.setVulnerabilities(tmpVulns);
         return vulns;
@@ -165,20 +201,49 @@ public class GetVulnerabilitiesService {
 
     private Vulnerabilities setCodeVulns(Vulnerabilities vulns, Project project) throws UnknownHostException {
         List<Vuln> tmpVulns = vulns.getVulnerabilities();
-        List<ProjectVulnerability> codeVulns = null;
+        List<ProjectVulnerability> codeVulns = new ArrayList<>();
         if (project != null) {
-            try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository
-                    .findByProjectAndVulnerabilitySourceAndAnalysisNot(project, vulnTemplate.SOURCE_SOURCECODE, Constants.FORTIFY_NOT_AN_ISSUE)) {
-                codeVulns = vulnsForProject.collect(Collectors.toList());
-            }
+            List<VulnerabilitySource> sastSources = Arrays.asList(vulnTemplate.SOURCE_SOURCECODE, vulnTemplate.SOURCE_GITLEAKS, vulnTemplate.SOURCE_IAC);
+            List<Project> projects = Collections.singletonList(project);
+            List<CodeProject> codeProjectsWithVulnManageEnabled = findCodeProjectService.getCodeProjectsInListOfProjects(projects);
+            List<ProjectVulnerability> projectVulnerabilities = vulnTemplate.projectVulnerabilityRepository.findVulnerabilitiesForCode(codeProjectsWithVulnManageEnabled, sastSources);
+            codeVulns.addAll(projectVulnerabilities);
         }
         else {
-            try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository
-                    .findByProjectInAndVulnerabilitySourceAndAnalysisNot(projectRepository.findByEnableVulnManage(true),vulnTemplate.SOURCE_SOURCECODE, Constants.FORTIFY_NOT_AN_ISSUE)){
-                codeVulns = vulnsForProject.collect(Collectors.toList());
+            List<Project> enabledVulnManageProjects = projectRepository.findByEnableVulnManage(true);
+            List<CodeProject> codeProjectsWithVulnManageEnabled = findCodeProjectService.getCodeProjectsInListOfProjects(enabledVulnManageProjects);
+            List<VulnerabilitySource> sastSources = Arrays.asList(vulnTemplate.SOURCE_SOURCECODE, vulnTemplate.SOURCE_GITLEAKS, vulnTemplate.SOURCE_IAC);
+            List<ProjectVulnerability> projectVulnerabilities = vulnTemplate.projectVulnerabilityRepository.findVulnerabilitiesForCode(codeProjectsWithVulnManageEnabled, sastSources);
+            codeVulns.addAll(projectVulnerabilities);
+        }
+
+        codeVulns.removeIf(projectVulnerability -> projectVulnerability.getGrade() == 0);
+
+        // Return only vulnerabilities in default branch
+        Map<String, ProjectVulnerability> uniqueVulnsMap = new HashMap<>();
+
+        for (ProjectVulnerability projectVulnerability : codeVulns) {
+            CodeProjectBranch codeProjectBranch = projectVulnerability.getCodeProjectBranch();
+            CodeProject codeProject = projectVulnerability.getCodeProject();
+
+            if (codeProjectBranch != null && codeProject != null) {
+                String branchName = codeProjectBranch.getName();
+                String projectBranch = codeProject.getBranch();
+
+                if (branchName != null && branchName.equals(projectBranch)) {
+                    String uniqueKey = branchName + "_" + projectBranch + "_" + projectVulnerability.getId(); // Tworzenie unikalnego klucza
+                    uniqueVulnsMap.put(uniqueKey, projectVulnerability);
+                }
+            } else if ( codeProjectBranch == null && codeProject != null ){
+                String uniqueKey = UUID.randomUUID().toString();
+                uniqueVulnsMap.put(uniqueKey, projectVulnerability);
             }
         }
-        for (ProjectVulnerability cv : codeVulns) {
+
+        List<ProjectVulnerability> uniqueVulns = new ArrayList<>(uniqueVulnsMap.values());
+
+
+        for (ProjectVulnerability cv : uniqueVulns) {
             Vuln v = new Vuln(cv, null, null,new CodeProject(), Constants.API_SCANNER_PACKAGE);
             tmpVulns.add(v);
         }

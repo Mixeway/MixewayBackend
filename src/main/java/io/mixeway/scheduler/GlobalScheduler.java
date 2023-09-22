@@ -7,6 +7,7 @@ import io.mixeway.domain.service.intf.UpdateInterfaceService;
 import io.mixeway.domain.service.project.FindProjectService;
 import io.mixeway.domain.service.project.UpdateProjectService;
 import io.mixeway.domain.service.scanmanager.code.FindCodeProjectService;
+import io.mixeway.domain.service.scanmanager.code.GetOrCreateCodeProjectBranchService;
 import io.mixeway.domain.service.scanmanager.code.UpdateCodeProjectService;
 import io.mixeway.domain.service.scanmanager.webapp.UpdateWebAppService;
 import io.mixeway.domain.service.settings.GetSettingsService;
@@ -55,6 +56,7 @@ public class GlobalScheduler {
     private final FindVulnHistoryService findVulnHistoryService;
     private final FindInfraScanService findInfraScanService;
     private final UpdateInterfaceService updateInterfaceService;
+    private final GetOrCreateCodeProjectBranchService getOrCreateCodeProjectBranchService;
 
     private DOPMailTemplateBuilder templateBuilder = new DOPMailTemplateBuilder();
     private List<String> severities = new ArrayList<String>(){{
@@ -86,7 +88,7 @@ public class GlobalScheduler {
      *
      * Get Vulns from OpenSource scanners - track
      */
-    @Scheduled(initialDelay=3000,fixedDelay = 10000000)
+    @Scheduled(initialDelay=3000,fixedDelay = 86400000)
     public void getDepTrackVulns() {
         log.info("[OpenSourceService] Starting loading vulnerabilities from SCA");
         int i =0;
@@ -99,6 +101,7 @@ public class GlobalScheduler {
                     log.info("[OpenSourceService] Loading progress: {} / {}", i, codeProjects.size());
                 }
                     try {
+
                         openSourceScanService.loadVulnerabilities(cp);
                     } catch (CertificateException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyManagementException | KeyStoreException | IOException e) {
                         log.error("Error {} during OpenSource Scan Synchro for {}", e.getLocalizedMessage(), cp.getName());

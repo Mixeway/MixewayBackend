@@ -56,6 +56,7 @@ public class CodeScanService {
     private final DeleteProjectVulnerabilityService deleteProjectVulnerabilityService;
     private final GetScannerService getScannerService;
     private final OperateOnCodeProject operateOnCodeProject;
+    private final GetOrCreateCodeProjectBranchService getOrCreateCodeProjectBranchService;
 
     /**
      * Method for getting CodeVulns for given names
@@ -191,11 +192,14 @@ public class CodeScanService {
         if (sastScanner.isPresent()) {
             List<CodeProject> codeProjectsRunning = findCodeProjectService.findRunningCodeProjectsLimit5();
             for (CodeProject codeProject : codeProjectsRunning) {
-                List<ProjectVulnerability> codeVulns = getProjectVulnerabilitiesService.getOldVulnsForCodeProject(codeProject);
+                CodeProjectBranch codeProjectBranch  = getOrCreateCodeProjectBranchService.getOrCreateCodeProjectBranch(codeProject, codeProject.getActiveBranch());
+                List<ProjectVulnerability> codeVulns = getProjectVulnerabilitiesService.getOldVulnsForCodeProjectAndSourceForBranch(codeProject, vulnTemplate.SOURCE_SOURCECODE,codeProjectBranch );
                 for (CodeScanClient codeScanClient : codeScanClients) {
                     try {
                         if (codeScanClient.canProcessRequest(sastScanner.get()) && codeScanClient.isScanDone(codeProject)) {
-                            codeScanClient.loadVulnerabilities(sastScanner.get(), null, true, codeProject, codeVulns);
+                            //CodeProjectBranch codeProjectBranch = findCodeProjectBranchService.findBranchForProjectAndRunning(codeProject);
+
+                            codeScanClient.loadVulnerabilities(sastScanner.get(), null, true, codeProject, codeVulns, codeProjectBranch);
                             // TODO: end codescan
                             updateCiOperations.updateCiOperationsForSAST(codeProject);
                             updateCodeProjectService.endScan(codeProject);
@@ -407,13 +411,50 @@ public class CodeScanService {
 
             ProjectVulnerability projectVulnerability = new ProjectVulnerability(codeProject,codeProject,vulnerability, vulnerabilityModel.getDescription(),null,
                     vulnerabilityModel.getSeverity(),null,vulnerabilityModel.getFilename()+":"+vulnerabilityModel.getLine(),
-                    "", vulnerabilitySource, null );
+                    "", vulnerabilitySource, null,null );
 
             vulnToPersist.add(projectVulnerability);
         }
         vulnTemplate.vulnerabilityPersistList(oldVulnsForCodeProject, vulnToPersist);
 
-        deleteProjectVulnerabilityService.deleteProjectVulnerabilityWithStatus(codeProject.getProject(), vulnTemplate.STATUS_REMOVED);
+        deleteProjectVulnerabilityService.deleteProjectVulnerabilityWithStatus(codeProject.getProject(), vulnTemplate.STATUS_REMOVED, vulnerabilitySource);
+
+        vulnTemplate.projectVulnerabilityRepository.flush();
+        log.info("[CICD] SourceCode - Loading Vulns for {} completed type of {} number of vulns {}", codeProject.getName(), scannerType, vulnToPersist.size());
+    }
+
+    /**
+     * Loading vulns from Mixeway scanner push to db - FOR V3 API
+     * @param codeProject project with vulns
+     * @param sastVulns list of vulns
+     */
+    @Transactional
+    @Modifying
+    public void loadVulnsFromCICDToCodeProjectForBranch(CodeProject codeProject, List<VulnerabilityModel> sastVulns, ScannerType scannerType,CodeProjectBranch codeProjectBranch) {
+        if (sastVulns.isEmpty())
+            return;
+        VulnerabilitySource vulnerabilitySource = null;
+        if (scannerType.equals(ScannerType.SAST)){
+            vulnerabilitySource = vulnTemplate.SOURCE_SOURCECODE;
+        } else if (scannerType.equals(ScannerType.GITLEAKS)){
+            vulnerabilitySource = vulnTemplate.SOURCE_GITLEAKS;
+        } else if (scannerType.equals(ScannerType.IAC)){
+            vulnerabilitySource = vulnTemplate.SOURCE_IAC;
+        }
+        List<ProjectVulnerability> oldVulnsForCodeProject = getProjectVulnerabilitiesService.getOldVulnsForCodeProjectAndSourceForBranch(codeProject,vulnerabilitySource, codeProjectBranch);
+        List<ProjectVulnerability> vulnToPersist = new ArrayList<>();
+        for (VulnerabilityModel vulnerabilityModel : sastVulns){
+            Vulnerability vulnerability = vulnTemplate.createOrGetVulnerabilityService.createOrGetVulnerability(vulnerabilityModel.getName());
+
+            ProjectVulnerability projectVulnerability = new ProjectVulnerability(codeProject,codeProject,vulnerability, vulnerabilityModel.getDescription(),null,
+                    vulnerabilityModel.getSeverity(),null,vulnerabilityModel.getFilename()+":"+vulnerabilityModel.getLine(),
+                    "", vulnerabilitySource, null,codeProjectBranch );
+
+            vulnToPersist.add(projectVulnerability);
+        }
+        vulnTemplate.vulnerabilityPersistList(oldVulnsForCodeProject, vulnToPersist);
+
+        deleteProjectVulnerabilityService.deleteProjectVulnerabilityWithStatus(codeProject.getProject(), vulnTemplate.STATUS_REMOVED, vulnerabilitySource);
 
         vulnTemplate.projectVulnerabilityRepository.flush();
         log.info("[CICD] SourceCode - Loading Vulns for {} completed type of {} number of vulns {}", codeProject.getName(), scannerType, vulnToPersist.size());

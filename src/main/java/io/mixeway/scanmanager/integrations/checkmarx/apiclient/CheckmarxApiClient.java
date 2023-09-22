@@ -73,9 +73,9 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
         this.secureRestTemplate = secureRestTemplate;
     }
     @Override
-    public void loadVulnerabilities(Scanner scanner, String urlToGetNext, Boolean single, CodeProject codeProject, List<ProjectVulnerability> codeVulns) throws ParseException, JSONException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+    public void loadVulnerabilities(Scanner scanner, String urlToGetNext, Boolean single, CodeProject codeProject, List<ProjectVulnerability> codeVulns, CodeProjectBranch codeProjectBranch) throws ParseException, JSONException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         List<CxResultCsvTemplate> cxResults = downloadResultsForScan(scanner,codeProject);
-        processVulnReportForCodeProject(cxResults,codeProject,codeVulns);
+        processVulnReportForCodeProject(cxResults,codeProject,codeVulns, codeProjectBranch);
     }
 
     @Override
@@ -573,13 +573,13 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
      * @param results
      * @param codeProject
      */
-    private void processVulnReportForCodeProject(List<CxResultCsvTemplate> results, CodeProject codeProject, List<ProjectVulnerability> oldVulns) {
+    private void processVulnReportForCodeProject(List<CxResultCsvTemplate> results, CodeProject codeProject, List<ProjectVulnerability> oldVulns, CodeProjectBranch codeProjectBranch) {
         List<ProjectVulnerability> vulnsToPersist = new ArrayList<>();
         for (CxResultCsvTemplate cxVuln: results) {
             Vulnerability vulnerability = vulnTemplate.createOrGetVulnerabilityService.createOrGetVulnerability(cxVuln.getQuery());
 
             ProjectVulnerability projectVulnerability = new ProjectVulnerability(codeProject,codeProject,vulnerability,cxVuln.getDescription(),null,
-                    cxVuln.getSeverity(),null,cxVuln.getDstLocation()+":"+cxVuln.getDstLine(),getTag(cxVuln.getAnalysis()), vulnTemplate.SOURCE_SOURCECODE, null );
+                    cxVuln.getSeverity(),null,cxVuln.getDstLocation()+":"+cxVuln.getDstLine(),getTag(cxVuln.getAnalysis()), vulnTemplate.SOURCE_SOURCECODE, null, codeProjectBranch );
 
             vulnsToPersist.add(projectVulnerability);
         }

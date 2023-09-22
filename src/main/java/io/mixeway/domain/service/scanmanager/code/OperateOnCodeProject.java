@@ -57,8 +57,7 @@ public class OperateOnCodeProject {
     }
 
     public void setBranch(CodeProject codeProject, String branch) {
-        codeProject.setBranch(branch);
-        codeProjectRepository.save(codeProject);
+        codeProjectRepository.updateCodeProjectBranch(codeProject.getId(), branch);
     }
 
     public void setRepoUsername(CodeProject codeProject, EditCodeProjectModel editCodeProjectModel) {

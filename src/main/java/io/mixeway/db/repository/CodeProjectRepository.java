@@ -55,4 +55,10 @@ public interface CodeProjectRepository extends JpaRepository<CodeProject, Long> 
 	List<CodeProject> findBydTrackUuidNotNullAndRepoUrlNotNull();
 	@Query("select cp from CodeProject cp where cp.remotename is null and cp.repoUrl is not null and cp.dTrackUuid is null")
 	List<CodeProject> getCodeProjectsForSynchro();
+
+	@Modifying
+	@Query("UPDATE CodeProject e SET e.branch = :branch WHERE e.id = :id")
+	void updateCodeProjectBranch(@Param("id") Long id, @Param("branch") String branch);
+
+    List<CodeProject> findByProjectIn(List<Project> enabledVulnManageProjects);
 }

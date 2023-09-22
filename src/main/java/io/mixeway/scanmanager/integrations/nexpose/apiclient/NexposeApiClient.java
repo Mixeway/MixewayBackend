@@ -144,7 +144,7 @@ public class NexposeApiClient implements NetworkScanClient, SecurityScanner {
                             "<b>Categories: "+ StringUtils.join(vulnDetails.getCategories(),", ")+"</b><br/>" +
                             "<br/><br/>Proof:<br/>"+result.getProof()+
                             "<br/>Description:<br/>"+vulnDetails.getDescription().getHtml(),null,
-                            setNexposeThreat(vulnDetails.getSeverity()),String.valueOf(result.getPort()),null,null, vulnTemplate.SOURCE_NETWORK,null);
+                            setNexposeThreat(vulnDetails.getSeverity()),String.valueOf(result.getPort()),null,null, vulnTemplate.SOURCE_NETWORK,null,null);
 
                     projectVulnerability.updateStatusAndGrade(oldVulns, vulnTemplate);
                     vulnTemplate.projectVulnerabilityRepository.save(projectVulnerability);

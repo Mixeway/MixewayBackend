@@ -70,7 +70,7 @@ public class OpenScapService {
                     .filter(entry -> entry.getKey().getId().equals(ruleRef))
                     .map(Map.Entry::getValue).findFirst().get();
             ProjectVulnerability projectVulnerability = new ProjectVulnerability(anInterface,null,null,rule.getDescription(),null,
-                    "High",null,null,null, vulnTemplate.SOURCE_CISBENCHMARK, cisRequirement );
+                    "High",null,null,null, vulnTemplate.SOURCE_CISBENCHMARK, cisRequirement,null );
 
             projectVulnerabilities.add(projectVulnerability);
 

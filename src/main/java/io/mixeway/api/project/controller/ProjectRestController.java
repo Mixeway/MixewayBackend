@@ -17,7 +17,7 @@ import java.util.List;
 
 @RestController()
 @RequestMapping("/v2/api/show/project")
-public class ProjectRestController {
+public class  ProjectRestController {
     private final ProjectRestService projectService;
 
     ProjectRestController(ProjectRestService projectRestService){
