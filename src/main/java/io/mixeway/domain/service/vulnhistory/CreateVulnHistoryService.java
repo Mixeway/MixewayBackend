@@ -132,6 +132,6 @@ public class CreateVulnHistoryService {
     }
 
     private long getInfraVulnsForProject(Project project){
-        return vulnTemplate.projectVulnerabilityRepository.findByProjectAndVulnerabilitySourceAndSeverityIn(project, vulnTemplate.SOURCE_NETWORK, severities).size();
+        return vulnTemplate.projectVulnerabilityRepository.findByProjectAndVulnerabilitySourceAndSeverityInAndStatusNot(project, vulnTemplate.SOURCE_NETWORK, severities, vulnTemplate.STATUS_REMOVED).size();
     }
 }
