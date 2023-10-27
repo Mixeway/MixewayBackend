@@ -61,11 +61,11 @@ public class ProjectRiskAnalyzer {
         result += vulnTemplate.projectVulnerabilityRepository
                 .findByCodeProjectAndVulnerabilitySourceAndSeverity(codeProject,
                         vulnTemplate.SOURCE_OPENSOURCE,
-                        Constants.VULN_CRITICALITY_CRITICAL).count() * OS_CRIT_WAGE;
+                        Constants.VULN_CRITICALITY_CRITICAL).filter(pv -> !pv.getStatus().equals(vulnTemplate.STATUS_REMOVED)).count() * OS_CRIT_WAGE;
         result += vulnTemplate.projectVulnerabilityRepository
                 .findByCodeProjectAndVulnerabilitySourceAndSeverity(codeProject,
                         vulnTemplate.SOURCE_OPENSOURCE,
-                        Constants.VULN_CRITICALITY_HIGH).count() * OS_HIGH_WAGE;
+                        Constants.VULN_CRITICALITY_HIGH).filter(pv -> !pv.getStatus().equals(vulnTemplate.STATUS_REMOVED)).count() * OS_HIGH_WAGE;
         return result;
     }
     public int getProjectOpenSourceRisk(Project project) {
@@ -73,11 +73,11 @@ public class ProjectRiskAnalyzer {
         result += vulnTemplate.projectVulnerabilityRepository
                 .findByProjectAndVulnerabilitySourceAndSeverity(project,
                         vulnTemplate.SOURCE_OPENSOURCE,
-                        Constants.VULN_CRITICALITY_CRITICAL).count() * OS_CRIT_WAGE;
+                        Constants.VULN_CRITICALITY_CRITICAL).filter(pv -> !pv.getStatus().equals(vulnTemplate.STATUS_REMOVED)).count() * OS_CRIT_WAGE;
         result += vulnTemplate.projectVulnerabilityRepository
                 .findByProjectAndVulnerabilitySourceAndSeverity(project,
                         vulnTemplate.SOURCE_OPENSOURCE,
-                        Constants.VULN_CRITICALITY_HIGH).count() * OS_HIGH_WAGE;
+                        Constants.VULN_CRITICALITY_HIGH).filter(pv -> !pv.getStatus().equals(vulnTemplate.STATUS_REMOVED)).count() * OS_HIGH_WAGE;
         return result;
     }
 }

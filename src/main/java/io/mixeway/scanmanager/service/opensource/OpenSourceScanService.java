@@ -46,7 +46,6 @@ public class OpenSourceScanService {
     private final CreateOpenSourceConfigService createOpenSourceConfigService;
     private final GetProjectVulnerabilitiesService getProjectVulnerabilitiesService;
     private final GetOrCreateSoftwarePacketService getOrCreateSoftwarePacketService;
-    private final DeleteProjectVulnerabilityService deleteProjectVulnerabilityService;
     private final GetOrCreateCodeProjectBranchService getOrCreateCodeProjectBranchService;
 
     /**
@@ -91,7 +90,7 @@ public class OpenSourceScanService {
                             vulnTemplate.STATUS_REMOVED.getId(), codeProjectBranch.getId());
                 openSourceScanClient.loadVulnerabilities(codeProjectToVerify, codeProjectBranch);
                 updateCiOperations.updateCiOperationsForOpenSource(codeProjectToVerify);
-                vulnTemplate.projectVulnerabilityRepository.deleteByStatusAndCodeProjectAndVulnerabilitySourceAndCodeProjectBranch(vulnTemplate.STATUS_REMOVED, codeProjectToVerify, vulnTemplate.SOURCE_OPENSOURCE, codeProjectBranch);
+                //vulnTemplate.projectVulnerabilityRepository.deleteByStatusAndCodeProjectAndVulnerabilitySourceAndCodeProjectBranch(vulnTemplate.STATUS_REMOVED, codeProjectToVerify, vulnTemplate.SOURCE_OPENSOURCE, codeProjectBranch);
                 break;
             }
         }
@@ -116,7 +115,7 @@ public class OpenSourceScanService {
                             vulnTemplate.STATUS_REMOVED.getId(), codeProjectBranch.getId());
                 openSourceScanClient.loadVulnerabilities(codeProjectToVerify, codeProjectBranch);
                 updateCiOperations.updateCiOperationsForOpenSource(codeProjectToVerify);
-                vulnTemplate.projectVulnerabilityRepository.deleteByStatusAndCodeProjectAndVulnerabilitySourceAndCodeProjectBranch(vulnTemplate.STATUS_REMOVED, codeProjectToVerify, vulnTemplate.SOURCE_OPENSOURCE, codeProjectBranch);
+                //vulnTemplate.projectVulnerabilityRepository.deleteByStatusAndCodeProjectAndVulnerabilitySourceAndCodeProjectBranch(vulnTemplate.STATUS_REMOVED, codeProjectToVerify, vulnTemplate.SOURCE_OPENSOURCE, codeProjectBranch);
                 break;
             }
         }
@@ -173,7 +172,7 @@ public class OpenSourceScanService {
             vulnToPersist.add(projectVulnerability);
         }
         vulnTemplate.vulnerabilityPersistList(oldVulns,vulnToPersist);
-        deleteProjectVulnerabilityService.deleteRemovedVulnerabilitiesInCodeProject(codeProject);
+        //deleteProjectVulnerabilityService.deleteRemovedVulnerabilitiesInCodeProject(codeProject);
         log.info("[CICD] SourceCode - Loading Vulns for {} completed type of DEPENDENCY CHECK", codeProject.getName());
     }
 

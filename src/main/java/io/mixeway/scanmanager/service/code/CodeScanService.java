@@ -53,7 +53,6 @@ public class CodeScanService {
     private final GetOrCreateProjectService getOrCreateProjectService;
     private final FindCodeProjectService findCodeProjectService;
     private final UpdateCodeProjectService updateCodeProjectService;
-    private final DeleteProjectVulnerabilityService deleteProjectVulnerabilityService;
     private final GetScannerService getScannerService;
     private final OperateOnCodeProject operateOnCodeProject;
     private final GetOrCreateCodeProjectBranchService getOrCreateCodeProjectBranchService;
@@ -207,7 +206,7 @@ public class CodeScanService {
                                 log.info("[CodeScan] Automatic integration with BugTracker enabled, proceeding...");
                                 vulnTemplate.processBugTracking(codeProject, vulnTemplate.SOURCE_SOURCECODE);
                             }
-                            deleteProjectVulnerabilityService.deleteRemovedVulnerabilitiesInCodeProject(codeProject);
+                            //deleteProjectVulnerabilityService.deleteRemovedVulnerabilitiesInCodeProject(codeProject);
                             //vulnTemplate.projectVulnerabilityRepository.deleteByStatusAndCodeProject(vulnTemplate.STATUS_REMOVED,codeProject);
                         } else {
                             log.debug("[CodeScan] Scan for {} is still running", codeProject.getName());
@@ -417,7 +416,7 @@ public class CodeScanService {
         }
         vulnTemplate.vulnerabilityPersistList(oldVulnsForCodeProject, vulnToPersist);
 
-        deleteProjectVulnerabilityService.deleteProjectVulnerabilityWithStatus(codeProject.getProject(), vulnTemplate.STATUS_REMOVED, vulnerabilitySource);
+        //deleteProjectVulnerabilityService.deleteProjectVulnerabilityWithStatus(codeProject.getProject(), vulnTemplate.STATUS_REMOVED, vulnerabilitySource);
 
         vulnTemplate.projectVulnerabilityRepository.flush();
         log.info("[CICD] SourceCode - Loading Vulns for {} completed type of {} number of vulns {}", codeProject.getName(), scannerType, vulnToPersist.size());
@@ -454,7 +453,7 @@ public class CodeScanService {
         }
         vulnTemplate.vulnerabilityPersistList(oldVulnsForCodeProject, vulnToPersist);
 
-        deleteProjectVulnerabilityService.deleteProjectVulnerabilityWithStatus(codeProject.getProject(), vulnTemplate.STATUS_REMOVED, vulnerabilitySource);
+        //deleteProjectVulnerabilityService.deleteProjectVulnerabilityWithStatus(codeProject.getProject(), vulnTemplate.STATUS_REMOVED, vulnerabilitySource);
 
         vulnTemplate.projectVulnerabilityRepository.flush();
         log.info("[CICD] SourceCode - Loading Vulns for {} completed type of {} number of vulns {}", codeProject.getName(), scannerType, vulnToPersist.size());

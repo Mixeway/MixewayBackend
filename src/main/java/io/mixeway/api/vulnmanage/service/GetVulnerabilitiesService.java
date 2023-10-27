@@ -114,13 +114,14 @@ public class GetVulnerabilitiesService {
         List<Vuln> tmpVulns = vulns.getVulnerabilities();
         List<ProjectVulnerability> softVuln = null;
         if (project != null) {
-            try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository.findByProjectAndVulnerabilitySource(project, vulnTemplate.SOURCE_OPENSOURCE)) {
+            try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository.findByProjectAndVulnerabilitySource(project, vulnTemplate.SOURCE_OPENSOURCE).filter(projectVulnerability -> !projectVulnerability.getStatus().equals(vulnTemplate.STATUS_REMOVED))) {
                 softVuln = vulnsForProject.collect(Collectors.toList());
             }
         }
         else {
             try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository
-                    .findByProjectInAndVulnerabilitySource(projectRepository.findByEnableVulnManage(true),vulnTemplate.SOURCE_OPENSOURCE)) {
+                    .findByProjectInAndVulnerabilitySource(projectRepository.findByEnableVulnManage(true),vulnTemplate.SOURCE_OPENSOURCE)
+                    .filter(projectVulnerability -> !projectVulnerability.getStatus().equals(vulnTemplate.STATUS_REMOVED))) {
                 softVuln = vulnsForProject.collect(Collectors.toList());
             }
         }
@@ -206,14 +207,21 @@ public class GetVulnerabilitiesService {
             List<VulnerabilitySource> sastSources = Arrays.asList(vulnTemplate.SOURCE_SOURCECODE, vulnTemplate.SOURCE_GITLEAKS, vulnTemplate.SOURCE_IAC);
             List<Project> projects = Collections.singletonList(project);
             List<CodeProject> codeProjectsWithVulnManageEnabled = findCodeProjectService.getCodeProjectsInListOfProjects(projects);
-            List<ProjectVulnerability> projectVulnerabilities = vulnTemplate.projectVulnerabilityRepository.findVulnerabilitiesForCode(codeProjectsWithVulnManageEnabled, sastSources);
+            List<ProjectVulnerability> projectVulnerabilities =
+                    vulnTemplate.projectVulnerabilityRepository.findVulnerabilitiesForCode(codeProjectsWithVulnManageEnabled, sastSources)
+                            .stream()
+                            .filter(projectVulnerability -> !projectVulnerability.getStatus().equals(vulnTemplate.STATUS_REMOVED))
+                            .collect(Collectors.toList());
             codeVulns.addAll(projectVulnerabilities);
         }
         else {
             List<Project> enabledVulnManageProjects = projectRepository.findByEnableVulnManage(true);
             List<CodeProject> codeProjectsWithVulnManageEnabled = findCodeProjectService.getCodeProjectsInListOfProjects(enabledVulnManageProjects);
             List<VulnerabilitySource> sastSources = Arrays.asList(vulnTemplate.SOURCE_SOURCECODE, vulnTemplate.SOURCE_GITLEAKS, vulnTemplate.SOURCE_IAC);
-            List<ProjectVulnerability> projectVulnerabilities = vulnTemplate.projectVulnerabilityRepository.findVulnerabilitiesForCode(codeProjectsWithVulnManageEnabled, sastSources);
+            List<ProjectVulnerability> projectVulnerabilities = vulnTemplate.projectVulnerabilityRepository.findVulnerabilitiesForCode(codeProjectsWithVulnManageEnabled, sastSources)
+                    .stream()
+                    .filter(projectVulnerability -> !projectVulnerability.getStatus().equals(vulnTemplate.STATUS_REMOVED))
+                    .collect(Collectors.toList());;
             codeVulns.addAll(projectVulnerabilities);
         }
 
@@ -256,13 +264,13 @@ public class GetVulnerabilitiesService {
         if (project != null) {
             //webAppVulns = new ArrayList<>(webAppVulnRepository.findByWebAppIn(project.getWebapps()));
             try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository
-                    .findByProjectAndVulnerabilitySource(project, vulnTemplate.SOURCE_WEBAPP)) {
+                    .findByProjectAndVulnerabilitySource(project, vulnTemplate.SOURCE_WEBAPP).filter(projectVulnerability -> !projectVulnerability.getStatus().equals(vulnTemplate.STATUS_REMOVED))) {
                 webAppVulns = vulnsForProject.collect(Collectors.toList());
             }
         }
         else {
             try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository
-                    .findByProjectInAndVulnerabilitySource(projectRepository.findByEnableVulnManage(true),vulnTemplate.SOURCE_WEBAPP)) {
+                    .findByProjectInAndVulnerabilitySource(projectRepository.findByEnableVulnManage(true),vulnTemplate.SOURCE_WEBAPP).filter(projectVulnerability -> !projectVulnerability.getStatus().equals(vulnTemplate.STATUS_REMOVED))) {
                 webAppVulns = vulnsForProject.collect(Collectors.toList());
             }
         }
@@ -278,12 +286,12 @@ public class GetVulnerabilitiesService {
         List<ProjectVulnerability> infraVulns = null;
         if (project != null) {
             try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository
-                    .findByProjectAndVulnerabilitySource(project,vulnTemplate.SOURCE_NETWORK)) {
+                    .findByProjectAndVulnerabilitySource(project,vulnTemplate.SOURCE_NETWORK).filter(projectVulnerability -> !projectVulnerability.getStatus().equals(vulnTemplate.STATUS_REMOVED))) {
                 infraVulns = vulnsForProject.collect(Collectors.toList());
             }
         } else {
             try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository
-                    .findByProjectInAndVulnerabilitySource(projectRepository.findByEnableVulnManage(true),vulnTemplate.SOURCE_NETWORK)) {
+                    .findByProjectInAndVulnerabilitySource(projectRepository.findByEnableVulnManage(true),vulnTemplate.SOURCE_NETWORK).filter(projectVulnerability -> !projectVulnerability.getStatus().equals(vulnTemplate.STATUS_REMOVED))) {
                 infraVulns = vulnsForProject.collect(Collectors.toList());
             }
         }

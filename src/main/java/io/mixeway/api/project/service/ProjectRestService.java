@@ -155,7 +155,7 @@ public class ProjectRestService {
         Optional<Project> project = findProjectService.findProjectById(id);
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             List<ProjectVulnerability> vulns;
-            try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository.findByProject(project.get())) {
+            try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository.findByProject(project.get()).filter(projectVulnerability -> !projectVulnerability.equals(vulnTemplate.STATUS_REMOVED))) {
                 return new ResponseEntity<>(vulnsForProject.collect(Collectors.toList()),HttpStatus.OK);
             }
         } else {

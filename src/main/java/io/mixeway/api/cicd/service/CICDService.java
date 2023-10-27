@@ -165,7 +165,7 @@ public class CICDService {
             CodeProjectBranch codeProjectBranch = getOrCreateCodeProjectBranchService.getOrCreateCodeProjectBranch(codeProject.get(), loadSCA.getBranch());
 
 
-            List<ProjectVulnerability> vulns = vulnTemplate.projectVulnerabilityRepository.findByCodeProjectAndCodeProjectBranch(codeProject.get(), codeProjectBranch);
+            List<ProjectVulnerability> vulns = vulnTemplate.projectVulnerabilityRepository.findByCodeProjectAndCodeProjectBranch(codeProject.get(), codeProjectBranch).stream().filter(projectVulnerability -> !projectVulnerability.getStatus().equals(vulnTemplate.STATUS_REMOVED)).collect(Collectors.toList());
             List<Vuln> vulnList = new ArrayList<>();
             vulns.removeIf(projectVulnerability -> projectVulnerability.getGrade() == 0);
             for (ProjectVulnerability pv : vulns){

@@ -163,7 +163,7 @@ public class DashboardService {
           findProjectService.count(),
           getScanNumberService.getNumberOfScansRunning(),
           getScanNumberService.getNumberOfScansInQueue(),
-          vulnTemplate.projectVulnerabilityRepository.count()
+          vulnTemplate.projectVulnerabilityRepository.countVulns()
         );
         dashboardTopStatistics.setStatisticCard(statisticCard);
         dashboardTopStatistics.setProjectVulnerabilityList(projectVulnerabilities.stream().limit(5).collect(Collectors.toList()));
