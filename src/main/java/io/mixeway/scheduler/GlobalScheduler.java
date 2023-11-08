@@ -74,8 +74,7 @@ public class GlobalScheduler {
      * Interval: 12h
      * Create vuln history
      */
-    //@Scheduled(cron="0 0 12 * * *" )
-    @Scheduled(initialDelay=3000,fixedDelay = 86400000)
+    @Scheduled(cron="0 0 12 * * *" )
     public void createHistoryForVulns() {
         for(Project project : findProjectService.findAll()){
             createVulnHistoryService.createScheduled(project);
