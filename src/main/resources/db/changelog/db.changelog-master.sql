@@ -1280,3 +1280,31 @@ alter table codeproject add column activebranch text;
 --changeset siewer:add-crated-time
 ALTER TABLE projectvulnerability ADD created TEXT;
 UPDATE projectvulnerability SET created = TO_CHAR(NOW(), 'YYYY-MM-DD HH24:MI:SS');
+
+--changeset siewer:fix-created-time
+UPDATE projectvulnerability SET created = created || '.000' WHERE created IS NOT NULL;
+
+--changeset siewer:extend-history
+alter table vulnhistory add column resolvedvulnerabilities int;
+alter table vulnhistory add column avgtimetofix int;
+alter table vulnhistory add column percentresolvedcriticals int;
+
+alter table vulnhistory add column codecritvuln int;
+alter table vulnhistory add column codehighvuln int;
+alter table vulnhistory add column codemediumvuln int;
+alter table vulnhistory add column codelowvuln int;
+
+alter table vulnhistory add column scacritvuln int;
+alter table vulnhistory add column scahighvuln int;
+alter table vulnhistory add column scamediumvuln int;
+alter table vulnhistory add column scalowvuln int;
+
+alter table vulnhistory add column webappcritvuln int;
+alter table vulnhistory add column webapphighvuln int;
+alter table vulnhistory add column webappmediumvuln int;
+alter table vulnhistory add column webapplowvuln int;
+
+alter table vulnhistory add column assetcritvuln int;
+alter table vulnhistory add column assethighvuln int;
+alter table vulnhistory add column assetmediumvuln int;
+alter table vulnhistory add column assetlowvuln int;

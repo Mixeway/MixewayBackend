@@ -110,4 +110,12 @@ public class  ProjectRestController {
         return projectService.getProjectByCiid(ciid, principal);
     }
 
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @GetMapping(value = "/{id}/detailstats")
+    public ResponseEntity<DetailStats> detailStats(@PathVariable("id") Long id, Principal principal) {
+        return projectService.detailStats(id, principal);
+    }
+
+
+
 }

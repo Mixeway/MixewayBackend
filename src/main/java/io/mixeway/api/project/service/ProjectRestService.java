@@ -114,7 +114,7 @@ public class ProjectRestService {
         HashMap<String,Long> pieData = new HashMap<>();
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             for (String severity : severityList){
-                pieData.put(severity,vulnTemplate.projectVulnerabilityRepository.countByProjectAndSeverity(project.get(), severity));
+                pieData.put(severity,vulnTemplate.projectVulnerabilityRepository.countVulnsbyProject(project.get(), severity));
             }
             return new ResponseEntity<>(pieData,HttpStatus.OK);
         } else {
@@ -234,9 +234,9 @@ public class ProjectRestService {
                     .repos(project.get().getCodes().size())
                     .webApps(project.get().getWebapps().size())
                     .assets(project.get().getAssets().size())
-                    .vulnCrit(projectVulnerabilities.stream().filter(pv -> pv.getSeverity().equals(Constants.VULN_CRITICALITY_CRITICAL) || pv.getSeverity().equals(Constants.VULN_CRITICALITY_HIGH)).count())
-                    .vulnMedium(projectVulnerabilities.stream().filter(pv -> pv.getSeverity().equals(Constants.VULN_CRITICALITY_MEDIUM)).count())
-                    .vulnLow(projectVulnerabilities.stream().filter(pv -> pv.getSeverity().equals(Constants.VULN_CRITICALITY_LOW)).count())
+                    .vulnCrit(projectVulnerabilities.stream().filter(pv -> (pv.getSeverity().equals(Constants.VULN_CRITICALITY_CRITICAL) || pv.getSeverity().equals(Constants.VULN_CRITICALITY_HIGH)) && !Objects.equals(pv.getStatus().getId(), vulnTemplate.STATUS_REMOVED.getId()) && pv.getGrade()!=0).count())
+                    .vulnMedium(projectVulnerabilities.stream().filter(pv -> pv.getSeverity().equals(Constants.VULN_CRITICALITY_MEDIUM) && !Objects.equals(pv.getStatus().getId(), vulnTemplate.STATUS_REMOVED.getId()) && pv.getGrade()!=0).count())
+                    .vulnLow(projectVulnerabilities.stream().filter(pv -> pv.getSeverity().equals(Constants.VULN_CRITICALITY_LOW) && !Objects.equals(pv.getStatus().getId(), vulnTemplate.STATUS_REMOVED.getId()) && pv.getGrade()!=0).count())
                     .build();
             return new ResponseEntity<>(projectStats, HttpStatus.OK);
 
@@ -248,5 +248,41 @@ public class ProjectRestService {
     public ResponseEntity<Project> getProjectByCiid(String ciid, Principal principal) {
         Optional<Project> project = findProjectService.findProjectByCiid(ciid);
         return project.map(value -> new ResponseEntity<>(value, HttpStatus.OK)).orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
+
+    public ResponseEntity<DetailStats> detailStats(Long id, Principal principal) {
+        Optional<Project> project = findProjectService.findProjectById(id);
+        if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
+            List<ProjectVulnerability> projectVulnerabilities = vulnTemplate.projectVulnerabilityRepository.findByProject(project.get()).collect(Collectors.toList());
+            int detectedVulnerabilities = projectVulnerabilities.size();
+            long detectedCriticalVulnerabilities = projectVulnerabilities.stream().filter(pv -> pv.getSeverity().equals(Constants.API_SEVERITY_CRITICAL)).count();
+            long resolvedCriticalVulnerabilities = projectVulnerabilities.stream().filter(pv -> pv.getSeverity().equals(Constants.API_SEVERITY_CRITICAL) && Objects.equals(pv.getStatus().getId(), vulnTemplate.STATUS_REMOVED.getId()) && pv.getGrade()!=0).count();
+            List<ProjectVulnerability> solvedVulnerabilities = projectVulnerabilities.stream().filter(pv -> pv.getStatus().getId().equals(vulnTemplate.STATUS_REMOVED.getId())).collect(Collectors.toList());
+            int percentResolvedCritical = (int) Math.ceil(((double) resolvedCriticalVulnerabilities / detectedCriticalVulnerabilities) * 100);
+            int avgTimeToFix= (int) Math.ceil(calculateAverageDifferenceInDays(solvedVulnerabilities));
+            DetailStats detailStats = DetailStats.builder()
+                    .resolvedCriticals(percentResolvedCritical)
+                    .detectedVulnerabilities(detectedVulnerabilities)
+                    .resolvedVulnerabilities(solvedVulnerabilities.size())
+                    .avgTimeToFix(avgTimeToFix)
+                    .build();
+            return new ResponseEntity<>(detailStats, HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
+    }
+
+    private static double calculateAverageDifferenceInDays(List<ProjectVulnerability> list) {
+        if (list == null || list.isEmpty()) {
+            // Handle this case as per your requirements, could throw an exception or return 0
+            return 0;
+        }
+
+        long sumOfDifferences = 0;
+        for (ProjectVulnerability pv : list) {
+            sumOfDifferences += pv.calculateDifferenceInDays();
+        }
+
+        // Calculate the average
+        return sumOfDifferences / (double) list.size();
     }
 }

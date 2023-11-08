@@ -17,6 +17,7 @@ import io.mixeway.utils.ScannerModel;
 import io.mixeway.utils.SecureRestTemplate;
 import io.mixeway.utils.VaultHelper;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.NoHttpResponseException;
 import org.codehaus.jettison.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.ByteArrayInputStream;
@@ -437,6 +439,8 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
             }
         } catch (HttpClientErrorException e){
             log.error("[Checkmarx] Error creating scan - {}", e.getStatusCode());
+        } catch (ResourceAccessException e) {
+            log.error("[Checkmarx] Error creating the scan - checkmarx not avaliable");
         }
         return false;
     }
