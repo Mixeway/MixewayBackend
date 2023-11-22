@@ -116,6 +116,12 @@ public class  ProjectRestController {
         return projectService.detailStats(id, principal);
     }
 
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @GetMapping(value = "/{id}/detailedhistory")
+    public ResponseEntity<List<VulnHistory>> detailedHistory(@PathVariable("id") Long id, Principal principal) {
+        return projectService.detailedHistory(id, principal);
+    }
+
 
 
 }

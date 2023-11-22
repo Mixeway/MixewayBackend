@@ -73,4 +73,9 @@ public class OperateOnVulnHistoryService {
         projectVulnTrendChart.setSeries(series);
         return projectVulnTrendChart;
     }
+
+    public List<VulnHistory> getLatestVulnHistoryForProject(Project project){
+        return vulnHistoryRepository.getVulnHistoryLimit(project.getId(), 30);
+    }
+
 }

@@ -155,7 +155,7 @@ public class ProjectRestService {
         Optional<Project> project = findProjectService.findProjectById(id);
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
             List<ProjectVulnerability> vulns;
-            try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository.findByProject(project.get()).filter(projectVulnerability -> !projectVulnerability.equals(vulnTemplate.STATUS_REMOVED))) {
+            try (Stream<ProjectVulnerability> vulnsForProject = vulnTemplate.projectVulnerabilityRepository.findByProject(project.get()).filter(projectVulnerability -> !projectVulnerability.getStatus().getId().equals(vulnTemplate.STATUS_REMOVED.getId()))) {
                 return new ResponseEntity<>(vulnsForProject.collect(Collectors.toList()),HttpStatus.OK);
             }
         } else {
@@ -284,5 +284,14 @@ public class ProjectRestService {
 
         // Calculate the average
         return sumOfDifferences / (double) list.size();
+    }
+
+    public ResponseEntity<List<VulnHistory>> detailedHistory(Long id, Principal principal) {
+        Optional<Project> project = findProjectService.findProjectById(id);
+        if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())){
+            List<VulnHistory> vulnHistories = operateOnVulnHistoryService.getLatestVulnHistoryForProject(project.get());
+            return new ResponseEntity<>(vulnHistories, HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
     }
 }
