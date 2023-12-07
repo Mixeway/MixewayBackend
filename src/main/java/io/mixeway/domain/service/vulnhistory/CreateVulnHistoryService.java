@@ -77,6 +77,8 @@ public class CreateVulnHistoryService {
         int detectedVulnerabilities = projectVulnerabilities.size();
         long detectedCriticalVulnerabilities = projectVulnerabilities.stream().filter(pv -> pv.getSeverity().equals(Constants.API_SEVERITY_CRITICAL)).count();
         long resolvedCriticalVulnerabilities = projectVulnerabilities.stream().filter(pv -> pv.getSeverity().equals(Constants.API_SEVERITY_CRITICAL) && Objects.equals(pv.getStatus().getId(), vulnTemplate.STATUS_REMOVED.getId()) && pv.getGrade()!=0).count();
+        long acknowlegedVulnerabilities = projectVulnerabilities.stream().filter(pv -> pv.getSeverity().equals(Constants.API_SEVERITY_CRITICAL) && pv.getGrade() == 0).count();
+        resolvedCriticalVulnerabilities += acknowlegedVulnerabilities;
         List<ProjectVulnerability> solvedVulnerabilities = projectVulnerabilities.stream().filter(pv -> pv.getStatus().getId().equals(vulnTemplate.STATUS_REMOVED.getId())).collect(Collectors.toList());
         int percentResolvedCritical = (int) Math.ceil(((double) resolvedCriticalVulnerabilities / detectedCriticalVulnerabilities) * 100);
         int avgTimeToFix= (int) Math.ceil(calculateAverageDifferenceInDays(solvedVulnerabilities));
