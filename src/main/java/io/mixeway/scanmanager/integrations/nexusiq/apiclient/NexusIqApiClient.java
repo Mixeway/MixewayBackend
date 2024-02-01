@@ -150,14 +150,14 @@ public class NexusIqApiClient implements SecurityScanner, OpenSourceScanClient {
     }
 
     @Override
-    public void loadVulnerabilities(CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+    public void loadVulnerabilities(CodeProject codeProject, CodeProjectBranch codeProjectBranch) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
         Scanner scanner = getScannerService.getScannerByType(findScannerTypeService.findByName(Constants.SCANNER_TYPE_NEXUS_IQ));
         if (scanner!=null) {
             String getRawDataReportUrl = getRawDataUrl(scanner, codeProject);
             RawReport rawReport = getRawReport(scanner, getRawDataReportUrl);
             try {
                 if (rawReport != null )
-                    saveVulnerabilities(codeProject, rawReport);
+                    saveVulnerabilities(codeProject, rawReport, codeProjectBranch);
             } catch (URISyntaxException e) {
                 throw new RuntimeException(e);
             }
@@ -183,7 +183,7 @@ public class NexusIqApiClient implements SecurityScanner, OpenSourceScanClient {
     }
 
 
-    private void saveVulnerabilities(CodeProject codeProject, RawReport rawReport) throws URISyntaxException {
+    private void saveVulnerabilities(CodeProject codeProject, RawReport rawReport, CodeProjectBranch codeProjectBranch) throws URISyntaxException {
         List<ProjectVulnerability> oldVulns = vulnTemplate.projectVulnerabilityRepository
                 .findByVulnerabilitySourceAndCodeProject(vulnTemplate.SOURCE_OPENSOURCE, codeProject);
         List<ProjectVulnerability> projectVulnerabilitiesFromReport = new ArrayList<>();
@@ -219,7 +219,8 @@ public class NexusIqApiClient implements SecurityScanner, OpenSourceScanClient {
                                     null,
                                     null,
                                     vulnTemplate.SOURCE_OPENSOURCE,
-                                    null);
+                                    null,
+                                    codeProjectBranch);
                             projectVulnerability.setStatus(vulnTemplate.STATUS_NEW);
                             projectVulnerabilitiesFromReport.add(projectVulnerability);
                         }
@@ -296,7 +297,8 @@ public class NexusIqApiClient implements SecurityScanner, OpenSourceScanClient {
 
     @Override
     public boolean createProject(CodeProject codeProject) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
-        return false;
+        this.autoDiscoveryProject(codeProject);
+        return true;
     }
 
     @Override
@@ -338,6 +340,21 @@ public class NexusIqApiClient implements SecurityScanner, OpenSourceScanClient {
                     updateCodeProjectService.updateOpenSourceSettings(codeProject,sync.getId(), sync.getName());
                     log.info("[Nexus-IQ] Synchronized infos for {} with {} and {}", codeProject.getName(), sync.getId(), sync.getName());
                 }
+            }
+        }
+        log.info("[Nexus-IQ] Synchronization completed.");
+    }
+    public void autoDiscoveryProject(CodeProject codeProject) throws UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, KeyManagementException {
+        Scanner scanner = getScannerService.getScannerByType(findScannerTypeService.findByName(Constants.SCANNER_TYPE_NEXUS_IQ));
+        if (scanner != null) {
+
+            List<Synchro> synchroList = loadNexusData(scanner);
+            log.info("[Nexus-IQ] Starting synchronization, found {} resources on remote nexus", synchroList.size());
+            Synchro sync = synchroList.stream().filter(s -> s.getRepoUrl().replace(".git","").equals(codeProject.getRepoUrl().replace(".git","")))
+                    .findAny().orElse(null);
+            if (sync != null){
+                updateCodeProjectService.updateOpenSourceSettings(codeProject,sync.getId(), sync.getName());
+                log.info("[Nexus-IQ] Synchronized infos for {} with {} and {}", codeProject.getName(), sync.getId(), sync.getName());
             }
         }
         log.info("[Nexus-IQ] Synchronization completed.");

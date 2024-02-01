@@ -59,4 +59,8 @@ public class FindCodeProjectService {
     public List<CodeProject> findProjectWithoutOSIntegration(){
         return codeProjectRepository.getCodeProjectsForSynchro();
     }
+
+    public List<CodeProject> getCodeProjectsInListOfProjects(List<Project> enabledVulnManageProjects) {
+        return codeProjectRepository.findByProjectIn(enabledVulnManageProjects);
+    }
 }

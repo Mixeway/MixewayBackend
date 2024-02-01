@@ -11,6 +11,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.Objects;
+
 @Setter
 @Getter
 @NoArgsConstructor
@@ -25,7 +27,11 @@ public class CxSetGitRepo {
         } else {
             this.url = codeProject.getRepoUrl();
         }
-        this.branch = "refs/heads/" + codeProject.getBranch();
+        if (codeProject.getActiveBranch() != null && !Objects.equals(codeProject.getActiveBranch(), "")) {
+            this.branch = "refs/heads/" + codeProject.getActiveBranch();
+        } else {
+            this.branch = "refs/heads/" + codeProject.getBranch();
+        }
     }
 
 }

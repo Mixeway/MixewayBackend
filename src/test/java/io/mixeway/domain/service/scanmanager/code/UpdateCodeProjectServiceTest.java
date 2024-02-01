@@ -56,7 +56,6 @@ class UpdateCodeProjectServiceTest {
         updateCodeProjectService.updateCodeProject(codeScanRequestModel, codeProject);
         codeProject = createOrGetCodeProjectService.getOrCreateCodeProject(project,"update_cp","master");
         assertEquals("https://repo.url", codeProject.getRepoUrl());
-        assertEquals("new_branch", codeProject.getBranch());
 
     }
 

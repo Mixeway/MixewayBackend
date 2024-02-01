@@ -7,6 +7,7 @@ import io.mixeway.domain.service.opensource.CreateOpenSourceConfigService;
 import io.mixeway.domain.service.project.FindProjectService;
 import io.mixeway.domain.service.projectvulnerability.DeleteProjectVulnerabilityService;
 import io.mixeway.domain.service.projectvulnerability.GetProjectVulnerabilitiesService;
+import io.mixeway.domain.service.scanmanager.code.GetOrCreateCodeProjectBranchService;
 import io.mixeway.domain.service.scanner.GetScannerService;
 import io.mixeway.domain.service.softwarepackage.GetOrCreateSoftwarePacketService;
 import io.mixeway.domain.service.vulnmanager.VulnTemplate;
@@ -45,7 +46,7 @@ public class OpenSourceScanService {
     private final CreateOpenSourceConfigService createOpenSourceConfigService;
     private final GetProjectVulnerabilitiesService getProjectVulnerabilitiesService;
     private final GetOrCreateSoftwarePacketService getOrCreateSoftwarePacketService;
-    private final DeleteProjectVulnerabilityService deleteProjectVulnerabilityService;
+    private final GetOrCreateCodeProjectBranchService getOrCreateCodeProjectBranchService;
 
     /**
      * Method witch get information about configured OpenSource scanner which is proper for particular project
@@ -78,18 +79,43 @@ public class OpenSourceScanService {
      */
     @Transactional()
     public void loadVulnerabilities(CodeProject codeProjectToVerify) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
-
+        CodeProjectBranch codeProjectBranch = getOrCreateCodeProjectBranchService.getOrCreateCodeProjectBranch(codeProjectToVerify, codeProjectToVerify.getBranch());
         for (OpenSourceScanClient openSourceScanClient : openSourceScanClients){
             if (openSourceScanClient.canProcessRequest(codeProjectToVerify)){
-                List<ProjectVulnerability> oldVulns = getProjectVulnerabilitiesService.getOldVulnsForCodeProjectAndSource(codeProjectToVerify,vulnTemplate.SOURCE_OPENSOURCE );
+                List<ProjectVulnerability> oldVulns = getProjectVulnerabilitiesService.getOldVulnsForCodeProjectAndSourceForBranch(codeProjectToVerify,vulnTemplate.SOURCE_OPENSOURCE, codeProjectBranch );
 
                 List<Long> vulnsToUpdate = oldVulns.stream().map(ProjectVulnerability::getId).collect(Collectors.toList());
                 if (vulnsToUpdate.size() >  0)
-                    vulnTemplate.projectVulnerabilityRepository.updateVulnState(vulnsToUpdate,
-                            vulnTemplate.STATUS_REMOVED.getId());
-                openSourceScanClient.loadVulnerabilities(codeProjectToVerify);
+                    vulnTemplate.projectVulnerabilityRepository.updateVulnStateForBranch(vulnsToUpdate,
+                            vulnTemplate.STATUS_REMOVED.getId(), codeProjectBranch.getId());
+                openSourceScanClient.loadVulnerabilities(codeProjectToVerify, codeProjectBranch);
                 updateCiOperations.updateCiOperationsForOpenSource(codeProjectToVerify);
-                vulnTemplate.projectVulnerabilityRepository.deleteByStatusAndCodeProjectAndVulnerabilitySource(vulnTemplate.STATUS_REMOVED, codeProjectToVerify, vulnTemplate.SOURCE_OPENSOURCE);
+                //vulnTemplate.projectVulnerabilityRepository.deleteByStatusAndCodeProjectAndVulnerabilitySourceAndCodeProjectBranch(vulnTemplate.STATUS_REMOVED, codeProjectToVerify, vulnTemplate.SOURCE_OPENSOURCE, codeProjectBranch);
+                break;
+            }
+        }
+
+    }
+
+    /**
+     * Using configured OpenSource Vulnerability Scanner and loading vulnerabilities for given codeproject v3 API
+     *
+     * @param codeProjectToVerify CodeProject to load opensource vulnerabilities
+     */
+    @Transactional()
+    public void loadVulnerabilitiesForBranch(CodeProject codeProjectToVerify, String branch) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+        CodeProjectBranch codeProjectBranch = getOrCreateCodeProjectBranchService.getOrCreateCodeProjectBranch(codeProjectToVerify, branch);
+        for (OpenSourceScanClient openSourceScanClient : openSourceScanClients){
+            if (openSourceScanClient.canProcessRequest(codeProjectToVerify)){
+                List<ProjectVulnerability> oldVulns = getProjectVulnerabilitiesService.getOldVulnsForCodeProjectAndSourceForBranch(codeProjectToVerify,vulnTemplate.SOURCE_OPENSOURCE, codeProjectBranch );
+
+                List<Long> vulnsToUpdate = oldVulns.stream().map(ProjectVulnerability::getId).collect(Collectors.toList());
+                if (vulnsToUpdate.size() >  0)
+                    vulnTemplate.projectVulnerabilityRepository.updateVulnStateForBranch(vulnsToUpdate,
+                            vulnTemplate.STATUS_REMOVED.getId(), codeProjectBranch.getId());
+                openSourceScanClient.loadVulnerabilities(codeProjectToVerify, codeProjectBranch);
+                updateCiOperations.updateCiOperationsForOpenSource(codeProjectToVerify);
+                //vulnTemplate.projectVulnerabilityRepository.deleteByStatusAndCodeProjectAndVulnerabilitySourceAndCodeProjectBranch(vulnTemplate.STATUS_REMOVED, codeProjectToVerify, vulnTemplate.SOURCE_OPENSOURCE, codeProjectBranch);
                 break;
             }
         }
@@ -142,11 +168,11 @@ public class OpenSourceScanService {
                     oSSVulnerabilityModel.getName(), oSSVulnerabilityModel.getDescription(),
                     oSSVulnerabilityModel.getReferences(), oSSVulnerabilityModel.getRecomendations());
 
-            ProjectVulnerability projectVulnerability = new ProjectVulnerability(codeProject, vuln, oSSVulnerabilityModel, softwarePacket, vulnTemplate.SOURCE_OPENSOURCE);
+            ProjectVulnerability projectVulnerability = new ProjectVulnerability(codeProject, vuln, oSSVulnerabilityModel, softwarePacket, vulnTemplate.SOURCE_OPENSOURCE,null);
             vulnToPersist.add(projectVulnerability);
         }
         vulnTemplate.vulnerabilityPersistList(oldVulns,vulnToPersist);
-        deleteProjectVulnerabilityService.deleteRemovedVulnerabilitiesInCodeProject(codeProject);
+        //deleteProjectVulnerabilityService.deleteRemovedVulnerabilitiesInCodeProject(codeProject);
         log.info("[CICD] SourceCode - Loading Vulns for {} completed type of DEPENDENCY CHECK", codeProject.getName());
     }
 

@@ -77,16 +77,16 @@ public class CiOperationsController {
                                            Principal principal) throws IOException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, JSONException, ParseException {
         return ciOperationsService.codeScan(id,groupName,projectName,commitId, principal);
     }
-    @CrossOrigin(origins="*")
-    @PreAuthorize("hasAuthority('ROLE_API')")
-    @GetMapping(value = "/project/{projectId}/code/verify/{codeGroup}/{codeProject}/{commitid}",produces = "application/json")
-    public ResponseEntity<CIVulnManageResponse> codeVerify(@PathVariable(value = "codeGroup") String codeGroup,
-                                                           @PathVariable(value = "codeProject") String codeProject,
-                                                           @PathVariable(value = "projectId") Long id,
-                                                           @PathVariable("commitid") String commitid,
-                                                           Principal principal) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
-        return ciOperationsService.codeVerify(codeGroup, codeProject, id, commitid, principal);
-    }
+//    @CrossOrigin(origins="*")
+//    @PreAuthorize("hasAuthority('ROLE_API')")
+//    @GetMapping(value = "/project/{projectId}/code/verify/{codeGroup}/{codeProject}/{commitid}",produces = "application/json")
+//    public ResponseEntity<CIVulnManageResponse> codeVerify(@PathVariable(value = "codeGroup") String codeGroup,
+//                                                           @PathVariable(value = "codeProject") String codeProject,
+//                                                           @PathVariable(value = "projectId") Long id,
+//                                                           @PathVariable("commitid") String commitid,
+//                                                           Principal principal) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+//        return ciOperationsService.codeVerify(codeGroup, codeProject, id, commitid, principal);
+//    }
 
 
     @CrossOrigin(origins="*")

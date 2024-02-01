@@ -1,5 +1,6 @@
 package io.mixeway.domain.service.cioperations;
 
+import io.mixeway.api.cicd.model.LoadSCA;
 import io.mixeway.api.protocol.cioperations.InfoScanPerformed;
 import io.mixeway.db.entity.CiOperations;
 import io.mixeway.db.entity.CodeProject;
@@ -32,6 +33,9 @@ public class CreateCiOperationsService {
 
     public CiOperations create(CodeProject codeProject, InfoScanPerformed infoScanPerformed) {
         return ciOperationsRepository.save(new CiOperations(codeProject, infoScanPerformed));
+    }
+    public CiOperations create(CodeProject codeProject, LoadSCA loadSca) {
+        return ciOperationsRepository.save(new CiOperations(codeProject, loadSca));
     }
     public CiOperations create(SecurityGatewayEntry securityGatewayEntry, CodeProject codeProject, Optional<CiOperations> optionalCiOperations){
         CiOperations ciOperations = optionalCiOperations.orElseGet(CiOperations::new);

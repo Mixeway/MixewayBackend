@@ -2,6 +2,7 @@ package io.mixeway.db.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.mixeway.api.cicd.model.LoadSCA;
 import io.mixeway.api.protocol.cioperations.InfoScanPerformed;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.OnDelete;
@@ -41,6 +42,12 @@ public class CiOperations {
         this.codeProject = codeProject;
         this.project = codeProject.getProject();
         this.commitId = infoScanPerformed.getCommitId();
+        this.openSourceScan = true;
+    }
+    public CiOperations(CodeProject codeProject, LoadSCA loadSCA) {
+        this.codeProject = codeProject;
+        this.project = codeProject.getProject();
+        this.commitId = loadSCA.getCommitId();
         this.openSourceScan = true;
     }
 

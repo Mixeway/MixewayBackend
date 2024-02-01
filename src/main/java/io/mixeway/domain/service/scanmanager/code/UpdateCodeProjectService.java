@@ -1,6 +1,7 @@
 package io.mixeway.domain.service.scanmanager.code;
 
 import io.mixeway.db.entity.CodeProject;
+import io.mixeway.db.entity.CodeProjectBranch;
 import io.mixeway.db.entity.Project;
 import io.mixeway.db.repository.CodeProjectRepository;
 import io.mixeway.scanmanager.model.CodeScanRequestModel;
@@ -36,8 +37,8 @@ public class UpdateCodeProjectService {
      */
     @Transactional
     public CodeProject updateCodeProject(CodeScanRequestModel codeScanRequest, CodeProject codeProject) {
+        codeProjectRepository.updateCodeProjectBranch(codeProject.getId(), codeScanRequest.getBranch());
         codeProject.setTechnique(codeScanRequest.getTech());
-        codeProject.setBranch(codeScanRequest.getBranch());
         codeProject.setRepoUrl(codeScanRequest.getRepoUrl());
         log.info("{} - Updated CodeProject [{}] {}", "ScanManager", codeProject.getProject().getName(), codeProject.getName());
         return codeProjectRepository.saveAndFlush(codeProject);
@@ -49,7 +50,6 @@ public class UpdateCodeProjectService {
     @Transactional
     public CodeProject updateCodeProjectAndPutToQueue(CodeScanRequestModel codeScanRequest, CodeProject codeProject) {
         codeProject.setTechnique(codeScanRequest.getTech());
-        codeProject.setBranch(codeScanRequest.getBranch());
         codeProject.setRepoUrl(codeScanRequest.getRepoUrl());
         codeProject.setInQueue(true);
         codeProject.setRequestId(UUID.randomUUID().toString());
@@ -117,5 +117,12 @@ public class UpdateCodeProjectService {
         codeProject.setdTrackUuid(remoteId);
         codeProject.setRemotename(remoteName);
         codeProjectRepository.save(codeProject);
+    }
+
+    @Transactional
+    public void updateActiveBranch(CodeProject codeProject, CodeProjectBranch codeProjectBranch) {
+        codeProject.setActiveBranch(codeProjectBranch.getName());
+        codeProjectRepository.save(codeProject);
+        log.info("[UpdateCodeProject] Updated project {} set branch to {}", codeProject.getName(), codeProjectBranch.getName());
     }
 }

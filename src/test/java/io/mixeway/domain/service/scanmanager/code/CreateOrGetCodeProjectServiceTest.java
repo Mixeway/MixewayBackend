@@ -1,6 +1,7 @@
 package io.mixeway.domain.service.scanmanager.code;
 
 import io.mixeway.db.entity.*;
+import io.mixeway.db.repository.CodeProjectBranchRepository;
 import io.mixeway.db.repository.CodeProjectRepository;
 import io.mixeway.db.repository.SettingsRepository;
 import io.mixeway.db.repository.UserRepository;
@@ -21,6 +22,7 @@ import org.springframework.test.annotation.DirtiesContext;
 
 import java.net.MalformedURLException;
 import java.security.Principal;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -40,6 +42,7 @@ class CreateOrGetCodeProjectServiceTest {
     private final FindProjectService findProjectService;
     private final CodeProjectRepository codeProjectRepository;
     private final GetOrCreateProjectService getOrCreateProjectService;
+    private final CodeProjectBranchRepository codeProjectBranchRepository;
 
     @Mock
     Principal principal;
@@ -66,6 +69,7 @@ class CreateOrGetCodeProjectServiceTest {
 
     @Test
     void createOrGetCodeProjectWithoutProject() throws MalformedURLException {
+
         Mockito.when(principal.getName()).thenReturn("test_create_cp");
         CodeProject codeProject1 = createOrGetCodeProjectService.createOrGetCodeProject("https://test/test_cp1","master","test_cp1",principal);
         assertNotNull(codeProject1);
@@ -76,6 +80,7 @@ class CreateOrGetCodeProjectServiceTest {
         CodeProject codeProject3 = createOrGetCodeProjectService.createOrGetCodeProject("https://test/test_cp3.git","master","test_cp3",principal);
         assertNotNull(codeProject3);
         assertEquals("test_cp3", codeProject3.getProject().getName());
+
         CodeProject codeProject4 = createOrGetCodeProjectService.createOrGetCodeProject("https://user:passwrd@test/test_cp4.git","master","test_cp3",principal);
         assertNotNull(codeProject4);
         assertEquals("test_cp4", codeProject4.getProject().getName());

@@ -110,7 +110,7 @@ public class VulnTemplate {
         List<ProjectVulnerability> newVulns = new ArrayList<>();
         for (ProjectVulnerability projectVulnerability : projectVulnerabilities
                 .stream()
-                .filter(distinctByKeys(ProjectVulnerability::getCodeProject, ProjectVulnerability::getSoftwarePacket, ProjectVulnerability::getVulnerability, ProjectVulnerability::getSeverity))
+                .filter(distinctByKeys(ProjectVulnerability::getCodeProject, ProjectVulnerability::getSoftwarePacket, ProjectVulnerability::getVulnerability, ProjectVulnerability::getSeverity, ProjectVulnerability::getCodeProjectBranch))
                 .collect(Collectors.toList())){
             List<ProjectVulnerability> oldVulnsToKeep = oldTmpVulns.stream()
                     .filter(o -> o.equals(projectVulnerability))

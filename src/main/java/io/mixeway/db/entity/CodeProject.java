@@ -34,6 +34,7 @@ public class CodeProject implements VulnSource {
 	@JsonIgnore private Boolean skipAllScan;
 	@JsonIgnore private String additionalPath;
 	@JsonIgnore private boolean inQueue;
+	@JsonIgnore private Set<CodeProjectBranch> branches;
 	@JsonIgnore private Set<SoftwarePacket> softwarePackets;
 	private String branch;
 	@JsonIgnore
@@ -51,9 +52,19 @@ public class CodeProject implements VulnSource {
 	@JsonIgnore private String scope;
 	@JsonIgnore private int remoteid;
 	private String appClient;
+	private String activeBranch;
 
 	@JsonIgnore
 	private Project project;
+
+	@Column(name="activebranch")
+	public String getActiveBranch() {
+		return activeBranch;
+	}
+
+	public void setActiveBranch(String activeBranch) {
+		this.activeBranch = activeBranch;
+	}
 
 	public String getRemotename() {
 		return remotename;
@@ -149,6 +160,18 @@ public class CodeProject implements VulnSource {
 		this.inQueue = false;
 
 	}
+	public CodeProject(Project project, String projectName, String branch, String commitid, String repoUrl, String repoUsername, String repoPassword) {
+		this.project = project;
+		this.name = projectName;
+		this.branch = branch;
+		this.commitid = commitid;
+		this.skipAllScan = true;
+		this.inQueue = false;
+		this.repoUrl = repoUrl;
+		this.repoUsername = repoUsername;
+		this.repoPassword = repoPassword;
+
+	}
 
 	public CodeProject() {
 
@@ -184,7 +207,7 @@ public class CodeProject implements VulnSource {
 		return branch;
 	}
 
-	public void setBranch(String branch) {
+	protected void setBranch(String branch) {
 		this.branch = branch;
 	}
 
@@ -304,6 +327,16 @@ public class CodeProject implements VulnSource {
 	public Set<ProjectVulnerability> getVulns() {
 		return vulns;
 	}
+
+	@OneToMany(mappedBy = "codeProject", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+	public Set<CodeProjectBranch> getBranches() {
+		return branches;
+	}
+
+	public void setBranches(Set<CodeProjectBranch> branches) {
+		this.branches = branches;
+	}
+
 	public void setVulns(Set<ProjectVulnerability> vulns) {
 		this.vulns = vulns;
 	}

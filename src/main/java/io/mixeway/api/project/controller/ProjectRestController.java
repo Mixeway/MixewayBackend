@@ -17,7 +17,7 @@ import java.util.List;
 
 @RestController()
 @RequestMapping("/v2/api/show/project")
-public class ProjectRestController {
+public class  ProjectRestController {
     private final ProjectRestService projectService;
 
     ProjectRestController(ProjectRestService projectRestService){
@@ -109,5 +109,19 @@ public class ProjectRestController {
     public ResponseEntity<Project> getProjectByCiid(@PathVariable("ciid") String ciid, Principal principal) {
         return projectService.getProjectByCiid(ciid, principal);
     }
+
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @GetMapping(value = "/{id}/detailstats")
+    public ResponseEntity<DetailStats> detailStats(@PathVariable("id") Long id, Principal principal) {
+        return projectService.detailStats(id, principal);
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @GetMapping(value = "/{id}/detailedhistory")
+    public ResponseEntity<List<VulnHistory>> detailedHistory(@PathVariable("id") Long id, Principal principal) {
+        return projectService.detailedHistory(id, principal);
+    }
+
+
 
 }

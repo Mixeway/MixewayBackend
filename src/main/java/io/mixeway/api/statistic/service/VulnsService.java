@@ -159,9 +159,9 @@ public class VulnsService {
         for (Project project: projects){
             GlobalStatistic globalStatistic = new GlobalStatistic();
             List<ProjectVulnerability> codeVulns = getProjectVulnerabilitiesService
-                    .getProjectVulnerabilitiesForProjectAndSourceAndSeverity(project, vulnTemplate.SOURCE_SOURCECODE,  Arrays.asList("Critical", "High")) ;
+                    .getProjectVulnerabilitiesForProjectAndSourceAndSeverity(project, vulnTemplate.SOURCE_SOURCECODE,  Arrays.asList("Critical", "High"));
             List<ProjectVulnerability> scaVulns = getProjectVulnerabilitiesService
-                    .getProjectVulnerabilitiesForProjectAndSourceAndSeverity(project, vulnTemplate.SOURCE_OPENSOURCE,  Arrays.asList("Critical", "High")) ;
+                    .getProjectVulnerabilitiesForProjectAndSourceAndSeverity(project, vulnTemplate.SOURCE_OPENSOURCE,  Arrays.asList("Critical", "High"));
             globalStatistic.setProject(project.getName());
             globalStatistic.setCodeVulns(codeVulns.size());
             globalStatistic.setScaVulns(scaVulns.size());

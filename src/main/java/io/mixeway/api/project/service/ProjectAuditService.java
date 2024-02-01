@@ -34,7 +34,6 @@ public class ProjectAuditService {
                 settings.getLocation(),
                 createOrGetVulnerabilityService.createOrGetVulnerability(settings.getVulnerability()
                 ));
-        log.info("Test");
         return new ResponseEntity<>(vulnerabiltyAudits, HttpStatus.OK);
     }
 
