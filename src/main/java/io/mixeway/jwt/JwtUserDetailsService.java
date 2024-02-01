@@ -62,6 +62,7 @@ public class JwtUserDetailsService implements UserDetailsService {
                                 Constants.ROLE_EDITOR_RUNNER + "," +
                                 Constants.ROLE_ADMIN + "," +
                                 Constants.ROLE_AUDITOR + "," +
+                                Constants.ROLE_PROJECT_OWNER + "," +
                                 Constants.ROLE_API);
             case Constants.ROLE_AUDITOR:
                 return AuthorityUtils.commaSeparatedStringToAuthorityList(
@@ -72,6 +73,9 @@ public class JwtUserDetailsService implements UserDetailsService {
                 return AuthorityUtils.commaSeparatedStringToAuthorityList(Constants.ROLE_USER + "," + Constants.ROLE_EDITOR_RUNNER + "," + Constants.ROLE_API);
             case Constants.ROLE_API:
                 return AuthorityUtils.commaSeparatedStringToAuthorityList(Constants.ROLE_API + "," + Constants.ROLE_USER);
+            case Constants.ROLE_PROJECT_OWNER:
+                return AuthorityUtils.commaSeparatedStringToAuthorityList(Constants.ROLE_API + "," + Constants.ROLE_USER + "," + Constants.ROLE_PROJECT_OWNER);
+
             default:
                 return AuthorityUtils.commaSeparatedStringToAuthorityList(Constants.ROLE_USER + "," + Constants.ROLE_API);
         }
