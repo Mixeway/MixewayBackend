@@ -42,7 +42,7 @@ public class PermissionFactory {
                 user.getPermisions().equals(Constants.ROLE_API) ||
                 user.getPermisions().equals(Constants.ROLE_AUDITOR))){
             return true;
-        } else if ( user != null && (user.getPermisions().equals(Constants.ROLE_USER) || user.getPermisions().equals(Constants.ROLE_EDITOR_RUNNER))){
+        } else if ( user != null && (user.getPermisions().equals(Constants.ROLE_USER) || user.getPermisions().equals(Constants.ROLE_PROJECT_OWNER) || user.getPermisions().equals(Constants.ROLE_EDITOR_RUNNER))){
             return user.getProjects().stream().map(Project::getId).collect(Collectors.toList()).contains(project.getId());
         } else if (principal.getName().equals(Constants.STRATEGY_SCHEDULER)) {
             return true;
@@ -131,7 +131,7 @@ public class PermissionFactory {
      */
     public List<Project> getProjectForPrincipal(Principal principal){
         Optional<User> userOptional = userRepository.findByUsernameOrApiKey(principal.getName(),principal.getName());
-        if (userOptional.isPresent() && (userOptional.get().getPermisions().equals(Constants.ROLE_API) || userOptional.get().getPermisions().equals(Constants.ROLE_USER) ||
+        if (userOptional.isPresent() && (userOptional.get().getPermisions().equals(Constants.ROLE_API) || userOptional.get().getPermisions().equals(Constants.ROLE_USER) || userOptional.get().getPermisions().equals(Constants.ROLE_PROJECT_OWNER) ||
                 userOptional.get().getPermisions().equals(Constants.ROLE_EDITOR_RUNNER))){
             return new ArrayList<>(userOptional.get().getProjects());
         } else if (userOptional.isPresent() && (userOptional.get().getPermisions().equals(Constants.ROLE_ADMIN) ||

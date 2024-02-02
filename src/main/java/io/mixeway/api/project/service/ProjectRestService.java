@@ -11,6 +11,9 @@ import io.mixeway.domain.service.routingdomain.FindRoutingDomainService;
 import io.mixeway.domain.service.scanmanager.code.FindCodeProjectService;
 import io.mixeway.domain.service.scanner.FindScannerService;
 import io.mixeway.domain.service.softwarepackage.FindSoftwarePacketService;
+import io.mixeway.domain.service.user.EditUserService;
+import io.mixeway.domain.service.user.FindUserService;
+import io.mixeway.domain.service.user.GetOrCreateUserService;
 import io.mixeway.domain.service.vulnhistory.OperateOnVulnHistoryService;
 import io.mixeway.domain.service.vulnmanager.VulnTemplate;
 import io.mixeway.utils.PermissionFactory;
@@ -49,6 +52,9 @@ public class ProjectRestService {
     private final OperateOnVulnHistoryService operateOnVulnHistoryService;
     private final UpdateProjectService updateProjectService;
     private final FindRoutingDomainService findRoutingDomainService;
+    private final FindUserService findUserService;
+    private final GetOrCreateUserService getOrCreateUserService;
+
 
 
     private ArrayList<String> severityList = new ArrayList<String>() {{
@@ -293,5 +299,20 @@ public class ProjectRestService {
             return new ResponseEntity<>(vulnHistories, HttpStatus.OK);
         }
         return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
+    }
+    public ResponseEntity<Status> setProjectUser(Long id, ProjectUser user, Principal principal) {
+        Optional<Project> project = findProjectService.findProjectById(id);
+        User user_read = findUserService.findByUsername(user.getUser()).orElse(null);
+
+        if (user_read == null){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())) {
+            List<Long> project_list = Collections.singletonList(project.get().getId());
+            getOrCreateUserService.loadProjectPermissionsForUser(project_list,user_read);
+            log.info("{} - grant access to {} to {}", principal.getName(), project.get().getName(),user_read.getUsername());
+        }
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 }

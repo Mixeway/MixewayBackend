@@ -170,8 +170,10 @@ public class Constants {
     public static final String STATUS_QUEUED = "In Queue";
 
 	public static final String ROLE_USER = "ROLE_USER";
+	public static final String ROLE_PROJECT_OWNER = "ROLE_PROJECT_OWNER";
 	public static final String ROLE_EDITOR_RUNNER = "ROLE_EDITOR_RUNNER";
 	public static final String ROLE_ADMIN = "ROLE_ADMIN";
+
 	public static final String API_URL="api";
 	public static final String KOORDYNATOR_API_URL = "koordynator";
 	public static final String SCANMANAGE_API = "scanmanage";

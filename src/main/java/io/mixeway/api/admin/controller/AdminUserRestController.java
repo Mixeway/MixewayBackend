@@ -70,6 +70,7 @@ public class AdminUserRestController {
         return adminRestService.addUser(userModel,principal.getName());
     }
 
+
     /**
      * Editing user
      *
@@ -116,3 +117,6 @@ public class AdminUserRestController {
         return adminRestService.disableUser(id,principal.getName());
     }
 }
+
+
+

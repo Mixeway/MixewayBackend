@@ -28,6 +28,7 @@ public class GetOrCreateUserService {
     private final ProjectRepository projectRepository;
     ArrayList<String> roles = new ArrayList<String>() {{
         add("ROLE_USER");
+        add("ROLE_PROJECT_OWNER");
         add("ROLE_AUDITOR");
         add("ROLE_ADMIN");
         add("ROLE_EDITOR_RUNNER");

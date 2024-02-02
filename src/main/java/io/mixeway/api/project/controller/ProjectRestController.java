@@ -109,6 +109,12 @@ public class  ProjectRestController {
     public ResponseEntity<Project> getProjectByCiid(@PathVariable("ciid") String ciid, Principal principal) {
         return projectService.getProjectByCiid(ciid, principal);
     }
+    @PreAuthorize("hasAuthority('ROLE_PROJECT_OWNER')")
+    @PostMapping(value = "/{id}/user/add")
+    public ResponseEntity<Status> setProjectUser(@PathVariable("id") Long id, @RequestBody  ProjectUser user, Principal principal) {
+        return projectService.setProjectUser(id,user,principal);
+    }
+
 
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping(value = "/{id}/detailstats")
