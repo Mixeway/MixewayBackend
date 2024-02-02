@@ -26,5 +26,6 @@
 /.nb-gradle/
 /.mvn/
 
+
 /src/main/resources/bootstrap.properties
 *.DS_Store
