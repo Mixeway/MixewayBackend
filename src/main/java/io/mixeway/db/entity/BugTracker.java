@@ -75,7 +75,7 @@ public class BugTracker {
     }
 
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
-    @JoinColumn(name = "bugtracker_id", nullable = false)
+    @JoinColumn(name = "bugtrackertype_id", nullable = false)
     public BugTrackerType getBugTrackerType() {
         return bugTrackerType;
     }
