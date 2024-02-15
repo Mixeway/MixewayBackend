@@ -309,7 +309,13 @@ public class ProjectRestService {
         }
 
         if (project.isPresent() && permissionFactory.canUserAccessProject(principal, project.get())) {
-            List<Long> project_list = Collections.singletonList(project.get().getId());
+            Set<Project> userProjectsSet = user_read.getProjects();
+            List<Long> project_list =new ArrayList<>();
+            if (userProjectsSet != null)
+                for (Project proj : userProjectsSet) {
+                    project_list.add(proj.getId());
+                }
+            project_list.add((project.get().getId()));
             getOrCreateUserService.loadProjectPermissionsForUser(project_list,user_read);
             log.info("{} - grant access to {} to {}", principal.getName(), project.get().getName(),user_read.getUsername());
         }
