@@ -455,7 +455,7 @@ public class CodeScanService {
 
         //deleteProjectVulnerabilityService.deleteProjectVulnerabilityWithStatus(codeProject.getProject(), vulnTemplate.STATUS_REMOVED, vulnerabilitySource);
 
-        vulnTemplate.projectVulnerabilityRepository.flush();
+        //vulnTemplate.projectVulnerabilityRepository.flush();
         log.info("[CICD] SourceCode - Loading Vulns for {} completed type of {} number of vulns {}", codeProject.getName(), scannerType, vulnToPersist.size());
     }
 }
