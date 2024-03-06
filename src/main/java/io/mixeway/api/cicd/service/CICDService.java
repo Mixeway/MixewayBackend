@@ -110,14 +110,18 @@ public class CICDService {
             // to support legacy application where client call SAST while it should be IAC
             List<VulnerabilityModel> sastVulns = vulns.stream().filter(v -> v.getScannerType().equals(ScannerType.IAC)).collect(Collectors.toList());
             if (sastVulns.size() > 0 ){
+                log.info("[CICD] Loading vulns from CICD pipeline for {}, IAC type: {}", codeProject.get().getName(), sastVulns.size());
                 codeScanService.loadVulnsFromCICDToCodeProjectForBranch(codeProject.get(), sastVulns, ScannerType.IAC, codeProjectBranch);
             } else {
+                log.info("[CICD] Loading vulns from CICD pipeline for {}, IAC type: {}", codeProject.get().getName(), 0);
                 codeScanService.loadVulnsFromCICDToCodeProjectForBranch(codeProject.get(), new ArrayList<>(), ScannerType.IAC, codeProjectBranch);
             }
             List<VulnerabilityModel> gitLeaksVulns = vulns.stream().filter(v -> v.getScannerType().equals(ScannerType.GITLEAKS)).collect(Collectors.toList());
             if (gitLeaksVulns.size() > 0 ){
+                log.info("[CICD] Loading vulns from CICD pipeline for {}, Gitleaks type: {}", codeProject.get().getName(), gitLeaksVulns.size());
                 codeScanService.loadVulnsFromCICDToCodeProjectForBranch(codeProject.get(), gitLeaksVulns, ScannerType.GITLEAKS, codeProjectBranch);
             } else {
+                log.info("[CICD] Loading vulns from CICD pipeline for {}, Gitleaks type: {}", codeProject.get().getName(), 0);
                 codeScanService.loadVulnsFromCICDToCodeProjectForBranch(codeProject.get(), new ArrayList<>(), ScannerType.GITLEAKS, codeProjectBranch);
             }
             //FOR NOW THIS FUNCTIONALITY IS NOT MIGRATED TO V3
