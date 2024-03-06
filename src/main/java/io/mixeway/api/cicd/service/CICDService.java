@@ -101,6 +101,8 @@ public class CICDService {
                                                                        String commitId, Principal principal) {
         Optional<CodeProject> codeProject = findCodeProjectService.findById(projectId);
         if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getProject())) {
+            log.info("[CICD] Loading vulns from CICD pipeline for {}, detected vulns {}", codeProject.get().getName(), vulns.size());
+
             CodeProjectBranch codeProjectBranch = getOrCreateCodeProjectBranchService.getOrCreateCodeProjectBranch(codeProject.get(), branch);
             updateCodeProjectService.changeCommitId(commitId, codeProject.get());
 
