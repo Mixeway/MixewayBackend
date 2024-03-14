@@ -50,7 +50,7 @@ jobs:
           java -version
       - name: Run tests
         run: |
-          mvn test
+          mvn test -Dspring.profiles.active=unittest
 
   publishbrod:
     runs-on: ubuntu-latest
