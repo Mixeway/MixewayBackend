@@ -255,6 +255,7 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
                     "/api/version", HttpMethod.GET, entity, String.class);
             if (response.getStatusCode() == HttpStatus.OK) {
                 scanner.setStatus(true);
+                scannerRepository.save(scanner);
                 return true;
             }
             else {
