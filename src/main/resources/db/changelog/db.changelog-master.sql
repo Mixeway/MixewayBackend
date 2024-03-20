@@ -1310,4 +1310,4 @@ alter table vulnhistory add column assetmediumvuln int;
 alter table vulnhistory add column assetlowvuln int;
 
 --changeset siewer:fixes
-ALTER TABLE bugtracker ADD COLUMN IF NOT EXISTS password INTEGER;
+ALTER TABLE bugtracker ADD COLUMN IF NOT EXISTS password text;
