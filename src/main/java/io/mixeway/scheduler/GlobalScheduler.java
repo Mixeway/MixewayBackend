@@ -14,6 +14,7 @@ import io.mixeway.domain.service.settings.GetSettingsService;
 import io.mixeway.domain.service.vulnhistory.CreateVulnHistoryService;
 import io.mixeway.domain.service.vulnhistory.FindVulnHistoryService;
 import io.mixeway.scanmanager.integrations.remotefirewall.apiclient.RfwApiClient;
+import io.mixeway.scanmanager.integrations.vulnauditor.service.MixewayVulnAuditorService;
 import io.mixeway.scanmanager.service.opensource.OpenSourceScanService;
 import io.mixeway.utils.DOPMailTemplateBuilder;
 import io.mixeway.utils.EmailVulnHelper;
@@ -21,6 +22,7 @@ import io.mixeway.utils.ProjectRiskAnalyzer;
 import io.mixeway.utils.ScanHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -57,6 +59,8 @@ public class GlobalScheduler {
     private final FindInfraScanService findInfraScanService;
     private final UpdateInterfaceService updateInterfaceService;
     private final GetOrCreateCodeProjectBranchService getOrCreateCodeProjectBranchService;
+    private final MixewayVulnAuditorService mixewayVulnAuditorService;
+
 
     private DOPMailTemplateBuilder templateBuilder = new DOPMailTemplateBuilder();
     private List<String> severities = new ArrayList<String>(){{
@@ -68,6 +72,12 @@ public class GlobalScheduler {
         add("High");
         add("Critical");
     }};
+
+
+    @Scheduled(fixedDelay = 300000)
+    public void predict() throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
+        mixewayVulnAuditorService.perdictVulnerabilities();
+    }
 
 
     /**

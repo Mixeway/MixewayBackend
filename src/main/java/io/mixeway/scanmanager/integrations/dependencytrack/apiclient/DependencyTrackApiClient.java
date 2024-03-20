@@ -61,7 +61,9 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
 
     @Override
     public boolean canProcessRequest(CodeProject codeProject) {
-        return StringUtils.isNotBlank(codeProject.getdTrackUuid()) && StringUtils.isBlank(codeProject.getRemotename());
+        List<Scanner> openSourceScanners = scannerRepository.findByScannerTypeAndStatus(scannerTypeRepository.findByNameIgnoreCase(Constants.SCANNER_TYPE_DEPENDENCYTRACK),true);
+
+        return openSourceScanners.size() > 0 && StringUtils.isNotBlank(codeProject.getdTrackUuid());
     }
 
     @Override

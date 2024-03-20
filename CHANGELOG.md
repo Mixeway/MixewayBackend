@@ -1,3 +1,13 @@
+## 1.8.3 (2024-03-20)
+
+#### New Features
+* Restored integration with MixewayVulnerabilityAuditor
+
+#### Bug Fixes
+* Fixed bug that prevents dependency track vulnerabilities to being loaded
+* Fixed bug stacktrace errors complaining about missing column password in table bugtracker
+* Fixed bug with nexus-iq integration that detect vulnerabilities in null:null packages
+
 ## 1.8.0 (2023-08-08)
 
 #### New Features

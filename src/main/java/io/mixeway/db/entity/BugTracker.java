@@ -100,6 +100,7 @@ public class BugTracker {
         this.username = username;
     }
 
+    @Column(name = "password")
     public String getPassword() {
         return password;
     }

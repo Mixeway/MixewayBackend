@@ -2,6 +2,7 @@ package io.mixeway.scanmanager.integrations.nexusiq.apiclient;
 
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
+import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.CiOperationsRepository;
 import io.mixeway.db.repository.ProxiesRepository;
 import io.mixeway.db.repository.ScannerRepository;
@@ -46,10 +47,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -195,6 +193,7 @@ public class NexusIqApiClient implements SecurityScanner, OpenSourceScanClient {
                         reportEntry.getComponentIdentifier().getCoordinates().getPackageId() :
                         reportEntry.getComponentIdentifier().getCoordinates().getGroupId()+":"+reportEntry.getComponentIdentifier().getCoordinates().getArtifactId();
                 componentVersion = reportEntry.getComponentIdentifier().getCoordinates().getVersion();
+                componentName = "null:null".equals(componentName) ? reportEntry.getDisplayName().split(" ")[0] : componentName;
             } catch (NullPointerException e) {
                 componentName = reportEntry.getDisplayName();
                 componentVersion = "unknown";
