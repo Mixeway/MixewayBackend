@@ -38,6 +38,7 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -219,7 +220,7 @@ public class DependencyTrackApiClient implements SecurityScanner, OpenSourceScan
                         vulnsToPersist.add(projectVulnerability);
                     } else {
                         softwarePacketVulnerability.get().setCodeProject(codeProject);
-                        softwarePacketVulnerability.get().setInserted(dateFormat.format(new Date()));
+                        softwarePacketVulnerability.get().setInserted(LocalDateTime.now());
                         softwarePacketVulnerability.get().setStatus(vulnTemplate.STATUS_EXISTING);
                         softwarePacketVulnerability.get().setCodeProjectBranch(codeProjectBranch);
                         vulnsToPersist.add(softwarePacketVulnerability.get()) ;

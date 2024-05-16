@@ -29,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.validation.constraints.Null;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.security.*;
 import java.security.cert.CertificateException;
@@ -137,7 +138,7 @@ public class ScanManagerService {
     }
 
     @Transactional
-    public ResponseEntity<Vulnerabilities> getVulnerabilitiesForScanByReqeustId(String requestId, Principal principal) throws UnknownHostException {
+    public ResponseEntity<Vulnerabilities> getVulnerabilitiesForScanByReqeustId(String requestId, Principal principal) throws UnknownHostException, URISyntaxException {
         List<Asset> assets = findAssetService.findByRequestId(requestId);
         List<CodeProject> codeProjects = findCodeProjectService.findByRequestId(requestId);
         List<WebApp> webApps = findWebAppService.findByRequestId(requestId);
@@ -157,7 +158,7 @@ public class ScanManagerService {
         return new ResponseEntity<>(vulnerabilities, HttpStatus.OK);
     }
 
-    private List<Vuln> getWebAppVulns(List<Vuln> vulnList, List<WebApp> webApps) throws UnknownHostException {
+    private List<Vuln> getWebAppVulns(List<Vuln> vulnList, List<WebApp> webApps) throws UnknownHostException, URISyntaxException {
         List<ProjectVulnerability> webAppVulns = vulnTemplate.projectVulnerabilityRepository.findByWebAppInAndVulnerabilitySource(webApps, vulnTemplate.SOURCE_WEBAPP);
         for (ProjectVulnerability wav : webAppVulns) {
             String hostname, port;
@@ -167,7 +168,7 @@ public class ScanManagerService {
         return vulnList;
     }
 
-    private List<Vuln> getCodeVulns(List<Vuln> vulnList, List<CodeProject> codeProjects) throws UnknownHostException {
+    private List<Vuln> getCodeVulns(List<Vuln> vulnList, List<CodeProject> codeProjects) throws UnknownHostException, URISyntaxException {
         List<ProjectVulnerability> codeVulns = vulnTemplate.projectVulnerabilityRepository.findByCodeProjectInAndAnalysisNot(codeProjects, Constants.FORTIFY_NOT_AN_ISSUE);
         for (ProjectVulnerability cv : codeVulns) {
             Vuln v = new Vuln(cv,null,null,new CodeProject(),Constants.API_SCANNER_CODE);
@@ -176,7 +177,7 @@ public class ScanManagerService {
         return vulnList;
     }
 
-    private List<Vuln> getInfrastructureVulnerabilities(List<Vuln> vulns, List<Asset> assets) throws UnknownHostException {
+    private List<Vuln> getInfrastructureVulnerabilities(List<Vuln> vulns, List<Asset> assets) throws UnknownHostException, URISyntaxException {
         List<ProjectVulnerability> projectVulnerabilities;
         try (Stream<ProjectVulnerability> infraVulns = vulnTemplate.projectVulnerabilityRepository
                 .findByanInterfaceIn(findInterfaceService.findByAssetIn(new ArrayList<>(assets)))){

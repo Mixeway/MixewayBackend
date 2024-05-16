@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import javax.validation.Valid;
+import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.security.Principal;
 import java.util.List;
@@ -64,7 +65,7 @@ public class ScanManagerController {
     }
     @PreAuthorize("hasAuthority('ROLE_API')")
     @GetMapping(value= "/vulnerabilities/{requestId}")
-    public ResponseEntity<Vulnerabilities> getVulnerabilitiesForScanByReqeustId(@Valid RequestId requestId, Errors errors, Principal principal) throws UnknownHostException {
+    public ResponseEntity<Vulnerabilities> getVulnerabilitiesForScanByReqeustId(@Valid RequestId requestId, Errors errors, Principal principal) throws UnknownHostException, URISyntaxException {
         if (errors.hasErrors()){
             return new ResponseEntity<>( HttpStatus.BAD_REQUEST);
         } else {

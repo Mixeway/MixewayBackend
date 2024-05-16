@@ -184,7 +184,7 @@ public class CiOperationsService {
             VulnManageResponse vmr = new VulnManageResponse();
             vmr.setVulnerabilityName(spv.getVulnerability().getName());
             vmr.setSeverity(spv.getSeverity());
-            vmr.setDateDiscovered(spv.getInserted());
+            vmr.setDateDiscovered(spv.getInserted().toString());
             vulnManageResponses.add(vmr);
         }
         return vulnManageResponses;

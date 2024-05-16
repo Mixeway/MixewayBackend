@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.security.*;
 import java.security.cert.CertificateException;
@@ -32,40 +33,40 @@ public class VulnManageApiController {
     @PreAuthorize("hasAuthority('ROLE_API')")
     @GetMapping(value = "/api/koordynator/vulnerabilities",produces = "application/json")
     @Transactional(readOnly = true)
-    public ResponseEntity<Vulnerabilities> getVulnerabilities() throws UnknownHostException {
+    public ResponseEntity<Vulnerabilities> getVulnerabilities() throws UnknownHostException, URISyntaxException {
        return getVulnerabilitiesService.getAllVulnerabilities();
     }
     @PreAuthorize("hasAuthority('ROLE_API')")
     @GetMapping(value = "/api/vulnerabilities/project/{projectId}",produces = "application/json")
     @Transactional(readOnly = true)
-    public ResponseEntity<Vulnerabilities> getVulnerabilitiesForProject(@PathVariable(value = "projectId") Long id) throws UnknownHostException {
+    public ResponseEntity<Vulnerabilities> getVulnerabilitiesForProject(@PathVariable(value = "projectId") Long id) throws UnknownHostException, URISyntaxException {
         return getVulnerabilitiesService.getVulnerabilitiesByProject(id);
     }
     @PreAuthorize("hasAuthority('ROLE_API')")
     @GetMapping(value = "/api/koordynator/vulnerabilities/{scannerType}",produces = "application/json")
     @Transactional(readOnly = true)
-    public ResponseEntity<String> getVulnerabilitiesByType(@PathVariable(value = "scannerType") String type) throws UnknownHostException {
+    public ResponseEntity<String> getVulnerabilitiesByType(@PathVariable(value = "scannerType") String type) throws UnknownHostException, URISyntaxException {
         return getVulnerabilitiesService.getVulnerabilitiesByType(type);
     }
 
     @PreAuthorize("hasAuthority('ROLE_API')")
     @GetMapping(value = "/v2/api/vulnerabilities/{scannerType}",produces = "application/json")
     @Transactional(readOnly = true)
-    public ResponseEntity<String> getVulnerabilitiesByTypev2(@PathVariable(value = "scannerType") String type) throws UnknownHostException {
+    public ResponseEntity<String> getVulnerabilitiesByTypev2(@PathVariable(value = "scannerType") String type) throws UnknownHostException, URISyntaxException {
         return getVulnerabilitiesService.getVulnerabilitiesByType(type);
     }
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PatchMapping(value = "/v2/api/vulnerabilities/{scannerType}/{vulnId}/{grade}",produces = "application/json")
     @Transactional(readOnly = true)
     public ResponseEntity<String> setGradeForVulnerabiility(@PathVariable(value = "scannerType") String type, @PathVariable("vulnId") Long id,@PathVariable("grade") int grade) throws UnknownHostException {
-        return getVulnerabilitiesService.setGradeForVulnerabiility(type, id,grade);
+        return getVulnerabilitiesService.setGradeForVulnerability(type, id,grade);
     }
 
     @CrossOrigin(origins="*")
     @PreAuthorize("hasAuthority('ROLE_API')")
     @GetMapping(value = "/api/vulns/{projectId}/{scannerType}",produces = "application/json")
     @Transactional(readOnly = true)
-    public ResponseEntity<String> getVulnerabilitiesByTypeAndProject(@PathVariable(value = "scannerType") String type,@PathVariable(value = "projectId") Long id) throws UnknownHostException {
+    public ResponseEntity<String> getVulnerabilitiesByTypeAndProject(@PathVariable(value = "scannerType") String type,@PathVariable(value = "projectId") Long id) throws UnknownHostException, URISyntaxException {
         return getVulnerabilitiesService.getVulnerabilitiesByProjectAndType(type, id);
     }
     @CrossOrigin(origins="*")
