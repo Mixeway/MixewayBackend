@@ -87,4 +87,10 @@ public class OperateOnAssets {
         }
 
     }
+
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @GetMapping("/{id}/{type}/scans")
+    public ResponseEntity<?> getScans(@PathVariable("id") Long id, @PathVariable("type") String type, Principal principal) throws IOException {
+        return operateOnAssetsService.getScans(id, type, principal);
+    }
 }

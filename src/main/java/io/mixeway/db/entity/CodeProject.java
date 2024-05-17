@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 		indexes = {
 				@Index(columnList = "id",name="codeproject_index")
 		})@EntityListeners(AuditingEntityListener.class)
-public class CodeProject implements VulnSource {
+public class CodeProject implements VulnSource, Scannable {
 	private Long id;
 	private String name;
 	private String dTrackUuid;

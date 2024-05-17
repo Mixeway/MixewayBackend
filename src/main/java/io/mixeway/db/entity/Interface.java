@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 @EntityListeners(AuditingEntityListener.class)
 @Cacheable
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
-public class Interface implements VulnSource {
+public class Interface implements VulnSource, Scannable {
 
 	private Long id;
 	private String privateip;

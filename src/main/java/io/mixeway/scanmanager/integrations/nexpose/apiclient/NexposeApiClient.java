@@ -7,6 +7,7 @@ import io.mixeway.db.repository.*;
 import io.mixeway.domain.service.intf.InterfaceOperations;
 import io.mixeway.domain.service.vulnmanager.VulnTemplate;
 import io.mixeway.scanmanager.integrations.nexpose.model.*;
+import io.mixeway.scanmanager.integrations.nexpose.model.Scan;
 import io.mixeway.scanmanager.service.SecurityScanner;
 import io.mixeway.scanmanager.service.network.NetworkScanClient;
 import io.mixeway.utils.*;

@@ -11,6 +11,8 @@ import io.mixeway.db.entity.*;
 import io.mixeway.domain.service.intf.FindInterfaceService;
 import io.mixeway.domain.service.intf.UpdateInterfaceService;
 import io.mixeway.domain.service.routingdomain.FindRoutingDomainService;
+import io.mixeway.domain.service.scan.CreateScanService;
+import io.mixeway.domain.service.scan.FindScanService;
 import io.mixeway.domain.service.scanmanager.code.CreateOrGetCodeProjectService;
 import io.mixeway.domain.service.scanmanager.code.FindCodeProjectService;
 import io.mixeway.domain.service.scanmanager.code.UpdateCodeProjectService;
@@ -29,6 +31,7 @@ import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -48,6 +51,8 @@ public class OperateOnAssetsService {
     private final UpdateWebAppService updateWebAppService;
     private final UpdateInterfaceService updateInterfaceService;
     private final VulnTemplate vulnTemplate;
+    private final FindScanService findScanService;
+    private final CreateScanService createScanService;
 
     public CodeProject createCodeProject(JsonNode rootNode, Project project, Principal principal) {
         String repositoryType = rootNode.path("repositoryType").asText();
@@ -224,5 +229,39 @@ public class OperateOnAssetsService {
             }
         }
         return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+    }
+
+    public ResponseEntity<?> getScans(Long id, String type, Principal principal) {
+
+        List<Scan> scans = new ArrayList<>();
+        switch (type) {
+            case "codeProject":
+                Optional<CodeProject> codeProject = findCodeProjectService.findById(id);
+                if (codeProject.isPresent()) {
+                    scans = findScanService.getScansForAsset(codeProject.get());
+                } else {
+                    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+                }
+                break;
+            case "webApp":
+                Optional<WebApp> webApp = findWebAppService.findById(id);
+                if (webApp.isPresent()) {
+                    scans = findScanService.getScansForAsset(webApp.get());
+                } else {
+                    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+                }
+                break;
+            case "interface":
+                Optional<Interface> anInterface = findInterfaceService.findById(id);
+                if (anInterface.isPresent()) {
+                    scans = findScanService.getScansForAsset(anInterface.get());
+                } else {
+                    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+                }
+                break;
+            default:
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>(scans, HttpStatus.OK);
     }
 }

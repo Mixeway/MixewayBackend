@@ -10,4 +10,5 @@ import java.util.List;
 public interface CodeProjectBranchRepository extends JpaRepository<CodeProjectBranch,Long> {
     List<CodeProjectBranch> findCodeProjectBranchByCodeProject(CodeProject codeProject);
     CodeProjectBranch findCodeProjectBranchByCodeProjectAndName(CodeProject project, String name);
+    CodeProjectBranch findByCodeProjectAndName(CodeProject project, String name);
 }

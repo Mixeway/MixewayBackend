@@ -1326,3 +1326,19 @@ alter table webapp add column basicauth text;
 alter table webapp add column apikey text;
 alter table webapp add column header text;
 alter table webapp add column name text;
+
+--changeset siewer:scanning_api
+create table scan(
+    id serial primary key,
+    inserted text,
+    triggerer text,
+    type text,
+    codeproject_id int references codeproject(id) ON DELETE CASCADE,
+    webapp_id int references webapp(id) ON DELETE CASCADE,
+    interface_id int references interface(id) ON DELETE CASCADE,
+    branch text,
+    commitid text,
+    vulncrit int,
+    vulnmedium int,
+    vulnlow int
+);
