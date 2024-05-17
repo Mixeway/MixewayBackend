@@ -45,6 +45,43 @@ public class WebApp implements VulnSource {
 	@JsonIgnore String password;
 	private int priority;
 	private String appClient;
+	private String basicAuth;
+	private String apikey;
+	private String header;
+	private String name;
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	@Column(name="basicauth")
+	public String getBasicAuth() {
+		return basicAuth;
+	}
+
+	public void setBasicAuth(String basicAuth) {
+		this.basicAuth = basicAuth;
+	}
+
+	public String getApikey() {
+		return apikey;
+	}
+
+	public void setApikey(String apikey) {
+		this.apikey = apikey;
+	}
+
+	public String getHeader() {
+		return header;
+	}
+
+	public void setHeader(String header) {
+		this.header = header;
+	}
 
 	@Column(name="appclient")
 	public String getAppClient() {

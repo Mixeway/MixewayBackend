@@ -1,5 +1,6 @@
 package io.mixeway.domain.service.scanmanager.webapp;
 
+import io.mixeway.api.project.model.EditProjectAssetModel;
 import io.mixeway.db.entity.CodeProject;
 import io.mixeway.db.entity.Project;
 import io.mixeway.db.entity.WebApp;
@@ -159,5 +160,11 @@ public class UpdateWebAppService {
             webApp.setProject(destination);
             webAppRepository.saveAndFlush(webApp);
         }
+    }
+
+    public void edit(EditProjectAssetModel editProjectAssetModel, WebApp webApp) {
+        webApp.setName(editProjectAssetModel.getName());
+        webApp.setUrl(editProjectAssetModel.getTarget());
+        webAppRepository.saveAndFlush(webApp);
     }
 }

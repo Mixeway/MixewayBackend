@@ -55,6 +55,7 @@ public class VulnHistory {
 	private Long assetHighVuln;
 	private Long assetMediumVuln;
 	private Long assetLowVuln;
+	private Long assetId;
 
 
 	@Column(name = "softwarepacketvulnnumber")
@@ -299,5 +300,14 @@ public class VulnHistory {
 
 	public void setAssetLowVuln(Long assetLowVuln) {
 		this.assetLowVuln = assetLowVuln;
+	}
+
+	@Column(name="asset_id")
+	public Long getAssetId() {
+		return assetId;
+	}
+
+	public void setAssetId(Long assetId) {
+		this.assetId = assetId;
 	}
 }

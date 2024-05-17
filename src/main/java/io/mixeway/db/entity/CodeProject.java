@@ -53,6 +53,26 @@ public class CodeProject implements VulnSource {
 	@JsonIgnore private int remoteid;
 	private String appClient;
 	private String activeBranch;
+	private boolean containEmbeded;
+	private String path;
+	private CodeProject parent;
+
+	@Column(name = "contain_embeded")
+	public boolean isContainEmbeded() {
+		return containEmbeded;
+	}
+
+	public void setContainEmbeded(boolean containEmbeded) {
+		this.containEmbeded = containEmbeded;
+	}
+
+	public String getPath() {
+		return path;
+	}
+
+	public void setPath(String path) {
+		this.path = path;
+	}
 
 	@JsonIgnore
 	private Project project;
@@ -339,6 +359,17 @@ public class CodeProject implements VulnSource {
 
 	public void setVulns(Set<ProjectVulnerability> vulns) {
 		this.vulns = vulns;
+	}
+
+	@ManyToOne(fetch = FetchType.LAZY, optional = true)
+	@JoinColumn(name = "parent_id", nullable = true)
+	@OnDelete(action = OnDeleteAction.CASCADE)
+	public CodeProject getParent() {
+		return parent;
+	}
+
+	public void setParent(CodeProject parent) {
+		this.parent = parent;
 	}
 
 	@PrePersist

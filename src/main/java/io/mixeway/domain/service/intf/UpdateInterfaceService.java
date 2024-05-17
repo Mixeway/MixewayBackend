@@ -1,5 +1,7 @@
 package io.mixeway.domain.service.intf;
 
+import io.mixeway.api.project.model.AssetVulns;
+import io.mixeway.api.project.model.EditProjectAssetModel;
 import io.mixeway.db.entity.Asset;
 import io.mixeway.db.entity.InfraScan;
 import io.mixeway.db.entity.Interface;
@@ -75,5 +77,13 @@ public class UpdateInterfaceService {
     @Transactional
     public void clearState(Project p) {
         interfaceRepository.updateInterfaceStateForNotRunningScan(p);
+    }
+
+    public void edit(EditProjectAssetModel editProjectAssetModel, Interface anInterface) {
+        anInterface.setPrivateip(editProjectAssetModel.getTarget());
+        interfaceRepository.save(anInterface);
+        Asset asset = anInterface.getAsset();
+        asset.setName(editProjectAssetModel.getName());
+        assetRepository.save(asset);
     }
 }

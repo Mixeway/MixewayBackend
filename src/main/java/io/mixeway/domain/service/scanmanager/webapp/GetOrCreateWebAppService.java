@@ -234,4 +234,15 @@ public class GetOrCreateWebAppService {
         }
         return webApp;
     }
+
+    public WebApp createWebApp(Project project, String appUrl, String appName, RoutingDomain routingDomain, String headerName, String apiKeyName, String basicAuth) {
+        WebApp webApp = getOrCreateWebApp(appUrl, project, routingDomain);
+        webApp.setName(appName);
+        webApp.setHeader(headerName);
+        webApp.setBasicAuth(basicAuth);
+        webApp.setApikey(apiKeyName);
+        webApp.setProject(project);
+        webApp = webAppRepository.save(webApp);
+        return webApp;
+    }
 }

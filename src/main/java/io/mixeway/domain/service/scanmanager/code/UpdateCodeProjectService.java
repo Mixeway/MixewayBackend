@@ -1,5 +1,6 @@
 package io.mixeway.domain.service.scanmanager.code;
 
+import io.mixeway.api.project.model.EditProjectAssetModel;
 import io.mixeway.db.entity.CodeProject;
 import io.mixeway.db.entity.CodeProjectBranch;
 import io.mixeway.db.entity.Project;
@@ -23,6 +24,7 @@ public class UpdateCodeProjectService {
     private final CodeProjectRepository codeProjectRepository;
     private final ProjectRiskAnalyzer projectRiskAnalyzer;
     private final FindCodeProjectService findCodeProjectService;
+    private final GetOrCreateCodeProjectBranchService getOrCreateCodeProjectBranchService;
 
     /**
      * Updates CodeProjcet base on configuration from CodeScanRequest
@@ -124,5 +126,21 @@ public class UpdateCodeProjectService {
         codeProject.setActiveBranch(codeProjectBranch.getName());
         codeProjectRepository.save(codeProject);
         log.info("[UpdateCodeProject] Updated project {} set branch to {}", codeProject.getName(), codeProjectBranch.getName());
+    }
+
+    public CodeProject setAsParent(CodeProject parent) {
+        parent.setContainEmbeded(true);
+        parent = codeProjectRepository.saveAndFlush(parent);
+        log.info("[UpdateCodeProject] Updated project {} set as parent", parent.getName());
+        return parent;
+    }
+
+    public CodeProject updateCodeProject(EditProjectAssetModel editProjectAssetModel, CodeProject codeProject){
+        codeProject.setRepoUrl(editProjectAssetModel.getTarget());
+        codeProject.setName(editProjectAssetModel.getName());
+        codeProject.setActiveBranch(editProjectAssetModel.getBranch());
+        getOrCreateCodeProjectBranchService.getOrCreateCodeProjectBranch(codeProject, editProjectAssetModel.getBranch());
+        codeProject = codeProjectRepository.saveAndFlush(codeProject);
+        return codeProject;
     }
 }

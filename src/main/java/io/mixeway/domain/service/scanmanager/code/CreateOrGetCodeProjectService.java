@@ -70,6 +70,15 @@ public class CreateOrGetCodeProjectService {
         getOrCreateCodeProjectBranchService.getOrCreateCodeProjectBranch(codeProject, codeProject.getBranch());
         return codeProject;
     }
+    public CodeProject createChildCodeProject(String repoUrl, String repoName, String branch, Principal principal, Project project, CodeProject parent, String path) {
+        CodeProject codeProject = new CodeProject(project, repoName, (branch == null || branch.isEmpty()) ? "master" : branch, null,repoUrl,null,null);
+        codeProject.setPath(path);
+        codeProject.setParent(parent);
+
+        codeProject = codeProjectRepository.saveAndFlush(codeProject);
+        getOrCreateCodeProjectBranchService.getOrCreateCodeProjectBranch(codeProject, codeProject.getBranch());
+        return codeProject;
+    }
 
     public CodeProject createOrGetCodeProject(String repoUrl, String branch, String codeProjectName, Principal principal) throws MalformedURLException {
         repoUrl = repoUrl.replaceAll("(https://)(.*:.*@)(.*)","$1$3").replace(".git","");

@@ -1311,3 +1311,18 @@ alter table vulnhistory add column assetlowvuln int;
 
 --changeset siewer:fixes
 ALTER TABLE bugtracker ADD COLUMN IF NOT EXISTS password text;
+
+--changeset siewer:history_for_assets
+alter table vulnhistory add column asset_id int;
+update vulnhistory set  asset_id=0;
+
+--changeset siewer:prepare_codeproject_for_multiprojects
+alter table codeproject add column contain_embeded boolean default false;
+alter table codeproject add column parent_id int references codeproject(id);
+alter table codeproject add column path text;
+
+--changeset siewer:prepare_webapp
+alter table webapp add column basicauth text;
+alter table webapp add column apikey text;
+alter table webapp add column header text;
+alter table webapp add column name text;
