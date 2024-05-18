@@ -2,10 +2,7 @@ package io.mixeway.api.project.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.mixeway.api.project.controller.OperateOnAssets;
-import io.mixeway.api.project.model.AssetPutModel;
-import io.mixeway.api.project.model.EditCodeProjectModel;
-import io.mixeway.api.project.model.EditProjectAssetModel;
-import io.mixeway.api.project.model.ProjectAssetModel;
+import io.mixeway.api.project.model.*;
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.domain.service.intf.FindInterfaceService;
@@ -19,6 +16,7 @@ import io.mixeway.domain.service.scanmanager.code.UpdateCodeProjectService;
 import io.mixeway.domain.service.scanmanager.webapp.FindWebAppService;
 import io.mixeway.domain.service.scanmanager.webapp.GetOrCreateWebAppService;
 import io.mixeway.domain.service.scanmanager.webapp.UpdateWebAppService;
+import io.mixeway.domain.service.vulnhistory.OperateOnVulnHistoryService;
 import io.mixeway.domain.service.vulnmanager.VulnTemplate;
 import io.mixeway.utils.PermissionFactory;
 import lombok.RequiredArgsConstructor;
@@ -53,6 +51,7 @@ public class OperateOnAssetsService {
     private final VulnTemplate vulnTemplate;
     private final FindScanService findScanService;
     private final CreateScanService createScanService;
+    private final OperateOnVulnHistoryService operateOnVulnHistoryService;
 
     public CodeProject createCodeProject(JsonNode rootNode, Project project, Principal principal) {
         String repositoryType = rootNode.path("repositoryType").asText();
@@ -237,7 +236,7 @@ public class OperateOnAssetsService {
         switch (type) {
             case "codeProject":
                 Optional<CodeProject> codeProject = findCodeProjectService.findById(id);
-                if (codeProject.isPresent()) {
+                if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getProject())) {
                     scans = findScanService.getScansForAsset(codeProject.get());
                 } else {
                     return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -245,7 +244,7 @@ public class OperateOnAssetsService {
                 break;
             case "webApp":
                 Optional<WebApp> webApp = findWebAppService.findById(id);
-                if (webApp.isPresent()) {
+                if (webApp.isPresent() && permissionFactory.canUserAccessProject(principal, webApp.get().getProject())) {
                     scans = findScanService.getScansForAsset(webApp.get());
                 } else {
                     return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -253,7 +252,7 @@ public class OperateOnAssetsService {
                 break;
             case "interface":
                 Optional<Interface> anInterface = findInterfaceService.findById(id);
-                if (anInterface.isPresent()) {
+                if (anInterface.isPresent() && permissionFactory.canUserAccessProject(principal, anInterface.get().getAsset().getProject())) {
                     scans = findScanService.getScansForAsset(anInterface.get());
                 } else {
                     return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -263,5 +262,38 @@ public class OperateOnAssetsService {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
         return new ResponseEntity<>(scans, HttpStatus.OK);
+    }
+
+    public ResponseEntity<ProjectVulnTrendChart> getAssetHistory(Long id, String type, Principal principal) {
+        ProjectVulnTrendChart projectVulnTrendChart = new ProjectVulnTrendChart();
+        switch (type) {
+            case "codeProject":
+                Optional<CodeProject> codeProject = findCodeProjectService.findById(id);
+                if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getProject())) {
+                    projectVulnTrendChart = operateOnVulnHistoryService.getVulnTrendChartForCodeProject(codeProject.get(), 14);
+                } else {
+                    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+                }
+                break;
+            case "webApp":
+                Optional<WebApp> webApp = findWebAppService.findById(id);
+                if (webApp.isPresent() && permissionFactory.canUserAccessProject(principal, webApp.get().getProject())) {
+                    projectVulnTrendChart = operateOnVulnHistoryService.getVulnTrendChartForWebApp(webApp.get(), 14);
+                } else {
+                    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+                }
+                break;
+            case "interface":
+                Optional<Interface> anInterface = findInterfaceService.findById(id);
+                if (anInterface.isPresent() && permissionFactory.canUserAccessProject(principal, anInterface.get().getAsset().getProject())) {
+                    projectVulnTrendChart = operateOnVulnHistoryService.getVulnTrendChartForInterface(anInterface.get(), 14);
+                } else {
+                    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+                }
+                break;
+            default:
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>(projectVulnTrendChart, HttpStatus.OK);
     }
 }

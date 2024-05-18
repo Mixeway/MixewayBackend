@@ -48,4 +48,8 @@ public class FindWebAppService {
     public List<WebApp> findByProject(Project project){
         return webAppRepository.findByProject(project);
     }
+
+    public List<WebApp> findAll() {
+        return webAppRepository.findAll();
+    }
 }

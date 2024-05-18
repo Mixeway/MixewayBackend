@@ -50,4 +50,8 @@ public class FindInterfaceService {
     public List<Interface> findByActive(boolean b) {
         return interfaceRepository.findByActive(b);
     }
+
+    public List<Interface> findAll() {
+        return interfaceRepository.findAll();
+    }
 }

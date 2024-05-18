@@ -1342,3 +1342,19 @@ create table scan(
     vulnmedium int,
     vulnlow int
 );
+
+--changeset siewer:asset_history
+create table assethistory(
+    id serial primary key,
+    inserted text,
+    codeproject_id int references codeproject(id) ON DELETE CASCADE,
+    webapp_id int references webapp(id) ON DELETE CASCADE,
+    interface_id int references interface(id) ON DELETE CASCADE,
+    scavulns int,
+    sastvulns int,
+    iacvulns int,
+    secretvulns int,
+    dastvulns int,
+    networkvulns int
+
+);

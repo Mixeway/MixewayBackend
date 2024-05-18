@@ -63,4 +63,8 @@ public class FindCodeProjectService {
     public List<CodeProject> getCodeProjectsInListOfProjects(List<Project> enabledVulnManageProjects) {
         return codeProjectRepository.findByProjectIn(enabledVulnManageProjects);
     }
+
+    public List<CodeProject> findAll() {
+        return codeProjectRepository.findAll();
+    }
 }

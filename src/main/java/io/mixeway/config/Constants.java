@@ -311,6 +311,12 @@ public class Constants {
     public static final String NEXUS_SEVERITY_MODERATE = "Moderate";
     public static final String VULNEARBILITY_SOURCE_IAC = "IaC";
     public static final String VULNERABILITY_HTTP_SERVER_DETECTED = "HTTP Server type and version";
+    public static final String SAST_LABEL = "SAST";
+    public static final String SCA_LABEL = "SCA";
+    public static final String IAC_LABEL = "IaC";
+    public static final String SECRET_LABEL = "Secrets";
+    public static final String DAST_LABEL = "DAST";
+    public static final String NETWORK_LABEL = "Intrastructure";
 }
 
 

@@ -18,6 +18,7 @@ public interface VulnHistoryRepository extends JpaRepository<VulnHistory, Long>{
 	List<VulnHistory> getLastTwoVulnForProject(Long project);
 	@Query(value="select * from vulnhistory v where v.project_id= ?1 order by v.inserted desc limit ?2", nativeQuery = true)
 	List<VulnHistory> getVulnHistoryLimit(Long project, int limit);
+
 	@Query(value="select sum(infrastructurevulnnumber+codevulnnumber+webappvulnnumber+auditvulnnumber+softwarepacketvulnnumber) as value, " +
 			"split_part(inserted, ' ', 1) as date from vulnhistory where project_id in :projects group by date order by date desc limit 10", nativeQuery = true)
 	List<OverAllVulnTrendChartData> getOverallVulnTrendData(@Param("projects") List<Long> projects);

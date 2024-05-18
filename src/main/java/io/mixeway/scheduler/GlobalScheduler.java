@@ -1,7 +1,10 @@
 package io.mixeway.scheduler;
 
+import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
+import io.mixeway.domain.service.assethistory.CreateAssetHistoryService;
 import io.mixeway.domain.service.infrascan.FindInfraScanService;
+import io.mixeway.domain.service.intf.FindInterfaceService;
 import io.mixeway.domain.service.intf.InterfaceOperations;
 import io.mixeway.domain.service.intf.UpdateInterfaceService;
 import io.mixeway.domain.service.project.FindProjectService;
@@ -9,10 +12,12 @@ import io.mixeway.domain.service.project.UpdateProjectService;
 import io.mixeway.domain.service.scanmanager.code.FindCodeProjectService;
 import io.mixeway.domain.service.scanmanager.code.GetOrCreateCodeProjectBranchService;
 import io.mixeway.domain.service.scanmanager.code.UpdateCodeProjectService;
+import io.mixeway.domain.service.scanmanager.webapp.FindWebAppService;
 import io.mixeway.domain.service.scanmanager.webapp.UpdateWebAppService;
 import io.mixeway.domain.service.settings.GetSettingsService;
 import io.mixeway.domain.service.vulnhistory.CreateVulnHistoryService;
 import io.mixeway.domain.service.vulnhistory.FindVulnHistoryService;
+import io.mixeway.domain.service.vulnmanager.VulnTemplate;
 import io.mixeway.scanmanager.integrations.remotefirewall.apiclient.RfwApiClient;
 import io.mixeway.scanmanager.integrations.vulnauditor.service.MixewayVulnAuditorService;
 import io.mixeway.scanmanager.service.opensource.OpenSourceScanService;
@@ -60,6 +65,10 @@ public class GlobalScheduler {
     private final UpdateInterfaceService updateInterfaceService;
     private final GetOrCreateCodeProjectBranchService getOrCreateCodeProjectBranchService;
     private final MixewayVulnAuditorService mixewayVulnAuditorService;
+    private final FindWebAppService findWebAppService;
+    private final FindInterfaceService findInterfaceService;
+    private final VulnTemplate vulnTemplate;
+    private final CreateAssetHistoryService createAssetHistoryService;
 
 
     private DOPMailTemplateBuilder templateBuilder = new DOPMailTemplateBuilder();
@@ -327,4 +336,57 @@ public class GlobalScheduler {
             }
         }
     }
+
+    @Scheduled(cron = "0 0 3 * * *") // Schedule to run at 3:00 AM every day
+    public void createHistoryForAssets() {
+        log.info("[SCHEDULED] Starting creating history for assets");
+        List<CodeProject> codeProjects = findCodeProjectService.findAll();
+        List<WebApp> webApps = findWebAppService.findAll();
+        List<Interface> interfaces = findInterfaceService.findAll();
+        for (CodeProject cp : codeProjects){
+            CodeProjectBranch codeProjectBranch = getOrCreateCodeProjectBranchService.getOrCreateCodeProjectBranch(cp, cp.getBranch());
+            List<ProjectVulnerability> projectVulnerabilities = vulnTemplate.projectVulnerabilityRepository.findByCodeProjectAndCodeProjectBranch(cp, codeProjectBranch);
+            int scaVulns = (int) projectVulnerabilities.stream()
+                    .filter(pv -> !pv.getStatus().equals(vulnTemplate.STATUS_REMOVED)) // Filter by status
+                    .filter(pv -> pv.getGrade() != 0)                               // Filter by grade
+                    .filter(pv -> pv.getVulnerabilitySource().getName().equals(Constants.VULN_TYPE_OPENSOURCE)) // Filter by source
+                    .count();
+            int sastVulns = (int) projectVulnerabilities.stream()
+                    .filter(pv -> !pv.getStatus().equals(vulnTemplate.STATUS_REMOVED)) // Filter by status
+                    .filter(pv -> pv.getGrade() != 0)                               // Filter by grade
+                    .filter(pv -> pv.getVulnerabilitySource().getName().equals(Constants.VULN_TYPE_SOURCECODE)) // Filter by source
+                    .count();
+            int secretVulns = (int) projectVulnerabilities.stream()
+                    .filter(pv -> !pv.getStatus().equals(vulnTemplate.STATUS_REMOVED)) // Filter by status
+                    .filter(pv -> pv.getGrade() != 0)                               // Filter by grade
+                    .filter(pv -> pv.getVulnerabilitySource().getName().equals(Constants.VULNEARBILITY_SOURCE_GITLEAKS)) // Filter by source
+                    .count();
+            int iacVulns = (int) projectVulnerabilities.stream()
+                    .filter(pv -> !pv.getStatus().equals(vulnTemplate.STATUS_REMOVED)) // Filter by status
+                    .filter(pv -> pv.getGrade() != 0)                               // Filter by grade
+                    .filter(pv -> pv.getVulnerabilitySource().getName().equals(Constants.VULNEARBILITY_SOURCE_IAC)) // Filter by source
+                    .count();
+            createAssetHistoryService.create(cp,scaVulns,sastVulns,0,secretVulns,iacVulns,0);
+        }
+        for (WebApp webApp : webApps) {
+            List<ProjectVulnerability> projectVulnerabilities = vulnTemplate.projectVulnerabilityRepository.findByWebApp(webApp);
+            int dastVulns = (int) projectVulnerabilities.stream()
+                    .filter(pv -> !pv.getStatus().equals(vulnTemplate.STATUS_REMOVED)) // Filter by status
+                    .filter(pv -> pv.getGrade() != 0)                               // Filter by grade
+                    .filter(pv -> pv.getVulnerabilitySource().getName().equals(Constants.VULN_TYPE_WEBAPP)) // Filter by source
+                    .count();
+            createAssetHistoryService.create(webApp,0,0,dastVulns,0,0,0);
+        }
+        for (Interface iface : interfaces){
+            List<ProjectVulnerability> projectVulnerabilities = vulnTemplate.projectVulnerabilityRepository.findByAnInterface(iface);
+            int networkVulns = (int) projectVulnerabilities.stream()
+                    .filter(pv -> !pv.getStatus().equals(vulnTemplate.STATUS_REMOVED)) // Filter by status
+                    .filter(pv -> pv.getGrade() != 0)                               // Filter by grade
+                    .filter(pv -> pv.getVulnerabilitySource().getName().equals(Constants.VULN_TYPE_NETWORK)) // Filter by source
+                    .count();
+            createAssetHistoryService.create(iface,0,0,0,0,0,networkVulns);
+        }
+        log.info("[SCHEDULED] Done creating history for assets");
+    }
+
 }
