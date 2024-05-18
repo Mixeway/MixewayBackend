@@ -1,9 +1,7 @@
 package io.mixeway.domain.service.cioperations;
 
 import io.mixeway.api.protocol.OverAllVulnTrendChartData;
-import io.mixeway.db.entity.CiOperations;
-import io.mixeway.db.entity.CodeProject;
-import io.mixeway.db.entity.Project;
+import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.CiOperationsRepository;
 import io.mixeway.domain.service.project.FindProjectService;
 import lombok.RequiredArgsConstructor;
@@ -37,5 +35,14 @@ public class FindCiOperationsService {
     }
     public List<CiOperations> findTop20(Project project){
         return ciOperationsRepository.findTop20ByProjectOrderByIdDesc(project);
+    }
+    public List<CiOperations> findTop20CodeProject(CodeProject codeProject){
+        return ciOperationsRepository.findTop20ByCodeProjectOrderByIdDesc(codeProject);
+    }
+    public List<CiOperations> findTop20WebApp(WebApp webApp){
+        return ciOperationsRepository.findTop20ByWebappOrderByIdDesc(webApp);
+    }
+    public List<CiOperations> findTop20Interface(Interface anInterface){
+        return ciOperationsRepository.findTop20ByInterfaceObjOrderByIdDesc(anInterface);
     }
 }

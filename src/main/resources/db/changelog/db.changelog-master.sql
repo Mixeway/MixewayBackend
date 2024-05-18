@@ -1358,3 +1358,7 @@ create table assethistory(
     networkvulns int
 
 );
+
+--changeset siewer:asset_ci_operation
+alter table cioperations add column webapp_id int references webapp(id) ON DELETE CASCADE;
+alter table cioperations add column interface_id int references interface(id) ON DELETE CASCADE;

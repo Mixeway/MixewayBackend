@@ -7,10 +7,7 @@ import io.mixeway.api.project.model.ProjectVulnTrendChart;
 import io.mixeway.api.project.service.OperateOnAssetsService;
 
 import io.mixeway.api.protocol.cioperations.PrepareCIOperation;
-import io.mixeway.db.entity.CodeProject;
-import io.mixeway.db.entity.Interface;
-import io.mixeway.db.entity.Project;
-import io.mixeway.db.entity.WebApp;
+import io.mixeway.db.entity.*;
 import io.mixeway.domain.service.intf.FindInterfaceService;
 import io.mixeway.domain.service.project.FindProjectService;
 import io.mixeway.domain.service.scanmanager.code.FindCodeProjectService;
@@ -25,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.security.Principal;
+import java.util.List;
 import java.util.Optional;
 
 @RequestMapping("/v3/api/asset")
@@ -99,5 +97,10 @@ public class OperateOnAssets {
     @GetMapping("/{id}/{type}/trend")
     public ResponseEntity<ProjectVulnTrendChart> getAssetHistory(@PathVariable("id") Long id, @PathVariable("type") String type, Principal principal) throws IOException {
         return operateOnAssetsService.getAssetHistory(id, type, principal);
+    }
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @GetMapping("/{id}/{type}/cioperations")
+    public ResponseEntity<List<CiOperations>> getCiOperation(@PathVariable("id") Long id, @PathVariable("type") String type, Principal principal) throws IOException {
+        return operateOnAssetsService.getCiOperation(id, type, principal);
     }
 }

@@ -35,6 +35,8 @@ public class CiOperations {
     Boolean sastScan;
     Boolean openSourceScan;
     Boolean imageScan;
+    private WebApp webapp;
+    private Interface interfaceObj;
 
     public CiOperations(){}
 
@@ -228,5 +230,28 @@ public class CiOperations {
     @PreUpdate
     public void preUpdate(){
         vulnNumber = sastCrit + sastHigh + openSourceCrit + openSourceHigh + imageCrit + imageHigh;
+    }
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "webapp_id", nullable = true)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @JsonIgnore
+    public WebApp getWebapp() {
+        return webapp;
+    }
+
+    public void setWebapp(WebApp webapp) {
+        this.webapp = webapp;
+    }
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "interface_id", nullable = true)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @JsonIgnore
+    public Interface getInterfaceObj() {
+        return interfaceObj;
+    }
+
+    public void setInterfaceObj(Interface interfaceObj) {
+        this.interfaceObj = interfaceObj;
     }
 }

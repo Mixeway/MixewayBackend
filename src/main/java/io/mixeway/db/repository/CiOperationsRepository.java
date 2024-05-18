@@ -1,11 +1,9 @@
 package io.mixeway.db.repository;
 
 import io.mixeway.api.protocol.OverAllVulnTrendChartData;
-import io.mixeway.db.entity.CodeProject;
-import io.mixeway.db.entity.Project;
+import io.mixeway.db.entity.*;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import io.mixeway.db.entity.CiOperations;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
@@ -20,4 +18,8 @@ public interface CiOperationsRepository extends JpaRepository<CiOperations,Long>
     Optional<CiOperations> findByCodeProjectAndCommitId(CodeProject codeProject, String commitId);
     List<CiOperations> findByProject(Project project);
     List<CiOperations> findTop20ByProjectOrderByIdDesc(Project project);
+
+    List<CiOperations> findTop20ByCodeProjectOrderByIdDesc(CodeProject codeProject);
+    List<CiOperations> findTop20ByWebappOrderByIdDesc(WebApp webApp);
+    List<CiOperations> findTop20ByInterfaceObjOrderByIdDesc(Interface anInterface);
 }

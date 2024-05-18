@@ -5,6 +5,7 @@ import io.mixeway.api.project.controller.OperateOnAssets;
 import io.mixeway.api.project.model.*;
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
+import io.mixeway.domain.service.cioperations.FindCiOperationsService;
 import io.mixeway.domain.service.intf.FindInterfaceService;
 import io.mixeway.domain.service.intf.UpdateInterfaceService;
 import io.mixeway.domain.service.routingdomain.FindRoutingDomainService;
@@ -52,6 +53,7 @@ public class OperateOnAssetsService {
     private final FindScanService findScanService;
     private final CreateScanService createScanService;
     private final OperateOnVulnHistoryService operateOnVulnHistoryService;
+    private final FindCiOperationsService findCiOperationsService;
 
     public CodeProject createCodeProject(JsonNode rootNode, Project project, Principal principal) {
         String repositoryType = rootNode.path("repositoryType").asText();
@@ -295,5 +297,38 @@ public class OperateOnAssetsService {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
         return new ResponseEntity<>(projectVulnTrendChart, HttpStatus.OK);
+    }
+
+    public ResponseEntity<List<CiOperations>> getCiOperation(Long id, String type, Principal principal) {
+        List<CiOperations> ciOperations = new ArrayList<>();
+        switch (type) {
+            case "codeProject":
+                Optional<CodeProject> codeProject = findCodeProjectService.findById(id);
+                if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getProject())) {
+                    ciOperations = findCiOperationsService.findTop20CodeProject(codeProject.get());
+                } else {
+                    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+                }
+                break;
+            case "webApp":
+                Optional<WebApp> webApp = findWebAppService.findById(id);
+                if (webApp.isPresent() && permissionFactory.canUserAccessProject(principal, webApp.get().getProject())) {
+                    ciOperations = findCiOperationsService.findTop20WebApp(webApp.get());
+                } else {
+                    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+                }
+                break;
+            case "interface":
+                Optional<Interface> anInterface = findInterfaceService.findById(id);
+                if (anInterface.isPresent() && permissionFactory.canUserAccessProject(principal, anInterface.get().getAsset().getProject())) {
+                    ciOperations = findCiOperationsService.findTop20Interface(anInterface.get());
+                } else {
+                    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+                }
+                break;
+            default:
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>(ciOperations, HttpStatus.OK);
     }
 }
