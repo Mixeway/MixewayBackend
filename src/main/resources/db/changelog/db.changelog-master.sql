@@ -1362,3 +1362,9 @@ create table assethistory(
 --changeset siewer:asset_ci_operation
 alter table cioperations add column webapp_id int references webapp(id) ON DELETE CASCADE;
 alter table cioperations add column interface_id int references interface(id) ON DELETE CASCADE;
+
+--changeset siewer:add_inserted_to_scannable
+alter table codeproject add column inserted text;
+alter table interface add column inserted text;
+UPDATE codeproject SET inserted = to_char(NOW(), 'YYYY-MM-DD HH24:MI:SS');
+UPDATE interface SET inserted = to_char(NOW(), 'YYYY-MM-DD HH24:MI:SS');

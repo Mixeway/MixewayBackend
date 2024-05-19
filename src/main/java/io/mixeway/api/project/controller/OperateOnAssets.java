@@ -2,7 +2,9 @@ package io.mixeway.api.project.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.mixeway.api.project.model.AssetDashboardModel;
 import io.mixeway.api.project.model.EditProjectAssetModel;
+import io.mixeway.api.project.model.NewVulnerabilityModel;
 import io.mixeway.api.project.model.ProjectVulnTrendChart;
 import io.mixeway.api.project.service.OperateOnAssetsService;
 
@@ -102,5 +104,15 @@ public class OperateOnAssets {
     @GetMapping("/{id}/{type}/cioperations")
     public ResponseEntity<List<CiOperations>> getCiOperation(@PathVariable("id") Long id, @PathVariable("type") String type, Principal principal) throws IOException {
         return operateOnAssetsService.getCiOperation(id, type, principal);
+    }
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @GetMapping("/{id}/{type}/newvulnerabilities")
+    public ResponseEntity<List<NewVulnerabilityModel>> getNewVulnerabilities(@PathVariable("id") Long id, @PathVariable("type") String type, Principal principal) throws IOException {
+        return operateOnAssetsService.getNewVulnerabilities(id, type, principal);
+    }
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @GetMapping("/{id}/{type}")
+    public ResponseEntity<AssetDashboardModel> getAssetDashboard(@PathVariable("id") Long id, @PathVariable("type") String type, Principal principal) throws IOException {
+        return operateOnAssetsService.getAssetDashboard(id, type, principal);
     }
 }

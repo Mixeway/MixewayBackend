@@ -27,10 +27,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -330,5 +328,222 @@ public class OperateOnAssetsService {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
         return new ResponseEntity<>(ciOperations, HttpStatus.OK);
+    }
+
+    public ResponseEntity<List<NewVulnerabilityModel>> getNewVulnerabilities(Long id, String type, Principal principal) {
+        List<NewVulnerabilityModel> newVulnerabilityModels = new ArrayList<>();
+        List<ProjectVulnerability> projectVulnerabilities = new ArrayList<>();
+        switch (type) {
+            case "codeProject":
+                Optional<CodeProject> codeProject = findCodeProjectService.findById(id);
+                if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getProject())) {
+                    projectVulnerabilities.addAll(vulnTemplate.projectVulnerabilityRepository.findByCodeProject(codeProject.get()));
+                } else {
+                    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+                }
+                break;
+            case "webApp":
+                Optional<WebApp> webApp = findWebAppService.findById(id);
+                if (webApp.isPresent() && permissionFactory.canUserAccessProject(principal, webApp.get().getProject())) {
+                    projectVulnerabilities.addAll(vulnTemplate.projectVulnerabilityRepository.findByWebApp(webApp.get()));
+                } else {
+                    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+                }
+                break;
+            case "interface":
+                Optional<Interface> anInterface = findInterfaceService.findById(id);
+                if (anInterface.isPresent() && permissionFactory.canUserAccessProject(principal, anInterface.get().getAsset().getProject())) {
+                    projectVulnerabilities.addAll(vulnTemplate.projectVulnerabilityRepository.findByAnInterface(anInterface.get()));
+                } else {
+                    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+                }
+                break;
+            default:
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        projectVulnerabilities = projectVulnerabilities.stream()
+                .sorted(Comparator.comparing(ProjectVulnerability::getInserted).reversed()) // Sort by inserted date in descending order
+                .limit(10) // Take only the first 10 elements
+                .collect(Collectors.toList());
+
+
+        return new ResponseEntity<>(projectVulnerabilities.stream()
+                .map(projectVulnerability -> {
+                    NewVulnerabilityModel newVulnerabilityModel = new NewVulnerabilityModel();
+                    newVulnerabilityModel.setSeverity(projectVulnerability.getSeverity());
+                    newVulnerabilityModel.setName(projectVulnerability.getVulnerability().getName());
+                    newVulnerabilityModel.setScanType(projectVulnerability.getVulnerabilitySource().getName());
+                    newVulnerabilityModel.setBranch(projectVulnerability.getCodeProjectBranch() != null ?
+                            projectVulnerability.getCodeProjectBranch().getName() : null);
+                    return newVulnerabilityModel;
+                })
+                .collect(Collectors.toList()), HttpStatus.OK);
+    }
+
+    public ResponseEntity<AssetDashboardModel> getAssetDashboard(Long id, String type, Principal principal) {
+        AssetDashboardModel assetDashboardModel = new AssetDashboardModel();
+        switch (type) {
+            case "codeProject":
+                Optional<CodeProject> codeProject = findCodeProjectService.findById(id);
+                if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getProject())) {
+                    assetDashboardModel= AssetDashboardModel.builder()
+                            .assetName(codeProject.get().getName())
+                            .target(codeProject.get().getRepoUrl())
+                            .created(codeProject.get().getInserted().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+                            .branch(codeProject.get().getBranch())
+                            .securityGateway("success")
+                            .reviewedIssues(AssetDashboardStatModel.builder()
+                                    .crit(1)
+                                    .high(2)
+                                    .medium(3)
+                                    .low(4)
+                                    .total(10)
+                                    .critPercent(10)
+                                    .lowPercent(60)
+                                    .highPercent(98)
+                                    .mediumPercent(35)
+                                    .build())
+                            .solvedIssues(AssetDashboardStatModel.builder()
+                                    .crit(1)
+                                    .high(2)
+                                    .medium(3)
+                                    .low(4)
+                                    .total(10)
+                                    .critPercent(10)
+                                    .lowPercent(60)
+                                    .highPercent(98)
+                                    .mediumPercent(35)
+                                    .build())
+                            .timeToResolve(AssetDashboardStatModel.builder()
+                                    .crit(1)
+                                    .high(2)
+                                    .medium(3)
+                                    .low(4)
+                                    .total(10)
+                                    .critPercent(10)
+                                    .lowPercent(60)
+                                    .highPercent(98)
+                                    .mediumPercent(35)
+                                    .build())
+                            .vulnerabilities(AssetDashboardStatModel.builder()
+                                    .crit(1)
+                                    .high(2)
+                                    .medium(3)
+                                    .low(4)
+                                    .build())
+                            .build();
+                } else {
+                    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+                }
+                break;
+            case "webApp":
+                Optional<WebApp> webApp = findWebAppService.findById(id);
+                if (webApp.isPresent() && permissionFactory.canUserAccessProject(principal, webApp.get().getProject())) {
+                    assetDashboardModel= AssetDashboardModel.builder()
+                            .assetName(webApp.get().getName())
+                            .target(webApp.get().getUrl())
+                            .created(webApp.get().getInserted())
+                            .securityGateway("warrning")
+                            .reviewedIssues(AssetDashboardStatModel.builder()
+                                    .crit(1)
+                                    .high(2)
+                                    .medium(3)
+                                    .low(4)
+                                    .total(10)
+                                    .critPercent(10)
+                                    .lowPercent(60)
+                                    .highPercent(98)
+                                    .mediumPercent(35)
+                                    .build())
+                            .solvedIssues(AssetDashboardStatModel.builder()
+                                    .crit(1)
+                                    .high(2)
+                                    .medium(3)
+                                    .low(4)
+                                    .total(10)
+                                    .critPercent(10)
+                                    .lowPercent(60)
+                                    .highPercent(98)
+                                    .mediumPercent(35)
+                                    .build())
+                            .timeToResolve(AssetDashboardStatModel.builder()
+                                    .crit(1)
+                                    .high(2)
+                                    .medium(3)
+                                    .low(4)
+                                    .total(10)
+                                    .critPercent(10)
+                                    .lowPercent(60)
+                                    .highPercent(98)
+                                    .mediumPercent(35)
+                                    .build())
+                            .vulnerabilities(AssetDashboardStatModel.builder()
+                                    .crit(1)
+                                    .high(2)
+                                    .medium(3)
+                                    .low(4)
+                                    .build())
+
+                            .build();
+                } else {
+                    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+                }
+                break;
+            case "interface":
+                Optional<Interface> anInterface = findInterfaceService.findById(id);
+                if (anInterface.isPresent() && permissionFactory.canUserAccessProject(principal, anInterface.get().getAsset().getProject())) {
+                    assetDashboardModel= AssetDashboardModel.builder()
+                            .assetName(anInterface.get().getAsset().getName())
+                            .target(anInterface.get().getPrivateip())
+                            .created(anInterface.get().getInserted().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+                            .securityGateway("danger")
+                            .reviewedIssues(AssetDashboardStatModel.builder()
+                                    .crit(1)
+                                    .high(2)
+                                    .medium(3)
+                                    .low(4)
+                                    .total(10)
+                                    .critPercent(10)
+                                    .lowPercent(60)
+                                    .highPercent(98)
+                                    .mediumPercent(35)
+                                    .build())
+                            .solvedIssues(AssetDashboardStatModel.builder()
+                                    .crit(1)
+                                    .high(2)
+                                    .medium(3)
+                                    .low(4)
+                                    .total(10)
+                                    .critPercent(10)
+                                    .lowPercent(60)
+                                    .highPercent(98)
+                                    .mediumPercent(35)
+                                    .build())
+                            .timeToResolve(AssetDashboardStatModel.builder()
+                                    .crit(1)
+                                    .high(2)
+                                    .medium(3)
+                                    .low(4)
+                                    .total(10)
+                                    .critPercent(10)
+                                    .lowPercent(60)
+                                    .highPercent(98)
+                                    .mediumPercent(35)
+                                    .build())
+                            .vulnerabilities(AssetDashboardStatModel.builder()
+                                    .crit(1)
+                                    .high(2)
+                                    .medium(3)
+                                    .low(4)
+                                    .build())
+
+                            .build();                } else {
+                    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+                }
+                break;
+            default:
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>(assetDashboardModel, HttpStatus.OK);
     }
 }

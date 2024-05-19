@@ -1,11 +1,14 @@
 package io.mixeway.db.entity;
 
+import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.*;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.mixeway.utils.VulnSource;
+import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
@@ -56,6 +59,17 @@ public class CodeProject implements VulnSource, Scannable {
 	private boolean containEmbeded;
 	private String path;
 	private CodeProject parent;
+	private LocalDateTime inserted;
+
+	@CreationTimestamp
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	public LocalDateTime getInserted() {
+		return inserted;
+	}
+
+	public void setInserted(LocalDateTime inserted) {
+		this.inserted = inserted;
+	}
 
 	@Column(name = "contain_embeded")
 	public boolean isContainEmbeded() {
@@ -374,6 +388,7 @@ public class CodeProject implements VulnSource, Scannable {
 
 	@PrePersist
 	void prePersist(){
+		this.inserted = LocalDateTime.now();
 		if (enableJira==null)
 			enableJira=false;
 	}

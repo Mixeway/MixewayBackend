@@ -1,14 +1,17 @@
 package io.mixeway.db.entity;
 
+import java.time.LocalDateTime;
 import java.util.Set;
 
 import javax.persistence.*;
 
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.NetworkInterface;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.mixeway.config.Constants;
 import io.mixeway.utils.VulnSource;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
@@ -39,6 +42,19 @@ public class Interface implements VulnSource, Scannable {
 	@JsonIgnore private String pool;
 	@JsonIgnore private Boolean autoCreated;
 	@JsonIgnore private boolean scanRunning;
+	private LocalDateTime inserted;
+
+	@CreationTimestamp
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	public LocalDateTime getInserted() {
+		return inserted;
+	}
+
+	public void setInserted(LocalDateTime inserted) {
+		this.inserted = inserted;
+	}
+
+
 	private int risk;
 	public Interface(){}
 	public Interface(Instance instance, Asset asset, RoutingDomain routingDomain, boolean isPublic) {
@@ -192,6 +208,11 @@ public class Interface implements VulnSource, Scannable {
 
 	public void setServices(Set<Service> services) {
 		this.services = services;
+	}
+
+	@PrePersist
+	void prePersist(){
+		this.inserted = LocalDateTime.now();
 	}
 
 }
