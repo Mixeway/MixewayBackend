@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
@@ -166,5 +167,114 @@ public class GetAssetDashboardService {
         } else {
             return 100;
         }
+    }
+
+    public AssetDashboardModel buildDashboardModel(List<ProjectVulnerability> allProjectVulnerabilities, String name, String target, LocalDateTime inserted) {
+
+        List<ProjectVulnerability> projectVulnerabilities = allProjectVulnerabilities.stream()
+                .filter(pv -> !pv.getStatus().getName().equals(vulnTemplate.STATUS_REMOVED.getName()))
+                .filter(pv -> pv.getGrade() != 0)
+                .collect(Collectors.toList());
+        List<ProjectVulnerability> solvedVulnerabilities = allProjectVulnerabilities.stream()
+                .filter(pv -> pv.getStatus().getName().equals(vulnTemplate.STATUS_REMOVED.getName()))
+                .collect(Collectors.toList());
+        List<ProjectVulnerability> reviewedVulnerabilities = allProjectVulnerabilities.stream()
+                .filter(pv -> !pv.getStatus().getName().equals(vulnTemplate.STATUS_REMOVED.getName()))
+                .filter(pv -> pv.getGrade() == 0 || pv.getGrade() == 1)
+                .collect(Collectors.toList());
+        List<ProjectVulnerability> notReviewedVulnerabilities = allProjectVulnerabilities.stream()
+                .filter(pv -> !pv.getStatus().getName().equals(vulnTemplate.STATUS_REMOVED.getName()))
+                .filter(pv -> pv.getGrade() == -1)
+                .collect(Collectors.toList());
+
+
+        int allCrit = (int)projectVulnerabilities.stream().filter(pv -> pv.getSeverity().equals(Constants.VULN_CRITICALITY_CRITICAL)).count();
+        int allHigh = (int)projectVulnerabilities.stream().filter(pv -> pv.getSeverity().equals(Constants.VULN_CRITICALITY_HIGH)).count();
+        int allMedium = (int)projectVulnerabilities.stream().filter(pv -> pv.getSeverity().equals(Constants.VULN_CRITICALITY_MEDIUM)).count();
+        int allLow = (int)projectVulnerabilities.stream().filter(pv -> pv.getSeverity().equals(Constants.VULN_CRITICALITY_LOW)).count();
+
+        int solvedCrit = (int)solvedVulnerabilities.stream().filter(pv -> pv.getSeverity().equals(Constants.VULN_CRITICALITY_CRITICAL)).count();
+        int solvedHigh = (int)solvedVulnerabilities.stream().filter(pv -> pv.getSeverity().equals(Constants.VULN_CRITICALITY_HIGH)).count();
+        int solvedMedium = (int)solvedVulnerabilities.stream().filter(pv -> pv.getSeverity().equals(Constants.VULN_CRITICALITY_MEDIUM)).count();
+        int solvedLow = (int)solvedVulnerabilities.stream().filter(pv -> pv.getSeverity().equals(Constants.VULN_CRITICALITY_LOW)).count();
+
+        int reviewedCrit = (int)reviewedVulnerabilities.stream().filter(pv -> pv.getSeverity().equals(Constants.VULN_CRITICALITY_CRITICAL)).count();
+        int reviewedHigh = (int)reviewedVulnerabilities.stream().filter(pv -> pv.getSeverity().equals(Constants.VULN_CRITICALITY_HIGH)).count();
+        int reviewedMedium = (int)reviewedVulnerabilities.stream().filter(pv -> pv.getSeverity().equals(Constants.VULN_CRITICALITY_MEDIUM)).count();
+        int reviewedLow = (int)reviewedVulnerabilities.stream().filter(pv -> pv.getSeverity().equals(Constants.VULN_CRITICALITY_LOW)).count();
+
+        int notReviewedCrit = (int)notReviewedVulnerabilities.stream().filter(pv -> pv.getSeverity().equals(Constants.VULN_CRITICALITY_CRITICAL)).count();
+        int notReviewedHigh = (int)notReviewedVulnerabilities.stream().filter(pv -> pv.getSeverity().equals(Constants.VULN_CRITICALITY_HIGH)).count();
+        int notReviewedMedium = (int)notReviewedVulnerabilities.stream().filter(pv -> pv.getSeverity().equals(Constants.VULN_CRITICALITY_MEDIUM)).count();
+        int notReviewedLow = (int)notReviewedVulnerabilities.stream().filter(pv -> pv.getSeverity().equals(Constants.VULN_CRITICALITY_LOW)).count();
+
+        // Calculate average days for each severity level
+        long avgCrit = calculateAverageDays(allProjectVulnerabilities, "Critical");
+        long avgHigh = calculateAverageDays(allProjectVulnerabilities, "High");
+        long avgMedium = calculateAverageDays(allProjectVulnerabilities, "Medium");
+        long avgLow = calculateAverageDays(allProjectVulnerabilities, "Low");
+
+        // Calculate average days for all vulnerabilities
+        long avgAll = calculateAverageDays(allProjectVulnerabilities, null);
+        int avgCritPercent = calculatePercentage(avgCrit);
+        int avgHighPercent = calculatePercentage(avgHigh);
+        int avgMediumPercent = calculatePercentage(avgMedium);
+        int avgLowPercent = calculatePercentage(avgLow);
+
+
+
+
+        AssetDashboardStatModel vulnStats = AssetDashboardStatModel.builder()
+                .crit(allCrit)
+                .high(allHigh)
+                .medium(allMedium)
+                .low(allLow)
+                .build();
+
+        AssetDashboardStatModel solvedIssues = AssetDashboardStatModel.builder()
+                .crit(solvedCrit)
+                .high(solvedHigh)
+                .medium(solvedMedium)
+                .low(solvedLow)
+                .critPercent((solvedCrit + allCrit) == 0 ? 0 : (int) Math.ceil((solvedCrit / (double)(solvedCrit + allCrit) * 100)) )
+                .highPercent((solvedHigh + allHigh) == 0 ? 0 : (int) Math.ceil((solvedHigh / (double)(solvedHigh + allHigh) * 100)) )
+                .mediumPercent((solvedMedium + allMedium) == 0 ? 0 : (int) Math.ceil((solvedMedium / (double)(solvedMedium + allMedium)) * 100) )
+                .lowPercent((solvedLow + allLow) == 0 ? 0 : (int) Math.ceil((solvedLow / (double)(solvedLow + allLow)) * 100))
+                .total(solvedVulnerabilities.size())
+                .build();
+        AssetDashboardStatModel reviewedIssues = AssetDashboardStatModel.builder()
+                .crit(reviewedCrit)
+                .high(reviewedHigh)
+                .medium(reviewedMedium)
+                .low(reviewedLow)
+                .critPercent((reviewedCrit + notReviewedCrit) == 0 ? 0 : (int) Math.ceil((reviewedCrit / (double)(reviewedCrit + notReviewedCrit) * 100)) )
+                .highPercent((reviewedHigh + notReviewedHigh) == 0 ? 0 : (int) Math.ceil((reviewedHigh / (double)(reviewedHigh + notReviewedHigh) * 100)) )
+                .mediumPercent((reviewedMedium + notReviewedMedium) == 0 ? 0 : (int) Math.ceil((reviewedMedium / (double)(reviewedMedium + notReviewedMedium)) * 100) )
+                .lowPercent((reviewedLow + notReviewedLow) == 0 ? 0 : (int) Math.ceil((reviewedLow / (double)(reviewedLow + notReviewedLow)) * 100))
+                .total(reviewedVulnerabilities.size())
+                .build();
+
+        AssetDashboardStatModel ttmIssues = AssetDashboardStatModel.builder()
+                .crit((int)avgCrit)
+                .high((int) avgHigh)
+                .medium( (int) avgMedium)
+                .low((int) avgLow)
+                .total((int)avgAll)
+                .critPercent(avgCritPercent)
+                .lowPercent(avgLowPercent)
+                .highPercent(avgHighPercent)
+                .mediumPercent(avgMediumPercent)
+                .build();
+
+        return AssetDashboardModel.builder()
+                .assetName(name)
+                .target(target)
+                .created(inserted.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+                .securityGateway("success")
+                .reviewedIssues(reviewedIssues)
+                .solvedIssues(solvedIssues)
+                .timeToResolve(ttmIssues)
+                .vulnerabilities(vulnStats)
+                .build();
     }
 }

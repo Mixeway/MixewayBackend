@@ -15,10 +15,10 @@ public interface AssetHistoryRepository extends JpaRepository<AssetHistory, Long
     @Query(value="select * from assethistory v where v.codeproject_id= ?1 order by v.inserted desc limit ?2", nativeQuery = true)
     List<AssetHistory> getCodeProjectHistory(Long project, int limit);
 
-    @Query(value="select * from vulnhistory v where v.webapp_id= ?1 order by v.inserted desc limit ?2", nativeQuery = true)
+    @Query(value="select * from assethistory v where v.webapp_id= ?1 order by v.inserted desc limit ?2", nativeQuery = true)
     List<AssetHistory> getWebAppHistory(Long project, int limit);
 
-    @Query(value="select * from vulnhistory v where v.interface_id= ?1 order by v.inserted desc limit ?2", nativeQuery = true)
+    @Query(value="select * from assethistory v where v.interface_id= ?1 order by v.inserted desc limit ?2", nativeQuery = true)
     List<AssetHistory> getInterfaceHistory(Long project, int limit);
 
 

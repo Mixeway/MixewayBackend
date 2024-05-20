@@ -115,4 +115,9 @@ public class OperateOnAssets {
     public ResponseEntity<AssetDashboardModel> getAssetDashboard(@PathVariable("id") Long id, @PathVariable("type") String type, Principal principal) throws IOException {
         return operateOnAssetsService.getAssetDashboard(id, type, principal);
     }
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @GetMapping("/{id}/{type}/vulnerabilities")
+    public ResponseEntity<List<ProjectVulnerability>> getAssetVulnerabilities(@PathVariable("id") Long id, @PathVariable("type") String type, Principal principal) throws IOException {
+        return operateOnAssetsService.getAssetVulnerabilities(id, type, principal);
+    }
 }

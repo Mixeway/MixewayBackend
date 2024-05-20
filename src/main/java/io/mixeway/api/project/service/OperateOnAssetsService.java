@@ -28,6 +28,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -396,52 +397,11 @@ public class OperateOnAssetsService {
             case "webApp":
                 Optional<WebApp> webApp = findWebAppService.findById(id);
                 if (webApp.isPresent() && permissionFactory.canUserAccessProject(principal, webApp.get().getProject())) {
-                    assetDashboardModel= AssetDashboardModel.builder()
-                            .assetName(webApp.get().getName())
-                            .target(webApp.get().getUrl())
-                            .created(webApp.get().getInserted())
-                            .securityGateway("warrning")
-                            .reviewedIssues(AssetDashboardStatModel.builder()
-                                    .crit(1)
-                                    .high(2)
-                                    .medium(3)
-                                    .low(4)
-                                    .total(10)
-                                    .critPercent(10)
-                                    .lowPercent(60)
-                                    .highPercent(98)
-                                    .mediumPercent(35)
-                                    .build())
-                            .solvedIssues(AssetDashboardStatModel.builder()
-                                    .crit(1)
-                                    .high(2)
-                                    .medium(3)
-                                    .low(4)
-                                    .total(10)
-                                    .critPercent(10)
-                                    .lowPercent(60)
-                                    .highPercent(98)
-                                    .mediumPercent(35)
-                                    .build())
-                            .timeToResolve(AssetDashboardStatModel.builder()
-                                    .crit(1)
-                                    .high(2)
-                                    .medium(3)
-                                    .low(4)
-                                    .total(10)
-                                    .critPercent(10)
-                                    .lowPercent(60)
-                                    .highPercent(98)
-                                    .mediumPercent(35)
-                                    .build())
-                            .vulnerabilities(AssetDashboardStatModel.builder()
-                                    .crit(1)
-                                    .high(2)
-                                    .medium(3)
-                                    .low(4)
-                                    .build())
-
-                            .build();
+                    List<ProjectVulnerability> projectVulnerabilities = vulnTemplate.projectVulnerabilityRepository.findByWebApp(webApp.get());
+                    assetDashboardModel= getAssetDashboardService.buildDashboardModel(projectVulnerabilities,
+                            webApp.get().getName(),
+                            webApp.get().getUrl(),
+                            LocalDateTime.parse(webApp.get().getInserted(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
                 } else {
                     return new ResponseEntity<>(HttpStatus.NOT_FOUND);
                 }
@@ -449,52 +409,12 @@ public class OperateOnAssetsService {
             case "interface":
                 Optional<Interface> anInterface = findInterfaceService.findById(id);
                 if (anInterface.isPresent() && permissionFactory.canUserAccessProject(principal, anInterface.get().getAsset().getProject())) {
-                    assetDashboardModel= AssetDashboardModel.builder()
-                            .assetName(anInterface.get().getAsset().getName())
-                            .target(anInterface.get().getPrivateip())
-                            .created(anInterface.get().getInserted().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
-                            .securityGateway("danger")
-                            .reviewedIssues(AssetDashboardStatModel.builder()
-                                    .crit(1)
-                                    .high(2)
-                                    .medium(3)
-                                    .low(4)
-                                    .total(10)
-                                    .critPercent(10)
-                                    .lowPercent(60)
-                                    .highPercent(98)
-                                    .mediumPercent(35)
-                                    .build())
-                            .solvedIssues(AssetDashboardStatModel.builder()
-                                    .crit(1)
-                                    .high(2)
-                                    .medium(3)
-                                    .low(4)
-                                    .total(10)
-                                    .critPercent(10)
-                                    .lowPercent(60)
-                                    .highPercent(98)
-                                    .mediumPercent(35)
-                                    .build())
-                            .timeToResolve(AssetDashboardStatModel.builder()
-                                    .crit(1)
-                                    .high(2)
-                                    .medium(3)
-                                    .low(4)
-                                    .total(10)
-                                    .critPercent(10)
-                                    .lowPercent(60)
-                                    .highPercent(98)
-                                    .mediumPercent(35)
-                                    .build())
-                            .vulnerabilities(AssetDashboardStatModel.builder()
-                                    .crit(1)
-                                    .high(2)
-                                    .medium(3)
-                                    .low(4)
-                                    .build())
-
-                            .build();                } else {
+                    List<ProjectVulnerability> projectVulnerabilities = vulnTemplate.projectVulnerabilityRepository.findByAnInterface(anInterface.get());
+                    assetDashboardModel= getAssetDashboardService.buildDashboardModel(projectVulnerabilities,
+                            anInterface.get().getAsset().getName(),
+                            anInterface.get().getPrivateip(),
+                            anInterface.get().getInserted());
+                } else {
                     return new ResponseEntity<>(HttpStatus.NOT_FOUND);
                 }
                 break;
@@ -502,5 +422,44 @@ public class OperateOnAssetsService {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
         return new ResponseEntity<>(assetDashboardModel, HttpStatus.OK);
+    }
+
+    public ResponseEntity<List<ProjectVulnerability>> getAssetVulnerabilities(Long id, String type, Principal principal) {
+        List<ProjectVulnerability> projectVulnerabilities = new ArrayList<>();
+        switch (type) {
+            case "codeProject":
+                Optional<CodeProject> codeProject = findCodeProjectService.findById(id);
+                if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getProject())) {
+                    projectVulnerabilities = vulnTemplate.projectVulnerabilityRepository.findByCodeProject(codeProject.get());
+                } else {
+                    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+                }
+                break;
+            case "webApp":
+                Optional<WebApp> webApp = findWebAppService.findById(id);
+                if (webApp.isPresent() && permissionFactory.canUserAccessProject(principal, webApp.get().getProject())) {
+                    projectVulnerabilities = vulnTemplate.projectVulnerabilityRepository.findByWebApp(webApp.get());
+
+                } else {
+                    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+                }
+                break;
+            case "interface":
+                Optional<Interface> anInterface = findInterfaceService.findById(id);
+                if (anInterface.isPresent() && permissionFactory.canUserAccessProject(principal, anInterface.get().getAsset().getProject())) {
+                    projectVulnerabilities = vulnTemplate.projectVulnerabilityRepository.findByAnInterface(anInterface.get());
+
+                } else {
+                    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+                }
+                break;
+            default:
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>(projectVulnerabilities
+                .stream()
+                .filter(
+                        pv -> !pv.getStatus().getName().equals(vulnTemplate.STATUS_REMOVED.getName())).collect(Collectors.toList()),
+                HttpStatus.OK);
     }
 }
