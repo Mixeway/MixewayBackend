@@ -5,6 +5,7 @@ import io.mixeway.api.project.controller.OperateOnAssets;
 import io.mixeway.api.project.model.*;
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
+import io.mixeway.domain.service.asset.GetAssetDashboardService;
 import io.mixeway.domain.service.cioperations.FindCiOperationsService;
 import io.mixeway.domain.service.intf.FindInterfaceService;
 import io.mixeway.domain.service.intf.UpdateInterfaceService;
@@ -52,6 +53,7 @@ public class OperateOnAssetsService {
     private final CreateScanService createScanService;
     private final OperateOnVulnHistoryService operateOnVulnHistoryService;
     private final FindCiOperationsService findCiOperationsService;
+    private final GetAssetDashboardService getAssetDashboardService;
 
     public CodeProject createCodeProject(JsonNode rootNode, Project project, Principal principal) {
         String repositoryType = rootNode.path("repositoryType").asText();
@@ -386,52 +388,7 @@ public class OperateOnAssetsService {
             case "codeProject":
                 Optional<CodeProject> codeProject = findCodeProjectService.findById(id);
                 if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getProject())) {
-                    assetDashboardModel= AssetDashboardModel.builder()
-                            .assetName(codeProject.get().getName())
-                            .target(codeProject.get().getRepoUrl())
-                            .created(codeProject.get().getInserted().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
-                            .branch(codeProject.get().getBranch())
-                            .securityGateway("success")
-                            .reviewedIssues(AssetDashboardStatModel.builder()
-                                    .crit(1)
-                                    .high(2)
-                                    .medium(3)
-                                    .low(4)
-                                    .total(10)
-                                    .critPercent(10)
-                                    .lowPercent(60)
-                                    .highPercent(98)
-                                    .mediumPercent(35)
-                                    .build())
-                            .solvedIssues(AssetDashboardStatModel.builder()
-                                    .crit(1)
-                                    .high(2)
-                                    .medium(3)
-                                    .low(4)
-                                    .total(10)
-                                    .critPercent(10)
-                                    .lowPercent(60)
-                                    .highPercent(98)
-                                    .mediumPercent(35)
-                                    .build())
-                            .timeToResolve(AssetDashboardStatModel.builder()
-                                    .crit(1)
-                                    .high(2)
-                                    .medium(3)
-                                    .low(4)
-                                    .total(10)
-                                    .critPercent(10)
-                                    .lowPercent(60)
-                                    .highPercent(98)
-                                    .mediumPercent(35)
-                                    .build())
-                            .vulnerabilities(AssetDashboardStatModel.builder()
-                                    .crit(1)
-                                    .high(2)
-                                    .medium(3)
-                                    .low(4)
-                                    .build())
-                            .build();
+                    assetDashboardModel= getAssetDashboardService.buildDashboardModelForCodeProject(codeProject.get());
                 } else {
                     return new ResponseEntity<>(HttpStatus.NOT_FOUND);
                 }
