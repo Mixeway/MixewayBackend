@@ -1368,3 +1368,11 @@ alter table codeproject add column inserted text;
 alter table interface add column inserted text;
 UPDATE codeproject SET inserted = to_char(NOW(), 'YYYY-MM-DD HH24:MI:SS');
 UPDATE interface SET inserted = to_char(NOW(), 'YYYY-MM-DD HH24:MI:SS');
+
+--changeset siewer:modify_ci_operations
+alter table cioperations add column dastscan_id int references scan(id);
+alter table cioperations add column sastscan_id int references scan(id);
+alter table cioperations add column scascan_id int references scan(id);
+alter table cioperations add column secretscan_id int references scan(id);
+alter table cioperations add column iacscan_id int references scan(id);
+alter table cioperations add column branch text;

@@ -22,4 +22,8 @@ public interface CiOperationsRepository extends JpaRepository<CiOperations,Long>
     List<CiOperations> findTop20ByCodeProjectOrderByIdDesc(CodeProject codeProject);
     List<CiOperations> findTop20ByWebappOrderByIdDesc(WebApp webApp);
     List<CiOperations> findTop20ByInterfaceObjOrderByIdDesc(Interface anInterface);
+
+    Optional<CiOperations> findByCommitId(String commitId);
+    List<CiOperations> findByCodeProject(CodeProject codeProject);
+    List<CiOperations> findByWebapp(WebApp webApp);
 }

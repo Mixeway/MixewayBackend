@@ -13,6 +13,7 @@ import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -23,6 +24,7 @@ public class CreateScanService {
     private final ScanRepository scanRepository;
     private final VulnTemplate vulnTemplate;
     private final CodeProjectBranchRepository codeProjectBranchRepository;
+    private final FindScanService findScanService;
 
     private static final Predicate<ProjectVulnerability> IS_HIGH_OR_CRITICAL =
             pv -> pv.getSeverity().equals(Constants.VULN_CRITICALITY_CRITICAL) || pv.getSeverity().equals(Constants.VULN_CRITICALITY_HIGH);
@@ -34,8 +36,10 @@ public class CreateScanService {
     private static final Predicate<ProjectVulnerability> IS_NOT_REMOVED_AND_HAS_GRADE =
             pv -> !Objects.equals(pv.getStatus().getName(), Constants.STATUS_REMOVED) && pv.getGrade() != 0;
 
-    public void createCodeScan(CodeProject codeProject, String branch, String commitId, String type, Principal principal) {
-        Scan scan = new Scan(principal.getName(), codeProject, branch, commitId, type);
+    public Scan createCodeScan(CodeProject codeProject, String branch, String commitId, String type, Principal principal) {
+        Scan scan = Optional.ofNullable(findScanService.findScan(commitId, codeProject))
+                .orElseGet(() -> new Scan(principal.getName(), codeProject, branch, commitId, type));
+
         CodeProjectBranch codeProjectBranch = codeProjectBranchRepository.findByCodeProjectAndName(codeProject, branch);
         List<ProjectVulnerability> projectVulnerabilities =
                 vulnTemplate.projectVulnerabilityRepository
@@ -43,10 +47,24 @@ public class CreateScanService {
                         .stream()
                         .filter(IS_NOT_REMOVED_AND_HAS_GRADE)
                         .collect(Collectors.toList());
+        switch (type) {
+            case Constants.IAC_LABEL:
+                projectVulnerabilities = projectVulnerabilities.stream().filter(pv -> Objects.equals(pv.getVulnerabilitySource().getId(), vulnTemplate.SOURCE_IAC.getId())).collect(Collectors.toList());
+                break;
+            case Constants.SECRET_LABEL:
+                projectVulnerabilities = projectVulnerabilities.stream().filter(pv -> Objects.equals(pv.getVulnerabilitySource().getId(), vulnTemplate.SOURCE_GITLEAKS.getId())).collect(Collectors.toList());
+                break;
+            case Constants.SAST_LABEL:
+                projectVulnerabilities = projectVulnerabilities.stream().filter(pv -> Objects.equals(pv.getVulnerabilitySource().getId(), vulnTemplate.SOURCE_SOURCECODE.getId())).collect(Collectors.toList());
+                break;
+            case Constants.SCA_LABEL:
+                projectVulnerabilities = projectVulnerabilities.stream().filter(pv -> Objects.equals(pv.getVulnerabilitySource().getId(), vulnTemplate.SOURCE_OPENSOURCE.getId())).collect(Collectors.toList());
+                break;
+        }
         scan.setVulnCrit((int) projectVulnerabilities.stream().filter(IS_HIGH_OR_CRITICAL).count());
         scan.setVulnMedium((int) projectVulnerabilities.stream().filter(IS_MEDIUM).count());
         scan.setVulnLow((int) projectVulnerabilities.stream().filter(IS_LOW).count());
-        scanRepository.save(scan);
+        return scanRepository.save(scan);
     }
 
     public void createWebAppScan(WebApp webApp, String branch, String commitId, Principal principal) {

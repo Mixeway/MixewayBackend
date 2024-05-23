@@ -1,5 +1,6 @@
 package io.mixeway.api.cicd.service;
 
+import io.mixeway.api.cicd.model.GitleaksReport;
 import io.mixeway.api.cicd.model.LoadSCA;
 import io.mixeway.api.cioperations.model.ZapReportModel;
 import io.mixeway.api.protocol.OpenSourceConfig;
@@ -27,6 +28,7 @@ import io.mixeway.utils.Status;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
+import org.checkerframework.checker.nullness.Opt;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -209,5 +211,21 @@ public class CICDService {
     private void updateCiOperationWithSecurityGatewayResponse(CodeProject codeProject, SecurityGatewayEntry securityGatewayEntry) {
         Optional<CiOperations> ciOperations = findCiOperationsService.findByCodeProjectAndCommitId(codeProject, codeProject.getCommitid());
         ciOperations.ifPresent(operations -> updateCiOperationsService.updateCiOperations(operations, securityGatewayEntry, codeProject));
+    }
+
+    public ResponseEntity<?> loadGitleaksReport(GitleaksReport gitleaksReport, long codeProjectid, Principal principal) {
+        Optional<CodeProject> codeProject = findCodeProjectService.findById(codeProjectid);
+        if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getProject())){
+            log.info("[CICD] Received Gitleaks raport that contains {} findings for {} [{}]", gitleaksReport.getFindings().size(), codeProject.get().getName(), codeProject.get().getRepoUrl());
+            if (gitleaksReport.getFindings().size() > 0 ){
+                codeScanService.loadGitleaksReport(gitleaksReport, codeProject.get(), principal);
+            } else {
+                codeScanService.loadVulnsFromCICDToCodeProject(codeProject.get(), new ArrayList<>(), ScannerType.GITLEAKS);
+            }
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+
     }
 }

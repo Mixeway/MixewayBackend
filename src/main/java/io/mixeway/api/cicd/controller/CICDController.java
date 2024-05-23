@@ -1,5 +1,6 @@
 package io.mixeway.api.cicd.controller;
 
+import io.mixeway.api.cicd.model.GitleaksReport;
 import io.mixeway.api.cicd.model.LoadSCA;
 import io.mixeway.api.cicd.service.CICDService;
 import io.mixeway.api.cioperations.model.LoadVulnModel;
@@ -113,5 +114,17 @@ public class CICDController {
     public ResponseEntity<SecurityGatewayResponse> cicdValidate(@RequestBody LoadSCA loadSCA,
                                                                                     Principal principal) throws UnknownHostException {
         return cicdService.validate(loadSCA, principal);
+    }
+
+    /**
+     * Validate State of security for given CodeProject and Branch
+     */
+    @CrossOrigin(origins="*")
+    @PreAuthorize("hasAuthority('ROLE_API')")
+    @PostMapping(value = "/asset/{id}/gitleaks",produces = "application/json")
+    public ResponseEntity<?> loadGitleaksReport(@RequestBody GitleaksReport gitleaksReport,
+                                                                @PathVariable("id") long codeProjectid,
+                                                                Principal principal) throws UnknownHostException {
+        return cicdService.loadGitleaksReport(gitleaksReport, codeProjectid, principal);
     }
 }

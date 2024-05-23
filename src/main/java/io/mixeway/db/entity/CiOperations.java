@@ -37,6 +37,20 @@ public class CiOperations {
     Boolean imageScan;
     private WebApp webapp;
     private Interface interfaceObj;
+    private Scan codeScan;
+    private Scan dastScan;
+    private Scan iacScan;
+    private Scan secretScan;
+    private Scan scaScan;
+    private String branch;
+
+    public String getBranch() {
+        return branch;
+    }
+
+    public void setBranch(String branch) {
+        this.branch = branch;
+    }
 
     public CiOperations(){}
 
@@ -254,4 +268,60 @@ public class CiOperations {
     public void setInterfaceObj(Interface interfaceObj) {
         this.interfaceObj = interfaceObj;
     }
+
+    @ManyToOne(fetch = FetchType.EAGER, optional = true)
+    @JoinColumn(name = "sastscan_id", nullable = true)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    public Scan getCodeScan() {
+        return codeScan;
+    }
+
+    public void setCodeScan(Scan codeScan) {
+        this.codeScan = codeScan;
+    }
+
+    @ManyToOne(fetch = FetchType.EAGER, optional = true)
+    @JoinColumn(name = "dastscan_id", nullable = true)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    public Scan getDastScan() {
+        return dastScan;
+    }
+
+    public void setDastScan(Scan dastScan) {
+        this.dastScan = dastScan;
+    }
+
+    @ManyToOne(fetch = FetchType.EAGER, optional = true)
+    @JoinColumn(name = "iacscan_id", nullable = true)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    public Scan getIacScan() {
+        return iacScan;
+    }
+
+    public void setIacScan(Scan iacScan) {
+        this.iacScan = iacScan;
+    }
+
+    @ManyToOne(fetch = FetchType.EAGER, optional = true)
+    @JoinColumn(name = "secretscan_id", nullable = true)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    public Scan getSecretScan() {
+        return secretScan;
+    }
+
+    public void setSecretScan(Scan secretScan) {
+        this.secretScan = secretScan;
+    }
+
+    @ManyToOne(fetch = FetchType.EAGER, optional = true)
+    @JoinColumn(name = "scascan_id", nullable = true)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    public Scan getScaScan() {
+        return scaScan;
+    }
+
+    public void setScaScan(Scan scaScan) {
+        this.scaScan = scaScan;
+    }
+
 }

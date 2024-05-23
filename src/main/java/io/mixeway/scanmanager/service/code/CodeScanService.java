@@ -1,14 +1,18 @@
 package io.mixeway.scanmanager.service.code;
 
+import io.mixeway.api.cicd.model.GitleaksReport;
+import io.mixeway.api.cicd.model.GitleaksReportEntry;
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
 import io.mixeway.db.repository.*;
+import io.mixeway.domain.service.cioperations.GetOrCreateCiOperationsService;
 import io.mixeway.domain.service.cioperations.UpdateCiOperationsService;
 import io.mixeway.domain.service.project.FindProjectService;
 import io.mixeway.domain.service.project.GetOrCreateProjectService;
 import io.mixeway.domain.service.projectvulnerability.DeleteProjectVulnerabilityService;
 import io.mixeway.domain.service.projectvulnerability.GetProjectVulnerabilitiesService;
+import io.mixeway.domain.service.scan.CreateScanService;
 import io.mixeway.domain.service.scanmanager.code.*;
 import io.mixeway.domain.service.scanner.GetScannerService;
 import io.mixeway.domain.service.vulnmanager.VulnTemplate;
@@ -20,6 +24,7 @@ import io.mixeway.utils.ScannerType;
 import io.mixeway.utils.Status;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.apache.tomcat.util.bcel.Const;
 import org.codehaus.jettison.json.JSONException;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.http.HttpStatus;
@@ -56,6 +61,9 @@ public class CodeScanService {
     private final GetScannerService getScannerService;
     private final OperateOnCodeProject operateOnCodeProject;
     private final GetOrCreateCodeProjectBranchService getOrCreateCodeProjectBranchService;
+    private final CreateScanService createScanService;
+    private final GetOrCreateCiOperationsService createCiOperationsService;
+    private final SecurityQualityGateway securityQualityGateway;
 
     /**
      * Method for getting CodeVulns for given names
@@ -457,5 +465,45 @@ public class CodeScanService {
 
         //vulnTemplate.projectVulnerabilityRepository.flush();
         log.info("[CICD] SourceCode - Loading Vulns for {} completed type of {} number of vulns {}", codeProject.getName(), scannerType, vulnToPersist.size());
+    }
+
+    public void loadGitleaksReport(GitleaksReport gitleaksReport, CodeProject codeProject, Principal principal){
+        CodeProjectBranch codeProjectBranch = getOrCreateCodeProjectBranchService
+                .getOrCreateCodeProjectBranch(
+                        codeProject,
+                        gitleaksReport.getProjectMetadata().getBranch()
+                );
+        List<ProjectVulnerability> oldVulnsForCodeProject = getProjectVulnerabilitiesService
+                .getOldVulnsForCodeProjectAndSourceForBranch(
+                        codeProject,
+                        vulnTemplate.SOURCE_GITLEAKS,
+                        codeProjectBranch
+                );
+        List<ProjectVulnerability> vulnToPersist = new ArrayList<>();
+        for (GitleaksReportEntry entry : gitleaksReport.getFindings()){
+            Vulnerability vulnerability = vulnTemplate.createOrGetVulnerabilityService.createOrGetVulnerability(entry.getRuleId() +  " detected");
+            String description = entry.getDescription() +
+                    "\n\n" +
+                    "Author: " +
+                    entry.getAuthor() +
+                    "\n" +
+                    "CommitId: " +
+                    entry.getCommit() +
+                    "\n" +
+                    "File fingerprint: " +
+                    entry.getFingerprint();
+
+            ProjectVulnerability projectVulnerability = new ProjectVulnerability(codeProject,codeProject,vulnerability, description,"Rotate secrets as soon as possible, remove secrets from the repository",
+                    Constants.VULN_CRITICALITY_CRITICAL,null,entry.getFile()+":"+entry.getStartLine(),
+                    "", vulnTemplate.SOURCE_GITLEAKS, null,codeProjectBranch );
+
+            vulnToPersist.add(projectVulnerability);
+        }
+        vulnTemplate.vulnerabilityPersistList(oldVulnsForCodeProject, vulnToPersist);
+        Scan scan = createScanService.createCodeScan(codeProject, codeProjectBranch.getName(), gitleaksReport.getProjectMetadata().getCommitId(),
+                Constants.SECRET_LABEL, principal);
+        CiOperations operations = createCiOperationsService.create(gitleaksReport.getProjectMetadata(), codeProject);
+        updateCiOperations.putScanOnAPipeline(operations, scan, securityQualityGateway.buildGatewayResponse(vulnToPersist));
+
     }
 }

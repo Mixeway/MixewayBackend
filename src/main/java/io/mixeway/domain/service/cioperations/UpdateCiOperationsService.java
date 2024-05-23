@@ -7,8 +7,10 @@ package io.mixeway.domain.service.cioperations;
 
 import io.mixeway.api.cioperations.model.CIVulnManageResponse;
 import io.mixeway.api.cioperations.service.CiOperationsService;
+import io.mixeway.config.Constants;
 import io.mixeway.db.entity.CiOperations;
 import io.mixeway.db.entity.CodeProject;
+import io.mixeway.db.entity.Scan;
 import io.mixeway.db.repository.CiOperationsRepository;
 import io.mixeway.domain.service.vulnmanager.VulnTemplate;
 import io.mixeway.utils.SecurityGatewayEntry;
@@ -68,5 +70,22 @@ public class UpdateCiOperationsService {
         ciOperations.setSastCrit(securityGatewayEntry.getSastCritical());
         ciOperations.setSastHigh(securityGatewayEntry.getSastHigh());
         ciOperationsRepository.save(ciOperations);
+    }
+
+    public void putScanOnAPipeline(CiOperations ciOperations, Scan scan, SecurityGatewayEntry securityGatewayEntry){
+        if (scan.getType().equals(Constants.SECRET_LABEL)){
+            ciOperations.setSecretScan(scan);
+        } else if (scan.getType().equals(Constants.IAC_LABEL)){
+            ciOperations.setIacScan(scan);
+        } else if (scan.getType().equals(Constants.SCA_LABEL)){
+            ciOperations.setScaScan(scan);
+        } else if (scan.getType().equals(Constants.SAST_LABEL)){
+            ciOperations.setCodeScan(scan);
+        } else if (scan.getType().equals(Constants.DAST_LABEL)){
+            ciOperations.setDastScan(scan);
+        }
+        ciOperations.setResult(securityGatewayEntry.isPassed()?"Ok":"Not Ok");
+
+        ciOperationsRepository.saveAndFlush(ciOperations);
     }
 }

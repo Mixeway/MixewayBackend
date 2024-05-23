@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -23,5 +24,9 @@ public class FindScanService {
             return scanRepository.findByInterfaceObj((Interface) scannable);
         }
         return new ArrayList<>();
+    }
+    public Scan findScan(String commitid, CodeProject codeProject){
+        Optional<Scan> scan = scanRepository.findByCommitIdAndCodeProject(commitid, codeProject);
+        return scan.orElse(null);
     }
 }

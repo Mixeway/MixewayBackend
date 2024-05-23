@@ -1,15 +1,16 @@
 package io.mixeway.domain.service.cioperations;
 
 import io.mixeway.api.cicd.model.LoadSCA;
+import io.mixeway.api.cicd.model.ProjectMetadata;
 import io.mixeway.api.protocol.cioperations.InfoScanPerformed;
-import io.mixeway.db.entity.CiOperations;
-import io.mixeway.db.entity.CodeProject;
-import io.mixeway.db.entity.Project;
-import io.mixeway.db.entity.SecurityGateway;
+import io.mixeway.db.entity.*;
 import io.mixeway.db.repository.CiOperationsRepository;
 import io.mixeway.scanmanager.model.SASTRequestVerify;
 import io.mixeway.utils.SecurityGatewayEntry;
 import lombok.RequiredArgsConstructor;
+import org.aspectj.apache.bcel.classfile.Code;
+import org.checkerframework.checker.nullness.Opt;
+import org.checkerframework.checker.units.qual.C;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -22,20 +23,26 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class CreateCiOperationsService {
     private final CiOperationsRepository ciOperationsRepository;
+    private final FindCiOperationsService findCiOperationsService;
 
     public void create(SASTRequestVerify verifyRequest, Project project, String commitId){
         CiOperations newOperation = new CiOperations();
         newOperation.setProject(project);
         newOperation.setCodeProject(verifyRequest.getCp());
         newOperation.setCommitId(commitId);
-        ciOperationsRepository.save(newOperation);
+        if (findCiOperationsService.findByCodeProjectAndCommitId(verifyRequest.getCp(), commitId).isPresent()) {
+            ciOperationsRepository.save(newOperation);
+        }
     }
 
+
     public CiOperations create(CodeProject codeProject, InfoScanPerformed infoScanPerformed) {
-        return ciOperationsRepository.save(new CiOperations(codeProject, infoScanPerformed));
+        Optional<CiOperations> ciOperations = findCiOperationsService.findByCodeProjectAndCommitId(codeProject, infoScanPerformed.getCommitId());
+        return ciOperations.orElseGet(() -> ciOperationsRepository.save(new CiOperations(codeProject, infoScanPerformed)));
     }
     public CiOperations create(CodeProject codeProject, LoadSCA loadSca) {
-        return ciOperationsRepository.save(new CiOperations(codeProject, loadSca));
+        Optional<CiOperations> ciOperations = findCiOperationsService.findByCodeProjectAndCommitId(codeProject, loadSca.getCommitId());
+        return ciOperations.orElseGet(() -> ciOperationsRepository.save(new CiOperations(codeProject, loadSca)));
     }
     public CiOperations create(SecurityGatewayEntry securityGatewayEntry, CodeProject codeProject, Optional<CiOperations> optionalCiOperations){
         CiOperations ciOperations = optionalCiOperations.orElseGet(CiOperations::new);
@@ -51,6 +58,8 @@ public class CreateCiOperationsService {
         ciOperations.setSastCrit(securityGatewayEntry.getSastCritical());
         ciOperations.setOpenSourceCrit(securityGatewayEntry.getOsCritical());
         ciOperations.setOpenSourceHigh(securityGatewayEntry.getOsHigh());
+
         return ciOperationsRepository.saveAndFlush(ciOperations);
     }
+
 }
