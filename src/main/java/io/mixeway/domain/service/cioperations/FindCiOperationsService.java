@@ -80,4 +80,10 @@ public class FindCiOperationsService {
         }
         return new ArrayList<>();
     }
+    public List<CiOperations> findAll(){
+        return ciOperationsRepository.findAll();
+    }
+    public List<CiOperations> findByProject(Project project){
+        return ciOperationsRepository.findByProject(project);
+    }
 }

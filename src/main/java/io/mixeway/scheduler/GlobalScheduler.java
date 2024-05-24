@@ -7,6 +7,7 @@ import io.mixeway.domain.service.infrascan.FindInfraScanService;
 import io.mixeway.domain.service.intf.FindInterfaceService;
 import io.mixeway.domain.service.intf.InterfaceOperations;
 import io.mixeway.domain.service.intf.UpdateInterfaceService;
+import io.mixeway.domain.service.metric.MetricService;
 import io.mixeway.domain.service.project.FindProjectService;
 import io.mixeway.domain.service.project.UpdateProjectService;
 import io.mixeway.domain.service.scanmanager.code.FindCodeProjectService;
@@ -69,6 +70,7 @@ public class GlobalScheduler {
     private final FindInterfaceService findInterfaceService;
     private final VulnTemplate vulnTemplate;
     private final CreateAssetHistoryService createAssetHistoryService;
+    private final MetricService metricService;
 
 
     private DOPMailTemplateBuilder templateBuilder = new DOPMailTemplateBuilder();
@@ -131,6 +133,24 @@ public class GlobalScheduler {
             log.error("Error during dTrack synchro {}", ignored.getLocalizedMessage());
         }
         log.info("[OpenSourceService] SCA Synchronization completed - vulnerabilities loaded");
+    }
+
+    /**
+     * Interval: 12h
+     *
+     * GlobalMetric
+     */
+    @Scheduled(initialDelay = 3000, fixedRate = 12 * 60 * 60 * 1000)
+    public void calculateGlobalMetric() {
+        log.info("[GlobalMetric] Starting generating global metrics");
+        metricService.getGlobalMetric();
+        log.info("[GlobalMetric] Finished generating global metrics");
+        log.info("[ProjectMetric] Starting generating Project metrics");
+        for(Project project : findProjectService.findAll()) {
+            metricService.getProjectMetric(project);
+        }
+        metricService.getGlobalMetric();
+        log.info("[ProjectMetric] Finished generating Project metrics");
     }
 
     /**

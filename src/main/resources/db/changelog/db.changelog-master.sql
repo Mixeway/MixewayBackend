@@ -1376,3 +1376,20 @@ alter table cioperations add column scascan_id int references scan(id);
 alter table cioperations add column secretscan_id int references scan(id);
 alter table cioperations add column iacscan_id int references scan(id);
 alter table cioperations add column branch text;
+
+--changeset siewer:metrics
+create table metric(
+    id serial primary key,
+    activevulnavg int,
+    activevulnno int,
+    fixedvulnno int,
+    fixedvulnpercent int,
+    fixtime int,
+    projectwithcicdno int,
+    projectwithcicdpercent int,
+    securejobno int,
+    securejobpercent int,
+    bugtrackingintegratedno int,
+    bugtrackingintegratedpercent int,
+    project_id int references project(id) ON DELETE CASCADE
+)
