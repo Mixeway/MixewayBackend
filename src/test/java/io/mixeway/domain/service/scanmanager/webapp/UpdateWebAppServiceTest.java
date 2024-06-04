@@ -124,6 +124,7 @@ class UpdateWebAppServiceTest {
             projectVulnerability.setWebApp(webApp);
             projectVulnerability.setSeverity("High");
             projectVulnerability.setAnalysis("Exploitable");
+            projectVulnerability.setLocation("/asd" + i);
             projectVulnerability.setVulnerabilitySource(vulnTemplate.SOURCE_WEBAPP);
             projectVulnerability.setVulnerability(createOrGetVulnerabilityService.createOrGetVulnerability("test"));
             vulnTemplate.vulnerabilityPersist(new ArrayList<>(), projectVulnerability);

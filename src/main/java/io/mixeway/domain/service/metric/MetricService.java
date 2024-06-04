@@ -48,8 +48,8 @@ public class MetricService {
         buildMetric(projectVulnerabilities, ciOperations, allProjects, bugTrackers, projectMetric);
     }
 
-    private void buildMetric(List<ProjectVulnerability> projectVulnerabilities, List<CiOperations> ciOperations,
-                               List<Project> allProjects, List<BugTracker> bugTrackers, Metric globalMetric) {
+    void buildMetric(List<ProjectVulnerability> projectVulnerabilities, List<CiOperations> ciOperations,
+                     List<Project> allProjects, List<BugTracker> bugTrackers, Metric globalMetric) {
         int totalProjects = allProjects.size();
 
         long activeVuln = projectVulnerabilities.stream()
@@ -107,10 +107,10 @@ public class MetricService {
         metricRepository.saveAndFlush(globalMetric);
     }
 
-    private int calculatePercentage(long part, long total) {
+    int calculatePercentage(long part, long total) {
         return total == 0 ? 0 : (int) Math.ceil((double) part / total * 100);
     }
-    private int calculateAverage(long part, long total) {
+    int calculateAverage(long part, long total) {
         return total == 0 ? 0 : (int) Math.ceil((double) part / total );
     }
 
@@ -127,13 +127,13 @@ public class MetricService {
                 .collect(Collectors.toList());
     }
 
-    private boolean isNotDuplicate(ProjectVulnerability vulnerability) {
+    boolean isNotDuplicate(ProjectVulnerability vulnerability) {
         List<ProjectVulnerability> vulnerabilities = vulnTemplate.projectVulnerabilityRepository.findAll();
         return vulnerabilities.stream()
                 .noneMatch(v -> isDuplicate(v, vulnerability));
     }
 
-    private boolean isDuplicate(ProjectVulnerability v1, ProjectVulnerability v2) {
+    boolean isDuplicate(ProjectVulnerability v1, ProjectVulnerability v2) {
         if (v1 == v2) return false;  // Skip self-comparison
         if (v1.getCodeProject() != null && v1.getCodeProjectBranch() != null
                 && v2.getCodeProject() != null && v2.getCodeProjectBranch() != null) {

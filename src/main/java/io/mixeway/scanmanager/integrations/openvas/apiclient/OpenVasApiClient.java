@@ -74,6 +74,9 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 	private final VulnTemplate vulnTemplate;
 	private final InterfaceOperations interfaceOperations;
 	private final DeleteProjectVulnerabilityService deleteProjectVulnerabilityService;
+
+	private static final int BATCH_SIZE = 5000;
+
 	OpenVasApiClient(VaultHelper vaultHelper, ScannerRepository nessusRepository, InfraScanRepository infraScanRepository, InterfaceRepository interfaceRepository,
 					 AssetRepository assetRepository, ScanHelper scanHelper, InterfaceOperations interfaceOperations,
 					 SecureRestTemplate secureRestTemplate, ScannerRepository scannerRepository,
@@ -266,8 +269,16 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 		List<Interface> scannerInterfaces = new ArrayList<>();
 		// Set All old vulnerabilities status of removed
 		if (oldVulns.size() > 0) {
-			vulnTemplate.projectVulnerabilityRepository.updateVulnState(oldVulns.stream().map(ProjectVulnerability::getId).collect(Collectors.toList()),
-					vulnTemplate.STATUS_REMOVED.getId());
+			// Batch processing in chunks of BATCH_SIZE
+			int numberOfBatches = (oldVulns.size() + BATCH_SIZE - 1) / BATCH_SIZE;
+			for (int i = 0; i < numberOfBatches; i++) {
+				int start = i * BATCH_SIZE;
+				int end = Math.min(start + BATCH_SIZE, oldVulns.size());
+				List<Long> batchIds = oldVulns.subList(start, end).stream()
+						.map(ProjectVulnerability::getId)
+						.collect(Collectors.toList());
+				vulnTemplate.projectVulnerabilityRepository.updateVulnState(batchIds, vulnTemplate.STATUS_REMOVED.getId());
+			}
 			oldVulns.forEach(o -> o.setStatus(vulnTemplate.STATUS_REMOVED));
 		}
 

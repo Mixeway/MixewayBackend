@@ -1,3 +1,16 @@
+## 2.0.0 (2024-06-04)
+
+#### New Features
+* Release of v3 API 
+* Creating metric table
+* Adjust CiOperations 
+* Create AssetHistory for extended history
+
+#### Bug Fixes
+* Fixed bug with OpenVas integration and large scan results error
+* Fixed bug related with problem of not comperhensive results from GUI and API with project vulnerabilities
+* Fixed integration with VulnAuditor
+
 ## 1.8.3 (2024-03-20)
 
 #### New Features

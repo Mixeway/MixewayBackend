@@ -30,8 +30,8 @@ public class CreateCiOperationsService {
         newOperation.setProject(project);
         newOperation.setCodeProject(verifyRequest.getCp());
         newOperation.setCommitId(commitId);
-        if (findCiOperationsService.findByCodeProjectAndCommitId(verifyRequest.getCp(), commitId).isPresent()) {
-            ciOperationsRepository.save(newOperation);
+        if (!findCiOperationsService.findByCodeProjectAndCommitId(verifyRequest.getCp(), commitId).isPresent()) {
+            ciOperationsRepository.saveAndFlush(newOperation);
         }
     }
 

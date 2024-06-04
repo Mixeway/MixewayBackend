@@ -215,6 +215,7 @@ class AssetServiceTest {
             ProjectVulnerability projectVulnerability = new ProjectVulnerability();
             projectVulnerability.setAnInterface(anInterface);
             projectVulnerability.setProject(project);
+            projectVulnerability.setLocation("location"+i);
             projectVulnerability.setVulnerabilitySource(vulnTemplate.SOURCE_NETWORK);
             projectVulnerability.setVulnerability(createOrGetVulnerabilityService.createOrGetVulnerability("networkvuln"));
             projectVulnerability.setSeverity("Critical");

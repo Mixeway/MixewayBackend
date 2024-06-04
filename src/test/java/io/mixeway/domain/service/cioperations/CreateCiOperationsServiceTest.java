@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.security.Principal;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -79,6 +80,7 @@ class CreateCiOperationsServiceTest {
 
         createCiOperationsService.create(sastRequestVerify,project,"new_sha");
         Optional<CiOperations> ciOperations = ciOperationsRepository.findByCodeProjectAndCommitId(codeProject, "new_sha");
+        List<CiOperations> operations = ciOperationsRepository.findAll();
         assertTrue(ciOperations.isPresent());
         assertEquals(codeProject.getId(), ciOperations.get().getCodeProject().getId());
     }
