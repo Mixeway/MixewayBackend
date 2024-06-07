@@ -375,7 +375,7 @@ public class CodeProject implements VulnSource, Scannable {
 		this.vulns = vulns;
 	}
 
-	@ManyToOne(fetch = FetchType.LAZY, optional = true)
+	@ManyToOne(fetch = FetchType.EAGER, optional = true)
 	@JoinColumn(name = "parent_id", nullable = true)
 	@OnDelete(action = OnDeleteAction.CASCADE)
 	public CodeProject getParent() {

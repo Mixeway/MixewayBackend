@@ -173,7 +173,7 @@ public class OperateOnAssetsService {
             long low = waVulns.stream()
                     .filter(cv -> cv.getSeverity().equals(Constants.VULN_CRITICALITY_LOW))
                     .count();
-            projectAssetModels.add(new ProjectAssetModel().convertWebApp(wa, (int) crit, (int) medium, (int) low, false));
+            projectAssetModels.add(new ProjectAssetModel().convertWebApp(wa, (int) crit, (int) medium, (int) low, (crit + medium + low) > 0));
         });
 
         findInterfaceService.findByAssetIn(new ArrayList<>(project.getAssets())).forEach(intf -> {
@@ -188,7 +188,7 @@ public class OperateOnAssetsService {
             long low = iVulns.stream()
                     .filter(cv -> cv.getSeverity().equals(Constants.VULN_CRITICALITY_LOW))
                     .count();
-            projectAssetModels.add(new ProjectAssetModel().convertInterface(intf, (int) crit, (int) medium, (int) low, false));
+            projectAssetModels.add(new ProjectAssetModel().convertInterface(intf, (int) crit, (int) medium, (int) low, (crit + medium + low) > 0));
         });
         return projectAssetModels;
     }
