@@ -36,7 +36,7 @@ public class GetOrCreateWebAppService {
     private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     public WebApp getOrCreateWebApp(String url, Project project, RoutingDomain routingDomain){
-        Optional<WebApp> webApp = webAppRepository.findByProjectAndUrl(project, url);
+        Optional<WebApp> webApp = webAppRepository.findByUrl( url);
         if (webApp.isPresent()){
             return webApp.get();
         } else {
