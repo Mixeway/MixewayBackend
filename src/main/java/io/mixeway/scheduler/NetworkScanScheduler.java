@@ -41,6 +41,7 @@ public class NetworkScanScheduler {
 	 * Method which takes scans in queue and run them if it is possible
 	 */
 	@Scheduled(initialDelay=0,fixedDelay = 300000)
+	@Transactional
 	public void runScansFromQueue() throws Exception {
 		networkScanService.runScansFromQueue();
 	}
