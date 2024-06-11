@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.Principal;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -86,8 +87,9 @@ public class CreateOrGetCodeProjectService {
         String[] repoUrlParts = repo.getPath().split("/");
         String name = repoUrlParts[repoUrlParts.length-1];
 
-        Optional<CodeProject> codeProject = codeProjectRepository.findByRepoUrlOrRepoUrlAndName(repoUrl, repoUrl+".git", codeProjectName);
+        List<CodeProject> codeProjectList = codeProjectRepository.findByRepoUrlOrRepoUrlAndName(repoUrl, repoUrl+".git", codeProjectName);
 
+        Optional<CodeProject> codeProject = codeProjectList.stream().filter(cp -> cp.getParent() == null).findFirst();
         if (codeProject.isPresent()){
             getOrCreateCodeProjectBranchService.getOrCreateCodeProjectBranch(codeProject.get(), branch);
             return codeProject.get();
