@@ -32,6 +32,7 @@ import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.client.UnknownContentTypeException;
 
@@ -406,12 +407,17 @@ public class NexusIqApiClient implements SecurityScanner, OpenSourceScanClient {
         RestTemplate restTemplate = secureRestTemplate.prepareClientWithCertificate(scanner);
         HttpHeaders headers = prepareAuthHeader(scanner);
         HttpEntity<String> entity = new HttpEntity<>(headers);
-        ResponseEntity<SourceControl> response = restTemplate.exchange(scanner.getApiUrl() +
-                "/api/v2/sourceControl/application/"+id, HttpMethod.GET, entity, SourceControl.class);
-        if (response.getStatusCode().equals(HttpStatus.OK)){
-            return response.getBody();
-        } else {
-            return null;
+        try {
+            ResponseEntity<SourceControl> response = restTemplate.exchange(scanner.getApiUrl() +
+                    "/api/v2/sourceControl/application/" + id, HttpMethod.GET, entity, SourceControl.class);
+            if (response.getStatusCode().equals(HttpStatus.OK)) {
+                return response.getBody();
+            } else {
+                return null;
+            }
+        } catch (HttpServerErrorException e) {
+            log.error("[Nexus-IQ] Server error during fetching source control for {} - {}", id, e.getStatusCode());
         }
+        return null;
     }
 }

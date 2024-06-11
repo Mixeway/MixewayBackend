@@ -6,6 +6,7 @@ import io.mixeway.api.project.model.*;
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.domain.service.asset.GetAssetDashboardService;
+import io.mixeway.domain.service.assethistory.FindAssetHistoryService;
 import io.mixeway.domain.service.cioperations.FindCiOperationsService;
 import io.mixeway.domain.service.intf.FindInterfaceService;
 import io.mixeway.domain.service.intf.UpdateInterfaceService;
@@ -55,6 +56,7 @@ public class OperateOnAssetsService {
     private final OperateOnVulnHistoryService operateOnVulnHistoryService;
     private final FindCiOperationsService findCiOperationsService;
     private final GetAssetDashboardService getAssetDashboardService;
+    private final FindAssetHistoryService findAssetHistoryService;
 
     public CodeProject createCodeProject(JsonNode rootNode, Project project, Principal principal) {
         String repositoryType = rootNode.path("repositoryType").asText();
@@ -147,48 +149,26 @@ public class OperateOnAssetsService {
         List<ProjectAssetModel> projectAssetModels = new ArrayList<>();
 
         findCodeProjectService.findByProject(project).forEach(cp -> {
-            List<ProjectVulnerability> codeVulns = vulnTemplate.projectVulnerabilityRepository.findByCodeProject(cp);
-            long crit = codeVulns.stream()
-                    .filter(cv -> cv.getSeverity().equals(Constants.VULN_CRITICALITY_CRITICAL) ||
-                            cv.getSeverity().equals(Constants.VULN_CRITICALITY_HIGH))
-                    .count();
-            long medium = codeVulns.stream()
-                    .filter(cv -> cv.getSeverity().equals(Constants.VULN_CRITICALITY_MEDIUM))
-                    .count();
-            long low = codeVulns.stream()
-                    .filter(cv -> cv.getSeverity().equals(Constants.VULN_CRITICALITY_LOW))
-                    .count();
-            projectAssetModels.add(new ProjectAssetModel().convertCodeProject(cp, (int) crit, (int) medium, (int) low));
+            AssetHistory assetHistory = findAssetHistoryService.getAssetHistory(cp).stream()
+                    .max(Comparator.comparing(AssetHistory::getInserted)).orElse(new AssetHistory());
+
+            projectAssetModels.add(new ProjectAssetModel().convertCodeProject(cp, assetHistory.getCrit() + assetHistory.getHigh(),
+                    assetHistory.getMedium(), assetHistory.getLow()));
         });
 
         findWebAppService.findByProject(project).forEach(wa -> {
-            List<ProjectVulnerability> waVulns = vulnTemplate.projectVulnerabilityRepository.findByWebApp(wa);
-            long crit = waVulns.stream()
-                    .filter(cv -> cv.getSeverity().equals(Constants.VULN_CRITICALITY_CRITICAL) ||
-                            cv.getSeverity().equals(Constants.VULN_CRITICALITY_HIGH))
-                    .count();
-            long medium = waVulns.stream()
-                    .filter(cv -> cv.getSeverity().equals(Constants.VULN_CRITICALITY_MEDIUM))
-                    .count();
-            long low = waVulns.stream()
-                    .filter(cv -> cv.getSeverity().equals(Constants.VULN_CRITICALITY_LOW))
-                    .count();
-            projectAssetModels.add(new ProjectAssetModel().convertWebApp(wa, (int) crit, (int) medium, (int) low, (crit + medium + low) > 0));
+            AssetHistory assetHistory = findAssetHistoryService.getAssetHistory(wa).stream()
+                    .max(Comparator.comparing(AssetHistory::getInserted)).orElse(new AssetHistory());
+            projectAssetModels.add(new ProjectAssetModel().convertWebApp(wa,
+                    assetHistory.getCrit() + assetHistory.getHigh(),
+                    assetHistory.getMedium(), assetHistory.getLow(), (assetHistory.getCrit() + assetHistory.getHigh() + assetHistory.getMedium() + assetHistory.getLow()) > 0));
         });
 
         findInterfaceService.findByAssetIn(new ArrayList<>(project.getAssets())).forEach(intf -> {
-            List<ProjectVulnerability> iVulns = vulnTemplate.projectVulnerabilityRepository.findByAnInterface(intf);
-            long crit = iVulns.stream()
-                    .filter(cv -> cv.getSeverity().equals(Constants.VULN_CRITICALITY_CRITICAL) ||
-                            cv.getSeverity().equals(Constants.VULN_CRITICALITY_HIGH))
-                    .count();
-            long medium = iVulns.stream()
-                    .filter(cv -> cv.getSeverity().equals(Constants.VULN_CRITICALITY_MEDIUM))
-                    .count();
-            long low = iVulns.stream()
-                    .filter(cv -> cv.getSeverity().equals(Constants.VULN_CRITICALITY_LOW))
-                    .count();
-            projectAssetModels.add(new ProjectAssetModel().convertInterface(intf, (int) crit, (int) medium, (int) low, (crit + medium + low) > 0));
+            AssetHistory assetHistory = findAssetHistoryService.getAssetHistory(intf).stream()
+                    .max(Comparator.comparing(AssetHistory::getInserted)).orElse(new AssetHistory());
+            projectAssetModels.add(new ProjectAssetModel().convertInterface(intf, assetHistory.getCrit() + assetHistory.getHigh(),
+                    assetHistory.getMedium(), assetHistory.getLow(), (assetHistory.getCrit() + assetHistory.getHigh() + assetHistory.getMedium() + assetHistory.getLow()) > 0));
         });
         return projectAssetModels;
     }

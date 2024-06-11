@@ -27,10 +27,15 @@ public class AssetHistory {
     private Integer secretVulns;
     private Integer dastVulns;
     private Integer networkVulns;
+    private Integer crit;
+    private Integer high;
+    private Integer medium;
+    private Integer low;
 
     public AssetHistory() {
     }
-    public AssetHistory(Scannable scannable, int scaVulns, int sastVulns, int iacVulns, int secretVulns, int dastVulns, int networkVulns){
+    public AssetHistory(Scannable scannable, int scaVulns, int sastVulns, int iacVulns, int secretVulns, int dastVulns, int networkVulns,
+                        int crit, int high, int medium, int low){
         if (scannable instanceof CodeProject) {
             this.codeProject = (CodeProject) scannable;
         } else if (scannable instanceof WebApp) {
@@ -44,6 +49,10 @@ public class AssetHistory {
         this.dastVulns = dastVulns;
         this.networkVulns = networkVulns;
         this.scaVulns = scaVulns;
+        this.crit = crit;
+        this.high = high;
+        this.medium = medium;
+        this.low = low;
     }
 
     @Id
@@ -154,5 +163,37 @@ public class AssetHistory {
 
     public void setNetworkVulns(Integer networkVulns) {
         this.networkVulns = networkVulns;
+    }
+
+    public Integer getCrit() {
+        return crit;
+    }
+
+    public void setCrit(Integer crit) {
+        this.crit = crit;
+    }
+
+    public Integer getHigh() {
+        return high;
+    }
+
+    public void setHigh(Integer high) {
+        this.high = high;
+    }
+
+    public Integer getMedium() {
+        return medium;
+    }
+
+    public void setMedium(Integer medium) {
+        this.medium = medium;
+    }
+
+    public Integer getLow() {
+        return low;
+    }
+
+    public void setLow(Integer low) {
+        this.low = low;
     }
 }

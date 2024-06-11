@@ -1393,3 +1393,9 @@ create table metric(
     bugtrackingintegratedpercent int,
     project_id int references project(id) ON DELETE CASCADE
 )
+
+--changeset siewer:extend_history
+alter table assethistory add column crit int;
+alter table assethistory add column high int;
+alter table assethistory add column medium int;
+alter table assethistory add column low int;

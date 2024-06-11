@@ -386,7 +386,27 @@ public class GlobalScheduler {
                     .filter(pv -> pv.getGrade() != 0)                               // Filter by grade
                     .filter(pv -> pv.getVulnerabilitySource().getName().equals(Constants.VULNEARBILITY_SOURCE_IAC)) // Filter by source
                     .count();
-            createAssetHistoryService.create(cp,scaVulns,sastVulns,0,secretVulns,iacVulns,0);
+            int crit = (int) projectVulnerabilities.stream()
+                    .filter(pv -> !pv.getStatus().equals(vulnTemplate.STATUS_REMOVED)) // Filter by status
+                    .filter(pv -> pv.getGrade() != 0)                               // Filter by grade
+                    .filter(pv -> pv.getSeverity().equals(Constants.VULN_CRITICALITY_CRITICAL)) // Filter by source
+                    .count();
+            int high = (int) projectVulnerabilities.stream()
+                    .filter(pv -> !pv.getStatus().equals(vulnTemplate.STATUS_REMOVED)) // Filter by status
+                    .filter(pv -> pv.getGrade() != 0)                               // Filter by grade
+                    .filter(pv -> pv.getSeverity().equals(Constants.VULN_CRITICALITY_HIGH)) // Filter by source
+                    .count();
+            int medium = (int) projectVulnerabilities.stream()
+                    .filter(pv -> !pv.getStatus().equals(vulnTemplate.STATUS_REMOVED)) // Filter by status
+                    .filter(pv -> pv.getGrade() != 0)                               // Filter by grade
+                    .filter(pv -> pv.getSeverity().equals(Constants.VULN_CRITICALITY_MEDIUM)) // Filter by source
+                    .count();
+            int low = (int) projectVulnerabilities.stream()
+                    .filter(pv -> !pv.getStatus().equals(vulnTemplate.STATUS_REMOVED)) // Filter by status
+                    .filter(pv -> pv.getGrade() != 0)                               // Filter by grade
+                    .filter(pv -> pv.getSeverity().equals(Constants.VULN_CRITICALITY_LOW)) // Filter by source
+                    .count();
+            createAssetHistoryService.create(cp,scaVulns,sastVulns,0,secretVulns,iacVulns,0, crit, high, medium, low);
         }
         for (WebApp webApp : webApps) {
             List<ProjectVulnerability> projectVulnerabilities = vulnTemplate.projectVulnerabilityRepository.findByWebApp(webApp);
@@ -395,7 +415,27 @@ public class GlobalScheduler {
                     .filter(pv -> pv.getGrade() != 0)                               // Filter by grade
                     .filter(pv -> pv.getVulnerabilitySource().getName().equals(Constants.VULN_TYPE_WEBAPP)) // Filter by source
                     .count();
-            createAssetHistoryService.create(webApp,0,0,dastVulns,0,0,0);
+            int crit = (int) projectVulnerabilities.stream()
+                    .filter(pv -> !pv.getStatus().equals(vulnTemplate.STATUS_REMOVED)) // Filter by status
+                    .filter(pv -> pv.getGrade() != 0)                               // Filter by grade
+                    .filter(pv -> pv.getSeverity().equals(Constants.VULN_CRITICALITY_CRITICAL)) // Filter by source
+                    .count();
+            int high = (int) projectVulnerabilities.stream()
+                    .filter(pv -> !pv.getStatus().equals(vulnTemplate.STATUS_REMOVED)) // Filter by status
+                    .filter(pv -> pv.getGrade() != 0)                               // Filter by grade
+                    .filter(pv -> pv.getSeverity().equals(Constants.VULN_CRITICALITY_HIGH)) // Filter by source
+                    .count();
+            int medium = (int) projectVulnerabilities.stream()
+                    .filter(pv -> !pv.getStatus().equals(vulnTemplate.STATUS_REMOVED)) // Filter by status
+                    .filter(pv -> pv.getGrade() != 0)                               // Filter by grade
+                    .filter(pv -> pv.getSeverity().equals(Constants.VULN_CRITICALITY_MEDIUM)) // Filter by source
+                    .count();
+            int low = (int) projectVulnerabilities.stream()
+                    .filter(pv -> !pv.getStatus().equals(vulnTemplate.STATUS_REMOVED)) // Filter by status
+                    .filter(pv -> pv.getGrade() != 0)                               // Filter by grade
+                    .filter(pv -> pv.getSeverity().equals(Constants.VULN_CRITICALITY_LOW)) // Filter by source
+                    .count();
+            createAssetHistoryService.create(webApp,0,0,dastVulns,0,0,0, crit, high, medium, low);
         }
         for (Interface iface : interfaces){
             List<ProjectVulnerability> projectVulnerabilities = vulnTemplate.projectVulnerabilityRepository.findByAnInterface(iface);
@@ -404,7 +444,27 @@ public class GlobalScheduler {
                     .filter(pv -> pv.getGrade() != 0)                               // Filter by grade
                     .filter(pv -> pv.getVulnerabilitySource().getName().equals(Constants.VULN_TYPE_NETWORK)) // Filter by source
                     .count();
-            createAssetHistoryService.create(iface,0,0,0,0,0,networkVulns);
+            int crit = (int) projectVulnerabilities.stream()
+                    .filter(pv -> !pv.getStatus().equals(vulnTemplate.STATUS_REMOVED)) // Filter by status
+                    .filter(pv -> pv.getGrade() != 0)                               // Filter by grade
+                    .filter(pv -> pv.getSeverity().equals(Constants.VULN_CRITICALITY_CRITICAL)) // Filter by source
+                    .count();
+            int high = (int) projectVulnerabilities.stream()
+                    .filter(pv -> !pv.getStatus().equals(vulnTemplate.STATUS_REMOVED)) // Filter by status
+                    .filter(pv -> pv.getGrade() != 0)                               // Filter by grade
+                    .filter(pv -> pv.getSeverity().equals(Constants.VULN_CRITICALITY_HIGH)) // Filter by source
+                    .count();
+            int medium = (int) projectVulnerabilities.stream()
+                    .filter(pv -> !pv.getStatus().equals(vulnTemplate.STATUS_REMOVED)) // Filter by status
+                    .filter(pv -> pv.getGrade() != 0)                               // Filter by grade
+                    .filter(pv -> pv.getSeverity().equals(Constants.VULN_CRITICALITY_MEDIUM)) // Filter by source
+                    .count();
+            int low = (int) projectVulnerabilities.stream()
+                    .filter(pv -> !pv.getStatus().equals(vulnTemplate.STATUS_REMOVED)) // Filter by status
+                    .filter(pv -> pv.getGrade() != 0)                               // Filter by grade
+                    .filter(pv -> pv.getSeverity().equals(Constants.VULN_CRITICALITY_LOW)) // Filter by source
+                    .count();
+            createAssetHistoryService.create(iface,0,0,0,0,0,networkVulns, crit, high, medium, low);
         }
         log.info("[SCHEDULED] Done creating history for assets");
     }
