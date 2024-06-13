@@ -371,6 +371,8 @@ public class NexusIqApiClient implements SecurityScanner, OpenSourceScanClient {
                 synchroList.add(synchroEntry);
             } catch (HttpClientErrorException e){
                 log.warn("[Nexus-IQ] Application {} on nexus has no repourl, HTTP_STATUS {}", application.getPublicId(), e.getStatusCode());
+            } catch (NullPointerException e){
+                log.warn("[Nexus-IQ] Application {} NullPOinter on loadNexusData", application.getPublicId());
             }
         }
         return synchroList;
