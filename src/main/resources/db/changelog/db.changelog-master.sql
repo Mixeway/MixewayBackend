@@ -1399,3 +1399,9 @@ alter table assethistory add column crit int;
 alter table assethistory add column high int;
 alter table assethistory add column medium int;
 alter table assethistory add column low int;
+
+--changeset siewer:extend_history_fix
+update assethistory set crit=0 where crit is null;
+update assethistory set high=0 where high is null;
+update assethistory set medium=0 where medium is null;
+update assethistory set low=0 where low is null;
