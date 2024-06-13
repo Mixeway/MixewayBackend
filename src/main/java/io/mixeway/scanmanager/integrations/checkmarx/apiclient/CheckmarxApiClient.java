@@ -29,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
@@ -437,8 +438,11 @@ public class CheckmarxApiClient implements CodeScanClient, SecurityScanner {
                 log.info("[Checkmarx] Successfull Created and started scan for {}", codeProject.getName());
                 return true;
             }
-        } catch (HttpClientErrorException e){
+        } catch (HttpClientErrorException | HttpServerErrorException e){
             log.error("[Checkmarx] Error creating scan - {}", e.getStatusCode());
+            codeProject.setRunning(false);
+            codeProjectRepository.save(codeProject);
+
         } catch (ResourceAccessException e) {
             log.error("[Checkmarx] Error creating the scan - checkmarx not avaliable");
         }

@@ -2,6 +2,7 @@ package io.mixeway.api.cicd.service;
 
 import io.mixeway.api.cicd.model.GitleaksReport;
 import io.mixeway.api.cicd.model.LoadSCA;
+import io.mixeway.api.cicd.model.ProjectMetadata;
 import io.mixeway.api.cioperations.model.ZapReportModel;
 import io.mixeway.api.protocol.OpenSourceConfig;
 import io.mixeway.api.protocol.cioperations.GetInfoRequest;
@@ -227,5 +228,16 @@ public class CICDService {
         }
         return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 
+    }
+
+    public ResponseEntity<?> loadScaVulns(ProjectMetadata projectMetadata, long codeProjectid, Principal principal) throws UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, KeyManagementException {
+        Optional<CodeProject> codeProject = findCodeProjectService.findById(codeProjectid);
+        if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getProject())){
+            log.info("[CICD] Received info about SCA scan for {} [{}]", codeProject.get().getName(), codeProject.get().getRepoUrl());
+            openSourceScanService.loadVulnerabilities(codeProject.get(), projectMetadata, principal);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
 }

@@ -1,12 +1,15 @@
 package io.mixeway.scanmanager.service.opensource;
 
+import io.mixeway.api.cicd.model.ProjectMetadata;
 import io.mixeway.api.protocol.OpenSourceConfig;
+import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.domain.service.cioperations.UpdateCiOperationsService;
 import io.mixeway.domain.service.opensource.CreateOpenSourceConfigService;
 import io.mixeway.domain.service.project.FindProjectService;
 import io.mixeway.domain.service.projectvulnerability.DeleteProjectVulnerabilityService;
 import io.mixeway.domain.service.projectvulnerability.GetProjectVulnerabilitiesService;
+import io.mixeway.domain.service.scan.CreateScanService;
 import io.mixeway.domain.service.scanmanager.code.GetOrCreateCodeProjectBranchService;
 import io.mixeway.domain.service.scanner.GetScannerService;
 import io.mixeway.domain.service.softwarepackage.GetOrCreateSoftwarePacketService;
@@ -47,6 +50,7 @@ public class OpenSourceScanService {
     private final GetProjectVulnerabilitiesService getProjectVulnerabilitiesService;
     private final GetOrCreateSoftwarePacketService getOrCreateSoftwarePacketService;
     private final GetOrCreateCodeProjectBranchService getOrCreateCodeProjectBranchService;
+    private final CreateScanService createScanService;
 
     /**
      * Method witch get information about configured OpenSource scanner which is proper for particular project
@@ -78,8 +82,17 @@ public class OpenSourceScanService {
      * @param codeProjectToVerify CodeProject to load opensource vulnerabilities
      */
     @Transactional()
-    public void loadVulnerabilities(CodeProject codeProjectToVerify) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
-        CodeProjectBranch codeProjectBranch = getOrCreateCodeProjectBranchService.getOrCreateCodeProjectBranch(codeProjectToVerify, codeProjectToVerify.getBranch());
+    public void loadVulnerabilities(CodeProject codeProjectToVerify, ProjectMetadata projectMetadata, Principal principal) throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyManagementException, KeyStoreException, IOException {
+        CodeProjectBranch codeProjectBranch;
+        if (projectMetadata != null){
+            codeProjectBranch = getOrCreateCodeProjectBranchService
+                    .getOrCreateCodeProjectBranch(
+                            codeProjectToVerify,
+                            projectMetadata.getBranch()
+                    );
+        } else {
+            codeProjectBranch = getOrCreateCodeProjectBranchService.getOrCreateCodeProjectBranch(codeProjectToVerify, codeProjectToVerify.getBranch());
+        }
         for (OpenSourceScanClient openSourceScanClient : openSourceScanClients){
             if (openSourceScanClient.canProcessRequest(codeProjectToVerify)){
                 List<ProjectVulnerability> oldVulns = getProjectVulnerabilitiesService.getOldVulnsForCodeProjectAndSourceForBranch(codeProjectToVerify,vulnTemplate.SOURCE_OPENSOURCE, codeProjectBranch );
@@ -89,7 +102,12 @@ public class OpenSourceScanService {
                     vulnTemplate.projectVulnerabilityRepository.updateVulnStateForBranch(vulnsToUpdate,
                             vulnTemplate.STATUS_REMOVED.getId(), codeProjectBranch.getId());
                 openSourceScanClient.loadVulnerabilities(codeProjectToVerify, codeProjectBranch);
-                updateCiOperations.updateCiOperationsForOpenSource(codeProjectToVerify);
+                if (projectMetadata != null ){
+                    updateCiOperations.updateCiOperationsForOpenSource(codeProjectToVerify, projectMetadata);
+                    createScanService.createCodeScan(codeProjectToVerify, codeProjectBranch.getName(), projectMetadata.getCommitId(), Constants.SCA_LABEL,principal);
+                } else {
+                    updateCiOperations.updateCiOperationsForOpenSource(codeProjectToVerify);
+                }
                 //vulnTemplate.projectVulnerabilityRepository.deleteByStatusAndCodeProjectAndVulnerabilitySourceAndCodeProjectBranch(vulnTemplate.STATUS_REMOVED, codeProjectToVerify, vulnTemplate.SOURCE_OPENSOURCE, codeProjectBranch);
                 break;
             }

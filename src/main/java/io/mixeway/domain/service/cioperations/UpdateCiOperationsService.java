@@ -5,6 +5,7 @@
  */
 package io.mixeway.domain.service.cioperations;
 
+import io.mixeway.api.cicd.model.ProjectMetadata;
 import io.mixeway.api.cioperations.model.CIVulnManageResponse;
 import io.mixeway.api.cioperations.service.CiOperationsService;
 import io.mixeway.config.Constants;
@@ -30,6 +31,7 @@ public class UpdateCiOperationsService {
     private final SecurityQualityGateway securityQualityGateway;
     private final CiOperationsRepository ciOperationsRepository;
     private final VulnTemplate vulnTemplate;
+    private final GetOrCreateCiOperationsService getOrCreateCiOperationsService;
 
 
     @Transactional
@@ -42,6 +44,12 @@ public class UpdateCiOperationsService {
             ciOperations.get().setOpenSourceScan(true);
             ciOperations.get().setResult(gateway.isPassed() ? "Ok":"Not Ok");
         }
+    }
+    @Transactional
+    public void updateCiOperationsForOpenSource(CodeProject codeProject, ProjectMetadata projectMetadata){
+        SecurityGatewayEntry gateway = securityQualityGateway.buildGatewayResponse(vulnTemplate.projectVulnerabilityRepository.findByCodeProject(codeProject));
+        Optional<CiOperations> ciOperations = ciOperationsRepository.findByCodeProjectAndCommitId(codeProject, projectMetadata.getCommitId());
+        CiOperations operations = getOrCreateCiOperationsService.create(projectMetadata,codeProject);
     }
     @Transactional
     public void updateCiOperationsForSAST(CodeProject codeProject){
