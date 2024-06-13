@@ -123,7 +123,7 @@ public class GlobalScheduler {
                 }
                     try {
 
-                        openSourceScanService.loadVulnerabilities(cp);
+                        openSourceScanService.loadVulnerabilities(cp,null,null);
                     } catch (CertificateException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyManagementException | KeyStoreException | IOException e) {
                         log.error("Error {} during OpenSource Scan Synchro for {}", e.getLocalizedMessage(), cp.getName());
                     }

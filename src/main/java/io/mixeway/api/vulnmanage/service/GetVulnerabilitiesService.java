@@ -359,7 +359,7 @@ public class GetVulnerabilitiesService {
         SecurityGateway securityGateway = securityGatewayRepository.findAll().stream().findFirst().orElse(null);
         if (securityGateway != null && cp.isPresent()) {
             if (StringUtils.isNotBlank(cp.get().getdTrackUuid())) {
-                openSourceScanService.loadVulnerabilities(cp.get());
+                openSourceScanService.loadVulnerabilities(cp.get(),null,null);
             }
             List<VulnManageResponse> vulnManageResponses = createVulnManageResponseForCodeProject(cp.get());
             CIVulnManageResponse ciVulnManageResponse = new CIVulnManageResponse();

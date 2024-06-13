@@ -129,7 +129,7 @@ public class CiOperationsService {
                 CodeProject codeProjectToVerify =sastRequestVerify.getCp();
                 CIVulnManageResponse ciVulnManageResponse = new CIVulnManageResponse();
                 if (StringUtils.isNotBlank(codeProjectToVerify.getdTrackUuid())){
-                    openSourceScanService.loadVulnerabilities(codeProjectToVerify);
+                    openSourceScanService.loadVulnerabilities(codeProjectToVerify, null,null);
                 }
                 List<VulnManageResponse> vmr = createVulnManageResponseForCodeProject(codeProjectToVerify);
                 ciVulnManageResponse.setVulnManageResponseList(vmr);
@@ -239,7 +239,7 @@ public class CiOperationsService {
                 createCiOperationsService.create(codeProject.get(), infoScanPerformed);
             }
             updateCodeProjectService.changeCommitId(infoScanPerformed.getCommitId(), codeProject.get());
-            openSourceScanService.loadVulnerabilities(codeProject.get());
+            openSourceScanService.loadVulnerabilities(codeProject.get(),null,null);
             return new ResponseEntity<>(HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -359,7 +359,7 @@ public class CiOperationsService {
         if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getProject())) {
             codeScanService.putCodeProjectToQueue(codeProjectId,principal);
             if (StringUtils.isNotBlank(codeProject.get().getdTrackUuid())) {
-                openSourceScanService.loadVulnerabilities(codeProject.get());
+                openSourceScanService.loadVulnerabilities(codeProject.get(), null, null);
                 log.info("[CICD] {} Loaded OpenSource Vulns for project - {}", principal.getName(), codeProject.get().getName());
             }
             log.info("[CICD] {} put SAST Project in queue - {}", principal.getName(), codeProject.get().getName());
@@ -397,7 +397,7 @@ public class CiOperationsService {
         Optional<CodeProject> codeProject = codeProjectRepository.findById(codeProjectId);
         if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getProject())) {
             List<ProjectVulnerability> vulns = vulnTemplate.projectVulnerabilityRepository.findByCodeProject(codeProject.get());
-            openSourceScanService.loadVulnerabilities(codeProject.get());
+            openSourceScanService.loadVulnerabilities(codeProject.get(), null, null);
             List<Vuln> vulnList = new ArrayList<>();
             for (ProjectVulnerability pv : vulns){
                 if (pv.getVulnerabilitySource().getId().equals(vulnTemplate.SOURCE_OPENSOURCE.getId())){
