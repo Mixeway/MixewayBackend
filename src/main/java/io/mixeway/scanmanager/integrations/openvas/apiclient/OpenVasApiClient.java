@@ -455,6 +455,9 @@ public class OpenVasApiClient implements NetworkScanClient, SecurityScanner {
 			return ns;
 		} catch (HttpClientErrorException hcee){
 			log.error("Error occured during target creation for {} with code {}",ns.getProject().getName(),hcee.getLocalizedMessage() );
+			ns.setRunning(false);
+			ns.setInQueue(false);
+			infraScanRepository.save(ns);
 		}
 		return null;
 	}
