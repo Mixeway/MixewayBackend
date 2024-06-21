@@ -88,6 +88,7 @@ public class Vuln {
 			case Constants.API_SCANNER_WEBAPP:
 				if (target instanceof WebApp && projectVulnerability.getVulnerabilitySource().getName().equals(Constants.VULN_TYPE_WEBAPP)) {
 					this.setGrade(projectVulnerability.getGrade());
+					this.setType(Constants.API_SCANNER_WEBAPP);
 					this.setVulnerabilityName(projectVulnerability.getVulnerability().getName());
 					this.setDescription(Objects.toString(projectVulnerability.getDescription(), "Description missing") + "\n\n" + Objects.toString(projectVulnerability.getRecommendation(), ""));
 					this.setBaseURL(projectVulnerability.getWebApp().getUrl());
@@ -105,6 +106,7 @@ public class Vuln {
 			case Constants.API_SCANNER_OPENVAS:
 				if (target instanceof Interface && projectVulnerability.getVulnerabilitySource().getName().equals(Constants.VULN_TYPE_NETWORK)) {
 					this.setGrade(projectVulnerability.getGrade());
+					this.setType(Constants.API_SCANNER_OPENVAS);
 					this.setVulnerabilityName(projectVulnerability.getVulnerability().getName());
 					this.setIpAddress(projectVulnerability.getAnInterface().getPrivateip() != null && !projectVulnerability.getAnInterface().getPrivateip().equals("") ?
 							projectVulnerability.getAnInterface().getPrivateip() :
