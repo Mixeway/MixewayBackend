@@ -1,6 +1,7 @@
 package io.mixeway.api.cicd.service;
 
 import io.mixeway.api.cicd.model.GitleaksReport;
+import io.mixeway.api.cicd.model.KicsReport;
 import io.mixeway.api.cicd.model.LoadSCA;
 import io.mixeway.api.cicd.model.ProjectMetadata;
 import io.mixeway.api.cioperations.model.ZapReportModel;
@@ -235,6 +236,21 @@ public class CICDService {
         if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getProject())){
             log.info("[CICD] Received info about SCA scan for {} [{}]", codeProject.get().getName(), codeProject.get().getRepoUrl());
             openSourceScanService.loadVulnerabilities(codeProject.get(), projectMetadata, principal);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    }
+
+    public ResponseEntity<?> loadKicsReport(KicsReport kicsReport, long codeProjectid, Principal principal) {
+        Optional<CodeProject> codeProject = findCodeProjectService.findById(codeProjectid);
+        if (codeProject.isPresent() && permissionFactory.canUserAccessProject(principal, codeProject.get().getProject())){
+            log.info("[CICD] Received KICS raport that contains {} findings for {} [{}]", kicsReport.getFindings().getTotal(), codeProject.get().getName(), codeProject.get().getRepoUrl());
+            if (kicsReport.getFindings().getTotal() > 0 ){
+                codeScanService.loadKicsReport(kicsReport, codeProject.get(), principal);
+            } else {
+                codeScanService.loadVulnsFromCICDToCodeProject(codeProject.get(), new ArrayList<>(), ScannerType.IAC);
+            }
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }

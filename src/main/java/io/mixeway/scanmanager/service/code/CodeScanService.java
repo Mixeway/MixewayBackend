@@ -1,7 +1,6 @@
 package io.mixeway.scanmanager.service.code;
 
-import io.mixeway.api.cicd.model.GitleaksReport;
-import io.mixeway.api.cicd.model.GitleaksReportEntry;
+import io.mixeway.api.cicd.model.*;
 import io.mixeway.config.Constants;
 import io.mixeway.db.entity.*;
 import io.mixeway.db.entity.Scanner;
@@ -505,5 +504,44 @@ public class CodeScanService {
         CiOperations operations = createCiOperationsService.create(gitleaksReport.getProjectMetadata(), codeProject);
         updateCiOperations.putScanOnAPipeline(operations, scan, securityQualityGateway.buildGatewayResponse(vulnToPersist));
 
+    }
+
+    public void loadKicsReport(KicsReport kicsReport, CodeProject codeProject, Principal principal) {
+        CodeProjectBranch codeProjectBranch = getOrCreateCodeProjectBranchService
+                .getOrCreateCodeProjectBranch(
+                        codeProject,
+                        kicsReport.getProjectMetadata().getBranch()
+                );
+        List<ProjectVulnerability> oldVulnsForCodeProject = getProjectVulnerabilitiesService
+                .getOldVulnsForCodeProjectAndSourceForBranch(
+                        codeProject,
+                        vulnTemplate.SOURCE_IAC,
+                        codeProjectBranch
+                );
+        List<ProjectVulnerability> vulnToPersist = new ArrayList<>();
+            for (KicsQuery query : kicsReport.getFindings().getQueries()){
+                Vulnerability vulnerability = vulnTemplate.createOrGetVulnerabilityService.createOrGetVulnerability(query.getName());
+
+                for (KicsFile file : query.getFiles()){
+                    String description = query.getDescription() +
+                            "\n\n" +
+                            "Category: " +
+                            query.getCategory() +
+                            "\n" +
+                            "Evidence: " +
+                            file.getActualValue();
+                    ProjectVulnerability projectVulnerability = new ProjectVulnerability(codeProject,codeProject,vulnerability, description,file.getExpectedValue(),
+                            Constants.VULN_CRITICALITY_CRITICAL,null,file.getName()+":"+file.getLine(),
+                            "", vulnTemplate.SOURCE_IAC, null,codeProjectBranch );
+
+                    vulnToPersist.add(projectVulnerability);
+                }
+            }
+
+        vulnTemplate.vulnerabilityPersistList(oldVulnsForCodeProject, vulnToPersist);
+        Scan scan = createScanService.createCodeScan(codeProject, codeProjectBranch.getName(), kicsReport.getProjectMetadata().getCommitId(),
+                Constants.IAC_LABEL, principal);
+        CiOperations operations = createCiOperationsService.create(kicsReport.getProjectMetadata(), codeProject);
+        updateCiOperations.putScanOnAPipeline(operations, scan, securityQualityGateway.buildGatewayResponse(vulnToPersist));
     }
 }

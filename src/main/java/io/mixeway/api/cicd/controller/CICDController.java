@@ -1,6 +1,7 @@
 package io.mixeway.api.cicd.controller;
 
 import io.mixeway.api.cicd.model.GitleaksReport;
+import io.mixeway.api.cicd.model.KicsReport;
 import io.mixeway.api.cicd.model.LoadSCA;
 import io.mixeway.api.cicd.model.ProjectMetadata;
 import io.mixeway.api.cicd.service.CICDService;
@@ -139,5 +140,17 @@ public class CICDController {
                                           @PathVariable("id") long codeProjectid,
                                           Principal principal) throws IOException, UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         return cicdService.loadScaVulns(projectMetadata, codeProjectid, principal);
+    }
+
+    /**
+     * Validate State of security for given CodeProject and Branch
+     */
+    @CrossOrigin(origins="*")
+    @PreAuthorize("hasAuthority('ROLE_API')")
+    @PostMapping(value = "/asset/{id}/kics",produces = "application/json")
+    public ResponseEntity<?> loadKicsReport(@RequestBody KicsReport kicsReport,
+                                                @PathVariable("id") long codeProjectid,
+                                                Principal principal) throws UnknownHostException {
+        return cicdService.loadKicsReport(kicsReport, codeProjectid, principal);
     }
 }
