@@ -131,13 +131,13 @@ public class BurpEEApiClient implements SecurityScanner, WebAppScanClient {
             scannerRepository.save(scanner);
             webApp.setRunning(false);
             webAppRepository.save(webApp);
-            log.error("HttpClientErrorException for {} - {}, setting scan status to not running", webApp.getUrl(), e.getStatusCode());
+            log.error("[BurpEE] HttpClientErrorException for {} - {} - {}, setting scan status to not running", webApp.getUrl(), e.getStatusCode(), e.getLocalizedMessage());
         } catch (ResourceAccessException rao) {
-            log.error("ResourceAccessException for {} - {}", webApp.getUrl(), rao.getLocalizedMessage());
+            log.error("[BurpEE] ResourceAccessException for {} - {}", webApp.getUrl(), rao.getLocalizedMessage());
         } catch (HttpServerErrorException e) {
             scanner.setRunningScans(scanner.getRunningScans() - 1);
             scannerRepository.save(scanner);
-            log.error ("HttpServerErrorException for {} - server error {} ", webApp.getUrl(),e.getStatusCode());
+            log.error ("[BurpEE] HttpServerErrorException for {} - server error {} ", webApp.getUrl(),e.getStatusCode());
         }
         log.info("[BurpEE] Something Went Wrong during checking scan status for {}", webApp.getUrl());
         return false;
